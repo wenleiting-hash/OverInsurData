@@ -1,0 +1,133 @@
+{
+  "header": {
+    "titleCreate": "Add Insurance Carrier",
+    "subtitleCreate": "Complete all information and submit for review. Upon approval, onboarding is completed.",
+    "titleEdit": "Edit · {name}",
+    "subtitleEdit": "Save modifications. All changes will be recorded in the audit log.",
+    "saveDraft": "Save Draft",
+    "saved": "Saved",
+    "submitAudit": "Submit for Review",
+    "saveChanges": "Save Changes"
+  },
+  "steps": {
+    "label": "Steps",
+    "basicInfo": {
+      "label": "Basic Information",
+      "desc": "Company name, short name, NAIC code, website"
+    },
+    "regulatory": {
+      "label": "Regulatory Information",
+      "desc": "Company type, headquarters, region"
+    },
+    "ratings": {
+      "label": "Financial Ratings",
+      "desc": "AM Best, S&P, Moody's, Fitch"
+    },
+    "settlement": {
+      "label": "Settlement Configuration",
+      "desc": "Billing cycle, format, account details"
+    },
+    "documents": {
+      "label": "Qualifications",
+      "desc": "Business license, compliance docs, contracts"
+    }
+  },
+  "sections": {
+    "companyBasic": "Company Basic Info",
+    "businessLines": "Lines of Business",
+    "regulatoryInfo": "Regulatory Details",
+    "headquarters": "Headquarters Information",
+    "ratingsInfo": "Financial Rating Details",
+    "settlementConfig": "Commission Settlement Config",
+    "qualifications": "Document Uploads"
+  },
+  "fields": {
+    "fullName": "Full Legal Name",
+    "fullNameHint": "Official English legal name",
+    "shortName": "Short Name",
+    "naicCode": "NAIC Code",
+    "naicCodeHint": "National Association of Insurance Commissioners code",
+    "naicCodeError": "NAIC code must be 5 digits",
+    "foundedYear": "Founded Year",
+    "website": "Website URL",
+    "companyType": "Company Type",
+    "cooperationType": "Cooperation Type",
+    "state": "State",
+    "region": "Region",
+    "city": "City"
+  },
+  "values": {
+    "admitted": "Admitted",
+    "nonAdmitted": "Non-Admitted",
+    "coopDirect": "Direct Agent",
+    "coopMGA": "MGA (Managing General Agent)",
+    "coopWholesale": "Wholesale Broker",
+    "coopRecommend": "Recommended Partner",
+    "coopPlatform": "Aggregator Platform"
+  },
+  "warnings": {
+    "nonAdmitted": "Non-Admitted carriers require additional Surplus Lines compliance checks per state."
+  },
+  "ratings": {
+    "info": "Enter current ratings from each agency along with rating dates. AM Best rating is required.",
+    "agency": "AM Best",
+    "agencySp": "Standard & Poors (S&P)",
+    "agencyMoody": "Moody's",
+    "agencyFitch": "Fitch",
+    "required": "Required",
+    "rating": "Rating",
+    "ratingDate": "Rating Date",
+    "notRated": "— Not Rated —"
+  },
+  "settlementFields": {
+    "settlementCycle": "Settlement Cycle",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "semiAnnual": "Semi-Annually",
+    "annual": "Annually",
+    "billingFormat": "Billing Format",
+    "apiPull": "API Auto-Pull",
+    "csvFile": "CSV File",
+    "excelFile": "Excel File",
+    "edi835": "EDI 835",
+    "manualEntry": "Manual Entry",
+    "billCutoffDay": "Bill Cutoff Day",
+    "cutoffDayHint": "Which day of month/quarter for data cutoff",
+    "day": "day(s)",
+    "paymentTerm": "Payment Term",
+    "paymentHint": "Days to pay after reconciliation completed",
+    "afterReconcile": "After reconciliation",
+    "withinDays": "days",
+    "currency": "Currency",
+    "usd": "USD",
+    "cad": "CAD",
+    "premiumCollection": "Premium Collection Method",
+    "aggregate": "Channel collects → Platform aggregates → Pays carrier",
+    "direct": "Channel pays carrier directly",
+    "platform": "Platform collects → Settles uniformly"
+  },
+  "documents": {
+    "uploadHint": "Upload relevant qualification documents. Contract documents will enter legal review upon submission.",
+    "clickUpload": "Click to upload files",
+    "supportedFormats": "Supports PDF, Word, Excel; single file max 50MB",
+    "requiredDocs": "Required",
+    "uploaded": "Uploaded",
+    "notUploaded": "Not uploaded",
+    "docs": {
+      "businessLicense": "Business License",
+      "mainAgreement": "Master Agreement",
+      "nda": "NDA (Non-Disclosure Agreement)",
+      "dpa": "DPA (Data Processing Agreement)",
+      "amBestReport": "AM Best Rating Report"
+    }
+  },
+  "navigation": {
+    "previousStep": "Previous",
+    "nextStep": "Next",
+    "stepCount": "Step {current} / {total}"
+  },
+  "validation": {
+    "missingRequired": "Please fill in all required fields",
+    "invalidNaic": "NAIC code format error, must be 5 digits"
+  }
+}

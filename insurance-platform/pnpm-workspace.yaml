@@ -1,0 +1,12 @@
+node_modules:
+  only:
+    - development
+packages:
+  # 主项目
+  - '.'
+  # apps 下的所有应用
+  - 'apps/*'
+  # services 下的后端服务
+  - 'services/*'
+  # packages 下的共享包
+  - 'packages/*'

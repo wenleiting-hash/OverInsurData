@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: product_requirements
+title: 海外保险数字化平台产品需求文档（保险公司管理与渠道管理）
+scope:
+    - 产品需求/
+source_files: []
+depends_on: []
+related_to: []

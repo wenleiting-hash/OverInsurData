@@ -1,0 +1,146 @@
+{
+  "dashboard": {
+    "title": "总览",
+    "kpiCards": {
+      "totalPremium": "本年总保费",
+      "policiesCount": "有效保单数",
+      "channelCount": "合作渠道数",
+      "commission": "本年佣金收入"
+    },
+    "trendVsLastYear": {
+      "up": "↑ {percent} vs 去年",
+      "down": "↓ {percent} vs 去年"
+    },
+    "monthsAgo": {
+      "one": "1 个月前",
+      "other": "{count} 个月前"
+    },
+    "chapters": {
+      "businessDistribution": "业务分布分析",
+      "performanceTrend": "绩效趋势分析",
+      "lossRatioAnalysis": "赔付率分析",
+      "recentActivities": "最近活动"
+    },
+    "charts": {
+      "revenueByCarrier": {
+        "title": "各保险公司保费排行",
+        "xLabel": "保险公司",
+        "yLabel": "保费金额（万美元）"
+      },
+      "marketShare": {
+        "title": "市场份额分布",
+        "legend": {
+          "top3": "Top 3 保险公司",
+          "others": "其他"
+        }
+      },
+      "alertStats": {
+        "title": "合规提醒统计",
+        "legends": {
+          "overdue": "即将到期",
+          "expired": "已过期",
+          "warning": "警告"
+        }
+      },
+      "premiumTrend": {
+        "title": "保费月度趋势",
+        "xLabel": "月份",
+        "yLabel": "保费总额"
+      },
+      "lossRatioChart": {
+        "title": "赔付率分布",
+        "xLabel": "保险公司",
+        "yLabel": "赔付率"
+      },
+      "channelPerformance": {
+        "title": "渠道绩效分布",
+        "xLabel": "渠道类别",
+        "yLabel": "业绩值"
+      }
+    },
+    "dataLabels": {
+      "latestDate": "最新日期：{{date}}",
+      "unit": {
+        "currency": "万美元",
+        "policy": "份",
+        "rate": "%",
+        "channel": "个"
+      }
+    },
+    "alerts": {
+      "viewAll": "查看全部",
+      "recentActivityItem": {
+        "status": {
+          "info": "信息",
+          "warning": "警告",
+          "success": "完成"
+        }
+      }
+    },
+    "buttons": {
+      "viewDetails": "查看详情",
+      "exportReport": "导出报告",
+      "refreshData": "刷新数据"
+    }
+  },
+  "menu": {
+    "overview": "总览",
+    "insurers": "保险公司管理",
+    "channels": "渠道管理",
+    "partnerships": "合作关系",
+    "products": "产品",
+    "commission": "佣金",
+    "analytics": "数据分析",
+    "settings": "设置",
+    "insurerList": "保险公司",
+    "productManagement": "产品管理",
+    "cooperationManagement": "合作管理",
+    "appointmentCompliance": "合规管理",
+    "financeSettlement": "财务结算",
+    "dataAnalysis": "数据分析",
+    "channelList": "渠道列表",
+    "channelMasterData": "渠道主数据",
+    "channelHierarchy": "渠道层级",
+    "onboardingManagement": "入驻管理",
+    "productAuthorization": "产品授权",
+    "commissionScheme": "佣金方案",
+    "commissionSettlement": "佣金结算",
+    "performanceAssessment": "绩效考核",
+    "trainingCertification": "培训认证",
+    "channelPortal": "渠道门户",
+    "channelAnalytics": "渠道分析",
+    "i18nManagement": "界面文案管理"
+  },
+  "carriers": {
+    "title": "保险公司管理",
+    "addNew": "新增保险公司",
+    "edit": "编辑保险公司",
+    "import": "批量导入",
+    "duplicateCheck": "重复数据检测"
+  },
+  "common": {
+    "search": "搜索保险公司、产品、渠道…",
+    "notifications": "通知",
+    "help": "帮助",
+    "admin": "管理员",
+    "language": "语言 / LANGUAGE",
+    "theme": "主题",
+    "notificationsSetting": "通知",
+    "timezone": "时区",
+    "version": "版本",
+    "logout": "退出登录",
+    "confirm": "确认",
+    "cancel": "取消",
+    "delete": "删除",
+    "save": "保存",
+    "editAction": "编辑",
+    "viewDetails": "查看详情",
+    "active": "活跃",
+    "inactive": "非活跃",
+    "pending": "待处理",
+    "yes": "是",
+    "no": "否",
+    "settings": "设置",
+    "enabled": "已开启"
+  }
+}

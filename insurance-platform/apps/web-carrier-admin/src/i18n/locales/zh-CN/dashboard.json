@@ -1,0 +1,100 @@
+{
+  "title": "总览",
+  "kpiCards": {
+    "totalPremium": "本年总保费",
+    "policiesCount": "有效保单数",
+    "channelCount": "合作渠道数",
+    "commission": "本年佣金收入"
+  },
+  "trendVsLastYear": {
+    "up": "↑ {percent} vs 去年",
+    "down": "↓ {percent} vs 去年"
+  },
+  "chapters": {
+    "businessDistribution": "业务分布分析",
+    "performanceTrend": "绩效趋势分析",
+    "lossRatioAnalysis": "赔付率分析",
+    "recentActivities": "最近活动"
+  },
+  "charts": {
+    "revenueByCarrier": {
+      "title": "各保险公司保费排行",
+      "xLabel": "保险公司",
+      "yLabel": "保费金额（万美元）"
+    },
+    "marketShare": {
+      "title": "市场份额分布",
+      "legend": {
+        "top3": "Top 3 保险公司",
+        "others": "其他"
+      }
+    },
+    "alertStats": {
+      "title": "合规提醒统计",
+      "legends": {
+        "overdue": "即将到期",
+        "expired": "已过期",
+        "warning": "警告"
+      }
+    },
+    "premiumTrend": {
+      "title": "保费月度趋势",
+      "xLabel": "月份",
+      "yLabel": "保费总额",
+      "description": "近 12 个月 · 单位：百万美元"
+    },
+    "filters": {
+      "newPolicy": "新单",
+      "renewal": "续保",
+      "total": "总计"
+    }
+  },
+  "dataLabels": {
+    "year": {
+      "current": "本年度 (2026)",
+      "previous": "上年度 (2025)"
+    },
+    "last12Months": "近 12 个月",
+    "unit": {
+      "currency": "万美元",
+      "policy": "份",
+      "rate": "%",
+      "channel": "个"
+    }
+  },
+  "alerts": {
+    "title": "待处理事项",
+    "countUnit": "项",
+    "viewAll": "查看全部",
+    "recentActivityItem": {
+      "status": {
+        "info": "信息",
+        "warning": "警告",
+        "success": "完成"
+      }
+    }
+  },
+  "buttons": {
+    "viewDetails": "查看详情",
+    "exportReport": "导出报告",
+    "refreshData": "刷新数据"
+  },
+  "tables": {
+    "carrier": "保险公司",
+    "type": "类型",
+    "totalPremium": "总保费",
+    "lossRatio": "赔付率",
+    "renewalRate": "续保率",
+    "status": "状态"
+  },
+  "statuses": {
+    "expiring": "即将到期",
+    "pending": "待审核",
+    "active": "合作中"
+  },
+  "common": {
+    "added": "新增",
+    "thisMonth": "本月",
+    "channelsAdded": "{count} 个 | 本月"
+  }
+}

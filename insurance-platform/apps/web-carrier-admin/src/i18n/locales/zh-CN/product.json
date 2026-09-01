@@ -1,0 +1,230 @@
+{
+  "header": {
+    "titleCreate": "新增保险产品",
+    "subtitleCreate": "配置产品基本属性、核保规则、费率方案及可售州范围",
+    "titleEdit": "编辑 · {productName}",
+    "subtitleEdit": "修改产品配置将生成新版本，所有变更记录至审计日志",
+    "saveDraft": "保存草稿",
+    "saved": "已保存",
+    "submitAudit": "提交审核",
+    "saveChanges": "保存修改"
+  },
+  "steps": {
+    "label": "填写步骤",
+    "basicInfo": {
+      "label": "基本信息",
+      "desc": "产品名称、代码、业务线、子险种"
+    },
+    "underwriting": {
+      "label": "核保配置",
+      "desc": "核保模式、出单权限、限额设置"
+    },
+    "states": {
+      "label": "可售州",
+      "desc": "获批销售的州列表及审批状态"
+    },
+    "documents": {
+      "label": "产品文件",
+      "desc": "条款、费率手册、销售指南"
+    },
+    "review": {
+      "label": "确认提交",
+      "desc": "最终核对并提交审核"
+    }
+  },
+  "sections": {
+    "productBasic": "产品基本属性",
+    "carrierRelation": "所属保险公司",
+    "underwritingConfig": "核保规则配置",
+    "issueAuthorization": "出单授权设置",
+    "stateApproval": "州级监管审批",
+    "productFiles": "产品相关附件",
+    "requiredDocs": "必需文件",
+    "optionalDocs": "可选文件"
+  },
+  "fields": {
+    "productName": "产品全称",
+    "productNamePlaceholder": "请输入完整英文名称",
+    "productNameHint": "产品在各州的官方注册名称",
+    "shortName": "产品简称",
+    "shortNamePlaceholder": "请输入简称 (选填)",
+    "productCode": "产品代码",
+    "productCodePlaceholder": "e.g. CA-LIAB-2026",
+    "productCodeHint": "内部产品编码，6-12 位字母数字组合",
+    "naicFormNumber": "NAIC 表单编号",
+    "naicFormNumberPlaceholder": "e.g. CA-12345",
+    "lineOfBusiness": "业务线",
+    "subLine": "子险种",
+    "subLinePlaceholder": "请选择更细粒度的分类",
+    "productType": "产品类型",
+    "naicCategory": "NAIC 分类",
+    "underwritingMode": "核保模式",
+    "authorizationChannels": "授权渠道",
+    "maxPolicyLimit": "最大出单限额",
+    "mgaAuthority": "MGA 独立核保权",
+    "renewalType": "续保类型",
+    "policyTermYears": "最长保险期间",
+    "availableStates": "可售州列表",
+    "effectiveDate": "生效日期",
+    "expirationDate": "停售日期",
+    "uploadDate": "上传日期",
+    "fileSize": "文件大小"
+  },
+  "values": {
+    "lobAUTO": "AUTO（汽车保险）",
+    "lobHOME": "HOME（家庭保险）",
+    "lobLIFE": "LIFE（人寿保险）",
+    "lobHEALTH": "HEALTH（健康保险）",
+    "lobCOMMERCIAL": "COMMERCIAL（商业保险）",
+    "lobP_C": "P&C（财产与责任保险）",
+    "Liability": "责任险",
+    "Collision": "碰撞险",
+    "Comprehensive": "全面险",
+    "Medical Payments": "医疗支付险",
+    "Dwelling": "住宅房屋",
+    "Condo": "公寓保险",
+    "Renters": "租房者保险",
+    "Homeowners": "住宅业主",
+    "BOP": "商业业主政策",
+    "Term Life": "定期寿险",
+    "Whole Life": "终身寿险",
+    "Critical Illness": "重大疾病险",
+    "typeIndividual": "个人险",
+    "typeGroup": "团体险",
+    "typeVoluntaryBenefits": "自愿福利险",
+    "statusOnSale": "在售",
+    "statusPaused": "暂停销售",
+    "statusOffSale": "停售",
+    "statusPending": "待审核"
+  },
+  "warnings": {
+    "autoUnderwriting": "自动核保模式下，系统将基于预设规则即时评估投保申请。请确保规则逻辑严谨，避免误拒或漏放。",
+    "manualUnderwriting": "人工核保模式需后台专员介入审核，平均处理时间 1-3 个工作日。",
+    "mgaAuthority": "启用 MGA 独立核保权后，该渠道可在限额内自行决定承保/拒保，无需平台干预。",
+    "stateApprovalRequired": "每个州均需单独获得监管批准才能销售。未获批的州将无法生成保单。",
+    "expiryWarning": "产品停售日期前 90 天系统将自动下架并通知渠道停止新单。"
+  },
+  "ratings": {
+    "info": "录入产品在各州的费率方案，费率表需与 NAIC 标准对齐",
+    "state": "州",
+    "rateSheetVersion": "费率表版本",
+    "effectiveDate": "生效日期",
+    "expirationDate": "失效日期",
+    "status": "状态",
+    "action": "操作",
+    "editRatePlan": "编辑费率"
+  },
+  "underwriting": {
+    "title": "核保规则配置",
+    "ageRange": "年龄范围",
+    "minAge": "最小年龄",
+    "maxAge": "最大年龄",
+    "excludeDUI": "DUI/DWI 记录拒保",
+    "excludeDUIHint": "过去 5 年内有 DUI/DWI 交通记录的申请人将自动拒保，无需人工核保",
+    "referHighValue": "高价值标的转人工核保",
+    "referHighValueHint": "当保单保额超过设定阈值时，自动转专业核保团队审核",
+    "thresholdAmount": "转介阈值（美元）",
+    "blacklistConditions": "核保黑名单条件",
+    "poorCredit": "信用不良",
+    "fraudHistory": "欺诈历史",
+    "mispresentation": "虚假陈述"
+  },
+  "settlementFields": {
+    "commissionRate": "佣金率",
+    "commissionCycle": "结算周期",
+    "paymentMethod": "支付方式"
+  },
+  "documents": {
+    "uploadHint": "请上传产品相关资质文件。合同类文件提交后将进入法务审核流程。",
+    "clickUpload": "点击上传文件",
+    "supportedFormats": "支持 PDF、Word、Excel；单文件不超过 50MB",
+    "requiredDocs": "必须",
+    "uploaded": "已上传",
+    "notUploaded": "未上传",
+    "docs": {
+      "terms": "产品条款",
+      "rateBook": "费率手册",
+      "salesGuide": "销售指南",
+      "underwritingGuide": "核保指南",
+      "complianceCertificate": "合规证书"
+    }
+  },
+  "navigation": {
+    "previousStep": "上一步",
+    "nextStep": "下一步",
+    "stepCount": "步骤 {current} / {total}",
+    "backToList": "返回列表",
+    "viewDetails": "查看详情"
+  },
+  "validation": {
+    "missingRequired": "请填写必填字段",
+    "invalidProductCode": "产品代码格式错误，应为 6-12 位字母数字组合",
+    "invalidNaicForm": "NAIC 表单编号应为字母数字混合，8-12 位",
+    "noStatesSelected": "至少选择一个可售州",
+    "datesInvalid": "生效日期不能晚于停售日期",
+    "premiumLimitExceeded": "最大出单限额不能超过 $5,000,000"
+  },
+  "filters": {
+    "searchPlaceholder": "按产品名称/代码搜索",
+    "insurer": "保险公司",
+    "allInsurers": "全部保险公司",
+    "lineOfBusiness": "业务线",
+    "allLOB": "全部业务线",
+    "status": "状态",
+    "active": "在售",
+    "paused": "暂停",
+    "inactive": "停售",
+    "pending": "待审核",
+    "resetFilters": "清除筛选",
+    "sortBy": "排序",
+    "premiumYTD": "本年保费",
+    "effectiveDate": "上架时间",
+    "productName": "产品名称"
+  },
+  "actions": {
+    "listTitle": "产品管理",
+    "addProduct": "新增产品",
+    "edit": "编辑",
+    "delete": "删除",
+    "viewDetails": "查看详情",
+    "enable": "启用",
+    "disable": "禁用",
+    "batchEnable": "批量启用",
+    "batchDisable": "批量禁用",
+    "export": "导出",
+    "import": "导入"
+  },
+  "bulkActions": {
+    "selectedCount": "已选择 {count} 个产品",
+    "batchEnable": "批量启用",
+    "batchDisable": "批量禁用",
+    "cancelSelection": "取消选择"
+  },
+  "emptyState": "暂无数据",
+  "pagination": {
+    "totalCount": "共 {count} 条 · 第 {page} / {pages} 页",
+    "pageSize": "每页 10 条",
+    "pageSize20": "每页 20 条",
+    "pageSize50": "每页 50 条"
+  },
+  "pages": {
+    "productManagement": "产品管理"
+  },
+  "tables": {
+    "productName": "产品名称",
+    "productCode": "产品代码",
+    "insurerName": "保险公司",
+    "lineOfBusiness": "业务线",
+    "subLine": "子险种",
+    "type": "类型",
+    "availableStates": "可售州",
+    "premiumYTD": "本年保费",
+    "policyCount": "保单数",
+    "avgPremium": "件均保费",
+    "lossRatio": "赔付率",
+    "renewalRate": "续保率",
+    "status": "状态",
+    "effectiveDate": "上架时间",
+    "actions": "操作"
+  }
+}

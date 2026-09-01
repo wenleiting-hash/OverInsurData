@@ -1,0 +1,22 @@
+{
+  "title": "Appointment 与合规模块",
+  "description": "管理美国保险代理人任命、合规筛查与许可证校验",
+  "comingSoon": "此功能模块正在开发中",
+  "applicationDescription": "Appointment 申请流程（NAICN/NIPR 注册/多州申请）",
+  "interceptorDescription": "合规拦截器（OFAC 筛查/黑名单检查/实时验证）",
+  "reportGeneratorDescription": "合规报告生成器（监管月报/年度报表/PDF 导出）",
+  "expiryReminderDescription": "许可证到期提醒（日历视图/自动通知/续费流程）",
+  "dashboardTitle": "Appointment 概览",
+  "pendingApplications": "待处理申请",
+  "activeAppointments": "有效任命",
+  "expiringLicenses": "即将过期许可证",
+  "complianceIssues": "合规问题",
+  "searchPlaceholder": "搜索代理人/产品/牌照...",
+  "backToDashboard": "返回首页",
+  "appointmentStatus.approved": "已批准",
+  "appointmentStatus.pending": "待审核",
+  "appointmentStatus.rejected": "已拒绝",
+  "appointmentStatus.expired": "已过期",
+  "appointmentStatus.terminated": "已终止",
+  "appointmentStatus.pendingSupplement": "待补充材料"
+}

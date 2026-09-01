@@ -1,0 +1,22 @@
+{
+  "title": "Appointment & Compliance Management",
+  "description": "Manage US insurance producer appointments, compliance screening and license verification",
+  "comingSoon": "This module is under development",
+  "applicationDescription": "Appointment application process (NAICN/NIPR registration/multi-state applications)",
+  "interceptorDescription": "Compliance interceptor (OFAC screening/blacklist check/real-time validation)",
+  "reportGeneratorDescription": "Compliance report generator (regulatory monthly reports/yearly statements/PDF export)",
+  "expiryReminderDescription": "License expiry reminder (calendar view/auto notifications/renewal workflow)",
+  "dashboardTitle": "Appointment Dashboard",
+  "pendingApplications": "Pending Applications",
+  "activeAppointments": "Active Appointments",
+  "expiringLicenses": "Expiring Licenses",
+  "complianceIssues": "Compliance Issues",
+  "searchPlaceholder": "Search by agent/product/license...",
+  "backToDashboard": "Back to Dashboard",
+  "appointmentStatus.approved": "Approved",
+  "appointmentStatus.pending": "Pending",
+  "appointmentStatus.rejected": "Rejected",
+  "appointmentStatus.expired": "Expired",
+  "appointmentStatus.terminated": "Terminated",
+  "appointmentStatus.pendingSupplement": "Pending Supplement"
+}

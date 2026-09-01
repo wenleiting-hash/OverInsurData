@@ -1,0 +1,100 @@
+{
+  "title": "Overview",
+  "kpiCards": {
+    "totalPremium": "Total Premium (YTD)",
+    "policiesCount": "Active Policies",
+    "channelCount": "Partner Channels",
+    "commission": "Commission Income (YTD)"
+  },
+  "trendVsLastYear": {
+    "up": "↑ {percent} vs Last Year",
+    "down": "↓ {percent} vs Last Year"
+  },
+  "chapters": {
+    "businessDistribution": "Business Distribution Analysis",
+    "performanceTrend": "Performance Trend Analysis",
+    "lossRatioAnalysis": "Loss Ratio Analysis",
+    "recentActivities": "Recent Activities"
+  },
+  "charts": {
+    "revenueByCarrier": {
+      "title": "Revenue Ranking by Carrier",
+      "xLabel": "Insurance Carrier",
+      "yLabel": "Premium (10K USD)"
+    },
+    "marketShare": {
+      "title": "Market Share Distribution",
+      "legend": {
+        "top3": "Top 3 Carriers",
+        "others": "Others"
+      }
+    },
+    "alertStats": {
+      "title": "Compliance Alerts Statistics",
+      "legends": {
+        "overdue": "Due Soon",
+        "expired": "Expired",
+        "warning": "Warning"
+      }
+    },
+    "premiumTrend": {
+      "title": "Monthly Premium Trend",
+      "xLabel": "Month",
+      "yLabel": "Total Premium",
+      "description": "Last 12 months · Unit: million USD"
+    },
+    "filters": {
+      "newPolicy": "New Policies",
+      "renewal": "Renewals",
+      "total": "Total"
+    }
+  },
+  "dataLabels": {
+    "year": {
+      "current": "Current Year (2026)",
+      "previous": "Previous Year (2025)"
+    },
+    "last12Months": "Last 12 Months",
+    "unit": {
+      "currency": "10K USD",
+      "policy": "Policies",
+      "rate": "%",
+      "channel": "Channels"
+    }
+  },
+  "alerts": {
+    "title": "Pending Items",
+    "countUnit": "items",
+    "viewAll": "View All",
+    "recentActivityItem": {
+      "status": {
+        "info": "Info",
+        "warning": "Warning",
+        "success": "Completed"
+      }
+    }
+  },
+  "buttons": {
+    "viewDetails": "View Details",
+    "exportReport": "Export Report",
+    "refreshData": "Refresh Data"
+  },
+  "tables": {
+    "carrier": "Carrier",
+    "type": "Type",
+    "totalPremium": "Total Premium",
+    "lossRatio": "Loss Ratio",
+    "renewalRate": "Renewal Rate",
+    "status": "Status"
+  },
+  "statuses": {
+    "expiring": "Expiring Soon",
+    "pending": "Pending Review",
+    "active": "Active"
+  },
+  "common": {
+    "added": "Added",
+    "thisMonth": "This Month",
+    "channelsAdded": "{count} channels added this month"
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "dashboard": {
+    "title": "Overview",
+    "kpiCards": {
+      "totalPremium": "Total Premium (YTD)",
+      "policiesCount": "Active Policies",
+      "channelCount": "Partner Channels",
+      "commission": "Commission Income (YTD)"
+    },
+    "trendVsLastYear": {
+      "up": "↑ {percent} vs Last Year",
+      "down": "↓ {percent} vs Last Year"
+    },
+    "monthsAgo": {
+      "one": "1 month ago",
+      "other": "{count} months ago"
+    },
+    "chapters": {
+      "businessDistribution": "Business Distribution Analysis",
+      "performanceTrend": "Performance Trend Analysis",
+      "lossRatioAnalysis": "Loss Ratio Analysis",
+      "recentActivities": "Recent Activities"
+    },
+    "charts": {
+      "revenueByCarrier": {
+        "title": "Revenue Ranking by Carrier",
+        "xLabel": "Insurance Carrier",
+        "yLabel": "Premium (10K USD)"
+      },
+      "marketShare": {
+        "title": "Market Share Distribution",
+        "legend": {
+          "top3": "Top 3 Carriers",
+          "others": "Others"
+        }
+      },
+      "alertStats": {
+        "title": "Compliance Alerts Statistics",
+        "legends": {
+          "overdue": "Due Soon",
+          "expired": "Expired",
+          "warning": "Warning"
+        }
+      },
+      "premiumTrend": {
+        "title": "Monthly Premium Trend",
+        "xLabel": "Month",
+        "yLabel": "Total Premium"
+      },
+      "lossRatioChart": {
+        "title": "Loss Ratio Distribution",
+        "xLabel": "Insurance Carrier",
+        "yLabel": "Loss Ratio"
+      },
+      "channelPerformance": {
+        "title": "Channel Performance Distribution",
+        "xLabel": "Channel Category",
+        "yLabel": "Performance Value"
+      }
+    },
+    "dataLabels": {
+      "latestDate": "Latest Date: {{date}}",
+      "unit": {
+        "currency": "10K USD",
+        "policy": "Policies",
+        "rate": "%",
+        "channel": "Channels"
+      }
+    },
+    "alerts": {
+      "viewAll": "View All",
+      "recentActivityItem": {
+        "status": {
+          "info": "Info",
+          "warning": "Warning",
+          "success": "Completed"
+        }
+      }
+    },
+    "buttons": {
+      "viewDetails": "View Details",
+      "exportReport": "Export Report",
+      "refreshData": "Refresh Data"
+    }
+  },
+  "menu": {
+    "overview": "Overview",
+    "insurers": "Insurance Carriers",
+    "channels": "Channel Management",
+    "partnerships": "Partnerships",
+    "products": "Products",
+    "commission": "Commission",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "insurerList": "Insurers",
+    "productManagement": "Product Management",
+    "cooperationManagement": "Cooperation Management",
+    "appointmentCompliance": "Compliance Management",
+    "financeSettlement": "Finance & Settlement",
+    "dataAnalysis": "Data Analytics",
+    "channelList": "Channel List",
+    "channelMasterData": "Channel Master Data",
+    "channelHierarchy": "Channel Hierarchy",
+    "onboardingManagement": "Onboarding Management",
+    "productAuthorization": "Product Authorization",
+    "commissionScheme": "Commission Scheme",
+    "commissionSettlement": "Commission Settlement",
+    "performanceAssessment": "Performance Assessment",
+    "trainingCertification": "Training & Certification",
+    "channelPortal": "Channel Portal",
+    "channelAnalytics": "Channel Analytics",
+    "i18nManagement": "Interface Copy Management"
+  },
+  "carriers": {
+    "title": "Insurance Carriers",
+    "addNew": "Add New Insurer",
+    "edit": "Edit Insurer",
+    "import": "Batch Import",
+    "duplicateCheck": "Duplicate Detection"
+  },
+  "common": {
+    "search": "Search insurers, products, channels…",
+    "notifications": "Notifications",
+    "help": "Help",
+    "admin": "Admin",
+    "language": "Language / LANGUAGE",
+    "theme": "Theme",
+    "notificationsSetting": "Notifications",
+    "timezone": "Timezone",
+    "version": "Version",
+    "logout": "Logout",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "editAction": "Edit",
+    "viewDetails": "View Details",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "yes": "Yes",
+    "no": "No",
+    "settings": "Settings",
+    "enabled": "Enabled"
+  }
+}

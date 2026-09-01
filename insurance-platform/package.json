@@ -1,0 +1,32 @@
+{
+  "name": "insurance-platform",
+  "version": "2.0.0",
+  "private": true,
+  "description": "海外保险数字化平台 V2.0（PostgreSQL 15 + Drizzle ORM）",
+  "scripts": {
+    "dev:carrier": "pnpm --filter web-carrier-admin dev",
+    "dev:channel": "pnpm --filter web-channel-admin dev",
+    "build:carrier": "pnpm --filter web-carrier-admin build",
+    "build:channel": "pnpm --filter web-channel-admin build",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react": "^7.33.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

@@ -1,0 +1,133 @@
+{
+  "header": {
+    "titleCreate": "新增保险公司",
+    "subtitleCreate": "填写完整信息后提交审核，审核通过后完成入驻",
+    "titleEdit": "编辑 · {name}",
+    "subtitleEdit": "修改字段后保存，变更将记录至审计日志",
+    "saveDraft": "保存草稿",
+    "saved": "已保存",
+    "submitAudit": "提交审核",
+    "saveChanges": "保存修改"
+  },
+  "steps": {
+    "label": "填写步骤",
+    "basicInfo": {
+      "label": "基本信息",
+      "desc": "公司名称、简称、NAIC、官网"
+    },
+    "regulatory": {
+      "label": "监管信息",
+      "desc": "公司类型、总部、大区"
+    },
+    "ratings": {
+      "label": "财务评级",
+      "desc": "AM Best、S&P、Moody's、Fitch"
+    },
+    "settlement": {
+      "label": "结算配置",
+      "desc": "结算周期、账单格式、账户"
+    },
+    "documents": {
+      "label": "资质文件",
+      "desc": "营业执照、合规文件、合同"
+    }
+  },
+  "sections": {
+    "companyBasic": "公司基本信息",
+    "businessLines": "业务线",
+    "regulatoryInfo": "监管信息",
+    "headquarters": "总部信息",
+    "ratingsInfo": "财务评级信息",
+    "settlementConfig": "佣金结算配置",
+    "qualifications": "资质文件上传"
+  },
+  "fields": {
+    "fullName": "公司全称",
+    "fullNameHint": "英文官方全称",
+    "shortName": "公司简称",
+    "naicCode": "NAIC 编码",
+    "naicCodeHint": "National Association of Insurance Commissioners 编码",
+    "naicCodeError": "NAIC 编码应为 5 位数字",
+    "foundedYear": "成立年份",
+    "website": "官方网站",
+    "companyType": "公司类型",
+    "cooperationType": "合作类型",
+    "state": "总部所在州",
+    "region": "大区",
+    "city": "城市"
+  },
+  "values": {
+    "admitted": "Admitted（已获批准入）",
+    "nonAdmitted": "Non-Admitted（未获批准入）",
+    "coopDirect": "直接代理",
+    "coopMGA": "MGA（Managing General Agent）",
+    "coopWholesale": "批发经纪",
+    "coopRecommend": "推荐合作",
+    "coopPlatform": "聚合平台合作"
+  },
+  "warnings": {
+    "nonAdmitted": "Non-Admitted 公司需额外确认各州的 Surplus Lines 合规要求"
+  },
+  "ratings": {
+    "info": "请录入各评级机构的当前评级及评级日期。至少填写 AM Best 评级。",
+    "agency": "AM Best",
+    "agencySp": "Standard & Poors (S&P)",
+    "agencyMoody": "Moody's",
+    "agencyFitch": "Fitch",
+    "required": "必填",
+    "rating": "评级",
+    "ratingDate": "评级日期",
+    "notRated": "— 未评级 —"
+  },
+  "settlementFields": {
+    "settlementCycle": "结算周期",
+    "monthly": "月度结算（每月）",
+    "quarterly": "季度结算（每季）",
+    "semiAnnual": "半年度结算",
+    "annual": "年度结算",
+    "billingFormat": "账单格式",
+    "apiPull": "API 自动拉取",
+    "csvFile": "CSV 文件",
+    "excelFile": "Excel 文件",
+    "edi835": "EDI 835",
+    "manualEntry": "人工录入",
+    "billCutoffDay": "账单截止日",
+    "cutoffDayHint": "每月/季第几天为数据截止日",
+    "day": "天",
+    "paymentTerm": "付款期限",
+    "paymentHint": "对账完成后多少天内支付",
+    "afterReconcile": "对账后",
+    "withinDays": "天内",
+    "currency": "结算货币",
+    "usd": "USD（美元）",
+    "cad": "CAD（加拿大元）",
+    "premiumCollection": "保费归集方式",
+    "aggregate": "渠道代收 → 平台归集 → 转付保险公司",
+    "direct": "渠道直接支付保险公司",
+    "platform": "平台代收后统一结算"
+  },
+  "documents": {
+    "uploadHint": "请上传保险公司相关资质文件。合同类文件提交后将进入法务审核流程。",
+    "clickUpload": "点击上传文件",
+    "supportedFormats": "支持 PDF、Word、Excel；单文件不超过 50MB",
+    "requiredDocs": "必须",
+    "uploaded": "已上传",
+    "notUploaded": "未上传",
+    "docs": {
+      "businessLicense": "营业执照",
+      "mainAgreement": "主合作协议",
+      "nda": "保密协议 (NDA)",
+      "dpa": "数据处理协议 (DPA)",
+      "amBestReport": "AM Best 评级报告"
+    }
+  },
+  "navigation": {
+    "previousStep": "上一步",
+    "nextStep": "下一步",
+    "stepCount": "步骤 {current} / {total}"
+  },
+  "validation": {
+    "missingRequired": "请填写必填字段",
+    "invalidNaic": "NAIC 编码格式错误，应为 5 位数字"
+  }
+}

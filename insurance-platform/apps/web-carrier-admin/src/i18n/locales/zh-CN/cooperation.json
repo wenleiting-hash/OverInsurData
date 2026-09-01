@@ -1,0 +1,69 @@
+{
+  "cooperation": {
+    "tabs": {
+      "establish": "合作关系建立",
+      "terminate": "合作关系终止",
+      "contracts": "合同协议管理",
+      "settlement": "结算参数配置",
+      "contacts": "对接人联络",
+      "renewal": "续约管理",
+      "integration": "产品资源接入"
+    },
+    "headers": {
+      "title": "合作管理",
+      "subtitle": "{activeCoops} 家合作保险公司 · {pendingCoops} 个申请处理中",
+      "createNew": "新建合作申请"
+    },
+    "wizard": {
+      "title": "新建合作关系申请",
+      "steps": ["选择保险公司", "合作范围", "条款确认", "提交"],
+      "step0": {
+        "title": "选择保险公司",
+        "empty": "所有合规保险公司均已建立合作关系",
+        "status": {
+          "verified": "已认证",
+          "pending": "待审核"
+        }
+      },
+      "step1": {
+        "title": "合作范围配置",
+        "coopType": "合作类型",
+        "coopTypes": {
+          "fullService": "全服务合作",
+          "fullServiceDesc": "所有险种、完整渠道服务",
+          "preferred": "优选合作",
+          "preferredDesc": "主要险种、专项服务支持",
+          "specialty": "专项合作",
+          "specialtyDesc": "指定险种或专业业务线",
+          "surplusLines": "Surplus Lines",
+          "surplusLinesDesc": "非标准/E&S 市场业务"
+        },
+        "linesOfBusiness": "业务线范围",
+        "states": "经营州"
+      },
+      "step2": {
+        "title": "条款确认与备注",
+        "commissionTier": "佣金等级",
+        "tiers": {
+          "tier1": "Tier-1",
+          "tier1Desc": "标准优选费率",
+          "tier2": "Tier-2",
+          "tier2Desc": "标准费率",
+          "tier3": "Tier-3",
+          "tier3Desc": "基础费率"
+        },
+        "notes": "申请备注",
+        "summary": "申请摘要"
+      },
+      "step3": {
+        "confirmTitle": "确认提交合作申请",
+        "description": "申请提交后将进入内部合规审核，同时向保险公司发送合作意向通知。审批通过后系统将自动创建合作记录。",
+        "confirmation": "我确认以上信息准确，同意提交合作申请"
+      }
+    },
+    "toast": {
+      "applicationSubmitted": "合作申请已成功提交，预计 5-10 个工作日审核完成",
+      "terminationSubmitted": "合作关系终止申请已提交（{{insurer}}），预计 3-5 个工作日审批完成"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "cooperation": {
+    "tabs": {
+      "establish": "Establish Partnership",
+      "terminate": "Terminate Partnership",
+      "contracts": "Contract Management",
+      "settlement": "Settlement Configuration",
+      "contacts": "Contact Persons",
+      "renewal": "Renewal Management",
+      "integration": "Product Integration"
+    },
+    "headers": {
+      "title": "Cooperation Management",
+      "subtitle": "{activeCoops} active partnerships · {pendingCoops} pending applications",
+      "createNew": "Create New Application"
+    },
+    "wizard": {
+      "title": "New Partnership Application",
+      "steps": ["Select Insurer", "Scope Config", "Terms Confirmation", "Submit"],
+      "step0": {
+        "title": "Select Insurance Company",
+        "empty": "All compliant insurers already have established partnerships",
+        "status": {
+          "verified": "Verified",
+          "pending": "Pending Review"
+        }
+      },
+      "step1": {
+        "title": "Partnership Scope Configuration",
+        "coopType": "Cooperation Type",
+        "coopTypes": {
+          "fullService": "Full-Service",
+          "fullServiceDesc": "All lines of business, complete channel services",
+          "preferred": "Preferred",
+          "preferredDesc": "Major lines, specialized support",
+          "specialty": "Specialty",
+          "specialtyDesc": "Selected lines or professional businesses",
+          "surplusLines": "Surplus Lines",
+          "surplusLinesDesc": "Non-standard/E&S market business"
+        },
+        "linesOfBusiness": "Lines of Business",
+        "states": "Operating States"
+      },
+      "step2": {
+        "title": "Terms Confirmation & Notes",
+        "commissionTier": "Commission Tier",
+        "tiers": {
+          "tier1": "Tier-1",
+          "tier1Desc": "Premium Preferred Rates",
+          "tier2": "Tier-2",
+          "tier2Desc": "Standard Rates",
+          "tier3": "Tier-3",
+          "tier3Desc": "Basic Rates"
+        },
+        "notes": "Application Notes",
+        "summary": "Application Summary"
+      },
+      "step3": {
+        "confirmTitle": "Confirm Submit Application",
+        "description": "After submission, the application enters internal compliance review with notification sent to the insurer. Upon approval, partnership record will be automatically created.",
+        "confirmation": "I confirm the above information is accurate and agree to submit the application"
+      }
+    },
+    "toast": {
+      "applicationSubmitted": "Partnership application successfully submitted, estimated 5-10 business days for review",
+      "terminationSubmitted": "Partnership termination application submitted ({{insurer}}, estimated 3-5 business days for approval"
+    }
+  }
+}

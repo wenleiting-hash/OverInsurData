@@ -1,0 +1,27 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: Q0DeR-MaG1C-BrAnCh-Fo2-NoN-GiT-Or-No-C0MmIt
+nodes_managed: true
+exported_at: "2026-08-28T15:57:32Z"
+modules:
+    "":
+        dir_name: 海外保险数字化平台 V1.0 产品设计与需求根模块
+        title: 海外保险数字化平台 V1.0 产品设计与需求根模块
+        scope:
+            - 产品设计/
+            - 产品需求/
+        source_files: []
+        children:
+            - product_requirements
+        depends_on: []
+        related_to: []
+    product_requirements:
+        dir_name: 海外保险数字化平台产品需求文档（保险公司管理与渠道管理）
+        title: 海外保险数字化平台产品需求文档（保险公司管理与渠道管理）
+        scope:
+            - 产品需求/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

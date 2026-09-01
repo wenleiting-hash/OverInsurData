@@ -1,0 +1,107 @@
+{
+  "common": {
+    "actions": {
+      "add": "添加",
+      "edit": "编辑",
+      "delete": "删除",
+      "save": "保存",
+      "cancel": "取消",
+      "confirm": "确认",
+      "reset": "重置",
+      "download": "下载",
+      "export": "导出",
+      "import": "导入",
+      "view": "查看",
+      "search": "搜索",
+      "filter": "筛选"
+    },
+    "status": {
+      "active": "有效",
+      "inactive": "无效",
+      "pending": "待处理",
+      "approved": "已批准",
+      "rejected": "已拒绝",
+      "suspended": "已暂停"
+    },
+    "fields": {
+      "name": "名称",
+      "code": "编码",
+      "description": "描述",
+      "createdAt": "创建时间",
+      "updatedAt": "更新时间",
+      "createdBy": "创建人",
+      "operator": "操作人"
+    },
+    "pagination": {
+      "currentPage": "第{{current}}页/共{{total}}页",
+      "itemsPerPage": "每页显示条数",
+      "totalItems": "共{{total}}条数据"
+    },
+    "messages": {
+      "deleteConfirm": "确定要删除此项目吗？",
+      "saveSuccess": "保存成功！",
+      "saveFailed": "保存失败，请重试。",
+      "noData": "暂无数据"
+    },
+    "menu": {
+      "dashboard": "仪表盘",
+      "insurers": "保险公司管理",
+      "partnerships": "合作关系",
+      "products": "产品",
+      "commission": "佣金",
+      "analytics": "数据分析",
+      "settings": "设置"
+    }
+  },
+  "carrier": {
+    "title": "保险公司管理",
+    "subtitle": "管理保险公司合作与配置",
+    "sections": {
+      "overview": "概览",
+      "newCarrier": "新增保险公司",
+      "editCarrier": "编辑保险公司",
+      "details": "保险公司详情"
+    },
+    "list": {
+      "title": "保险公司列表",
+      "addColumn": "列设置",
+      "refresh": "刷新数据"
+    }
+  },
+  "dashboard": {
+    "title": "仪表盘",
+    "subtitle": "{{date}}",
+    "kpi": {
+      "totalPremium": "总保费",
+      "validPolicies": "有效保单数",
+      "activeCarriers": "活跃保险公司",
+      "commissionEarned": "佣金收入"
+    },
+    "charts": {
+      "premiumTrend": "保费趋势",
+      "carrierDistribution": "保险公司分布",
+      "productMix": "产品组合"
+    },
+    "recentActivity": "最近活动"
+  },
+  "insurers": {
+    "title": "保险公司",
+    "table": {
+      "headers": {
+        "carrierId": "公司 ID",
+        "carrierName": "公司名称",
+        "naicCode": "NAIC 编码",
+        "type": "类型",
+        "rating": "评级",
+        "status": "状态",
+        "actions": "操作"
+      }
+    },
+    "forms": {
+      "basicInfo": "基本信息",
+      "contactInfo": "联系信息",
+      "settlementConfig": "结算配置",
+      "stateScope": "州范围"
+    }
+  }
+}
