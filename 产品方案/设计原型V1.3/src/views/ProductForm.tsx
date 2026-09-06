@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import {
-  ArrowLeft, ChevronRight, CheckCircle, Info, Plus, X, Upload,
+  ArrowLeft, ChevronRight, CheckCircle, Info, X, Upload,
   FileText, Package, Shield, Globe, BookOpen, AlertTriangle,
 } from 'lucide-react'
 import { products, insurers } from '../data/mockData'
+import { useLang } from '../i18n'
 import type { ViewId } from '../components/Sidebar'
 
 interface Props {
@@ -34,13 +35,22 @@ const US_STATES = [
   'VA','WA','WV','WI','WY',
 ]
 
-const STEPS = [
-  { id: 0, label: '基本信息', icon: Package },
-  { id: 1, label: '费率配置', icon: FileText },
-  { id: 2, label: '核保规则', icon: Shield },
-  { id: 3, label: '可售州', icon: Globe },
-  { id: 4, label: '合规文件', icon: BookOpen },
+const STEPS_META = [
+  { id: 0, icon: Package },
+  { id: 1, icon: FileText },
+  { id: 2, icon: Shield },
+  { id: 3, icon: Globe },
+  { id: 4, icon: BookOpen },
 ]
+
+const COVERAGE_KEYS = ['liability', 'comprehensive', 'collision', 'medical', 'um', 'roadside', 'substitute', 'newCarValue', 'deductibleWaiver'] as const
+type CoverageKey = typeof COVERAGE_KEYS[number]
+
+const FACTOR_KEYS = ['drivingRecord', 'vehicleType', 'drivingExperience', 'creditScore', 'territory', 'usage', 'ageBand', 'claimsHistory', 'vehicleValue', 'safetyEquip'] as const
+type FactorKey = typeof FACTOR_KEYS[number]
+
+const DOC_KEYS = ['filing', 'rates', 'guide', 'uwManual', 'training'] as const
+type DocKey = typeof DOC_KEYS[number]
 
 function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
@@ -56,12 +66,13 @@ function Field({ label, required, hint, children }: { label: string; required?: 
 }
 
 export default function ProductForm({ mode, productId, navigateTo }: Props) {
+  const { t } = useLang()
   const existing = products.find(p => p.id === productId)
 
   const [step, setStep] = useState(0)
   const [saved, setSaved] = useState(false)
 
-  // Step 0 — 基本信息
+  // Step 0 — basic info
   const [name, setName] = useState(existing?.name ?? '')
   const [code, setCode] = useState(existing?.code ?? '')
   const [insurerId, setInsurerId] = useState(existing?.insurerId ?? '')
@@ -69,29 +80,81 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
   const [subLine, setSubLine] = useState(existing?.subLine ?? '')
   const [prodType, setProdType] = useState<'Individual' | 'Group' | 'Voluntary'>(existing?.type ?? 'Individual')
   const [description, setDescription] = useState('')
-  const [coverages, setCoverages] = useState<string[]>(['责任险', '综合险', '碰撞险'])
+  const [coverages, setCoverages] = useState<CoverageKey[]>(['liability', 'comprehensive', 'collision'])
 
-  // Step 1 — 费率配置
+  // Step 1 — rates
   const [rateType, setRateType] = useState<'flat' | 'tiered' | 'usage'>('tiered')
   const [baseRate, setBaseRate] = useState('')
   const [minPremium, setMinPremium] = useState('')
   const [maxPremium, setMaxPremium] = useState('')
-  const [rateFactors, setRateFactors] = useState<string[]>(['驾驶记录', '车型系数', '信用评分'])
+  const [rateFactors, setRateFactors] = useState<FactorKey[]>(['drivingRecord', 'vehicleType', 'creditScore'])
 
-  // Step 2 — 核保规则
+  // Step 2 — underwriting
   const [ageMin, setAgeMin] = useState('18')
   const [ageMax, setAgeMax] = useState('80')
   const [excludeDUI, setExcludeDUI] = useState(true)
   const [referHighValue, setReferHighValue] = useState(true)
   const [referThreshold, setReferThreshold] = useState('150000')
 
-  // Step 3 — 可售州
+  // Step 3 — states
   const [selectedStates, setSelectedStates] = useState<Set<string>>(
     new Set(existing?.states?.[0] === 'ALL' ? US_STATES : (existing?.states ?? []))
   )
 
-  // Step 4 — 文件
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
+  // Step 4 — files
+  const [uploadedFiles, setUploadedFiles] = useState<DocKey[]>([])
+
+  const stepLabels = [t.prdLblBasic, t.prdStepRates, t.prdLblUw, t.prdLblStates, t.prdLblCompliance]
+
+  const coverageLabels: Record<CoverageKey, string> = {
+    liability: t.prdCovLiability,
+    comprehensive: t.prdCovComprehensive,
+    collision: t.prdCovCollision,
+    medical: t.prdCovMedical,
+    um: t.prdCovUm,
+    roadside: t.prdCovRoadside,
+    substitute: t.prdCovSubstitute,
+    newCarValue: t.prdCovNewCarValue,
+    deductibleWaiver: t.prdCovDeductibleWaiver,
+  }
+
+  const factorLabels: Record<FactorKey, string> = {
+    drivingRecord: t.prdFacDrivingRecord,
+    vehicleType: t.prdFacVehicleType,
+    drivingExperience: t.prdFacDrivingExp,
+    creditScore: t.prdFacCredit,
+    territory: t.prdFacTerritory,
+    usage: t.prdFacUsage,
+    ageBand: t.prdFacAgeBand,
+    claimsHistory: t.prdFacClaimsHistory,
+    vehicleValue: t.prdFacVehicleValue,
+    safetyEquip: t.prdFacSafetyEquip,
+  }
+
+  const rateTypeOptions = [
+    { val: 'flat', label: t.prdRateFlat, desc: t.prdRateFlatDesc },
+    { val: 'tiered', label: t.prdRateTiered, desc: t.prdRateTieredDesc },
+    { val: 'usage', label: t.prdRateUsage, desc: t.prdRateUsageDesc },
+  ]
+
+  const docList: { key: DocKey; label: string; required: boolean; hint: string; accept: string }[] = [
+    { key: 'filing', label: t.prdDocFiling, required: true, hint: t.prdDocFilingHint, accept: '.pdf' },
+    { key: 'rates', label: t.prdDocRates, required: true, hint: t.prdDocRatesHint, accept: '.pdf,.xlsx' },
+    { key: 'guide', label: t.prdMatGuide, required: true, hint: t.prdDocGuideHint, accept: '.pdf' },
+    { key: 'uwManual', label: t.prdDocUwManual, required: false, hint: t.prdDocUwHint, accept: '.pdf' },
+    { key: 'training', label: t.prdMatDeck, required: false, hint: t.prdDocTrainingHint, accept: '.pdf,.pptx' },
+  ]
+
+  const statePresets = [
+    { label: t.prdPresetNortheast, states: ['NY', 'NJ', 'CT', 'MA', 'PA', 'VT', 'NH', 'ME', 'RI'] },
+    { label: t.prdPresetCaTx, states: ['CA', 'TX'] },
+  ]
+
+  const typeOptions = [
+    { val: 'Individual' as const, label: t.prdTypeIndividual },
+    { val: 'Group' as const, label: t.prdTypeGroup },
+    { val: 'Voluntary' as const, label: t.prdTypeVoluntary },
+  ]
 
   const toggleState = (s: string) => setSelectedStates(prev => {
     const n = new Set(prev)
@@ -119,9 +182,9 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
       <div className="card" style={{ padding: '60px 40px' }}>
         <CheckCircle size={48} style={{ color: '#34C759', margin: '0 auto 16px' }} />
         <div style={{ fontSize: 20, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>
-          {mode === 'create' ? '产品创建成功' : '产品信息已更新'}
+          {mode === 'create' ? t.prdCreated : t.prdUpdated}
         </div>
-        <p style={{ fontSize: 14, color: '#717786' }}>正在跳转至产品列表…</p>
+        <p style={{ fontSize: 14, color: '#717786' }}>{t.prdRedirecting}</p>
       </div>
     </div>
   )
@@ -133,10 +196,10 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
         <button className="btn-ghost" onClick={back}><ArrowLeft size={15} /></button>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>
-            {mode === 'create' ? '新增产品' : `编辑产品 — ${existing?.name ?? ''}`}
+            {mode === 'create' ? t.prdNewProduct : t.prdEditTitle(existing?.name ?? '')}
           </h1>
           <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>
-            {mode === 'create' ? '填写产品信息，配置费率、核保规则与可售区域' : '修改产品配置，变更将记录至审计日志'}
+            {mode === 'create' ? t.prdCreateSubtitle : t.prdEditSubtitle}
           </p>
         </div>
       </div>
@@ -144,7 +207,7 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, alignItems: 'start' }}>
         {/* Step nav */}
         <div className="card" style={{ padding: '18px 16px', position: 'sticky', top: 24 }}>
-          {STEPS.map((s, i) => {
+          {STEPS_META.map((s, i) => {
             const done = stepDone(i)
             const active = step === i
             return (
@@ -169,76 +232,76 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
                   }
                 </div>
                 <div>
-                  <div style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? '#0058BC' : '#414755' }}>{s.label}</div>
-                  {done && !active && <div style={{ fontSize: 10.5, color: '#34C759' }}>已完成</div>}
+                  <div style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? '#0058BC' : '#414755' }}>{stepLabels[i]}</div>
+                  {done && !active && <div style={{ fontSize: 10.5, color: '#34C759' }}>{t.prdStepDone}</div>}
                 </div>
               </div>
             )
           })}
           <div style={{ marginTop: 16, padding: '0 4px' }}>
             <div style={{ height: 4, background: 'rgba(193,198,215,0.3)', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${(STEPS.filter((_, i) => stepDone(i)).length / STEPS.length) * 100}%`, background: '#34C759', borderRadius: 3, transition: 'width 300ms' }} />
+              <div style={{ height: '100%', width: `${(STEPS_META.filter((_, i) => stepDone(i)).length / STEPS_META.length) * 100}%`, background: '#34C759', borderRadius: 3, transition: 'width 300ms' }} />
             </div>
             <div style={{ fontSize: 11.5, color: '#717786', marginTop: 6, textAlign: 'center' }}>
-              {STEPS.filter((_, i) => stepDone(i)).length} / {STEPS.length} 步完成
+              {t.prdStepsProgress(STEPS_META.filter((_, i) => stepDone(i)).length, STEPS_META.length)}
             </div>
           </div>
         </div>
 
         {/* Form area */}
         <div className="card" style={{ padding: '28px 32px' }}>
-          {/* ── Step 0: 基本信息 ── */}
+          {/* ── Step 0: basic info ── */}
           {step === 0 && (
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 24 }}>产品基本信息</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 24 }}>{t.prdInfoBasic}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
-                <Field label="产品全称" required>
+                <Field label={t.prdFieldName} required>
                   <input className="input-glass w-full" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Travelers Auto Insurance" style={{ fontSize: 13.5 }} />
                 </Field>
-                <Field label="产品代码" required hint="格式：承保方-业务线-序号（如 TRV-AUTO-001）">
+                <Field label={t.prdLblCode} required hint={t.prdCodeHint}>
                   <input className="input-glass w-full" value={code} onChange={e => setCode(e.target.value)} placeholder="TRV-AUTO-001" style={{ fontSize: 13.5, fontFamily: "'JetBrains Mono', monospace" }} />
                 </Field>
-                <Field label="承保保险公司" required>
+                <Field label={t.prdLblCarrier} required>
                   <select className="input-glass w-full" style={{ fontSize: 13.5 }} value={insurerId} onChange={e => setInsurerId(e.target.value)}>
-                    <option value="">选择保险公司</option>
+                    <option value="">{t.prdSelectInsurer}</option>
                     {insurers.map(i => <option key={i.id} value={i.id}>{i.shortName} — {i.name}</option>)}
                   </select>
                 </Field>
-                <Field label="产品类型" required>
+                <Field label={t.prdLblType} required>
                   <div className="flex gap-2">
-                    {(['Individual', 'Group', 'Voluntary'] as const).map(t => (
-                      <label key={t} style={{
+                    {typeOptions.map(tp => (
+                      <label key={tp.val} style={{
                         flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, cursor: 'pointer',
-                        background: prodType === t ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
-                        border: `0.5px solid ${prodType === t ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
+                        background: prodType === tp.val ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
+                        border: `0.5px solid ${prodType === tp.val ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
                       }}>
-                        <input type="radio" name="prodType" checked={prodType === t} onChange={() => setProdType(t)} style={{ accentColor: '#0058BC' }} />
-                        <span style={{ fontSize: 12.5 }}>{t === 'Individual' ? '个人险' : t === 'Group' ? '团体险' : '自愿福利险'}</span>
+                        <input type="radio" name="prodType" checked={prodType === tp.val} onChange={() => setProdType(tp.val)} style={{ accentColor: '#0058BC' }} />
+                        <span style={{ fontSize: 12.5 }}>{tp.label}</span>
                       </label>
                     ))}
                   </div>
                 </Field>
-                <Field label="业务线" required>
+                <Field label={t.prdLblLine} required>
                   <select className="input-glass w-full" style={{ fontSize: 13.5 }} value={line} onChange={e => { setLine(e.target.value); setSubLine('') }}>
-                    <option value="">选择业务线</option>
+                    <option value="">{t.prdSelectLine}</option>
                     {LINES.map(l => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </Field>
-                <Field label="业务子线" required>
+                <Field label={t.prdLblSubLine} required>
                   <select className="input-glass w-full" style={{ fontSize: 13.5 }} value={subLine} onChange={e => setSubLine(e.target.value)} disabled={!line}>
-                    <option value="">选择业务子线</option>
+                    <option value="">{t.prdSelectSubLine}</option>
                     {(SUB_LINES[line] ?? []).map(sl => <option key={sl} value={sl}>{sl}</option>)}
                   </select>
                 </Field>
               </div>
-              <Field label="产品描述">
+              <Field label={t.prdFieldDesc}>
                 <textarea className="input-glass w-full" style={{ minHeight: 88, resize: 'vertical', fontSize: 13.5 }}
-                  placeholder="描述产品的核心价值、目标客群和主要特点…"
+                  placeholder={t.prdDescPlaceholder}
                   value={description} onChange={e => setDescription(e.target.value)} />
               </Field>
-              <Field label="主要承保范围" hint="选择本产品包含的承保类别">
+              <Field label={t.prdCoverageTitle} hint={t.prdCoverageHint}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {['责任险', '综合险', '碰撞险', '医疗赔付', '未保险驾驶员', '道路救援', '车辆替代', '新车价值保障', '自付额豁免'].map(c => (
+                  {COVERAGE_KEYS.map(c => (
                     <label key={c} style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
                       background: coverages.includes(c) ? 'rgba(0,88,188,0.10)' : 'rgba(241,243,254,0.7)',
@@ -249,7 +312,7 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
                         onChange={() => setCoverages(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
                         style={{ display: 'none' }} />
                       {coverages.includes(c) && <CheckCircle size={11} />}
-                      {c}
+                      {coverageLabels[c]}
                     </label>
                   ))}
                 </div>
@@ -257,45 +320,41 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
             </div>
           )}
 
-          {/* ── Step 1: 费率配置 ── */}
+          {/* ── Step 1: rates ── */}
           {step === 1 && (
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 24 }}>费率结构配置</div>
-              <Field label="费率类型" required>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 24 }}>{t.prdRateConfigTitle}</div>
+              <Field label={t.prdRateType} required>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  {[
-                    { val: 'flat', label: '固定费率', desc: '统一基础费率' },
-                    { val: 'tiered', label: '分级费率', desc: '按风险等级分层' },
-                    { val: 'usage', label: '按用量计费', desc: 'Usage-Based / Telematics' },
-                  ].map(t => (
-                    <label key={t.val} style={{
+                  {rateTypeOptions.map(rt => (
+                    <label key={rt.val} style={{
                       flex: 1, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
-                      background: rateType === t.val ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
-                      border: `0.5px solid ${rateType === t.val ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
+                      background: rateType === rt.val ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
+                      border: `0.5px solid ${rateType === rt.val ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
                     }}>
-                      <input type="radio" name="rateType" checked={rateType === t.val} onChange={() => setRateType(t.val as any)} style={{ display: 'none' }} />
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: rateType === t.val ? '#0058BC' : '#181C23' }}>{t.label}</div>
-                      <div style={{ fontSize: 12, color: '#717786', marginTop: 3 }}>{t.desc}</div>
+                      <input type="radio" name="rateType" checked={rateType === rt.val} onChange={() => setRateType(rt.val as any)} style={{ display: 'none' }} />
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: rateType === rt.val ? '#0058BC' : '#181C23' }}>{rt.label}</div>
+                      <div style={{ fontSize: 12, color: '#717786', marginTop: 3 }}>{rt.desc}</div>
                     </label>
                   ))}
                 </div>
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 20px' }}>
-                <Field label="基础费率（年）" required>
+                <Field label={t.prdBaseRateAnnual} required>
                   <div className="relative">
                     <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
                     <input className="input-glass w-full" value={baseRate} onChange={e => setBaseRate(e.target.value)}
                       placeholder="1,200" style={{ paddingLeft: 22, fontSize: 13.5, fontFamily: "'JetBrains Mono', monospace" }} />
                   </div>
                 </Field>
-                <Field label="最低保费" required>
+                <Field label={t.prdMinPremium} required>
                   <div className="relative">
                     <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
                     <input className="input-glass w-full" value={minPremium} onChange={e => setMinPremium(e.target.value)}
                       placeholder="480" style={{ paddingLeft: 22, fontSize: 13.5, fontFamily: "'JetBrains Mono', monospace" }} />
                   </div>
                 </Field>
-                <Field label="最高保费" required>
+                <Field label={t.prdMaxPremium} required>
                   <div className="relative">
                     <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
                     <input className="input-glass w-full" value={maxPremium} onChange={e => setMaxPremium(e.target.value)}
@@ -303,9 +362,9 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
                   </div>
                 </Field>
               </div>
-              <Field label="费率影响因子" hint="选择影响最终保费计算的关键变量">
+              <Field label={t.prdRatingFactors} hint={t.prdFactorsHint}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {['驾驶记录', '车型系数', '驾龄', '信用评分', '地区系数', '用途系数', '年龄段', '出险历史', '车辆价值', '安全设备'].map(f => (
+                  {FACTOR_KEYS.map(f => (
                     <label key={f} style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
                       background: rateFactors.includes(f) ? 'rgba(0,88,188,0.10)' : 'rgba(241,243,254,0.7)',
@@ -316,7 +375,7 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
                         onChange={() => setRateFactors(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])}
                         style={{ display: 'none' }} />
                       {rateFactors.includes(f) && <CheckCircle size={11} />}
-                      {f}
+                      {factorLabels[f]}
                     </label>
                   ))}
                 </div>
@@ -324,46 +383,46 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
             </div>
           )}
 
-          {/* ── Step 2: 核保规则 ── */}
+          {/* ── Step 2: underwriting ── */}
           {step === 2 && (
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 6 }}>核保规则配置</div>
-              <p style={{ fontSize: 13, color: '#717786', marginBottom: 24 }}>设定基本的资格规则和自动化决策逻辑，高级规则可在产品上架后进一步配置。</p>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 6 }}>{t.prdUwConfigTitle}</div>
+              <p style={{ fontSize: 13, color: '#717786', marginBottom: 24 }}>{t.prdUwConfigSub}</p>
 
               <div style={{ background: 'rgba(255,149,0,0.06)', border: '0.5px solid rgba(255,149,0,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 22 }}>
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle size={14} style={{ color: '#a05800' }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#7a5c00' }}>核保规则说明</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#7a5c00' }}>{t.prdUwNoteTitle}</span>
                 </div>
-                <p style={{ fontSize: 12.5, color: '#7a5c00' }}>此处配置的规则将在渠道提交报价时自动执行。规则生效前请与承保团队确认。</p>
+                <p style={{ fontSize: 12.5, color: '#7a5c00' }}>{t.prdUwNoteBody}</p>
               </div>
 
-              <Field label="投保人年龄要求">
+              <Field label={t.prdAgeReq}>
                 <div className="flex items-center gap-10">
                   <div className="flex items-center gap-3">
-                    <span style={{ fontSize: 13, color: '#414755' }}>最小年龄</span>
+                    <span style={{ fontSize: 13, color: '#414755' }}>{t.prdAgeMin}</span>
                     <input className="input-glass" value={ageMin} onChange={e => setAgeMin(e.target.value)}
                       style={{ width: 80, textAlign: 'center', fontSize: 13.5, fontFamily: "'JetBrains Mono', monospace" }} />
-                    <span style={{ fontSize: 13, color: '#717786' }}>岁</span>
+                    <span style={{ fontSize: 13, color: '#717786' }}>{t.prdYears}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span style={{ fontSize: 13, color: '#414755' }}>最大年龄</span>
+                    <span style={{ fontSize: 13, color: '#414755' }}>{t.prdAgeMax}</span>
                     <input className="input-glass" value={ageMax} onChange={e => setAgeMax(e.target.value)}
                       style={{ width: 80, textAlign: 'center', fontSize: 13.5, fontFamily: "'JetBrains Mono', monospace" }} />
-                    <span style={{ fontSize: 13, color: '#717786' }}>岁</span>
+                    <span style={{ fontSize: 13, color: '#717786' }}>{t.prdYears}</span>
                   </div>
                 </div>
               </Field>
 
-              <Field label="自动核保规则">
+              <Field label={t.prdAutoRules}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
                     background: excludeDUI ? 'rgba(186,26,26,0.05)' : 'rgba(255,255,255,0.6)',
                     border: `0.5px solid ${excludeDUI ? 'rgba(186,26,26,0.2)' : 'rgba(193,198,215,0.5)'}` }}>
                     <input type="checkbox" checked={excludeDUI} onChange={e => setExcludeDUI(e.target.checked)} style={{ accentColor: '#BA1A1A', marginTop: 2 }} />
                     <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>DUI 记录拒保 <span style={{ color: '#BA1A1A', fontSize: 12 }}>（排除规则）</span></div>
-                      <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>过去 5 年内有 DUI/DWI 记录的申请人自动拒保</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>{t.prdRuleDui} <span style={{ color: '#BA1A1A', fontSize: 12 }}>{t.prdTagExclusion}</span></div>
+                      <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t.prdRuleDuiDesc}</div>
                     </div>
                   </label>
                   <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
@@ -371,11 +430,11 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
                     border: `0.5px solid ${referHighValue ? 'rgba(255,149,0,0.2)' : 'rgba(193,198,215,0.5)'}` }}>
                     <input type="checkbox" checked={referHighValue} onChange={e => setReferHighValue(e.target.checked)} style={{ accentColor: '#FF9500', marginTop: 2 }} />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>高价值标的转人工核保 <span style={{ color: '#a05800', fontSize: 12 }}>（转介规则）</span></div>
-                      <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>标的价值超过阈值时，转专业核保团队审核</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>{t.prdRuleHighValue} <span style={{ color: '#a05800', fontSize: 12 }}>{t.prdTagReferral}</span></div>
+                      <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t.prdRuleHighValueDesc}</div>
                       {referHighValue && (
                         <div className="flex items-center gap-3 mt-8" style={{ marginTop: 8 }}>
-                          <span style={{ fontSize: 13, color: '#414755' }}>转介阈值</span>
+                          <span style={{ fontSize: 13, color: '#414755' }}>{t.prdReferThreshold}</span>
                           <div className="relative">
                             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
                             <input className="input-glass" value={referThreshold} onChange={e => setReferThreshold(e.target.value)}
@@ -390,22 +449,19 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
             </div>
           )}
 
-          {/* ── Step 3: 可售州 ── */}
+          {/* ── Step 3: states ── */}
           {step === 3 && (
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>可售州配置</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>{t.prdStatesConfigTitle}</div>
               <div className="flex items-center justify-between mb-16" style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: '#717786' }}>
-                  已选 <strong style={{ color: '#0058BC' }}>{selectedStates.size}</strong> 个州 / 50 州
+                  {t.prdStatesSelectedLead}<strong style={{ color: '#0058BC' }}>{selectedStates.size}</strong>{t.prdStatesSelectedTail}
                 </p>
                 <div className="flex gap-2">
-                  <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => setSelectedStates(new Set(US_STATES))}>全选</button>
-                  <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => setSelectedStates(new Set())}>清空</button>
+                  <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => setSelectedStates(new Set(US_STATES))}>{t.prdSelectAll}</button>
+                  <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => setSelectedStates(new Set())}>{t.prdClearAll}</button>
                   {/* Common presets */}
-                  {[
-                    { label: '东北', states: ['NY', 'NJ', 'CT', 'MA', 'PA', 'VT', 'NH', 'ME', 'RI'] },
-                    { label: '加州+德州', states: ['CA', 'TX'] },
-                  ].map(p => (
+                  {statePresets.map(p => (
                     <button key={p.label} className="btn-ghost" style={{ fontSize: 12.5 }}
                       onClick={() => setSelectedStates(new Set([...selectedStates, ...p.states]))}>
                       +{p.label}
@@ -432,22 +488,16 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
             </div>
           )}
 
-          {/* ── Step 4: 合规文件 ── */}
+          {/* ── Step 4: compliance documents ── */}
           {step === 4 && (
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>合规文件上传</div>
-              <p style={{ fontSize: 13, color: '#717786', marginBottom: 24 }}>上传产品上架所需的合规文件，带 * 为必传材料。</p>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>{t.prdDocsTitle}</div>
+              <p style={{ fontSize: 13, color: '#717786', marginBottom: 24 }}>{t.prdDocsSub}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { type: '产品备案表', required: true, hint: '各州监管机构要求的产品备案文件', accept: '.pdf' },
-                  { type: '费率文件', required: true, hint: '费率测算模型及备案费率表', accept: '.pdf,.xlsx' },
-                  { type: '产品指南', required: true, hint: '渠道销售用产品说明手册', accept: '.pdf' },
-                  { type: '核保规则手册', required: false, hint: '详细核保规则和操作指引', accept: '.pdf' },
-                  { type: '培训课件', required: false, hint: '渠道培训演示文稿', accept: '.pdf,.pptx' },
-                ].map(doc => {
-                  const uploaded = uploadedFiles.includes(doc.type)
+                {docList.map(doc => {
+                  const uploaded = uploadedFiles.includes(doc.key)
                   return (
-                    <div key={doc.type} style={{
+                    <div key={doc.key} style={{
                       display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12,
                       background: uploaded ? 'rgba(52,199,89,0.06)' : 'rgba(255,255,255,0.6)',
                       border: `0.5px solid ${uploaded ? 'rgba(52,199,89,0.25)' : 'rgba(193,198,215,0.4)'}`,
@@ -457,17 +507,17 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>
-                          {doc.type} {doc.required && <span style={{ color: '#BA1A1A' }}>*</span>}
+                          {doc.label} {doc.required && <span style={{ color: '#BA1A1A' }}>*</span>}
                         </div>
-                        <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>{doc.hint} · 支持 {doc.accept}</div>
-                        {uploaded && <div style={{ fontSize: 12, color: '#34C759', marginTop: 2 }}>{doc.type}-v1.0.pdf — 刚刚上传</div>}
+                        <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>{doc.hint} · {t.prdSupports(doc.accept)}</div>
+                        {uploaded && <div style={{ fontSize: 12, color: '#34C759', marginTop: 2 }}>{t.prdJustUploaded(doc.label)}</div>}
                       </div>
                       {uploaded
-                        ? <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => setUploadedFiles(f => f.filter(x => x !== doc.type))}>
-                            <X size={13} />移除
+                        ? <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => setUploadedFiles(f => f.filter(x => x !== doc.key))}>
+                            <X size={13} />{t.prdRemove}
                           </button>
-                        : <button className="btn-secondary" style={{ fontSize: 12.5 }} onClick={() => setUploadedFiles(f => [...f, doc.type])}>
-                            <Upload size={13} />上传
+                        : <button className="btn-secondary" style={{ fontSize: 12.5 }} onClick={() => setUploadedFiles(f => [...f, doc.key])}>
+                            <Upload size={13} />{t.prdUpload}
                           </button>
                       }
                     </div>
@@ -480,16 +530,16 @@ export default function ProductForm({ mode, productId, navigateTo }: Props) {
           {/* Navigation buttons */}
           <div className="flex items-center justify-between mt-28" style={{ marginTop: 32, paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.3)' }}>
             <button className="btn-ghost" style={{ fontSize: 13 }} onClick={() => step > 0 ? setStep(s => s - 1) : back()}>
-              <ArrowLeft size={14} /> {step === 0 ? '取消' : '上一步'}
+              <ArrowLeft size={14} /> {step === 0 ? t.prdCancel : t.prdPrev}
             </button>
             <div className="flex gap-2">
-              <button className="btn-secondary" style={{ fontSize: 13 }}>保存草稿</button>
-              {step < STEPS.length - 1
+              <button className="btn-secondary" style={{ fontSize: 13 }}>{t.prdSaveDraft}</button>
+              {step < STEPS_META.length - 1
                 ? <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => setStep(s => s + 1)} disabled={!stepDone(step)}>
-                    下一步 <ChevronRight size={14} />
+                    {t.prdNext} <ChevronRight size={14} />
                   </button>
                 : <button className="btn-primary" style={{ fontSize: 13, background: '#1a7a2e' }} onClick={handleSubmit}>
-                    <CheckCircle size={14} /> {mode === 'create' ? '提交上架申请' : '保存更改'}
+                    <CheckCircle size={14} /> {mode === 'create' ? t.prdSubmitListing : t.prdSaveChanges}
                   </button>
               }
             </div>

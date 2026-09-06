@@ -141,13 +141,14 @@ export interface PendingChange {
   approver?: string
   effectiveDate: string
   reason: string
+  reasonEn?: string
 }
 
 export const pendingChanges: PendingChange[] = [
-  { id: 'pc1', changeType: 'move-parent', nodeId: 'c5', nodeName: 'Sunshine State Brokers', fromParentId: 'r-south', fromParentName: 'South & Southeast Region', toParentId: 'r-northeast', toParentName: 'Northeast Region', requestedBy: 'Carlos Martinez', requestDate: '2026-08-15', status: 'pending-approval', effectiveDate: '2026-09-01', reason: '业务重心东移，主要合作保险公司在东北区' },
-  { id: 'pc2', changeType: 'add-parent', nodeId: 'ag-001', nodeName: 'Alex Kim', toParentId: 'b-pc-sf', toParentName: 'PC San Francisco Branch', newRevenueShare: 0.3, requestedBy: 'Linda Zhao', requestDate: '2026-08-18', status: 'pending-approval', effectiveDate: '2026-09-01', reason: '跨区域协作，Alex Kim 承接 SF 分支部分业务' },
-  { id: 'pc3', changeType: 'terminate', nodeId: 'hr12', nodeName: 'Gulf South Insurance Partners', requestedBy: 'Zhang Wei', requestDate: '2026-08-20', status: 'pending-approval', effectiveDate: '2026-09-30', reason: '持续赔付率超标，合规委员会决议终止合作' },
-  { id: 'pc4', changeType: 'add-relation', nodeId: 'c11', nodeName: 'Bay Area Commercial Specialists', toParentId: 'r-west', toParentName: 'West Region', requestedBy: 'Kevin Zhang', requestDate: '2026-08-01', status: 'approved', approver: 'Sarah Chen', effectiveDate: '2026-08-15', reason: '新渠道加入申请' },
+  { id: 'pc1', changeType: 'move-parent', nodeId: 'c5', nodeName: 'Sunshine State Brokers', fromParentId: 'r-south', fromParentName: 'South & Southeast Region', toParentId: 'r-northeast', toParentName: 'Northeast Region', requestedBy: 'Carlos Martinez', requestDate: '2026-08-15', status: 'pending-approval', effectiveDate: '2026-09-01', reason: '业务重心东移，主要合作保险公司在东北区', reasonEn: 'Business focus shifting east; primary carrier partners are in the Northeast region' },
+  { id: 'pc2', changeType: 'add-parent', nodeId: 'ag-001', nodeName: 'Alex Kim', toParentId: 'b-pc-sf', toParentName: 'PC San Francisco Branch', newRevenueShare: 0.3, requestedBy: 'Linda Zhao', requestDate: '2026-08-18', status: 'pending-approval', effectiveDate: '2026-09-01', reason: '跨区域协作，Alex Kim 承接 SF 分支部分业务', reasonEn: 'Cross-region collaboration; Alex Kim takes on part of the SF Branch book of business' },
+  { id: 'pc3', changeType: 'terminate', nodeId: 'hr12', nodeName: 'Gulf South Insurance Partners', requestedBy: 'Zhang Wei', requestDate: '2026-08-20', status: 'pending-approval', effectiveDate: '2026-09-30', reason: '持续赔付率超标，合规委员会决议终止合作', reasonEn: 'Persistent loss-ratio exceedance; the compliance committee resolved to terminate the partnership' },
+  { id: 'pc4', changeType: 'add-relation', nodeId: 'c11', nodeName: 'Bay Area Commercial Specialists', toParentId: 'r-west', toParentName: 'West Region', requestedBy: 'Kevin Zhang', requestDate: '2026-08-01', status: 'approved', approver: 'Sarah Chen', effectiveDate: '2026-08-15', reason: '新渠道加入申请', reasonEn: 'New channel onboarding application' },
 ]
 
 // ── White-label Configurations ────────────────────────────────────────────────
@@ -229,18 +230,25 @@ export const teamPerfSummary: TeamPerf[] = [
 export const NODE_TYPE_LABEL: Record<NodeType, string> = {
   platform: '平台', region: '大区', agency: '代理机构', branch: '分支机构', agent: '经纪人', 'sub-agent': '子代理',
 }
+export const NODE_TYPE_LABEL_EN: Record<NodeType, string> = {
+  platform: 'Platform', region: 'Region', agency: 'Agency', branch: 'Branch', agent: 'Broker', 'sub-agent': 'Sub-agent',
+}
 export const NODE_TYPE_COLOR: Record<NodeType, string> = {
   platform: '#0058BC', region: '#7B3FCA', agency: '#34C759', branch: '#FF9F0A', agent: '#60CDFF', 'sub-agent': '#A0A5B1',
 }
-export const STATUS_STYLE: Record<NodeStatus, { bg: string; color: string; label: string }> = {
-  active:    { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033', label: '活跃' },
-  inactive:  { bg: 'rgba(180,180,180,0.15)', color: '#717786', label: '未激活' },
-  suspended: { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', label: '已暂停' },
-  pending:   { bg: 'rgba(255,159,10,0.12)',  color: '#B06000', label: '待审核' },
+export const STATUS_STYLE: Record<NodeStatus, { bg: string; color: string; label: string; labelEn: string }> = {
+  active:    { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033', label: '活跃', labelEn: 'Active' },
+  inactive:  { bg: 'rgba(180,180,180,0.15)', color: '#717786', label: '未激活', labelEn: 'Inactive' },
+  suspended: { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', label: '已暂停', labelEn: 'Suspended' },
+  pending:   { bg: 'rgba(255,159,10,0.12)',  color: '#B06000', label: '待审核', labelEn: 'Pending Review' },
 }
 export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
   'add-relation': '新增层级', 'move-parent': '调整上级', 'add-parent': '增加上级',
   'remove-parent': '移除上级', terminate: '终止关系', 'adjust-share': '调整分成比',
+}
+export const CHANGE_TYPE_LABEL_EN: Record<ChangeType, string> = {
+  'add-relation': 'New Relation', 'move-parent': 'Parent Change', 'add-parent': 'Add Parent',
+  'remove-parent': 'Remove Parent', terminate: 'Terminate Relation', 'adjust-share': 'Split Adjustment',
 }
 
 // Build children map for tree rendering

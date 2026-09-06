@@ -1,0 +1,122 @@
+{
+  "header": {
+    "title": "Insurer Data Analytics",
+    "subtitle": "Performance Overview · Product Analytics · Regional Analytics · Channel Contribution · Loss Ratio · Renewal",
+    "criticalAlerts": "{n} loss ratio alerts",
+    "export": "Export Report"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "product": "Products",
+    "regional": "Regions",
+    "channel": "Channels",
+    "loss": "Loss Ratio",
+    "renewal": "Renewal"
+  },
+  "kpi": {
+    "productName": "Product Name",
+    "insurer": "Insurer",
+    "line": "Business Line",
+    "premium": "Premium Volume",
+    "premiumShort": "Premium",
+    "growth": "Growth",
+    "premiumGrowth": "Premium Growth",
+    "policies": "Policies",
+    "avgPremium": "Avg Premium",
+    "lossRatio": "Loss Ratio",
+    "renewalRate": "Renewal Rate",
+    "topState": "Top State",
+    "state": "State",
+    "region": "Region",
+    "topInsurer": "Top Insurer",
+    "channels": "Channels",
+    "tier": "Tier",
+    "premiumContribution": "Premium Contribution",
+    "share": "Share",
+    "commission": "Commission",
+    "product": "Product",
+    "scale": "Volume"
+  },
+  "overview": {
+    "kpiPremium": "Platform Annualized Premium",
+    "kpiPremiumSub": "YoY +13.2%",
+    "kpiCommission": "Platform Commission Income",
+    "kpiCommissionSub": "Blended rate 12.0%",
+    "kpiLossRatio": "Blended Loss Ratio",
+    "kpiLossRatioSub": "MoM -0.6pp",
+    "kpiRenewal": "Blended Renewal Rate",
+    "kpiRenewalSub": "MoM +0.3pp",
+    "highGrowth": "High Growth",
+    "unitPolicies": "active policies",
+    "unitChannels": "channels",
+    "unitProducts": "products",
+    "chartPremiumTrend": "Monthly Premium Trend ($10K)",
+    "chartTarget": "YTD Premium vs Target ($M)",
+    "actual": "Actual",
+    "target": "Target"
+  },
+  "product": {
+    "topGrowth": "Growth TOP {n}",
+    "sortLossRatio": "Loss Ratio (lower better)",
+    "filterAll": "All Insurers",
+    "chartMonthly": "Top Products Monthly Premium Trend ($10K)"
+  },
+  "regional": {
+    "statesCount": "{n} states",
+    "lossRatioLabel": "Loss Ratio: ",
+    "chartMonthly": "Regional Monthly Premium Trend ($10K)",
+    "chartCompare": "Premium & Loss Ratio by Region",
+    "stateDetail": "{region} State Details",
+    "top8States": "Top 8 States by Premium",
+    "viewAll": "View All"
+  },
+  "channel": {
+    "name": "Channel Name",
+    "insurersCount": "{n} insurers",
+    "shareOf": "Share {v}",
+    "chartRanking": "Channel Premium Ranking ($M)",
+    "chartMonthly": "Top Channels Monthly Premium Trend ($10K)"
+  },
+  "loss": {
+    "alerts": "Alerts",
+    "criticalCount": "{n} Critical",
+    "warningCount": "{n} Warning",
+    "trendRising": "Rising",
+    "trendImproving": "Improving",
+    "trendStable": "Stable",
+    "threshold": "Threshold {v}",
+    "chartTrend": "Loss Ratio Trend by Insurer",
+    "thresholdLine": "Alert Line 70%",
+    "chartByLine": "Loss Ratio by Line vs Benchmark",
+    "actualRatio": "Actual Loss Ratio",
+    "benchmark": "Industry Benchmark",
+    "summary": "Loss Ratio Summary by Insurer"
+  },
+  "renewal": {
+    "kpiOverall": "Platform Blended Renewal Rate",
+    "kpiOverallSub": "MoM +0.3pp",
+    "kpiDue": "Due This Month",
+    "kpiDueSub": "Pending renewal",
+    "kpiRenewed": "Renewed This Month",
+    "kpiGrowth": "Renewal Premium Growth",
+    "kpiGrowthSub": "Avg premium YoY growth",
+    "chartTrend": "Renewal Rate Trend by Insurer",
+    "chartCohort": "Renewal Cohorts — Due Policy Composition",
+    "renewed": "Renewed",
+    "cancelled": "Cancelled",
+    "lapsed": "Lapsed",
+    "chartRanking": "Renewal Rate Ranking by Insurer",
+    "chartByProduct": "Renewal Rate by Product",
+    "cohortDetail": "Monthly Renewal Cohort Details",
+    "period": "Period",
+    "dueCount": "Due Policies",
+    "avgPremiumChange": "Avg Premium Change"
+  },
+  "alert": {
+    "la1": "FL professional liability claims concentration has triggered the reinsurance reporting threshold",
+    "la2": "TX natural disaster season impact, elevated auto loss ratio",
+    "la3": "Rising trend; will exceed threshold within 2 months if sustained",
+    "la4": "Above industry average for 3 consecutive months, monitor closely",
+    "la5": "Down 2.1ppt vs last quarter, notable improvement"
+  }
+}

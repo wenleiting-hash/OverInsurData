@@ -1,0 +1,29 @@
+{
+  "module": "common",
+  "menu": {
+    "dashboard": "Dashboard",
+    "insurers": "Insurance Carrier Management",
+    "insurerList": "Carrier List",
+    "productManagement": "Product Management",
+    "cooperationManagement": "Cooperation Management",
+    "appointmentCompliance": "Appointment & Compliance",
+    "certificateManagement": "Certificate Management",
+    "financeSettlement": "Finance & Settlement",
+    "dataAnalysis": "Data Analysis",
+    "channels": "Channel Management",
+    "channelList": "Channel List",
+    "channelMasterData": "Channel Master Data",
+    "channelHierarchy": "Channel Hierarchy",
+    "onboardingManagement": "Onboarding Management",
+    "productAuthorization": "Product Authorization",
+    "commissionScheme": "Commission Scheme",
+    "commissionSettlement": "Commission Settlement",
+    "performanceAssessment": "Performance Assessment",
+    "trainingCertification": "Training Certification",
+    "channelPortal": "Channel Portal",
+    "channelAnalytics": "Channel Analytics",
+    "settings": "Settings",
+    "i18nManagement": "Multilingual Management",
+    "permissionManagement": "Permission Management"
+  }
+}

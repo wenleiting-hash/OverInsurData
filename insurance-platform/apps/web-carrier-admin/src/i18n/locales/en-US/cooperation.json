@@ -1,5 +1,81 @@
 {
-  "cooperation": {
+  "tabs": {
+    "establish": "Establish Partnership",
+    "terminate": "Terminate Partnership",
+    "contracts": "Contract Management",
+    "settlement": "Settlement Configuration",
+    "contacts": "Contact Persons",
+    "renewal": "Renewal Management",
+    "integration": "Product Integration"
+  },
+  "headers": {
+    "title": "Cooperation Management",
+    "subtitle": "{activeCoops} active partnerships · {pendingCoops} pending applications",
+    "createNew": "Create New Application"
+  },
+  "wizard": {
+    "title": "New Partnership Application",
+    "steps": ["Select Insurer", "Scope Config", "Terms Confirmation", "Submit"],
+    "step0": {
+      "title": "Select Insurance Company",
+      "empty": "All compliant insurers already have established partnerships",
+      "status": {
+        "verified": "Verified",
+        "pending": "Pending Review"
+      }
+    },
+    "step1": {
+      "title": "Partnership Scope Configuration",
+      "coopType": "Cooperation Type",
+      "coopTypes": {
+        "fullService": "Full-Service",
+        "fullServiceDesc": "All lines of business, complete channel services",
+        "preferred": "Preferred",
+        "preferredDesc": "Major lines, specialized support",
+        "specialty": "Specialty",
+        "specialtyDesc": "Selected lines or professional businesses",
+        "surplusLines": "Surplus Lines",
+        "surplusLinesDesc": "Non-standard/E&S market business"
+      },
+      "linesOfBusiness": "Lines of Business",
+      "states": "Operating States"
+    },
+    "step2": {
+      "title": "Terms Confirmation & Notes",
+      "commissionTier": "Commission Tier",
+      "tiers": {
+        "tier1": "Tier-1",
+        "tier1Desc": "Premium Preferred Rates",
+        "tier2": "Tier-2",
+        "tier2Desc": "Standard Rates",
+        "tier3": "Tier-3",
+        "tier3Desc": "Basic Rates"
+      },
+      "notes": "Application Notes",
+      "summary": "Application Summary"
+    },
+    "step3": {
+      "confirmTitle": "Confirm Submit Application",
+      "description": "After submission, the application enters internal compliance review with notification sent to the insurer. Upon approval, partnership record will be automatically created.",
+      "confirmation": "I confirm the above information is accurate and agree to submit the application"
+    }
+  },
+  "toast": {
+    "applicationSubmitted": "Partnership application successfully submitted, estimated 5-10 business days for review",
+    "terminationSubmitted": "Partnership termination application submitted ({insurer}, estimated 3-5 business days for approval"
+  },
+  "view": {
+    "common": {
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "close": "Close"
+    },
+    "title": "Cooperation Management",
+    "subtitle": "{active} partner insurers · {pending} applications in progress · {renewals} renewals pending",
+    "renewalsUrgent": "{count} renewals urgent",
+    "actions": {
+      "newApplication": "New Partnership Application"
+    },
     "tabs": {
       "establish": "Establish Partnership",
       "terminate": "Terminate Partnership",
@@ -9,17 +85,221 @@
       "renewal": "Renewal Management",
       "integration": "Product Integration"
     },
-    "headers": {
-      "title": "Cooperation Management",
-      "subtitle": "{activeCoops} active partnerships · {pendingCoops} pending applications",
-      "createNew": "Create New Application"
+    "coopStatus": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "underReview": "Under Review",
+      "approved": "Active",
+      "rejected": "Rejected",
+      "terminated": "Terminated"
+    },
+    "contractStatus": {
+      "draft": "Draft",
+      "negotiating": "Negotiating",
+      "pendingSign": "Pending Signature",
+      "active": "Active",
+      "expiring": "Expiring Soon",
+      "expired": "Expired",
+      "terminated": "Terminated"
+    },
+    "integrationStatus": {
+      "available": "Available",
+      "requested": "Requested",
+      "inReview": "Under Review",
+      "approved": "Approved",
+      "integrated": "Integrated",
+      "rejected": "Rejected",
+      "suspended": "Suspended"
+    },
+    "renewalPriority": {
+      "critical": "Critical",
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "renewalStatus": {
+      "upcoming": "Pending",
+      "inNegotiation": "Negotiating",
+      "renewed": "Renewed",
+      "atRisk": "At Risk",
+      "lapsed": "Lapsed"
+    },
+    "stats": {
+      "active": "Active",
+      "reviewing": "Under Review",
+      "terminated": "Terminated",
+      "lobs": "Lines Covered"
+    },
+    "coopCard": {
+      "term": "Partnership Term",
+      "permanent": "Permanent",
+      "commission": "Commission Tier",
+      "unspecified": "Not specified",
+      "owner": "Owner",
+      "viewDetail": "View Details"
+    },
+    "contracts": {
+      "summary": "{total} contracts total · {active} active · {expiring} expiring soon",
+      "upload": "Upload Contract",
+      "create": "New Contract",
+      "th": {
+        "name": "Contract Name",
+        "insurer": "Insurance Company",
+        "type": "Type",
+        "version": "Version",
+        "validity": "Validity Period",
+        "signatoryUs": "Signatory (Us)",
+        "signatoryThem": "Signatory (Counterparty)",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "daysLeft": "({days} days)",
+      "autoRenewBadge": "Auto-Renew",
+      "tags": {
+        "3yr": "3-Year",
+        "5yr": "5-Year",
+        "annual": "Annual",
+        "hnw": "High Net Worth",
+        "commercial": "Commercial",
+        "renewing": "Renewal in Negotiation",
+        "dataSharing": "Data Sharing"
+      },
+      "actions": {
+        "view": "View",
+        "download": "Download",
+        "renew": "Renew",
+        "sign": "Sign"
+      }
+    },
+    "settlement": {
+      "lastUpdated": "Last updated: {date} · {by}",
+      "normal": "Normal",
+      "toastLoaded": "Settlement parameters loaded. Please modify in the editor and save.",
+      "cycle": "Settlement Cycle",
+      "cutoff": "Bill Cutoff",
+      "cutoffValue": "Day {day} of each month",
+      "paymentTerm": "Payment Terms",
+      "paymentMethod": "Payment Method",
+      "reconFormat": "Reconciliation Format",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "semiAnnual": "Semi-Annual",
+      "saved": "Configuration Saved",
+      "billCutoffDay": "Bill Cutoff Day (monthly)",
+      "paymentTermsDays": "Payment Terms (days)",
+      "premiumCollection": "Premium Collection",
+      "enableApiRecon": "Enable real-time API reconciliation",
+      "enableApiReconDesc": "Automatically sync policy and commission data via API to reduce manual reconciliation",
+      "saveConfig": "Save Configuration",
+      "editTitle": "Edit Settlement Configuration — {name}"
+    },
+    "contacts": {
+      "searchInsurer": "Search Insurance Companies",
+      "addContact": "Add Contact",
+      "allInsurers": "All Insurance Companies",
+      "count": "{count} contacts",
+      "primary": "Primary",
+      "escalation": "Escalation"
+    },
+    "terminate": {
+      "warning": "Terminating this partnership will affect all active products and channel authorizations. Proceed only after a thorough assessment.",
+      "coopInfo": "Partnership type: {type} · Contract expires: {date}",
+      "productsOwner": "12 products · Owner {owner}",
+      "initiate": "Initiate Termination",
+      "withInsurer": "Terminate Partnership with {insurer}",
+      "terminatedSection": "Terminated Partnerships",
+      "terminatedAt": "Terminated {date}",
+      "currentInfo": "Partnership type: {type} · Current expiry: {date}",
+      "impact": {
+        "products": "Linked Products",
+        "productsValue": "{count}",
+        "productsDesc": "New business quotes will be stopped",
+        "channels": "Partner Channels",
+        "channelsValue": "{count}",
+        "channelsDesc": "Product authorizations will be revoked in batch",
+        "contracts": "Active Contracts",
+        "contractsValue": "{count}",
+        "contractsDesc": "To be handled per contract terms"
+      },
+      "reasonLabel": "Termination Reason *",
+      "reasons": {
+        "expired": "Agreement expired, no renewal",
+        "compliance": "Unresolved compliance issues",
+        "strategy": "Business strategy adjustment",
+        "mutual": "Terminated by mutual agreement",
+        "counterparty": "Requested by counterparty",
+        "performance": "Performance below target",
+        "other": "Other (explain in notes)"
+      },
+      "typeLabel": "Termination Type *",
+      "types": {
+        "endOfTerm": "End of Term",
+        "endOfTermDesc": "Per contract terms, {date}",
+        "immediate": "Immediate Termination",
+        "immediateDesc": "Effective immediately, requires confirmation from both parties",
+        "scheduled": "Scheduled Date Termination",
+        "scheduledDesc": "Custom termination date"
+      },
+      "noteLabel": "Notes",
+      "notePlaceholder": "Describe the termination background, follow-up arrangements, or special matters…",
+      "confirmPrefix": "I acknowledge the termination impact and confirm the request to terminate the partnership with",
+      "confirmSuffix": ". This application takes effect after supervisor approval and will be recorded in the audit log.",
+      "submit": "Submit Termination Request",
+      "toastSubmitted": "Partnership termination request submitted ({insurer}), estimated 3-5 business days for approval",
+      "done": {
+        "title": "Termination Request Submitted",
+        "desc": "The request has entered the approval workflow. Termination will be executed at the selected time once approved.",
+        "back": "Back to List"
+      }
+    },
+    "renewal": {
+      "timeline": "Renewal Timeline",
+      "expiryDate": "Expiry date: ",
+      "overdue": "Overdue by {days} days",
+      "daysLeft": "{days} days remaining",
+      "lastAction": "Latest update: {action} ({date})",
+      "owner": "Owner: {name}",
+      "autoRenew": "Auto-Renew",
+      "initiate": "Initiate Renewal"
+    },
+    "priority": {
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "integration": {
+      "all": "All",
+      "requestProduct": "Request Product Access",
+      "applicant": "Requested by: {name}",
+      "priorityLabel": "Priority: ",
+      "estimatedPremium": "Est. Premium",
+      "nationwide": "Nationwide",
+      "apiDoc": "API Docs ✓",
+      "testPassed": "Tests Passed ✓",
+      "requestAccess": "Request Access",
+      "startTech": "Start Technical Integration",
+      "viewProduct": "View Product"
     },
     "wizard": {
       "title": "New Partnership Application",
-      "steps": ["Select Insurer", "Scope Config", "Terms Confirmation", "Submit"],
+      "prev": "← Previous",
+      "next": "Next →",
+      "submit": "Submit Application",
+      "done": {
+        "title": "Application Submitted",
+        "desc": "Your application has entered the compliance review process, estimated 5–10 business days. The result will be sent to you by email.",
+        "back": "Back to Partnership List"
+      },
+      "stepNames": {
+        "select": "Select Insurance Company",
+        "scope": "Partnership Scope",
+        "terms": "Terms Confirmation",
+        "submit": "Submit"
+      },
       "step0": {
         "title": "Select Insurance Company",
         "empty": "All compliant insurers already have established partnerships",
+        "coopTypeLabel": "Partnership Type",
         "status": {
           "verified": "Verified",
           "pending": "Pending Review"
@@ -27,43 +307,360 @@
       },
       "step1": {
         "title": "Partnership Scope Configuration",
-        "coopType": "Cooperation Type",
+        "coopType": "Partnership Type",
         "coopTypes": {
-          "fullService": "Full-Service",
+          "fullService": "Full-Service Partnership",
           "fullServiceDesc": "All lines of business, complete channel services",
-          "preferred": "Preferred",
-          "preferredDesc": "Major lines, specialized support",
-          "specialty": "Specialty",
-          "specialtyDesc": "Selected lines or professional businesses",
+          "preferred": "Preferred Partnership",
+          "preferredDesc": "Major lines, dedicated support",
+          "specialty": "Specialty Partnership",
+          "specialtyDesc": "Designated lines or professional businesses",
           "surplusLines": "Surplus Lines",
-          "surplusLinesDesc": "Non-standard/E&S market business"
+          "surplusLinesDesc": "Non-standard / E&S market business"
         },
         "linesOfBusiness": "Lines of Business",
-        "states": "Operating States"
+        "states": "Operating States",
+        "moreStates": "… (full 50-state selector)"
       },
       "step2": {
         "title": "Terms Confirmation & Notes",
         "commissionTier": "Commission Tier",
         "tiers": {
-          "tier1": "Tier-1",
-          "tier1Desc": "Premium Preferred Rates",
-          "tier2": "Tier-2",
-          "tier2Desc": "Standard Rates",
-          "tier3": "Tier-3",
-          "tier3Desc": "Basic Rates"
+          "tier1Desc": "Preferred rates",
+          "tier2Desc": "Standard rates",
+          "tier3Desc": "Basic rates"
         },
         "notes": "Application Notes",
-        "summary": "Application Summary"
+        "notesPlaceholder": "Add partnership background, special terms, or business expectations…",
+        "summaryTitle": "Application Summary",
+        "summary": {
+          "insurer": "Insurance Company",
+          "coopType": "Partnership Type",
+          "lines": "Lines of Business",
+          "states": "Operating States",
+          "commission": "Commission Tier",
+          "none": "None selected"
+        }
       },
       "step3": {
         "confirmTitle": "Confirm Submit Application",
-        "description": "After submission, the application enters internal compliance review with notification sent to the insurer. Upon approval, partnership record will be automatically created.",
+        "description": "After submission, the application enters internal compliance review and a partnership intent notification is sent to the insurer. Upon approval, the partnership record will be created automatically.",
         "confirmation": "I confirm the above information is accurate and agree to submit the application"
       }
+    }
+  },
+  "contacts": {
+    "backToList": "Back to Cooperation List",
+    "title": "Contact Person Management",
+    "subtitle": "Manage insurer contact persons across all functional roles",
+    "stats": {
+      "total": "Total Contacts",
+      "active": "Active",
+      "accountManagers": "Account Managers",
+      "recentLogs": "Recent Logs"
     },
-    "toast": {
-      "applicationSubmitted": "Partnership application successfully submitted, estimated 5-10 business days for review",
-      "terminationSubmitted": "Partnership termination application submitted ({{insurer}}, estimated 3-5 business days for approval"
+    "actions": {
+      "addContact": "Add Contact",
+      "export": "Export"
+    },
+    "searchPlaceholder": "Search by name, email, or phone...",
+    "filter": {
+      "allRoles": "All Roles",
+      "allStatus": "All Status",
+      "activeOnly": "Active Only",
+      "inactiveOnly": "Inactive Only"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "note": "Note: Select a contact to view details and communication history",
+    "empty": {
+      "title": "Select a Contact Person",
+      "desc": "Choose a contact from the list to view their details, contact information, and communication history"
+    },
+    "detail": {
+      "contactInfo": "Contact Information",
+      "professionalDetails": "Professional Details",
+      "labels": {
+        "email": "Email",
+        "directPhone": "Direct Phone",
+        "mobile": "Mobile",
+        "officeAddress": "Office Address",
+        "position": "Position",
+        "department": "Department",
+        "role": "Role",
+        "primaryContact": "Primary Contact",
+        "status": "Status"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "exportLogs": "Export {count} Communication Logs",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "edit": "Edit"
+    },
+    "logs": {
+      "title": "Communication History",
+      "total": "({count} total)",
+      "addLog": "+ Log Communication",
+      "filterAll": "All",
+      "filterCalls": "Calls",
+      "filterEmails": "Emails",
+      "empty": {
+        "title": "No communication logs yet",
+        "desc": "Add your first communication log above"
+      },
+      "followUp": "Follow-up:",
+      "due": "Due:"
+    },
+    "roles": {
+      "accountManager": "Account Manager",
+      "underwriting": "Underwriting Contact",
+      "claims": "Claims Contact",
+      "finance": "Finance Contact",
+      "it": "Technical Contact",
+      "compliance": "Compliance Contact",
+      "executive": "Executive Contact"
+    },
+    "commTypes": {
+      "phone": "Phone Call",
+      "email": "Email",
+      "meeting": "Meeting",
+      "im": "Instant Messaging",
+      "siteVisit": "On-site Visit"
+    },
+    "alerts": {
+      "addContact": "Add New Contact Modal - To be implemented",
+      "editContact": "Edit Contact: {name}",
+      "deactivateConfirm": "Deactivate {name}?",
+      "deactivated": "Contact deactivated successfully!",
+      "activate": "Activate {name}",
+      "selectFirst": "Please select a contact first",
+      "exporting": "Exporting {count} communication logs..."
+    }
+  },
+  "lifecycle": {
+    "backToList": "Back to Cooperation List",
+    "title": "Cooperation Status & Renewal Management",
+    "subtitle": "Track partnership lifecycle and manage renewal assessments",
+    "stats": {
+      "negotiating": "Negotiating",
+      "pendingSignature": "Pending Signature",
+      "approved": "Approved",
+      "inProgress": "In Progress",
+      "expiringSoon": "Expiring Soon",
+      "terminated": "Terminated",
+      "pendingApproval": "Pending Approval",
+      "expired": "Expired"
+    },
+    "searchPlaceholder": "Search by insurer name or cooperation ID...",
+    "filter": {
+      "allStatuses": "All Statuses",
+      "month": "This Month",
+      "quarter": "This Quarter",
+      "year": "This Year"
+    },
+    "expiringAlert": "{count} Cooperation(s) Expiring Within 90 Days",
+    "daysLeft": "{days} days left",
+    "reviewAll": "Review All",
+    "setReminders": "Set Reminders",
+    "expiryListTitle": "Detailed Expiry List ({count} entries)",
+    "col": {
+      "insurer": "Insurance Company",
+      "type": "Type",
+      "status": "Status",
+      "effectiveDate": "Effective Date",
+      "expirationDate": "Expiration Date",
+      "daysLeft": "Days Left",
+      "totalPremium": "Total Premium",
+      "rating": "Rating",
+      "actions": "Actions"
+    },
+    "permanent": "Permanent",
+    "renew": "Renew",
+    "noExpiring": "No cooperations expiring within 90 days",
+    "showing": "Showing {shown} of {total} cooperation(s)",
+    "exportReport": "Export Report",
+    "setUpAlerts": "Set Up Alerts",
+    "quality": {
+      "title": "Quality Assessment",
+      "avgLossRatio": "Average Loss Ratio",
+      "renewalRate": "Renewal Rate",
+      "complaintRate": "Complaint Rate",
+      "disputeRate": "Dispute Rate",
+      "strategicAlignment": "Strategic Alignment"
+    },
+    "performance": {
+      "title": "Performance Trends",
+      "thisPeriod": "This Period",
+      "lastPeriod": "Last Period",
+      "premiumVolume": "Premium Volume",
+      "policiesSold": "Policies Sold",
+      "commissionIncome": "Commission Income",
+      "channelCount": "Channel Count"
+    },
+    "alert": {
+      "renewalStart": "Starting renewal assessment for {name}"
+    }
+  },
+  "terminateDetail": {
+    "backToList": "Back to Cooperation List",
+    "title": "Terminate Cooperation Relationship",
+    "subtitle": "Initiate and manage the termination process for cooperation relationships",
+    "warning": {
+      "title": "⚠️ This action will permanently terminate the cooperation relationship",
+      "item1": "All channel authorizations will be automatically recalled",
+      "item2": "Appointment terminations will be filed with insurers",
+      "item3": "Channels will be notified immediately",
+      "item4": "This action requires legal, compliance, and GM approval"
+    },
+    "form": {
+      "selectCoop": "Select Cooperation Relationship*",
+      "selectPlaceholder": "Select a cooperation to terminate",
+      "reason": "Termination Reason*",
+      "reasonPlaceholder": "Select reason",
+      "type": "Termination Type*",
+      "typePlaceholder": "Select termination type",
+      "effectiveDate": "Termination Effective Date",
+      "immediate": "Immediate Termination",
+      "immediateDesc": "Effective as soon as approved",
+      "futureDate": "Future Date",
+      "futureDateDesc": "Set a specific termination date",
+      "terminationDate": "Termination Date*",
+      "transitionPeriod": "Transition Period (Days)*",
+      "viewImpact": "View Impact Scope",
+      "cancel": "Cancel"
+    },
+    "preview": {
+      "title": "Selected Cooperation",
+      "insurer": "Insurance Company",
+      "coopType": "Cooperation Type",
+      "status": "Status",
+      "effectiveDate": "Effective Date",
+      "expirationDate": "Expiration Date",
+      "permanent": "Permanent",
+      "impactTitle": "Impact Summary",
+      "impactDesc": "Click \"View Impact Scope\" to see detailed breakdown",
+      "noSelection": "No cooperation selected"
+    },
+    "notes": {
+      "title": "Important Notes",
+      "item1": "All affected parties will receive automatic notifications",
+      "item2": "A comprehensive audit report will be generated",
+      "item3": "Pending quotes may need special handling",
+      "item4": "Active policies require service continuity planning"
+    },
+    "modal": {
+      "title": "Impact Analysis & Processing",
+      "subtitle": "{insurer} - {type} Partnership",
+      "affectedProducts": "Affected Products",
+      "authorizedChannels": "Authorized Channels",
+      "pendingQuotes": "Pending Quotes",
+      "activePolicies": "Active Policies",
+      "unpaidCommissions": "Unpaid Commissions",
+      "appointmentsToTerminate": "Appointments to Terminate",
+      "strategyTitle": "Business Continuation Strategy",
+      "pendingQuoteTitle": "Pending Quote Handling",
+      "selectStrategy": "Select handling strategy...",
+      "activePolicyTitle": "Active Policy Service Arrangement",
+      "selectArrangement": "Select service arrangement...",
+      "commissionTitle": "Unpaid Commission Settlement",
+      "selectPlan": "Select settlement plan...",
+      "batchTitle": "Batch Operations",
+      "recalling": "Recalling...",
+      "recallChannels": "Recall {count} Channel Authorizations",
+      "filing": "Filing...",
+      "terminateAppointments": "Terminate {count} Appointments",
+      "nextStepsTitle": "Next Steps",
+      "nextSteps": {
+        "1": "Review all impact data and select handling strategies above",
+        "2": "Execute batch operations (recall authorizations, file appointments)",
+        "3": "Submit for approval workflow",
+        "4": "Generate audit report upon completion"
+      },
+      "close": "Close",
+      "continueApproval": "Continue to Approval"
+    },
+    "workflow": {
+      "title": "Approval Workflow",
+      "legalReview": "Legal Review",
+      "complianceReview": "Compliance Review",
+      "gmApproval": "General Manager Approval"
+    },
+    "alerts": {
+      "selectFields": "Please select cooperation, reason, and type",
+      "recallSuccess": "{count} channel authorizations have been successfully recalled!",
+      "terminateSuccess": "{count} appointments scheduled for termination!",
+      "terminated": "Cooperation terminated successfully! All actions completed."
+    }
+  },
+  "contractMgmt": {
+    "backToList": "Back to Cooperation List",
+    "title": "Contract & Agreement Management",
+    "subtitle": "Manage all contracts and agreements with insurance carriers",
+    "stats": {
+      "total": "Total Contracts",
+      "active": "Active",
+      "expiringSoon": "Expiring Soon (90d)",
+      "draft": "Draft"
+    },
+    "expiringAlert": "{count} Contract(s) Expiring Within 90 Days",
+    "daysLeft": "{days} days left",
+    "searchPlaceholder": "Search by contract name or number...",
+    "filter": {
+      "allTypes": "All Types",
+      "allStatuses": "All Statuses"
+    },
+    "dateRange": {
+      "to": "to",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    },
+    "applyFilter": "Apply Filter",
+    "showing": "Showing {shown} of {total} contracts",
+    "addContract": "Add Contract",
+    "col": {
+      "name": "Contract Name",
+      "number": "Contract Number",
+      "insurer": "Insurer",
+      "type": "Type",
+      "effectiveDate": "Effective Date",
+      "expirationDate": "Expiration Date",
+      "status": "Status",
+      "daysLeft": "Days Left",
+      "actions": "Actions",
+      "comm": "Comm"
+    },
+    "daysUnit": "days",
+    "noResults": "No contracts found matching your criteria",
+    "types": {
+      "masterAgreement": "Master Agreement",
+      "productSupplement": "Product Supplement",
+      "nda": "Non-Disclosure Agreement (NDA)",
+      "dpa": "Data Processing Agreement (DPA)",
+      "commissionSupplement": "Commission Supplement",
+      "compliance": "Compliance"
+    },
+    "status": {
+      "draft": "Draft",
+      "pendingApproval": "Pending Approval",
+      "signed": "Signed",
+      "inEffect": "In Effect",
+      "expiringSoon": "Expiring Soon",
+      "expired": "Expired",
+      "terminated": "Terminated"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "edit": "Edit",
+      "downloadPDF": "Download PDF"
+    },
+    "alerts": {
+      "addContract": "Create New Contract Modal - To be implemented",
+      "editContract": "Edit Contract: {name}",
+      "viewDetails": "View Details: {name}",
+      "downloadingPDF": "Downloading PDF: {name}.pdf"
     }
   }
 }

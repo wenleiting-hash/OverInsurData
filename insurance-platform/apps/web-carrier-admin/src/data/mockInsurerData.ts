@@ -15,6 +15,15 @@ export interface Insurer {
   };
 }
 
+/** 加载 Mock 保险公司列表（供合作管理等模块使用的统一形状） */
+export function loadMockCarriers(): Array<{ carrierId: string; carrierName: string; carrierCode: string }> {
+  return mockInsurers.map(i => ({
+    carrierId: i.id,
+    carrierName: i.name,
+    carrierCode: i.code,
+  }));
+}
+
 export const mockInsurers: Insurer[] = [
   {
     id: 'insurer-001',

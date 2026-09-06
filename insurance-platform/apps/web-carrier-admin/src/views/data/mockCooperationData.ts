@@ -43,6 +43,7 @@ export interface InsuranceCooperation {
   status: CooperationStatus
   commissionTier?: 'Tier-1' | 'Tier-2' | 'Tier-3' // Commission level for this partnership
   notes?: string                // Warnings/Notes about this partnership (e.g., renewal issues, termination reason)
+  notesEn?: string              // English parallel text for notes
   
   // Contact Persons
   myContactPerson: ContactPerson
@@ -661,6 +662,7 @@ export function generateMockCooperations(): InsuranceCooperation[] {
       stateScope: ['MA', 'NH', 'VT', 'ME'],
       contractFile: undefined,
       notes: '合同即将到期，续约谈判进行中', // Example from screenshot
+      notesEn: 'Contract expiring soon; renewal negotiation in progress',
       createdAt: '2025-08-25T14:00:00Z',
       updatedAt: '2025-08-28T16:30:00Z',
       createdBy: 'user_partnership_mgr',
@@ -766,6 +768,7 @@ export function generateMockCooperations(): InsuranceCooperation[] {
       stateScope: ['NY', 'DE', 'CA'],
       contractFile: undefined,
       notes: '新合作申请，合规审核中',
+      notesEn: 'New partnership application under compliance review',
       createdAt: '2026-08-01T09:00:00Z',
       updatedAt: '2026-08-01T09:00:00Z',
       createdBy: 'user_admin',
@@ -806,6 +809,7 @@ export function generateMockCooperations(): InsuranceCooperation[] {
       stateScope: ['TX', 'FL', 'CA'],
       contractFile: undefined,
       notes: '因赔付率持续超标，双方协商终止合作',
+      notesEn: 'Partnership terminated by mutual agreement due to sustained loss ratio overruns',
       createdAt: '2020-10-01T09:00:00Z',
       updatedAt: '2025-12-31T09:00:00Z',
       createdBy: 'user_admin',
@@ -1378,3 +1382,64 @@ export const mockContracts = generateMockContracts()
 export const mockSettlementConfigs = generateMockSettlementConfigs()
 export const mockContactPersons = generateMockContactPersons()
 export const mockCommunicationLogs = generateMockCommunicationLogs()
+
+// ============================================================================
+// COOPERATION FORM OPTIONS (功能点 3.1 - 3.2)
+// ============================================================================
+
+/** 合作表单向导的表单数据结构 */
+export interface CooperationsFormData {
+  insurerId: string
+  cooperationType?: CooperationType
+  status: CooperationStatus
+  myContactPerson: { name: string; email: string; phone: string; position?: string }
+  insurerContactPerson: { name: string; position: string; email: string; phone: string }
+  settlementMethod?: SettlementMethod
+  settlementCycle: number
+  premiumCollectionMethod?: PremiumCollectionMethod
+  premiumSettlementCycle: PremiumSettlementFrequency
+  effectiveDate: string
+  expirationDate?: string
+  productScope: ProductScopeConfig
+  stateScope: State[]
+  contractFile?: FileMetadata
+}
+
+/** 终止原因选项 */
+export const TERMINATION_REASONS: Array<{ value: string; label: string }> = [
+  { value: 'performance', label: 'Performance Issues' },
+  { value: 'business-strategy', label: 'Business Strategy Adjustment' },
+  { value: 'compliance', label: 'Compliance Violation' },
+  { value: 'low-volume', label: 'Low Business Volume' },
+  { value: 'mutual-agreement', label: 'Mutual Agreement' },
+  { value: 'contract-expiry', label: 'Contract Expiry (Not Renewing)' },
+  { value: 'other', label: 'Other' },
+]
+
+/** 终止类型选项 */
+export const TERMINATION_TYPES: Array<{ value: string; label: string }> = [
+  { value: 'immediate', label: 'Immediate Termination' },
+  { value: 'grace-period', label: 'Termination with Grace Period (30 days)' },
+  { value: 'end-of-term', label: 'Effective at End of Current Term' },
+]
+
+/** Pending Quote 处理策略选项 */
+export const PENDING_QUOTE_ACTIONS: Array<{ value: string; label: string }> = [
+  { value: 'honor', label: 'Honor Existing Quotes Until Expiry' },
+  { value: 'void', label: 'Void All Pending Quotes Immediately' },
+  { value: 'review', label: 'Case-by-Case Review' },
+]
+
+/** 在保保单服务安排选项 */
+export const ACTIVE_POLICY_ACTIONS: Array<{ value: string; label: string }> = [
+  { value: 'service-through-expiry', label: 'Continue Service Until Policy Expiry' },
+  { value: 'transfer', label: 'Transfer Policies to Another Channel' },
+  { value: 'terminate-immediately', label: 'Terminate Coverage Immediately (Requires Legal Review)' },
+]
+
+/** 未结佣金结算方案选项 */
+export const COMMISSION_ACTIONS: Array<{ value: string; label: string }> = [
+  { value: 'settle-all', label: 'Settle All Unpaid Commissions in Final Cycle' },
+  { value: 'forfeit', label: 'Forfeit Commissions on Terminated Business' },
+  { value: 'hold-disputes', label: 'Hold Until Disputes Resolved' },
+]

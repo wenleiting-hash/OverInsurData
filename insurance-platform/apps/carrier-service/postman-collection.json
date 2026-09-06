@@ -1,0 +1,268 @@
+{
+  "info": {
+    "name": "OverInsur Data - Ovwr Management API",
+    "description": "Postman collection for testing I18n and Role management modules",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "I18n Translation Management",
+      "item": [
+        {
+          "name": "Get All Translations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/i18n/translations?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "i18n", "translations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Translation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/i18n/translations/{{translation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "i18n", "translations", "{{translation_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Translation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ovwrNamespace\": \"auth\",\n  \"ovwrKey\": \"login.button\",\n  \"ovwrEnUS\": \"Login\",\n  \"ovwrZhCN\": \"登录\",\n  \"ovwrType\": \"button\",\n  \"ovwrModule\": \"auth\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/i18n/translations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "i18n", "translations"]
+            }
+          }
+        },
+        {
+          "name": "Update Translation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ovwrEnUS\": \"Sign In\",\n  \"ovwrZhCN\": \"签到\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/i18n/translations/{{translation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "i18n", "translations", "{{translation_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Translation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/i18n/translations/{{translation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "i18n", "translations", "{{translation_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Role Template Management",
+      "item": [
+        {
+          "name": "Get All Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Template by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles/{{template_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles", "{{template_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Template",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ovwrTemplateName\": \"Admin Full Access\",\n  \"ovwrDescription\": \"Full administrative access to all modules\",\n  \"ovwrPermissions\": [\n    { \"ovwrPermissionId\": \"perm-001\" },\n    { \"ovwrPermissionId\": \"perm-002\" }\n  ],\n  \"ovwrApplicableRoles\": [\"role-admin\", \"role-manager\"],\n  \"ovwrIsSystem\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles"]
+            }
+          }
+        },
+        {
+          "name": "Update Template",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ovwrTemplateName\": \"Updated Admin Access\",\n  \"ovwrDescription\": \"Updated description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles/{{template_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles", "{{template_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Template",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles/{{template_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles", "{{template_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Apply Template to Role",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ovwrRoleId\": \"role-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles/{{template_id}}/apply",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles", "{{template_id}}", "apply"]
+            }
+          }
+        },
+        {
+          "name": "Clone Template",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newName\": \"Admin Copy (Dev)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles/{{template_id}}/clone",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles", "{{template_id}}", "clone"]
+            }
+          }
+        },
+        {
+          "name": "Get Template Usage Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ovwr/roles/{{template_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ovwr", "roles", "{{template_id}}", "stats"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "translation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "template_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

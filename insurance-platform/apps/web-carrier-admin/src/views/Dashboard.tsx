@@ -4,8 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar, Legend,
 } from 'recharts'
-import { insurers, premiumTrendData, marketShareData, alertItems, recentActivities } from './data/mockDashboardData'
-import { formatCurrency, formatPercent, formatRelativeTime, formatDate } from '@/i18n/formatters'
+import { insurers, premiumTrendData, marketShareData, alertItems, recentActivities, formatCurrency, formatPercent, type AlertItem, type RecentActivity } from './data/mockDashboardData'
 import type { ViewId } from '@/App'
 
 interface Props {
@@ -15,7 +14,7 @@ interface Props {
 const totalPremium = insurers.reduce((s, i) => s + (i.revenue ?? 0), 0)
 const totalPolicies = insurers.reduce((s, i) => s + (i.policyCount ?? 0), 0)
 const totalChannels = 287
-const totalCommission = insurers.reduce((s, i) => s + ((i.revenue ?? 0) * 0.05), 0)
+const totalCommission = insurers.reduce((s, i) => s + (i.commissionIncome ?? 0), 0)
 const avgLossRatio = insurers.filter(i => i.status !== 'inactive').reduce((s, i) => s + (i.lossRatio ?? 0), 0) / insurers.filter(i => i.status !== 'inactive').length || 0.61
 
 const alertIcons: Record<string, React.ReactNode> = {
@@ -49,58 +48,104 @@ function CustomTooltip({ active, payload, label }: any) {
   return null
 }
 
-function PieTooltip({ active, payload }: any) {
-  if (active && payload && payload.length) {
-    return (
-      <div className="glass-strong" style={{ padding: '8px 12px', borderRadius: 10, fontSize: 12 }}>
-        <div style={{ fontWeight: 600 }}>{payload[0].name}</div>
-        <div style={{ color: '#414755' }}>{payload[0].name}: {payload[0].value}%</div>
-      </div>
-    )
-  }
-  return null
-}
-
 export default function Dashboard({ navigateTo }: Props) {
   const { t } = useTranslation('dashboard');
-  
-  // Generate KPI cards with i18n
+
+  // Alert message/time (aligns with prototype: i18n templates keyed by item.id / timeKey)
+  const alertMessage = (item: AlertItem): string => {
+    switch (item.id) {
+      case 1: return t('alerts.expiring', { days: item.days ?? 0, date: item.date ?? '' })
+      case 2: return t('alerts.appointments', { count: item.count ?? 0, days: item.days ?? 0 })
+      case 3: return t('alerts.lossRatio', { ratio: item.ratio ?? '', threshold: item.threshold ?? '' })
+      case 4: return t('alerts.profileReview')
+      case 5: return t('alerts.licenseExpired')
+      case 6: return t('alerts.reconciled', { monthLabel: t(`activity.months.${item.month ?? 8}`), amount: item.amount ?? '' })
+      default: return ''
+    }
+  }
+
+  const alertTime = (item: AlertItem): string => {
+    if (item.timeKey === 'today') return t('activity.today')
+    if (item.timeKey === 'yesterday') return t('activity.yesterday')
+    return t('activity.daysAgo', { n: item.daysAgo ?? 0 })
+  }
+
+  const activityAction = (act: RecentActivity): string =>
+    ({
+      newInsurer: t('activity.actions.newInsurer'),
+      productLaunch: t('activity.actions.productLaunch'),
+      appointment: t('activity.actions.appointment'),
+      reconciliation: t('activity.actions.reconciliation'),
+      channelSuspended: t('activity.actions.channelSuspended'),
+    } as Record<RecentActivity['actKey'], string>)[act.actKey]
+
+  const activityDetail = (act: RecentActivity): string => {
+    switch (act.actKey) {
+      case 'newInsurer': return t('activity.actions.newInsurerDetail', { name: act.entity ?? '' })
+      case 'productLaunch': return t('activity.actions.productLaunchDetail', { product: act.entity ?? '', states: act.region ?? '' })
+      case 'appointment': return t('activity.actions.appointmentDetail', { channel: act.entity ?? '', carrier: act.entity2 ?? '', state: act.region ?? '' })
+      case 'reconciliation': return t('activity.actions.reconciliationDetail', { carrier: act.entity ?? '', monthLabel: t(`activity.months.${act.month ?? 8}`), variance: act.variance ?? '' })
+      case 'channelSuspended': return t('activity.actions.channelSuspendedDetail', { name: act.entity ?? '' })
+    }
+  }
+
+  const activityTime = (act: RecentActivity): string => {
+    if (act.timeKey === 'min') return t('activity.minAgo', { n: act.n ?? 0 })
+    if (act.timeKey === 'hour') return t('activity.hourAgo', { n: act.n ?? 0 })
+    return `${t('activity.yesterday')} ${act.clock ?? ''}`
+  }
+
+  // Market share pie tooltip (aligns with prototype: share % + premium amount)
+  const PieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="glass-strong" style={{ padding: '8px 12px', borderRadius: 10, fontSize: 12 }}>
+          <div style={{ fontWeight: 600 }}>{payload[0].name}</div>
+          <div style={{ color: '#414755' }}>{t('charts.marketShare.share')} {payload[0].value}%</div>
+          <div style={{ color: '#414755' }}>{t('charts.marketShare.premium')} {formatCurrency((totalPremium * payload[0].value) / 100, true)}</div>
+        </div>
+      )
+    }
+    return null
+  }
+
+  // Generate KPI cards with i18n (colors align with prototype: brand-tinted backgrounds)
   const KPI_CARDS = [
     {
       label: t('kpiCards.totalPremium'),
-      value: formatCurrency(totalPremium, { short: true }),
-      sub: t('trendVsLastYear.up').replace('{percent}', '12.4'),
+      value: formatCurrency(totalPremium, true),
+      sub: t('trendVsLastYear.up', { percent: '12.4' }),
       trend: 'up' as const,
       icon: <DollarSign size={20} />,
       color: '#0058BC',
-      bg: '#F4F6FA',
+      bg: 'rgba(0,88,188,0.08)',
     },
     {
       label: t('kpiCards.policiesCount'),
       value: totalPolicies.toLocaleString(),
-      sub: t('trendVsLastYear.up').replace('{percent}', '8.1'),
+      sub: t('trendVsLastYear.up', { percent: '8.1' }),
       trend: 'up' as const,
       icon: <Package size={20} />,
-      color: '#34C759',
-      bg: '#F0F9F4',
+      color: '#006687',
+      bg: 'rgba(0,102,135,0.08)',
     },
     {
       label: t('kpiCards.channelCount'),
       value: totalChannels.toString(),
-      sub: `${t('common.added')} ${totalChannels} | ${t('common.thisMonth')}`,
+      sub: t('common.channelsAdded', { count: 18 }),
       trend: 'up' as const,
       icon: <Users size={20} />,
-      color: '#006687',
-      bg: '#F4F6FA',
+      color: '#34C759',
+      bg: 'rgba(52,199,89,0.08)',
     },
     {
       label: t('kpiCards.commission'),
-      value: formatCurrency(totalCommission, { short: true }),
-      sub: t('trendVsLastYear.up').replace('{percent}', '14.2'),
+      value: formatCurrency(totalCommission, true),
+      sub: t('trendVsLastYear.up', { percent: '14.2' }),
       trend: 'up' as const,
       icon: <TrendingUp size={20} />,
       color: '#9E3D00',
-      bg: '#FFF8F0',
+      bg: 'rgba(158,61,0,0.08)',
     },
   ]
   
@@ -110,7 +155,7 @@ export default function Dashboard({ navigateTo }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#181C23', lineHeight: 1.3 }}>{t('title')}</h1>
-          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>数据截至 2026-08-22 · 美国市场</p>
+          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>{t('dataAsOf', { date: '2026-08-22' })}</p>
         </div>
         <div className="flex items-center gap-2">
           <select className="input-glass" style={{ fontSize: 13 }}>
@@ -194,7 +239,7 @@ export default function Dashboard({ navigateTo }: Props) {
         {/* Market Share Pie */}
         <div className="card" style={{ padding: 22 }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: '#181C23', marginBottom: 4 }}>{t('charts.marketShare.title')}</div>
-          <div style={{ fontSize: 12, color: '#717786', marginBottom: 12 }}>{t('chapters.businessDistribution')}</div>
+          <div style={{ fontSize: 12, color: '#717786', marginBottom: 12 }}>{t('charts.marketShare.subtitle')}</div>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie
@@ -245,8 +290,8 @@ export default function Dashboard({ navigateTo }: Props) {
                 >
                   <span style={{ color: c.text, flexShrink: 0, marginTop: 1 }}>{alertIcons[item.type]}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: '#181C23', lineHeight: 1.4 }}>{item.message}</div>
-                    <div style={{ fontSize: 11, color: '#717786', marginTop: 3 }}>{item.time}</div>
+                    <div style={{ fontSize: 12.5, color: '#181C23', lineHeight: 1.4 }}>{alertMessage(item)}</div>
+                    <div style={{ fontSize: 11, color: '#717786', marginTop: 3 }}>{alertTime(item)}</div>
                   </div>
                   <ArrowRight size={12} style={{ color: '#C1C6D7', flexShrink: 0, marginTop: 2 }} />
                 </div>
@@ -258,9 +303,9 @@ export default function Dashboard({ navigateTo }: Props) {
         {/* Top insurers table */}
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="flex items-center justify-between" style={{ padding: '16px 18px', borderBottom: '0.5px solid rgba(193,198,215,0.4)' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23' }}>{t('chapters.performanceTrend')}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23' }}>{t('ranking.title')}</div>
             <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => navigateTo('insurer-list')}>
-              {t('buttons.viewDetails')} <ArrowRight size={12} />
+              {t('alerts.viewAll')} <ArrowRight size={12} />
             </button>
           </div>
           <table className="data-table">
@@ -293,7 +338,7 @@ export default function Dashboard({ navigateTo }: Props) {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: '#181C23' }}>
-                      {formatCurrency(ins.revenue ?? 0, { short: true, locale: 'zh-CN' })}
+                      {formatCurrency(ins.revenue ?? 0, true)}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <span style={{
@@ -334,11 +379,11 @@ export default function Dashboard({ navigateTo }: Props) {
                 key={act.id}
                 style={{ padding: '10px 18px', borderBottom: i < recentActivities.length - 1 ? '0.5px solid rgba(193,198,215,0.25)' : 'none' }}
               >
-                <div style={{ fontSize: 12.5, color: '#181C23', lineHeight: 1.45, fontWeight: 500 }}>{act.action}</div>
-                <div style={{ fontSize: 11.5, color: '#414755', marginTop: 2, lineHeight: 1.4 }}>{act.detail}</div>
+                <div style={{ fontSize: 12.5, color: '#181C23', lineHeight: 1.45, fontWeight: 500 }}>{activityAction(act)}</div>
+                <div style={{ fontSize: 11.5, color: '#414755', marginTop: 2, lineHeight: 1.4 }}>{activityDetail(act)}</div>
                 <div style={{ fontSize: 11, color: '#717786', marginTop: 4 }}>
                   <span style={{ fontWeight: 500 }}>{act.user}</span>
-                  <span style={{ marginLeft: 6 }}>{act.time}</span>
+                  <span style={{ marginLeft: 6 }}>{activityTime(act)}</span>
                 </div>
               </div>
             ))}

@@ -1,0 +1,47 @@
+{
+  "brand": {
+    "subtitle": "海外保险管理平台"
+  },
+  "tabs": {
+    "password": "账号密码登录",
+    "sso": "集成平台登录"
+  },
+  "form": {
+    "usernameLabel": "用户名",
+    "usernamePlaceholder": "请输入用户名",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "signIn": "登录",
+    "forgotPassword": "忘记密码？",
+    "emptyError": "请输入用户名和密码",
+    "invalidCredentials": "用户名或密码错误",
+    "accountLocked": "账户已锁定，请 1 小时后重试",
+    "networkError": "网络错误，请稍后重试"
+  },
+  "demo": {
+    "title": "演示账号",
+    "usernameLabel": "用户名：",
+    "passwordLabel": "密码："
+  },
+  "sso": {
+    "viaTitle": "通过集成平台登录",
+    "descLine1": "本系统支持作为子系统集成到其他平台。",
+    "descLine2": "当由集成平台跳转过来时，用户信息将自动携带，无需再次输入。",
+    "paramsTitle": "集成参数说明",
+    "paramToken": "用户认证令牌（必填）",
+    "paramUser": "用户姓名（必填）",
+    "paramRole": "用户角色（可选）",
+    "paramPlatform": "来源平台名称（可选）",
+    "exampleLabel": "示例：",
+    "exampleCode": "?token=xxx&user=张三&role=Admin&platform=ERP",
+    "warning": "当前未检测到集成平台传入的用户信息，请由集成平台携带参数跳转至本页面。"
+  },
+  "footer": {
+    "copyright": "© 2025 InsureOS · 海外保险管理平台 · 保留所有权利"
+  },
+  "a11y": {
+    "switchToZh": "切换到中文",
+    "switchToEn": "切换到英文",
+    "togglePassword": "显示或隐藏密码"
+  }
+}

@@ -56,12 +56,12 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
   
   const getStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
-      approved: 'Approved',
-      pending: 'Pending',
-      'under-review': 'Under Review',
-      rejected: 'Rejected',
-      expired: 'Expired',
-      terminated: 'Terminated',
+      approved: t('tracking.statusLabels.approved'),
+      pending: t('tracking.statusLabels.pending'),
+      'under-review': t('tracking.statusLabels.underReview'),
+      rejected: t('tracking.statusLabels.rejected'),
+      expired: t('tracking.statusLabels.expired'),
+      terminated: t('tracking.statusLabels.terminated'),
     };
     return labels[status] || status;
   };
@@ -72,22 +72,22 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
       <div className="max-w-[1600px] mx-auto mb-6">
         <div className="flex items-center gap-2 text-gray-600 mb-3">
           <button onClick={() => navigateTo('dashboard')} className="hover:text-gray-900 flex items-center gap-1">
-            <ArrowLeft size={18}/> Back to Dashboard
+            <ArrowLeft size={18}/> {t('tracking.backToDashboard')}
           </button>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <FileText className="text-purple-600" size={28}/>
-          Appointment Status Tracking
+          {t('tracking.title')}
         </h1>
-        <p className="text-gray-600 mt-1">Real-time tracking of all NIPR appointment authorizations</p>
+        <p className="text-gray-600 mt-1">{t('tracking.subtitle')}</p>
       </div>
       
       {/* Quick Stats */}
       <div className="max-w-[1600px] mx-auto mb-6 grid grid-cols-4 gap-4">
-        <StatCard label="Total Appointments" value={stats.total.toString()} icon={<FileText className="text-blue-600"/>} color="blue"/>
-        <StatCard label="Under Review" value={stats.underReview.toString()} warn={stats.underReview > 5} icon={<Clock className="text-orange-600"/>} color="orange"/>
-        <StatCard label="Approved" value={stats.approved.toString()} icon={<CheckCircle className="text-green-600"/>} color="green"/>
-        <StatCard label="Expiring Soon" value={stats.expiringSoon90Days.toString()} warn={stats.expiringSoon90Days > 0} icon={<Clock className="text-yellow-600"/>} color="yellow"/>
+        <StatCard label={t('tracking.stats.total')} value={stats.total.toString()} icon={<FileText className="text-blue-600"/>} color="blue"/>
+        <StatCard label={t('tracking.stats.underReview')} value={stats.underReview.toString()} warn={stats.underReview > 5} icon={<Clock className="text-orange-600"/>} color="orange"/>
+        <StatCard label={t('tracking.stats.approved')} value={stats.approved.toString()} icon={<CheckCircle className="text-green-600"/>} color="green"/>
+        <StatCard label={t('tracking.stats.expiringSoon')} value={stats.expiringSoon90Days.toString()} warn={stats.expiringSoon90Days > 0} icon={<Clock className="text-yellow-600"/>} color="yellow"/>
       </div>
       
       {/* Filters */}
@@ -98,7 +98,7 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18}/>
               <input
                 type="text"
-                placeholder="Search by channel, insurer, or ID..."
+                placeholder={t('tracking.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
@@ -111,13 +111,13 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
           >
-            <option value="ALL">All Statuses</option>
-            <option value="approved">Approved</option>
-            <option value="pending">Pending</option>
-            <option value="under-review">Under Review</option>
-            <option value="rejected">Rejected</option>
-            <option value="expired">Expired</option>
-            <option value="terminated">Terminated</option>
+            <option value="ALL">{t('tracking.filterAllStatuses')}</option>
+            <option value="approved">{t('tracking.filterApproved')}</option>
+            <option value="pending">{t('tracking.filterPending')}</option>
+            <option value="under-review">{t('tracking.filterUnderReview')}</option>
+            <option value="rejected">{t('tracking.filterRejected')}</option>
+            <option value="expired">{t('tracking.filterExpired')}</option>
+            <option value="terminated">{t('tracking.filterTerminated')}</option>
           </select>
           
           <select
@@ -125,7 +125,7 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
             onChange={(e) => setStateFilter(e.target.value)}
             className="px-4 py-2 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
           >
-            <option value="ALL">All States</option>
+            <option value="ALL">{t('tracking.filterAllStates')}</option>
             <option value="CA">California</option>
             <option value="NY">New York</option>
             <option value="TX">Texas</option>
@@ -142,20 +142,20 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
       {/* Applications Table */}
       <div className="max-w-[1600px] mx-auto card overflow-hidden">
         <div className="px-6 py-4 border-b bg-gray-50">
-          <h3 className="font-semibold text-gray-900">Authorization Tracking List ({filteredApps.length} entries)</h3>
+          <h3 className="font-semibold text-gray-900">{t('tracking.listTitle', { count: filteredApps.length })}</h3>
         </div>
         
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Channel & NPN</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Insurer</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State & Line</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NIPR ID</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tracking.col.channelNpn')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tracking.col.insurer')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tracking.col.stateLine')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tracking.col.dates')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tracking.col.status')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tracking.col.niprId')}</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('tracking.col.actions')}</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -176,14 +176,14 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-600">
-                    Submitted: {new Date(app.submittedDate).toLocaleDateString()}
+                    {t('tracking.submittedPrefix')}{new Date(app.submittedDate).toLocaleDateString()}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Expires: {new Date(app.expiryDate).toLocaleDateString()}
+                    {t('tracking.expiresPrefix')}{new Date(app.expiryDate).toLocaleDateString()}
                   </div>
                   {app.processingDays && (
                     <div className="text-xs text-gray-500 mt-1">
-                      Processed in {app.processingDays}d
+                      {t('tracking.processedIn', { days: app.processingDays })}
                     </div>
                   )}
                 </td>
@@ -197,10 +197,10 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button onClick={() => alert(`View details: ${app.id}`)} className="text-purple-600 hover:text-purple-900 mr-3">
-                    <Eye size={16}/> View
+                    <Eye size={16}/> {t('tracking.view')}
                   </button>
                   {(app.status === 'pending' || app.status === 'under-review') && (
-                    <button className="text-blue-600 hover:text-blue-900">Edit</button>
+                    <button className="text-blue-600 hover:text-blue-900">{t('tracking.edit')}</button>
                   )}
                 </td>
               </tr>
@@ -218,15 +218,15 @@ export default function AppointmentStatusTrackingView({ navigateTo }: Props) {
                 <Clock className="text-yellow-600 mt-0.5" size={20}/>
                 <div>
                   <div className="font-semibold text-yellow-900 mb-1">
-                    {stats.expiringSoon90Days} Appointment(s) Expiring Within 90 Days
+                    {t('tracking.expiringAlert', { count: stats.expiringSoon90Days })}
                   </div>
                   <div className="text-sm text-yellow-800">
-                    Renewal actions required to maintain continuous authorization
+                    {t('tracking.expiringAlertDesc')}
                   </div>
                 </div>
               </div>
               <button className="px-4 py-2 rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition-colors text-sm font-medium">
-                Review Renewals →
+                {t('tracking.reviewRenewals')}
               </button>
             </div>
           </div>

@@ -18,5 +18,639 @@
   "appointmentStatus.rejected": "Rejected",
   "appointmentStatus.expired": "Expired",
   "appointmentStatus.terminated": "Terminated",
-  "appointmentStatus.pendingSupplement": "Pending Supplement"
+  "appointmentStatus.pendingSupplement": "Pending Supplement",
+  "common": {
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "underReview": "Under Review",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "terminated": "Terminated"
+    }
+  },
+  "stats": {
+    "totalApplications": "Total Appointments",
+    "approved": "Approved",
+    "pendingOrUnderReview": "Pending / Under Review",
+    "nearExpiry30Days": "Expiring within 30 days"
+  },
+  "tab": {
+    "application": "Appointment Application",
+    "tracking": "Status Tracking",
+    "renewal": "Renewal & Termination",
+    "license-check": "NIPR License Management",
+    "compliance-report": "Compliance Report",
+    "ofac-screening": "OFAC Screening"
+  },
+  "app": {
+    "title": "Compliance Management",
+    "subtitle": "Manage channel appointment applications, license verification, issuance compliance interception and OFAC sanctions screening",
+    "expiredLicensesCount": "{n} expired licenses",
+    "expiringSoonCount": "{n} expiring soon",
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "terminated": "Terminated",
+      "underReview": "Under Review"
+    },
+    "licStatus": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "expired": "Expired",
+      "suspended": "Suspended",
+      "pending": "Pending",
+      "cancelled": "Cancelled"
+    },
+    "result": {
+      "blocked": "Blocked",
+      "warned": "Warned",
+      "passed": "Passed",
+      "manualReview": "Manual Review"
+    },
+    "ofacResult": {
+      "clear": "No List Match",
+      "watchlist": "Possible Match",
+      "blocked": "Blocked",
+      "pending": "Screening"
+    },
+    "tabs": {
+      "application": "Appointments",
+      "tracking": "Status Tracking",
+      "renewal": "Renewal & Termination",
+      "license": "NIPR Licenses",
+      "interception": "Issuance Interception",
+      "report": "Compliance Reports",
+      "ofac": "OFAC Screening"
+    },
+    "stats": {
+      "total": "Total Appointments",
+      "approved": "Approved",
+      "pendingOrReview": "Pending / Under Review",
+      "expiring30": "Expiring in 30 Days"
+    },
+    "filterAll": "All ({n})",
+    "searchPlaceholder": "Search channel, insurer, state...",
+    "newApplication": "New Application",
+    "table": {
+      "channel": "Channel",
+      "insurer": "Insurer",
+      "stateLine": "State / Line",
+      "status": "Status",
+      "submittedDate": "Submitted",
+      "approvedDate": "Approved",
+      "expiryDate": "Expiry Date",
+      "actions": "Actions"
+    },
+    "expiredDays": "Expired {d}d",
+    "expiresInDays": "Expires in {d}d",
+    "action": {
+      "viewDetail": "View Details",
+      "renew": "Renew",
+      "terminate": "Terminate",
+      "reapply": "Reapply"
+    },
+    "timeline": {
+      "event1": "QT-2026-088421 issuance blocked",
+      "detail1": "Northeast Professional — Hartford CT Commercial — appointment expired",
+      "event2": "ap8 Southwest Insurance Network submitted Zurich AZ Commercial appointment",
+      "detail2": "Application sent to NIPR, awaiting state insurance department acceptance",
+      "event3": "ap8 application submitted",
+      "detail3": "Submitted by channel Lisa Wang, NPN auto-prefilled",
+      "event4": "ap5 AIG FL Professional entered manual review",
+      "detail4": "Insurer internal compliance review, estimated 5 business days",
+      "event5": "ap4 Liberty Mutual NY Auto application submitted",
+      "detail5": "Awaiting NIPR acceptance confirmation",
+      "event6": "ap6 Hartford CT Commercial appointment expired",
+      "detail6": "Channel Northeast Professional — expiry reminder sent 60 days ago, renewal not completed",
+      "event7": "ap10 Travelers CA Auto WA application rejected",
+      "detail7": "WA state license not activated"
+    },
+    "processingAppointments": "Appointments in Progress ({n})",
+    "submittedDateLabel": "Submitted: ",
+    "submittedByLabel": "Submitter: ",
+    "niprIdLabel": "NIPR ID: ",
+    "pendingAssignment": "Pending Assignment",
+    "recentEvents": "Recent Events",
+    "trackSteps": {
+      "niprSubmit": "NIPR Submission",
+      "stateAccept": "State Acceptance",
+      "insurerReview": "Insurer Review",
+      "done": "Done"
+    },
+    "subtabs": {
+      "renewal": "Renewals",
+      "termination": "Terminations"
+    },
+    "renewStats": {
+      "due60": "Due within 60 Days",
+      "due6090": "Due in 60–90 Days",
+      "inProgress": "In Progress"
+    },
+    "expiryDateLabel": "Expiry: ",
+    "daysLeft": "{d} days left",
+    "renewalInProgress": "Renewal in Progress",
+    "viewProgress": "View Progress",
+    "startRenewal": "Start Renewal",
+    "terminationNotice": "Before You Terminate",
+    "terminationWarning": "After termination, the channel will no longer be able to issue policies for this insurer in the corresponding state/line. The termination will be reported to regulators via NIPR and cannot be reversed.",
+    "applyTerminate": "Terminate",
+    "terminateModalTitle": "Confirm Appointment Termination",
+    "terminateModalDesc": "This action is irreversible. Please select a termination reason:",
+    "terminateReasons": {
+      "channelInitiated": "Channel-initiated termination",
+      "regulatory": "Regulatory requirement",
+      "insurerRequired": "Insurer-required termination",
+      "violation": "Channel violation",
+      "other": "Other"
+    },
+    "cancel": "Cancel",
+    "confirmTerminate": "Confirm Termination",
+    "renewModalTitle": "Initiate Appointment Renewal",
+    "renewModalDesc": "The system will submit the renewal application via NIPR automatically. Please confirm the renewal period:",
+    "renewPeriods": {
+      "1y": "Renew for 1 Year",
+      "2y": "Renew for 2 Years",
+      "untilLicenseExpiry": "Renew until License Expiry"
+    },
+    "submitRenewal": "Submit Renewal",
+    "licStats": {
+      "total": "Total Licenses",
+      "active": "Active Licenses",
+      "expiring60": "Expiring within 60 Days",
+      "expiredSuspended": "Expired / Suspended"
+    },
+    "licSearchPlaceholder": "Search channel, NPN, state...",
+    "batchNiprVerify": "Batch NIPR Verification",
+    "expiredLicensesHint": "Renew immediately; expired licenses will block policy issuance",
+    "mismatchLicensesCount": "{n} licenses mismatch NIPR records",
+    "mismatchHint": "Verification and update required",
+    "licTable": {
+      "channelNpn": "Channel / NPN",
+      "state": "State",
+      "licenseNumber": "License No.",
+      "typeLine": "Type / Lines",
+      "status": "Status",
+      "expiryDate": "Expiry Date",
+      "niprVerification": "NIPR Verification",
+      "ceHours": "CE Hours",
+      "actions": "Actions"
+    },
+    "verification": {
+      "verified": "Verified",
+      "mismatch": "Mismatch",
+      "notFound": "Not Found",
+      "pending": "Pending"
+    },
+    "daysRemaining": "{d}d left",
+    "verifying": "Verifying...",
+    "interceptStats": {
+      "total": "Total Checks"
+    },
+    "interceptTabs": {
+      "log": "Interception Logs",
+      "rules": "Rules"
+    },
+    "policyDraftLabel": "Policy Draft: ",
+    "customerLabel": "Customer: ",
+    "premiumLabel": "Premium: ",
+    "released": "Released",
+    "priority": "Priority {n}",
+    "triggerCountLabel": "Triggered: ",
+    "lastTriggeredLabel": "Last Triggered: ",
+    "ruleAction": {
+      "block": "Block",
+      "warn": "Warn"
+    },
+    "reportCenter": "Compliance Report Center",
+    "generateNewReport": "New Report",
+    "configureReport": "Report Parameters",
+    "reportTypeLabel": "Report Type",
+    "reportPeriodLabel": "Reporting Period",
+    "outputFormatLabel": "Output Format",
+    "reportTypes": {
+      "appointment-status": "Appointment Status",
+      "license-compliance": "License Compliance",
+      "ofac-summary": "OFAC Screening Summary",
+      "interception-log": "Interception Log",
+      "renewal-calendar": "Renewal Calendar",
+      "regulatory-filing": "Regulatory Filing"
+    },
+    "period": {
+      "aug2026": "Aug 2026",
+      "jul2026": "Jul 2026"
+    },
+    "generating": "Generating...",
+    "startGeneration": "Generate",
+    "reportStatus": {
+      "ready": "Ready",
+      "generating": "Generating",
+      "scheduled": "Scheduled",
+      "failed": "Failed"
+    },
+    "generatedAtLabel": "Generated: ",
+    "generatedByLabel": "Generated By: ",
+    "scheduledGeneration": "Scheduled Generation",
+    "operatorLabel": "Operator: ",
+    "fileSizeLabel": "Size: ",
+    "recordCountLabel": "Records: ",
+    "download": "Download",
+    "awaitingExecution": "Awaiting Execution",
+    "ofac": {
+      "title": "Real-time OFAC Sanctions Screening",
+      "subtitle": "Screen customers, beneficiaries and related entities against SDN / SDGT / OFSI and other sanctions lists",
+      "entityName": "Entity Name *",
+      "entityPlaceholder": "Enter individual or company name...",
+      "typeLabel": "Type",
+      "company": "Company",
+      "individual": "Individual",
+      "screening": "Screening...",
+      "startScreening": "Start Screening",
+      "passed": "Screening Passed — No Sanctions Records",
+      "watchlistScore": "Possible Match — {score}% similarity",
+      "blocked": "Screening Failed — Sanctions List Hit",
+      "matchedEntryLabel": "Matched Entry: ",
+      "reviewHint": "Manual review recommended before policy issuance",
+      "blockedHint": "Automatically blocked; policy issuance prohibited for this entity",
+      "pass": "Pass",
+      "stats": {
+        "total": "Total Screenings"
+      },
+      "table": {
+        "timestamp": "Timestamp",
+        "entityName": "Entity Name",
+        "type": "Type",
+        "result": "Result",
+        "matchedEntry": "Matched Entry",
+        "operator": "Operator",
+        "disposition": "Disposition"
+      }
+    }
+  },
+  "new": {
+    "backToCompliance": "Back to Compliance",
+    "title": "New Appointment Application",
+    "subtitle": "Submit an appointment application for a channel via NIPR; processing typically takes 2–6 weeks",
+    "progressLabel": "Progress",
+    "selectedInfo": "Selected Info",
+    "labels": {
+      "channel": "Channel",
+      "insurer": "Insurer",
+      "stateLine": "State / Line"
+    },
+    "steps": {
+      "channel": { "label": "Select Channel", "sub": "Choose the applying channel" },
+      "insurer": { "label": "Select Insurer", "sub": "Choose the target insurer" },
+      "details": { "label": "Configure Details", "sub": "State · Line · Notes" },
+      "confirm": { "label": "Confirm & Submit", "sub": "Review and submit" }
+    },
+    "step0": {
+      "title": "Select a Channel",
+      "subtitle": "Select the channel for the appointment application; channels with invalid licenses are excluded"
+    },
+    "agentsCount": "{n} agents",
+    "step1": {
+      "title": "Select an Insurer",
+      "subtitle": "Select the insurer to apply to"
+    },
+    "step2": {
+      "title": "Configure Application Details",
+      "subtitle": "Select the state and line of business, and add supplementary notes"
+    },
+    "fields": {
+      "state": "State",
+      "line": "Line of Business",
+      "reason": "Notes"
+    },
+    "reasonPlaceholder": "Enter the reason, business background or other notes...",
+    "urgent": {
+      "title": "Mark as Urgent",
+      "desc": "Enable expedited processing; approval expected within 3 business days"
+    },
+    "step3": {
+      "title": "Confirm Application Info",
+      "subtitle": "Please review the information carefully before submitting; it will automatically enter the NIPR process after submission"
+    },
+    "summaryTitle": "Application Summary",
+    "summary": {
+      "channel": "Channel",
+      "channelNpn": "Channel NPN",
+      "insurer": "Insurer",
+      "state": "State",
+      "line": "Line",
+      "priority": "Priority",
+      "reason": "Notes"
+    },
+    "priority": {
+      "urgent": "Urgent (expedited)",
+      "normal": "Normal"
+    },
+    "notesTitle": "Before You Submit",
+    "notesBody": "After submission, the system will automatically submit the appointment application via NIPR; processing typically takes 2–6 weeks depending on the state regulator. Please ensure the channel's license is valid and unexpired in the applying state.",
+    "cancel": "Cancel",
+    "prevStep": "Previous",
+    "nextStep": "Next",
+    "submitting": "Submitting...",
+    "confirmSubmit": "Submit"
+  },
+  "renewal": {
+    "backToDashboard": "Back to Dashboard",
+    "title": "Appointment Renewal Management",
+    "subtitle": "Track and manage expiring NIPR appointment authorizations",
+    "urgentAlert": "{count} Appointment(s) Expiring Within 30 Days - CRITICAL ACTION REQUIRED",
+    "urgentAlertDesc": "Immediate renewal submission needed to avoid coverage gaps and regulatory penalties",
+    "renewNow": "Renew Now →",
+    "stats": {
+      "expiring90D": "Expiring (90D)",
+      "critical30D": "Critical (≤30D)",
+      "inProgress": "In Progress",
+      "renewed": "Already Renewed",
+      "mildWarning": "Mild Warning (61-90D)"
+    },
+    "searchPlaceholder": "Search by channel, insurer, or ID...",
+    "filterAllStatuses": "All Statuses",
+    "filterNotDue": "Not Due Yet",
+    "filterDueSoon": "Due Soon",
+    "filterInProgress": "In Progress",
+    "filterRenewed": "Renewed",
+    "batchRenew": "Batch Renew",
+    "listTitle": "Expiring Appointments List ({count} entries)",
+    "col": {
+      "channelNpn": "Channel & NPN",
+      "insurerState": "Insurer & State",
+      "expiryDate": "Expiry Date",
+      "daysRemaining": "Days Remaining",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "npnPrefix": "NPN: ",
+    "daysCount": "{count} days",
+    "urgency": {
+      "critical": "CRITICAL - Renew Immediately",
+      "urgent": "URGENT - Within 30 Days",
+      "warning": "WARNING - Within 60 Days",
+      "dueSoon": "RENEWAL DUE SOON",
+      "upcoming": "UPCOMING RENEWAL"
+    },
+    "startRenewal": "Start Renewal",
+    "processing": "⟳ Processing...",
+    "completed": "✓ Completed",
+    "noExpiring": "No appointments expiring within 90 days",
+    "noExpiringDesc": "All current appointments are valid with sufficient time remaining",
+    "guidelinesTitle": "Renewal Process Guidelines",
+    "step1Title": "Step 1: Verify Eligibility",
+    "step1": {
+      "item1": "Confirm active NIPR license status",
+      "item2": "Check CE requirement completion",
+      "item3": "Verify no outstanding violations"
+    },
+    "step2Title": "Step 2: Submit Application",
+    "step2": {
+      "item1": "Login to NIPR portal",
+      "item2": "Complete renewal form (AF-100)",
+      "item3": "Pay state filing fees ($50-$200)",
+      "item4": "Submit supporting documents"
+    },
+    "step3Title": "Step 3: Track Progress",
+    "step3": {
+      "item1": "Awaiting carrier approval (7-14 days)",
+      "item2": "NIPR processing (5-7 business days)",
+      "item3": "Receive authorization certificate",
+      "item4": "Update internal system records"
+    },
+    "alert": {
+      "batchRenew": "Initiating batch renewal for {count} appointment(s)\n\nPlease review:\n1. Channel organization eligibility\n2. Outstanding compliance requirements\n3. State-specific filing fees",
+      "startRenewal": "Starting renewal process for:\n\nID: {id}\nChannel: {channelName}\nNPN: {channelNpn}\nInsurer: {insurerShort}\nState: {state}\nLine of Authority: {line}\n\nExpiring in: {daysUntilExp} day(s)\n\nNext Steps:\n1. Verify current NIPR license status\n2. Submit renewal application via NIPR portal\n3. Pay state-specific filing fees\n4. Await carrier approval confirmation"
+    }
+  },
+  "tracking": {
+    "backToDashboard": "Back to Dashboard",
+    "title": "Appointment Status Tracking",
+    "subtitle": "Real-time tracking of all NIPR appointment authorizations",
+    "stats": {
+      "total": "Total Appointments",
+      "underReview": "Under Review",
+      "approved": "Approved",
+      "expiringSoon": "Expiring Soon"
+    },
+    "searchPlaceholder": "Search by channel, insurer, or ID...",
+    "filterAllStatuses": "All Statuses",
+    "filterApproved": "Approved",
+    "filterPending": "Pending",
+    "filterUnderReview": "Under Review",
+    "filterRejected": "Rejected",
+    "filterExpired": "Expired",
+    "filterTerminated": "Terminated",
+    "filterAllStates": "All States",
+    "listTitle": "Authorization Tracking List ({count} entries)",
+    "col": {
+      "channelNpn": "Channel & NPN",
+      "insurer": "Insurer",
+      "stateLine": "State & Line",
+      "dates": "Dates",
+      "status": "Status",
+      "niprId": "NIPR ID",
+      "actions": "Actions"
+    },
+    "submittedPrefix": "Submitted: ",
+    "expiresPrefix": "Expires: ",
+    "processedIn": "Processed in {days}d",
+    "statusLabels": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "underReview": "Under Review",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "terminated": "Terminated"
+    },
+    "view": "View",
+    "edit": "Edit",
+    "expiringAlert": "{count} Appointment(s) Expiring Within 90 Days",
+    "expiringAlertDesc": "Renewal actions required to maintain continuous authorization",
+    "reviewRenewals": "Review Renewals →"
+  },
+  "terminate": {
+    "backToList": "Back to List",
+    "title": "Renewal & Termination Management",
+    "subtitle": "Manage appointment renewals and terminations",
+    "tab": "Renewal & Termination",
+    "listTitle": "Terminable Appointments",
+    "noticeTitle": "⚠️ Before You Terminate",
+    "noticeItem1": "After termination, the channel will no longer be able to issue policies for this insurer in the corresponding state/line",
+    "noticeItem2": "The termination will be reported to regulators via NIPR and cannot be reversed",
+    "noticeItem3": "All in-flight policies will be severely affected; proceed with caution",
+    "noticeItem4": "Please provide an accurate termination reason for future audits",
+    "col": {
+      "channel": "Channel",
+      "insurer": "Insurer",
+      "stateLine": "State/Line",
+      "approvedDate": "Approved Date",
+      "expiryDate": "Expiry Date",
+      "daysRemaining": "Days Remaining",
+      "actions": "Actions"
+    },
+    "days": "{{n}} days",
+    "applyTerminate": "Terminate",
+    "empty": "No terminable appointments at the moment",
+    "summaryPrefix": "",
+    "summarySuffix": " terminable records in total",
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "underReview": "Under Review",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "terminated": "Terminated"
+    },
+    "modalTitle": "Confirm Termination Request",
+    "modalSubtitle": "Please provide the termination reason and confirm the action",
+    "selectedInfoTitle": "Appointment to be terminated:",
+    "reasonLabel": "Termination Reason * (required)",
+    "reasonPlaceholder": "Enter the termination reason, e.g., channel-initiated termination, partnership ended, ...",
+    "reasonRequired": "Termination reason is required",
+    "irreversibleWarning": "⚠️ This will submit a termination request via NIPR. Once submitted, it cannot be reversed. Please ensure alignment with your partner.",
+    "acknowledge": "I understand the risks above and confirm the termination of this appointment",
+    "submitSuccess": "Termination request submitted\nReason: {{reason}}",
+    "cancel": "Cancel",
+    "confirmSubmit": "Confirm Submit"
+  },
+  "reportGen": {
+    "title": "Compliance Report Generator",
+    "description": "Automatically generate compliance regulatory reports with export support",
+    "statAvailableTemplates": "Available Templates",
+    "statActiveTemplates": "active templates",
+    "statGeneratedToday": "Generated Today",
+    "statAutomationRunning": "↑ Automated",
+    "statMonthlyTotal": "Monthly Total",
+    "statTotalDownloads": "Total Downloads {n}",
+    "statSuccessRate": "Generation Success Rate",
+    "statExceptionRate": "↓ Exception Rate {n}%",
+    "filterAllCategories": "All Categories",
+    "categoryScreening": "Compliance Screening",
+    "categoryLicense": "License Management",
+    "categoryApplication": "Application Management",
+    "categoryAudit": "Audit Reports",
+    "rangeToday": "Today",
+    "rangeYesterday": "Yesterday",
+    "rangeThisWeek": "This Week",
+    "rangeLastWeek": "Last Week",
+    "rangeLastMonth": "Last Month",
+    "refreshData": "Refresh Data",
+    "newReport": "New Report",
+    "historyTitle": "Generation History",
+    "colReportName": "Report Name",
+    "colPeriodRange": "Period Range",
+    "colGeneratedAt": "Generated At",
+    "colFileFormat": "File Format",
+    "colFileSize": "File Size",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "download": "Download",
+    "templatesTitle": "Report Template Library",
+    "templateActive": "Active",
+    "templateArchived": "Archived",
+    "generationFrequency": "Generation Frequency:",
+    "frequencyDaily": "Daily",
+    "frequencyWeekly": "Weekly",
+    "frequencyMonthly": "Monthly",
+    "frequencyQuarterly": "Quarterly",
+    "lastGenerated": "Last Generated:",
+    "viewDetails": "View Details",
+    "manualGenerate": "Generate Manually",
+    "emptyTitle": "No Generation Records",
+    "emptyDesc": "No report records match the current filters",
+    "statusCompleted": "Completed",
+    "statusGenerating": "Generating",
+    "statusFailed": "Failed"
+  },
+  "licenseExpiry": {
+    "title": "License Expiry Reminder",
+    "description": "Monitor channel agent license validity periods and send automated reminders",
+    "refreshLog": "Refresh license status data",
+    "stats": {
+      "totalAlerts": "Total Alerts",
+      "totalAlertsSub": "Under active monitoring",
+      "criticalAlerts": "Critical Alerts",
+      "criticalAlertsSub": "⚠️ Immediate action required",
+      "expired": "Expired",
+      "expiredSub": "❌ Business impact",
+      "inProgress": "Renewal in Progress",
+      "inProgressSub": "▶️ Follow up",
+      "complianceRate": "Compliance Rate",
+      "complianceRateSub": "↑ High pass rate",
+      "avgCycle": "Avg Cycle",
+      "avgCycleSub": "Renewal processing time",
+      "avgProcessingDays": "{n} days"
+    },
+    "filter": {
+      "allSeverities": "All Severities",
+      "severityCritical": "Critical",
+      "severityHigh": "High",
+      "severityMedium": "Medium",
+      "severityLow": "Low",
+      "allStatuses": "All Statuses",
+      "statusNotified": "Notified",
+      "statusReminded": "Reminded",
+      "statusExpired": "Expired",
+      "statusRenewed": "Renewed"
+    },
+    "action": {
+      "refreshData": "Refresh",
+      "exportList": "Export List",
+      "viewDetail": "View Details →",
+      "startRenewal": "Start Renewal →"
+    },
+    "table": {
+      "colChannel": "Channel",
+      "colLicenseType": "License Type",
+      "colCountdown": "Expiry Countdown",
+      "colSeverity": "Risk Level",
+      "colStatus": "Status",
+      "colRenewalProgress": "Renewal Progress",
+      "colActions": "Actions",
+      "licenseNumberLabel": "License No.: ",
+      "lastNotifiedLabel": "Last Notified: ",
+      "expiryLabel": "Expires: "
+    },
+    "daysRemaining": {
+      "expired": "⚠️ Expired",
+      "within": "Within {days} days",
+      "days": "{days} days"
+    },
+    "renewalStatus": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "status": {
+      "notified": "Notified",
+      "reminded": "Reminded",
+      "expired": "Expired",
+      "renewed": "Renewed"
+    },
+    "severity": {
+      "critical": "⚡ Critical",
+      "high": "⚠️ High",
+      "medium": "🔶 Medium",
+      "low": "🟢 Low Risk"
+    },
+    "empty": {
+      "title": "No Alert Records",
+      "desc": "No alert records match the current filters"
+    },
+    "quickAction": {
+      "title": "Quick Action Recommendations",
+      "immediateTitle": "Needs Immediate Action",
+      "immediateCount": "{n} item(s)",
+      "immediateDesc": "Licenses expiring within 7 days",
+      "expiredTitle": "Expired - Needs Attention",
+      "expiredCount": "{n} item(s)",
+      "expiredDesc": "May affect business operations",
+      "batchTitle": "Batch Renewal Window",
+      "batchRange": "30-90 days",
+      "batchDesc": "Plan renewals in advance"
+    }
+  }
 }

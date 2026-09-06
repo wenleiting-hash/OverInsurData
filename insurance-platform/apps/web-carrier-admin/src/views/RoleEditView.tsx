@@ -11,26 +11,31 @@ interface Props {
 
 // Mock data (临时数据源)
 const mockRoles: Role[] = [
-  { 
-    id: 'r1', 
-    name: '超级管理员', 
-    code: 'super_admin', 
+  {
+    id: 'r1',
+    name: '超级管理员',
+    nameEn: 'Super Admin',
+    code: 'super_admin',
     description: '拥有所有权限',
+    descriptionEn: 'Has all permissions',
     permissions: { all: true },
     createdAt: '2026-01-01T00:00:00Z'
   },
-  { 
-    id: 'r2', 
-    name: '普通管理员', 
-    code: 'admin', 
+  {
+    id: 'r2',
+    name: '普通管理员',
+    nameEn: 'General Admin',
+    code: 'admin',
     description: '常规管理权限',
+    descriptionEn: 'Standard management permissions',
     permissions: { users: false, roles: false },
     createdAt: '2026-01-02T00:00:00Z'
   },
 ];
 
 export default function RoleEditView({ roleId, navigateTo }: Props) {
-  const { t } = useTranslation('permission');
+  const { t, i18n } = useTranslation('permission');
+  const isEn = i18n.language?.startsWith?.('en') ?? false;
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -43,36 +48,36 @@ export default function RoleEditView({ roleId, navigateTo }: Props) {
     const role = mockRoles.find(r => r.id === roleId);
     if (role) {
       setFormData({
-        name: role.name,
+        name: isEn ? (role.nameEn ?? role.name) : role.name,
         code: role.code,
-        description: role.description || '',
+        description: isEn ? (role.descriptionEn ?? role.description ?? '') : (role.description ?? ''),
       });
     }
     setLoading(false);
-  }, [roleId]);
+  }, [roleId, isEn]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // 🔴 todo: 调用真实 API 更新角色
-    console.log('更新角色数据:', { id: roleId, ...formData });
-    
-    alert(t('updateSuccess') || '角色更新成功！');
+    console.log('Update role data:', { id: roleId, ...formData });
+
+    alert(t('updateSuccess'));
     navigateTo('role-list');
   };
 
   const handleDelete = () => {
-    if (confirm(t('confirmDelete') || '确定要删除此角色吗？此操作不可恢复。')) {
+    if (confirm(t('confirmDelete'))) {
       // 🔴 todo: 调用真实 API 删除角色
-      console.log('删除角色:', roleId);
-      
-      alert(t('deleteSuccess') || '角色已删除！');
+      console.log('Delete role:', roleId);
+
+      alert(t('deleteSuccess'));
       navigateTo('role-list');
     }
   };
 
   if (loading) {
-    return <div className="p-6 text-center">加载中...</div>;
+    return <div className="p-6 text-center">{t('loading')}</div>;
   }
 
   return (
@@ -102,7 +107,7 @@ export default function RoleEditView({ roleId, navigateTo }: Props) {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('enterRoleNamePlaceholder') || t('pleaseEnter', { field: t('roleName') })}
+                placeholder={t('enterRoleNamePlaceholder')}
               />
             </div>
 
@@ -117,7 +122,7 @@ export default function RoleEditView({ roleId, navigateTo }: Props) {
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                 disabled
-                placeholder={t('enterRoleCodePlaceholder') || t('roleCode')}
+                placeholder={t('enterRoleCodePlaceholder')}
               />
               <p className="text-xs text-gray-500 mt-1">{t('codeReadOnlyHint')}</p>
             </div>
@@ -132,7 +137,7 @@ export default function RoleEditView({ roleId, navigateTo }: Props) {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"
-                placeholder={t('enterDescriptionPlaceholder') || t('description')}
+                placeholder={t('enterDescriptionPlaceholder')}
               />
             </div>
 
@@ -143,10 +148,10 @@ export default function RoleEditView({ roleId, navigateTo }: Props) {
               </label>
               <div className="glass rounded-lg p-4 border border-gray-200">
                 <p className="text-sm text-gray-600 mb-3">{t('permissionsDescription')}</p>
-                <button 
+                <button
                   type="button"
                   className="btn-primary"
-                  onClick={() => alert(t('comingSoonPermissionConfig') || '权限配置功能开发中')}
+                  onClick={() => alert(t('comingSoonPermissionConfig'))}
                 >
                   {t('configurePermissions')}
                 </button>
@@ -159,7 +164,7 @@ export default function RoleEditView({ roleId, navigateTo }: Props) {
                 {t('createTime')}
               </label>
               <div className="px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-600">
-                {new Date().toLocaleDateString('zh-CN')}
+                {new Date().toLocaleDateString(i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US')}
               </div>
             </div>
 
@@ -171,7 +176,7 @@ export default function RoleEditView({ roleId, navigateTo }: Props) {
               >
                 {t('saveChanges')}
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => navigateTo('role-list')}

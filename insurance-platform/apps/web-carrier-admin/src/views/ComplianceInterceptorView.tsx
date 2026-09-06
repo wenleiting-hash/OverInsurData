@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ViewId } from '@/App';
-import { ShieldAlert, CheckCircle, Clock, XCircle, AlertTriangle, Filter, Download, RefreshCw, Shield } from 'lucide-react';
+import { ShieldAlert, CheckCircle, Clock, XCircle, AlertTriangle, Filter, Download, RefreshCw, Shield, Search } from 'lucide-react';
 import type { ComplianceInterception } from './data/mockComplianceData';
 import { generateMockComplianceInterceptions } from './data/mockComplianceData';
 
@@ -62,7 +62,7 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
     // Release logic - in real implementation would call API
     console.log(`Releasing interception ${interception.id}`);
     // Here we just update the local state
-    selectedIndex(null);
+    setSelectedInterception(null);
   };
 
   return (
@@ -206,7 +206,7 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
                     <div className="text-sm font-medium text-gray-900">
                       {inter.reasonDescriptions[inter.reason] || inter.reason}
                     </div>
-                    {inter.reason === 'OFACMatch' && (
+                    {inter.reason === 'ofac-match' && (
                       <div className="text-xs text-red-600 mt-1">
                         Entity: {inter.matchedEntity || 'N/A'}
                       </div>

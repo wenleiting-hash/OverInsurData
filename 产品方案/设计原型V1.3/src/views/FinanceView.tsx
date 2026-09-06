@@ -7,11 +7,13 @@ import {
   ChevronRight, ChevronsUpDown,
 } from 'lucide-react'
 import type { ViewId } from '../components/Sidebar'
+import { useLang } from '../i18n'
 import {
   commissionBills, billLineItems, reconciliationDiffs, settlementCycles,
   premiumRecords, premiumSummaries, parseTemplates, settlementHistory,
-  FREQ_LABEL, METHOD_LABEL, DIFF_TYPE_LABEL, DIFF_STATUS_STYLE, BILL_STATUS_STYLE,
-  type BillImportStatus, type DiffStatus,
+  DIFF_STATUS_STYLE, BILL_STATUS_STYLE,
+  type BillImportStatus, type DiffStatus, type DiffType, type MatchStatus,
+  type CycleFrequency, type SettlementMethod, type PremiumDiffType,
 } from '../data/financeData'
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -40,9 +42,10 @@ function fmt(n: number) {
   return '$' + n.toLocaleString()
 }
 
-// ── Tab 1 — 佣金账单导入 ──────────────────────────────────────────────────────
+// ── Tab 1 — Bill Import ───────────────────────────────────────────────────────
 
 function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void }) {
+  const { t } = useLang()
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadDone, setUploadDone] = useState(false)
@@ -65,15 +68,24 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
   const totalCommission = commissionBills.reduce((s, b) => s + b.totalCommission, 0)
   const settledCommission = commissionBills.filter(b => b.status === 'settled').reduce((s, b) => s + (b.reconciledAmount ?? b.totalCommission), 0)
 
+  const billStatusLabel: Record<BillImportStatus, string> = {
+    'pending-parse': t.finStPendingParse,
+    parsed: t.finStParsed,
+    reconciled: t.finStReconciled,
+    exception: t.finStException,
+    settled: t.finStSettled,
+    archived: t.finStArchived,
+  }
+
   return (
     <div>
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '账单总数', value: commissionBills.length, display: commissionBills.length.toString(), color: '#181C23' },
-          { label: '待处理', value: totalPending, display: totalPending.toString(), color: totalPending > 0 ? '#C0392B' : '#1E8033' },
-          { label: '本期应收佣金', value: totalCommission, display: fmt(totalCommission), color: '#0058BC' },
-          { label: '已结算金额', value: settledCommission, display: fmt(settledCommission), color: '#1E8033' },
+          { label: t.finKpiTotalBills, value: commissionBills.length, display: commissionBills.length.toString(), color: '#181C23' },
+          { label: t.finKpiPending, value: totalPending, display: totalPending.toString(), color: totalPending > 0 ? '#C0392B' : '#1E8033' },
+          { label: t.finKpiReceivable, value: totalCommission, display: fmt(totalCommission), color: '#0058BC' },
+          { label: t.finKpiSettled, value: settledCommission, display: fmt(settledCommission), color: '#1E8033' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -92,14 +104,14 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
       >
         <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.pdf,.edi" style={{ display: 'none' }} onChange={doUpload} />
         {uploading ? (
-          <><Loader2 size={28} color="#0058BC" className="animate-spin" /><span style={{ fontSize: 13.5, fontWeight: 600, color: '#0058BC' }}>正在上传并预检…</span></>
+          <><Loader2 size={28} color="#0058BC" className="animate-spin" /><span style={{ fontSize: 13.5, fontWeight: 600, color: '#0058BC' }}>{t.finUploading}</span></>
         ) : uploadDone ? (
-          <><CheckCircle2 size={28} color="#1E8033" /><span style={{ fontSize: 13.5, fontWeight: 600, color: '#1E8033' }}>上传成功，等待解析</span></>
+          <><CheckCircle2 size={28} color="#1E8033" /><span style={{ fontSize: 13.5, fontWeight: 600, color: '#1E8033' }}>{t.finUploadDone}</span></>
         ) : (
           <>
             <Upload size={28} color="#A0A5B1" />
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: '#555' }}>拖拽文件到此处，或 <span style={{ color: '#0058BC' }}>点击选择文件</span></span>
-            <span style={{ fontSize: 12, color: '#A0A5B1' }}>支持 CSV、Excel、PDF、EDI 格式 · 单文件最大 50 MB</span>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: '#555' }}>{t.finDropHere}<span style={{ color: '#0058BC' }}>{t.finPickFile}</span></span>
+            <span style={{ fontSize: 12, color: '#A0A5B1' }}>{t.finUploadHint}</span>
           </>
         )}
       </div>
@@ -111,14 +123,14 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
             const st = s !== 'all' ? BILL_STATUS_STYLE[s] : null
             return (
               <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: statusFilter === s ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: statusFilter === s ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: statusFilter === s ? '#0058BC' : '#717786', cursor: 'pointer' }}>
-                {s === 'all' ? '全部' : st?.label}
+                {s === 'all' ? t.finAll : billStatusLabel[s]}
               </button>
             )
           })}
         </div>
         <div className="relative">
           <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索账单、保险公司…" className="input-glass" style={{ paddingLeft: 30, width: 220, fontSize: 12.5 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.finSearchPlaceholder} className="input-glass" style={{ paddingLeft: 30, width: 220, fontSize: 12.5 }} />
         </div>
       </div>
 
@@ -127,7 +139,7 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['文件名', '保险公司', '账期', '状态', '保单数', '总保费', '应收佣金', '差异', '操作'].map(h => (
+              {[t.finThFile, t.finThInsurer, t.finThPeriod, t.finThStatus, t.finThPolicies, t.finThPremium, t.finThCommission, t.finThDiff, t.finThAction].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -150,23 +162,23 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
                   </td>
                   <td style={{ padding: '10px 14px', fontWeight: 600, color: '#181C23', fontSize: 13 }}>{b.insurerShort}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{b.period}</td>
-                  <td style={{ padding: '10px 14px' }}><Badge bg={st.bg} color={st.color}>{st.label}</Badge></td>
+                  <td style={{ padding: '10px 14px' }}><Badge bg={st.bg} color={st.color}>{billStatusLabel[b.status]}</Badge></td>
                   <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555', fontSize: 12.5 }}>{b.totalPolicies.toLocaleString()}</td>
                   <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555', fontSize: 12.5 }}>{fmt(b.totalPremium)}</td>
                   <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: '#0058BC', fontSize: 12.5 }}>{fmt(b.totalCommission)}</td>
                   <td style={{ padding: '10px 14px' }}>
                     {b.exceptionCount != null && b.exceptionCount > 0
-                      ? <span style={{ fontSize: 12, fontWeight: 700, color: '#C0392B' }}>{b.exceptionCount} 条差异</span>
+                      ? <span style={{ fontSize: 12, fontWeight: 700, color: '#C0392B' }}>{t.finDiffCount(b.exceptionCount)}</span>
                       : b.status === 'settled' || b.status === 'reconciled'
-                      ? <span style={{ fontSize: 12, color: '#1E8033' }}>无差异</span>
+                      ? <span style={{ fontSize: 12, color: '#1E8033' }}>{t.finNoDiff}</span>
                       : <span style={{ fontSize: 12, color: '#C1C6D7' }}>—</span>}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
                     <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                      <button className="btn-ghost" style={{ padding: 5 }} title="查看详情"><Eye size={13} /></button>
-                      {(b.status === 'pending-parse') && <button className="btn-ghost" style={{ padding: 5, color: '#0058BC' }} title="立即解析"><Zap size={13} /></button>}
-                      {(b.status === 'parsed') && <button className="btn-ghost" style={{ padding: 5, color: '#0058BC' }} title="开始对账"><ArrowUpDown size={13} /></button>}
-                      <button className="btn-ghost" style={{ padding: 5 }} title="下载"><Download size={13} /></button>
+                      <button className="btn-ghost" style={{ padding: 5 }} title={t.finViewDetail}><Eye size={13} /></button>
+                      {(b.status === 'pending-parse') && <button className="btn-ghost" style={{ padding: 5, color: '#0058BC' }} title={t.finParseNow}><Zap size={13} /></button>}
+                      {(b.status === 'parsed') && <button className="btn-ghost" style={{ padding: 5, color: '#0058BC' }} title={t.finStartRecon}><ArrowUpDown size={13} /></button>}
+                      <button className="btn-ghost" style={{ padding: 5 }} title={t.finDownload}><Download size={13} /></button>
                     </div>
                   </td>
                 </tr>
@@ -179,27 +191,28 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
   )
 }
 
-// ── Tab 2 — 佣金账单解析 ──────────────────────────────────────────────────────
+// ── Tab 2 — Bill Parsing ──────────────────────────────────────────────────────
 
 function BillParseTab() {
+  const { t } = useLang()
   const [selectedBill, setSelectedBill] = useState(commissionBills[0].id)
   const [parsing, setParsing] = useState(false)
   const [parsed, setParsed] = useState(false)
   const bill = commissionBills.find(b => b.id === selectedBill)!
   const lines = billLineItems.filter(l => l.billId === selectedBill)
-  const template = parseTemplates.find(t => t.insurerId === bill.insurerId)
+  const template = parseTemplates.find(tp => tp.insurerId === bill.insurerId)
 
   const doParse = () => {
     setParsing(true)
     setTimeout(() => { setParsing(false); setParsed(true) }, 2500)
   }
 
-  const matchStyle: Record<string, { bg: string; color: string; label: string }> = {
-    matched:     { bg: 'rgba(52,199,89,0.1)',  color: '#1E8033', label: '匹配' },
-    unmatched:   { bg: 'rgba(255,59,48,0.1)',  color: '#C0392B', label: '未匹配' },
-    'rate-diff': { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '费率差异' },
-    'amount-diff':{ bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: '金额差异' },
-    duplicate:   { bg: 'rgba(130,80,255,0.1)', color: '#7B3FCA', label: '重复行' },
+  const matchStyle: Record<MatchStatus, { bg: string; color: string; label: string }> = {
+    matched:     { bg: 'rgba(52,199,89,0.1)',  color: '#1E8033', label: t.finMatched },
+    unmatched:   { bg: 'rgba(255,59,48,0.1)',  color: '#C0392B', label: t.finUnmatched },
+    'rate-diff': { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: t.finRateDiff },
+    'amount-diff':{ bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: t.finAmountDiff },
+    duplicate:   { bg: 'rgba(130,80,255,0.1)', color: '#7B3FCA', label: t.finDuplicate },
   }
 
   return (
@@ -207,21 +220,21 @@ function BillParseTab() {
       {/* Left — bill selector + template info */}
       <div className="flex flex-col gap-3">
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>选择账单</label>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t.finSelectBill}</label>
           <select value={selectedBill} onChange={e => { setSelectedBill(e.target.value); setParsed(false) }} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
             {commissionBills.map(b => <option key={b.id} value={b.id}>{b.insurerShort} · {b.period} ({b.fileFormat})</option>)}
           </select>
         </div>
 
         <Card style={{ padding: '14px 16px' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: '#717786', marginBottom: 10, letterSpacing: 0.5, textTransform: 'uppercase' as const } as React.CSSProperties}>账单信息</div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: '#717786', marginBottom: 10, letterSpacing: 0.5, textTransform: 'uppercase' as const } as React.CSSProperties}>{t.finBillInfo}</div>
           {[
-            ['文件名', bill.fileName.length > 24 ? bill.fileName.slice(0, 24) + '…' : bill.fileName],
-            ['格式', bill.fileFormat],
-            ['账期', bill.period],
-            ['保单数', bill.totalPolicies.toLocaleString()],
-            ['总保费', fmt(bill.totalPremium)],
-            ['应收佣金', fmt(bill.totalCommission)],
+            [t.finThFile, bill.fileName.length > 24 ? bill.fileName.slice(0, 24) + '…' : bill.fileName],
+            [t.finTfFormat, bill.fileFormat],
+            [t.finThPeriod, bill.period],
+            [t.finThPolicies, bill.totalPolicies.toLocaleString()],
+            [t.finThPremium, fmt(bill.totalPremium)],
+            [t.finThCommission, fmt(bill.totalCommission)],
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between" style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', padding: '6px 0', fontSize: 12 }}>
               <span style={{ color: '#717786' }}>{k}</span>
@@ -232,16 +245,16 @@ function BillParseTab() {
 
         {template && (
           <Card style={{ padding: '14px 16px' }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#717786', marginBottom: 10, letterSpacing: 0.5, textTransform: 'uppercase' as const } as React.CSSProperties}>解析模板</div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#717786', marginBottom: 10, letterSpacing: 0.5, textTransform: 'uppercase' as const } as React.CSSProperties}>{t.finParseTemplate}</div>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>{template.templateName}</div>
             {[
-              ['保单号列', template.policyCol],
-              ['保费列', template.premiumCol],
-              ['佣金列', template.commissionCol],
-              ['日期列', template.dateCol],
-              ['标题行', `第 ${template.headerRow + 1} 行`],
-              ['使用次数', template.usageCount.toString()],
-              ['成功率', (template.successRate * 100).toFixed(1) + '%'],
+              [t.finColPolicy, template.policyCol],
+              [t.finColPremium, template.premiumCol],
+              [t.finColCommission, template.commissionCol],
+              [t.finColDate, template.dateCol],
+              [t.finHeaderRow, t.finHeaderRowVal(template.headerRow + 1)],
+              [t.finUsageCount, template.usageCount.toString()],
+              [t.finSuccessRate, (template.successRate * 100).toFixed(1) + '%'],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between" style={{ padding: '5px 0', fontSize: 12 }}>
                 <span style={{ color: '#717786' }}>{k}</span>
@@ -249,13 +262,13 @@ function BillParseTab() {
               </div>
             ))}
             <button className="btn-ghost" style={{ marginTop: 8, width: '100%', padding: '6px', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-              <Edit2 size={11} /> 编辑模板
+              <Edit2 size={11} /> {t.finEditTemplate}
             </button>
           </Card>
         )}
 
         <button onClick={doParse} disabled={parsing} style={{ padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: parsing ? 'rgba(0,88,188,0.3)' : '#0058BC', color: '#fff', border: 'none', cursor: parsing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          {parsing ? <><Loader2 size={14} className="animate-spin" />解析中…</> : <><Zap size={14} />开始解析</>}
+          {parsing ? <><Loader2 size={14} className="animate-spin" />{t.finParsing}</> : <><Zap size={14} />{t.finStartParse}</>}
         </button>
       </div>
 
@@ -264,18 +277,18 @@ function BillParseTab() {
         {!parsed && !parsing && lines.length === 0 ? (
           <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 12, color: '#A0A5B1' }}>
             <FileText size={40} />
-            <div style={{ fontSize: 14, fontWeight: 600 }}>点击"开始解析"以提取账单数据</div>
-            <div style={{ fontSize: 12 }}>系统将根据模板规则自动识别各字段</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{t.finParseEmpty}</div>
+            <div style={{ fontSize: 12 }}>{t.finParseEmptyHint}</div>
           </Card>
         ) : (
           <div>
             {(parsed || lines.length > 0) && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
                 {[
-                  { label: '解析行数', value: (bill.parsedPolicies ?? lines.length).toLocaleString(), color: '#0058BC' },
-                  { label: '匹配成功', value: (bill.matchedPolicies ?? lines.filter(l => l.matchStatus === 'matched').length).toLocaleString(), color: '#1E8033' },
-                  { label: '存在差异', value: (bill.exceptionCount ?? lines.filter(l => l.matchStatus !== 'matched').length).toLocaleString(), color: '#C0392B' },
-                  { label: '匹配率', value: bill.matchedPolicies ? ((bill.matchedPolicies / bill.totalPolicies) * 100).toFixed(1) + '%' : '—', color: '#7B3FCA' },
+                  { label: t.finKpiParsedLines, value: (bill.parsedPolicies ?? lines.length).toLocaleString(), color: '#0058BC' },
+                  { label: t.finKpiMatched, value: (bill.matchedPolicies ?? lines.filter(l => l.matchStatus === 'matched').length).toLocaleString(), color: '#1E8033' },
+                  { label: t.finStException, value: (bill.exceptionCount ?? lines.filter(l => l.matchStatus !== 'matched').length).toLocaleString(), color: '#C0392B' },
+                  { label: t.finKpiMatchRate, value: bill.matchedPolicies ? ((bill.matchedPolicies / bill.totalPolicies) * 100).toFixed(1) + '%' : '—', color: '#7B3FCA' },
                 ].map(s => (
                   <Card key={s.label} style={{ padding: '12px 14px' }}>
                     <div style={{ fontSize: 11, color: '#717786', marginBottom: 4 }}>{s.label}</div>
@@ -290,7 +303,7 @@ function BillParseTab() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
                   <thead>
                     <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-                      {['行#', '保单号', '被保人', '州', '保费', '费率', '佣金(账单)', '佣金(系统)', '差额', '状态'].map(h => (
+                      {[t.finThLine, t.finThPolicyNo, t.finThInsured, t.finThState, t.finThPrem, t.finThRate, t.finThCommBill, t.finThCommSystem, t.finThDiffAmount, t.finThStatus].map(h => (
                         <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
@@ -331,9 +344,10 @@ function BillParseTab() {
   )
 }
 
-// ── Tab 3 — 佣金对账 ──────────────────────────────────────────────────────────
+// ── Tab 3 — Commission Reconciliation ─────────────────────────────────────────
 
 function CommissionReconcileTab() {
+  const { t } = useLang()
   const [period, setPeriod] = useState('2026-08')
   const [insurer, setInsurer] = useState('all')
 
@@ -344,38 +358,47 @@ function CommissionReconcileTab() {
   const totalDiff = billsToRecon.reduce((s, b) => s + (b.differenceAmount ?? 0), 0)
   const exceptionTotal = billsToRecon.reduce((s, b) => s + (b.exceptionCount ?? 0), 0)
 
+  const billStatusLabel: Record<BillImportStatus, string> = {
+    'pending-parse': t.finStPendingParse,
+    parsed: t.finStParsed,
+    reconciled: t.finStReconciled,
+    exception: t.finStException,
+    settled: t.finStSettled,
+    archived: t.finStArchived,
+  }
+
   return (
     <div>
       {/* Toolbar */}
       <div className="flex items-center gap-3 mb-5">
         <div>
-          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 4 }}>账期</label>
+          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 4 }}>{t.finThPeriod}</label>
           <select value={period} onChange={e => setPeriod(e.target.value)} className="input-glass" style={{ fontSize: 13, minWidth: 140 }}>
             {['2026-08', '2026-07', '2026-06', '2026-Q3', '2026-Q2'].map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 4 }}>保险公司</label>
+          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 4 }}>{t.finThInsurer}</label>
           <select value={insurer} onChange={e => setInsurer(e.target.value)} className="input-glass" style={{ fontSize: 13, minWidth: 160 }}>
-            <option value="all">全部保险公司</option>
+            <option value="all">{t.anAllInsurers}</option>
             {['Travelers', 'Liberty Mutual', 'Nationwide', 'Chubb', 'AIG', 'Zurich'].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </div>
         <button style={{ alignSelf: 'flex-end', padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <RefreshCw size={13} /> 批量对账
+          <RefreshCw size={13} /> {t.finBatchRecon}
         </button>
         <button style={{ alignSelf: 'flex-end', padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600, background: 'rgba(0,88,188,0.08)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Download size={13} /> 导出对账报告
+          <Download size={13} /> {t.finExportReport}
         </button>
       </div>
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '账单应收佣金', value: fmt(totalBill), sub: `${billsToRecon.length} 张账单`, color: '#0058BC', bg: 'rgba(0,88,188,0.06)' },
-          { label: '系统核实佣金', value: fmt(totalOur), sub: '已完成对账', color: '#1E8033', bg: 'rgba(52,199,89,0.06)' },
-          { label: '差异金额', value: fmt(totalDiff), sub: `${exceptionTotal} 条差异项`, color: totalDiff > 0 ? '#C0392B' : '#1E8033', bg: totalDiff > 0 ? 'rgba(255,59,48,0.06)' : 'rgba(52,199,89,0.06)' },
-          { label: '对账完成率', value: ((billsToRecon.filter(b => b.exceptionCount === 0 || b.status === 'reconciled').length / Math.max(billsToRecon.length, 1)) * 100).toFixed(0) + '%', sub: '无差异账单占比', color: '#7B3FCA', bg: 'rgba(123,63,202,0.06)' },
+          { label: t.finKpiBillCommission, value: fmt(totalBill), sub: t.finBillsSub(billsToRecon.length), color: '#0058BC', bg: 'rgba(0,88,188,0.06)' },
+          { label: t.finKpiVerified, value: fmt(totalOur), sub: t.finReconDone, color: '#1E8033', bg: 'rgba(52,199,89,0.06)' },
+          { label: t.finKpiDiffAmount, value: fmt(totalDiff), sub: t.finDiffItemsSub(exceptionTotal), color: totalDiff > 0 ? '#C0392B' : '#1E8033', bg: totalDiff > 0 ? 'rgba(255,59,48,0.06)' : 'rgba(52,199,89,0.06)' },
+          { label: t.finKpiReconRate, value: ((billsToRecon.filter(b => b.exceptionCount === 0 || b.status === 'reconciled').length / Math.max(billsToRecon.length, 1)) * 100).toFixed(0) + '%', sub: t.finCleanRatio, color: '#7B3FCA', bg: 'rgba(123,63,202,0.06)' },
         ].map(s => (
           <Card key={s.label} style={{ background: s.bg }}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -387,11 +410,11 @@ function CommissionReconcileTab() {
 
       {/* Per-insurer reconciliation table */}
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
-        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', fontSize: 13, fontWeight: 700, color: '#181C23' }}>各保险公司对账汇总</div>
+        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', fontSize: 13, fontWeight: 700, color: '#181C23' }}>{t.finSummaryTitle}</div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['保险公司', '账单金额', '系统金额', '差异金额', '差异条数', '状态', '操作'].map(h => (
+              {[t.finThInsurer, t.finThBillAmount, t.finThSystemAmount, t.finKpiDiffAmount, t.finThDiffCount, t.finThStatus, t.finThAction].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786' }}>{h}</th>
               ))}
             </tr>
@@ -414,7 +437,7 @@ function CommissionReconcileTab() {
                   <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: (b.exceptionCount ?? 0) > 0 ? '#C0392B' : '#1E8033', fontWeight: 700 }}>
                     {b.exceptionCount ?? 0}
                   </td>
-                  <td style={{ padding: '10px 14px' }}><Badge bg={st.bg} color={st.color}>{st.label}</Badge></td>
+                  <td style={{ padding: '10px 14px' }}><Badge bg={st.bg} color={st.color}>{billStatusLabel[b.status]}</Badge></td>
                   <td style={{ padding: '10px 14px' }}>
                     <div className="flex gap-1">
                       <button className="btn-ghost" style={{ padding: 5 }}><Eye size={13} /></button>
@@ -430,12 +453,12 @@ function CommissionReconcileTab() {
 
       {/* Waterfall visualization */}
       <Card>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>账单对账瀑布分析</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{t.finWaterfallTitle}</div>
         <div className="flex flex-col gap-3">
           {[
-            { label: '账单应收佣金合计', amount: totalBill, color: '#0058BC', width: 100 },
-            { label: '匹配确认金额', amount: totalOur, color: '#1E8033', width: Math.round((totalOur / totalBill) * 100) },
-            { label: '差异未结金额', amount: totalDiff, color: '#C0392B', width: Math.round((totalDiff / totalBill) * 100) },
+            { label: t.finWfTotal, amount: totalBill, color: '#0058BC', width: 100 },
+            { label: t.finWfMatched, amount: totalOur, color: '#1E8033', width: Math.round((totalOur / totalBill) * 100) },
+            { label: t.finWfUnresolved, amount: totalDiff, color: '#C0392B', width: Math.round((totalDiff / totalBill) * 100) },
           ].map(row => (
             <div key={row.label} className="flex items-center gap-3">
               <div style={{ width: 140, fontSize: 12.5, color: '#717786', flexShrink: 0 }}>{row.label}</div>
@@ -451,9 +474,10 @@ function CommissionReconcileTab() {
   )
 }
 
-// ── Tab 4 — 差异处理 ──────────────────────────────────────────────────────────
+// ── Tab 4 — Diff Handling ─────────────────────────────────────────────────────
 
 function DiffHandlingTab() {
+  const { lang, t } = useLang()
   const [statusFilter, setStatusFilter] = useState<DiffStatus | 'all'>('all')
   const [selectedDiff, setSelectedDiff] = useState<string | null>(null)
   const [processingAction, setProcessingAction] = useState<string | null>(null)
@@ -471,15 +495,32 @@ function DiffHandlingTab() {
 
   const totalDiff = reconciliationDiffs.filter(d => d.status === 'open' || d.status === 'under-review' || d.status === 'disputed').reduce((s, d) => s + Math.abs(d.diffAmount), 0)
 
+  const diffStatusLabel: Record<DiffStatus, string> = {
+    open: t.finDsOpen,
+    'under-review': t.finDsReview,
+    accepted: t.finDsAccepted,
+    disputed: t.finDsDisputed,
+    adjusted: t.finDsAdjusted,
+    waived: t.finDsWaived,
+  }
+
+  const diffTypeLabel: Record<DiffType, string> = {
+    'rate-mismatch': t.finRateDiff,
+    'amount-mismatch': t.finAmountDiff,
+    'missing-policy': t.finDtMissingPolicy,
+    duplicate: t.finDuplicate,
+    'missing-in-bill': t.finDtMissingInBill,
+  }
+
   return (
     <div>
       {/* Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '待处理差异', value: (counts['open'] ?? 0).toString(), color: '#C0392B' },
-          { label: '争议中', value: (counts['disputed'] ?? 0).toString(), color: '#B06000' },
-          { label: '涉及金额', value: fmt(totalDiff), color: '#0058BC' },
-          { label: '已结案', value: ((counts['accepted'] ?? 0) + (counts['adjusted'] ?? 0) + (counts['waived'] ?? 0)).toString(), color: '#1E8033' },
+          { label: t.finKpiOpen, value: (counts['open'] ?? 0).toString(), color: '#C0392B' },
+          { label: t.finKpiDisputed, value: (counts['disputed'] ?? 0).toString(), color: '#B06000' },
+          { label: t.finKpiInvolved, value: fmt(totalDiff), color: '#0058BC' },
+          { label: t.finKpiClosed, value: ((counts['accepted'] ?? 0) + (counts['adjusted'] ?? 0) + (counts['waived'] ?? 0)).toString(), color: '#1E8033' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -494,7 +535,7 @@ function DiffHandlingTab() {
           const st = s !== 'all' ? DIFF_STATUS_STYLE[s] : null
           return (
             <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: statusFilter === s ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: statusFilter === s ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: statusFilter === s ? '#0058BC' : '#717786', cursor: 'pointer' }}>
-              {s === 'all' ? `全部 (${counts.all})` : `${st?.label} (${counts[s] ?? 0})`}
+              {s === 'all' ? `${t.finAll} (${counts.all})` : `${diffStatusLabel[s]} (${counts[s] ?? 0})`}
             </button>
           )
         })}
@@ -510,21 +551,21 @@ function DiffHandlingTab() {
               <div className="flex items-start justify-between" style={{ padding: '14px 16px', cursor: 'pointer' }} onClick={() => setSelectedDiff(isSelected ? null : d.id)}>
                 <div style={{ flex: 1 }}>
                   <div className="flex items-center gap-3 mb-1">
-                    <Badge bg={st.bg} color={st.color}>{st.label}</Badge>
-                    <span style={{ fontSize: 11.5, background: 'rgba(180,180,180,0.12)', color: '#555', borderRadius: 5, padding: '2px 7px', fontWeight: 600 }}>{DIFF_TYPE_LABEL[d.diffType]}</span>
+                    <Badge bg={st.bg} color={st.color}>{diffStatusLabel[d.status]}</Badge>
+                    <span style={{ fontSize: 11.5, background: 'rgba(180,180,180,0.12)', color: '#555', borderRadius: 5, padding: '2px 7px', fontWeight: 600 }}>{diffTypeLabel[d.diffType]}</span>
                     <Mono style={{ fontSize: 12, color: '#0058BC', fontWeight: 700 }}>{d.policyNumber}</Mono>
                     <span style={{ fontSize: 12.5, color: '#181C23' }}>{d.insuredName}</span>
                   </div>
                   <div className="flex items-center gap-4" style={{ fontSize: 12 }}>
                     <span style={{ color: '#717786' }}>{d.insurerShort} · {d.billName.length > 30 ? d.billName.slice(0, 30) + '…' : d.billName}</span>
-                    <span style={{ color: '#A0A5B1' }}>创建：<Mono>{d.createdDate}</Mono></span>
-                    {d.resolvedDate && <span style={{ color: '#A0A5B1' }}>结案：<Mono>{d.resolvedDate}</Mono></span>}
-                    {d.assignedTo && <span style={{ color: '#0058BC' }}>处理人：{d.assignedTo}</span>}
+                    <span style={{ color: '#A0A5B1' }}>{t.finCreated}<Mono>{d.createdDate}</Mono></span>
+                    {d.resolvedDate && <span style={{ color: '#A0A5B1' }}>{t.finResolved}<Mono>{d.resolvedDate}</Mono></span>}
+                    {d.assignedTo && <span style={{ color: '#0058BC' }}>{t.finAssignee}{d.assignedTo}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-3 ml-4">
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 11, color: '#717786' }}>账单 vs 系统</div>
+                    <div style={{ fontSize: 11, color: '#717786' }}>{t.finBillVsSystem}</div>
                     <div style={{ fontSize: 13.5, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: d.diffAmount > 0 ? '#C0392B' : d.diffAmount < 0 ? '#B06000' : '#1E8033' }}>
                       {d.diffAmount > 0 ? '+' : ''}{fmt(d.diffAmount)}
                     </div>
@@ -538,31 +579,31 @@ function DiffHandlingTab() {
                 <div style={{ borderTop: '0.5px solid rgba(193,198,215,0.35)', padding: '14px 16px', background: 'rgba(249,249,255,0.6)' }}>
                   {d.note && (
                     <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(255,159,10,0.08)', border: '1px solid rgba(255,159,10,0.2)', fontSize: 12.5, color: '#7A5000', marginBottom: 12 }}>
-                      <span style={{ fontWeight: 600 }}>当前处理备注：</span>{d.note}
+                      <span style={{ fontWeight: 600 }}>{t.finCurrentNote}</span>{lang === 'en' ? d.noteEn ?? d.note : d.note}
                     </div>
                   )}
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>添加处理备注</label>
-                    <textarea rows={2} placeholder="记录核查结论或处理决定…" className="input-glass" style={{ width: '100%', fontSize: 13, resize: 'vertical' }} />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t.finAddNote}</label>
+                    <textarea rows={2} placeholder={t.finNotePlaceholder} className="input-glass" style={{ width: '100%', fontSize: 13, resize: 'vertical' }} />
                   </div>
                   <div className="flex items-center gap-2">
                     {d.status === 'open' && (
                       <>
                         <button onClick={() => doAction(d.id, 'review')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          {isProcessing ? <Loader2 size={12} className="animate-spin" /> : <Eye size={12} />} 发起审核
+                          {isProcessing ? <Loader2 size={12} className="animate-spin" /> : <Eye size={12} />} {t.finStartReview}
                         </button>
-                        <button onClick={() => doAction(d.id, 'dispute')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(255,159,10,0.1)', color: '#B06000', border: '1px solid rgba(255,159,10,0.2)', cursor: 'pointer' }}>标记争议</button>
-                        <button onClick={() => doAction(d.id, 'waive')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(180,180,180,0.12)', color: '#717786', border: '1px solid rgba(193,198,215,0.4)', cursor: 'pointer' }}>豁免处理</button>
+                        <button onClick={() => doAction(d.id, 'dispute')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(255,159,10,0.1)', color: '#B06000', border: '1px solid rgba(255,159,10,0.2)', cursor: 'pointer' }}>{t.finMarkDispute}</button>
+                        <button onClick={() => doAction(d.id, 'waive')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(180,180,180,0.12)', color: '#717786', border: '1px solid rgba(193,198,215,0.4)', cursor: 'pointer' }}>{t.finWaive}</button>
                       </>
                     )}
                     {(d.status === 'under-review' || d.status === 'disputed') && (
                       <>
                         <button onClick={() => doAction(d.id, 'accept')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(52,199,89,0.1)', color: '#1E8033', border: '1px solid rgba(52,199,89,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <Check size={12} /> 认可账单金额
+                          <Check size={12} /> {t.finAcceptBill}
                         </button>
-                        <button onClick={() => doAction(d.id, 'adjust')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(123,63,202,0.1)', color: '#7B3FCA', border: '1px solid rgba(123,63,202,0.2)', cursor: 'pointer' }}>调整系统金额</button>
+                        <button onClick={() => doAction(d.id, 'adjust')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(123,63,202,0.1)', color: '#7B3FCA', border: '1px solid rgba(123,63,202,0.2)', cursor: 'pointer' }}>{t.finAdjustSystem}</button>
                         <button onClick={() => doAction(d.id, 'reject')} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: 'rgba(255,59,48,0.1)', color: '#C0392B', border: '1px solid rgba(255,59,48,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <X size={12} /> 拒绝账单项
+                          <X size={12} /> {t.finRejectItem}
                         </button>
                       </>
                     )}
@@ -577,24 +618,39 @@ function DiffHandlingTab() {
   )
 }
 
-// ── Tab 5 — 结算周期配置 ──────────────────────────────────────────────────────
+// ── Tab 5 — Settlement Cycles ─────────────────────────────────────────────────
 
 function SettlementCycleTab() {
+  const { t } = useLang()
   const [editId, setEditId] = useState<string | null>(null)
   const editCycle = settlementCycles.find(c => c.id === editId)
 
   const totalNextDue = settlementCycles.reduce((s, c) => s + (c.nextDueAmount ?? 0), 0)
   const totalYtd = settlementCycles.reduce((s, c) => s + c.ytdSettled, 0)
 
+  const freqLabel: Record<CycleFrequency, string> = {
+    monthly: t.finFreqMonthly,
+    quarterly: t.finFreqQuarterly,
+    'semi-annual': t.finFreqSemiAnnual,
+    annual: t.finFreqAnnual,
+    custom: t.finFreqCustom,
+  }
+  const methodLabel: Record<SettlementMethod, string> = {
+    'wire-transfer': t.finMethodWire,
+    ach: t.finMethodAch,
+    check: t.finMethodCheck,
+    offset: t.finMethodOffset,
+  }
+
   return (
     <div>
       {/* KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '已配置结算关系', value: settlementCycles.length.toString(), color: '#0058BC' },
-          { label: '本月即将结算', value: fmt(totalNextDue), color: '#B06000' },
-          { label: '本年累计已结算', value: fmt(totalYtd), color: '#1E8033' },
-          { label: '自动对账已启用', value: settlementCycles.filter(c => c.autoReconcile).length.toString(), color: '#7B3FCA' },
+          { label: t.finKpiConfigs, value: settlementCycles.length.toString(), color: '#0058BC' },
+          { label: t.finKpiDueMonth, value: fmt(totalNextDue), color: '#B06000' },
+          { label: t.finKpiYtd, value: fmt(totalYtd), color: '#1E8033' },
+          { label: t.finKpiAutoEnabled, value: settlementCycles.filter(c => c.autoReconcile).length.toString(), color: '#7B3FCA' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -612,8 +668,8 @@ function SettlementCycleTab() {
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#181C23' }}>{c.insurerShort}</div>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{FREQ_LABEL[c.frequency]}</Badge>
-                    <Badge bg="rgba(123,63,202,0.1)" color="#7B3FCA">{METHOD_LABEL[c.method]}</Badge>
+                    <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{freqLabel[c.frequency]}</Badge>
+                    <Badge bg="rgba(123,63,202,0.1)" color="#7B3FCA">{methodLabel[c.method]}</Badge>
                   </div>
                 </div>
                 <button className="btn-ghost" style={{ padding: 6 }} onClick={() => setEditId(editId === c.id ? null : c.id)}><Settings size={14} /></button>
@@ -621,11 +677,11 @@ function SettlementCycleTab() {
 
               <div className="flex flex-col gap-2" style={{ fontSize: 12.5 }}>
                 {[
-                  ['结算日', `每月 ${c.cutoffDay} 日截止 · ${c.paymentDueDays}d 内付款`],
-                  ['下次结算', c.nextDueDate],
-                  ['应结金额', c.nextDueAmount ? fmt(c.nextDueAmount) : '待确定'],
-                  ['本年累结', fmt(c.ytdSettled)],
-                  ['银行账户', c.bankAccount ?? '未配置'],
+                  [t.finRowCutoff, t.finRowCutoffVal(c.cutoffDay, c.paymentDueDays)],
+                  [t.finRowNextDue, c.nextDueDate],
+                  [t.finRowDueAmount, c.nextDueAmount ? fmt(c.nextDueAmount) : t.finTbd],
+                  [t.finRowYtd, fmt(c.ytdSettled)],
+                  [t.finRowBank, c.bankAccount ?? t.finNotConfigured],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between">
                     <span style={{ color: '#717786' }}>{k}</span>
@@ -637,13 +693,13 @@ function SettlementCycleTab() {
               <div className="flex items-center gap-3 mt-3 pt-3" style={{ borderTop: '0.5px solid rgba(193,198,215,0.3)', fontSize: 12 }}>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: c.autoReconcile ? '#34C759' : '#C1C6D7' }} />
-                  <span style={{ color: '#717786' }}>自动对账</span>
+                  <span style={{ color: '#717786' }}>{t.finAutoRecon}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: c.autoSettle ? '#34C759' : '#C1C6D7' }} />
-                  <span style={{ color: '#717786' }}>自动结算</span>
+                  <span style={{ color: '#717786' }}>{t.finAutoSettle}</span>
                 </div>
-                <span style={{ color: '#A0A5B1', marginLeft: 'auto', fontSize: 11 }}>提前 {c.notifyDaysBefore}d 通知</span>
+                <span style={{ color: '#A0A5B1', marginLeft: 'auto', fontSize: 11 }}>{t.finNotifyBefore(c.notifyDaysBefore)}</span>
               </div>
             </Card>
           ))}
@@ -651,7 +707,7 @@ function SettlementCycleTab() {
           {/* Add new */}
           <button onClick={() => setEditId('new')} style={{ borderRadius: 14, border: '2px dashed rgba(193,198,215,0.5)', background: 'rgba(255,255,255,0.3)', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', color: '#A0A5B1', minHeight: 200 }}>
             <Plus size={22} />
-            <span style={{ fontSize: 13, fontWeight: 600 }}>新增结算配置</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{t.finAddConfig}</span>
           </button>
         </div>
 
@@ -659,19 +715,19 @@ function SettlementCycleTab() {
         {editId && editCycle && (
           <Card style={{ padding: '18px 20px', alignSelf: 'flex-start', position: 'sticky', top: 0 }}>
             <div className="flex items-center justify-between mb-4">
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>编辑结算配置 — {editCycle.insurerShort}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>{t.finEditConfigTitle(editCycle.insurerShort)}</div>
               <button className="btn-ghost" style={{ padding: 4 }} onClick={() => setEditId(null)}><X size={14} /></button>
             </div>
             <div className="flex flex-col gap-4">
               {[
-                { label: '结算频率', type: 'select', options: Object.entries(FREQ_LABEL).map(([v, l]) => ({ v, l })), value: editCycle.frequency },
-                { label: '截止日（月内第N天）', type: 'number', value: editCycle.cutoffDay },
-                { label: '付款宽限期（天）', type: 'number', value: editCycle.paymentDueDays },
-                { label: '结算方式', type: 'select', options: Object.entries(METHOD_LABEL).map(([v, l]) => ({ v, l })), value: editCycle.method },
-                { label: '最低结算金额', type: 'number', value: editCycle.minSettleAmount },
-                { label: '提前通知天数', type: 'number', value: editCycle.notifyDaysBefore },
-                { label: '联系邮箱', type: 'text', value: editCycle.contactEmail },
-                { label: '银行账号', type: 'text', value: editCycle.bankAccount ?? '' },
+                { label: t.finFieldFrequency, type: 'select', options: Object.entries(freqLabel).map(([v, l]) => ({ v, l })), value: editCycle.frequency },
+                { label: t.finFieldCutoff, type: 'number', value: editCycle.cutoffDay },
+                { label: t.finFieldGrace, type: 'number', value: editCycle.paymentDueDays },
+                { label: t.finFieldMethod, type: 'select', options: Object.entries(methodLabel).map(([v, l]) => ({ v, l })), value: editCycle.method },
+                { label: t.finFieldMinAmount, type: 'number', value: editCycle.minSettleAmount },
+                { label: t.finFieldNotify, type: 'number', value: editCycle.notifyDaysBefore },
+                { label: t.finFieldEmail, type: 'text', value: editCycle.contactEmail },
+                { label: t.finFieldBank, type: 'text', value: editCycle.bankAccount ?? '' },
               ].map(f => (
                 <div key={f.label}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 5 }}>{f.label}</label>
@@ -685,13 +741,13 @@ function SettlementCycleTab() {
                 </div>
               ))}
               <div className="flex flex-col gap-2">
-                {[['autoReconcile', '启用自动对账', editCycle.autoReconcile], ['autoSettle', '启用自动结算', editCycle.autoSettle]].map(([k, l, v]) => (
+                {[['autoReconcile', t.finChkAutoRecon, editCycle.autoReconcile], ['autoSettle', t.finChkAutoSettle, editCycle.autoSettle]].map(([k, l, v]) => (
                   <label key={k as string} className="flex items-center gap-2" style={{ cursor: 'pointer', fontSize: 13, color: '#181C23' }}>
                     <input type="checkbox" defaultChecked={v as boolean} />{l as string}
                   </label>
                 ))}
               </div>
-              <button style={{ padding: '9px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>保存配置</button>
+              <button style={{ padding: '9px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>{t.finSaveConfig}</button>
             </div>
           </Card>
         )}
@@ -699,26 +755,26 @@ function SettlementCycleTab() {
 
       {/* Settlement history */}
       <div style={{ marginTop: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>结算历史</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{t.finHistoryTitle}</div>
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-                {['保险公司', '账期', '结算日期', '结算金额', '结算方式', '参考编号', '状态', '确认人'].map(h => (
+                {[t.finThInsurer, t.finThPeriod, t.finThSettleDate, t.finThSettleAmount, t.finFieldMethod, t.finThRefNo, t.finThStatus, t.finThConfirmedBy].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {settlementHistory.map((s, i) => {
-                const statusS = s.status === 'completed' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: '已完成' } : s.status === 'pending' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '待结算' } : s.status === 'failed' ? { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: '失败' } : { bg: 'rgba(180,180,180,0.15)', color: '#666', label: '已冲销' }
+                const statusS = s.status === 'completed' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: t.finRsCompleted } : s.status === 'pending' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: t.finRsPending } : s.status === 'failed' ? { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: t.finRsFailed } : { bg: 'rgba(180,180,180,0.15)', color: '#666', label: t.finRsReversed }
                 return (
                   <tr key={s.id} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
                     <td style={{ padding: '10px 14px', fontWeight: 700, color: '#181C23' }}>{s.insurerShort}</td>
                     <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555', fontSize: 12 }}>{s.period}</td>
-                    <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: s.settledDate ? '#555' : '#C1C6D7', fontSize: 12 }}>{s.settledDate || '待执行'}</td>
+                    <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: s.settledDate ? '#555' : '#C1C6D7', fontSize: 12 }}>{s.settledDate || t.finPendingExec}</td>
                     <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: '#0058BC', fontSize: 12.5 }}>{fmt(s.amount)}</td>
-                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#555' }}>{METHOD_LABEL[s.method]}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#555' }}>{methodLabel[s.method]}</td>
                     <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: s.referenceNumber ? '#555' : '#C1C6D7' }}>{s.referenceNumber || '—'}</td>
                     <td style={{ padding: '10px 14px' }}><Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge></td>
                     <td style={{ padding: '10px 14px', fontSize: 12, color: s.confirmedBy ? '#555' : '#C1C6D7' }}>{s.confirmedBy || '—'}</td>
@@ -733,9 +789,10 @@ function SettlementCycleTab() {
   )
 }
 
-// ── Tab 6 — 保费对账 ──────────────────────────────────────────────────────────
+// ── Tab 6 — Premium Reconciliation ────────────────────────────────────────────
 
 function PremiumReconcileTab() {
+  const { lang, t } = useLang()
   const [selectedInsurer, setSelectedInsurer] = useState('all')
 
   const filtered = premiumRecords.filter(r => selectedInsurer === 'all' || r.insurerShort === selectedInsurer)
@@ -747,14 +804,18 @@ function PremiumReconcileTab() {
   const exceptionCount = summaries.reduce((s, r) => s + r.exceptionCount, 0)
 
   const statusStyle: Record<string, { bg: string; color: string; label: string }> = {
-    matched:   { bg: 'rgba(52,199,89,0.1)',   color: '#1E8033', label: '匹配' },
-    exception: { bg: 'rgba(255,59,48,0.1)',   color: '#C0392B', label: '差异' },
-    adjusted:  { bg: 'rgba(123,63,202,0.1)',  color: '#7B3FCA', label: '已调整' },
-    pending:   { bg: 'rgba(255,159,10,0.1)',  color: '#B06000', label: '待确认' },
+    matched:   { bg: 'rgba(52,199,89,0.1)',   color: '#1E8033', label: t.finMatched },
+    exception: { bg: 'rgba(255,59,48,0.1)',   color: '#C0392B', label: t.finPsException },
+    adjusted:  { bg: 'rgba(123,63,202,0.1)',  color: '#7B3FCA', label: t.finDsAdjusted },
+    pending:   { bg: 'rgba(255,159,10,0.1)',  color: '#B06000', label: t.finPsPending },
   }
 
-  const diffTypeLabel: Record<string, string> = {
-    'missing-remittance': '未收到保费', 'over-remittance': '保费多缴', 'rate-error': '费率计算错误', 'cancellation-adj': '退保调整', 'endorsement-adj': '批单调整',
+  const diffTypeLabel: Record<PremiumDiffType, string> = {
+    'missing-remittance': t.finPdtMissing,
+    'over-remittance': t.finPdtOver,
+    'rate-error': t.finPdtRateError,
+    'cancellation-adj': t.finPdtCancellation,
+    'endorsement-adj': t.finPdtEndorsement,
   }
 
   return (
@@ -762,10 +823,10 @@ function PremiumReconcileTab() {
       {/* KPI */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '应收保费', value: fmt(totalExpected), color: '#0058BC' },
-          { label: '已到账保费', value: fmt(totalRemitted), color: '#1E8033' },
-          { label: '差异金额', value: fmt(Math.abs(totalDiff)), sub: totalDiff > 0 ? '未足额到账' : totalDiff < 0 ? '多到账' : '无差异', color: totalDiff !== 0 ? '#C0392B' : '#1E8033' },
-          { label: '异常保单', value: exceptionCount.toString(), color: exceptionCount > 0 ? '#C0392B' : '#1E8033' },
+          { label: t.finKpiExpected, value: fmt(totalExpected), color: '#0058BC' },
+          { label: t.finKpiReceived, value: fmt(totalRemitted), color: '#1E8033' },
+          { label: t.finKpiDiffAmount, value: fmt(Math.abs(totalDiff)), sub: totalDiff > 0 ? t.finSubShort : totalDiff < 0 ? t.finSubOver : t.finNoDiff, color: totalDiff !== 0 ? '#C0392B' : '#1E8033' },
+          { label: t.finKpiExceptions, value: exceptionCount.toString(), color: exceptionCount > 0 ? '#C0392B' : '#1E8033' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -778,16 +839,16 @@ function PremiumReconcileTab() {
       {/* Per-insurer summary table */}
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
         <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>各保险公司保费对账汇总</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>{t.finPremiumSummaryTitle}</span>
           <select value={selectedInsurer} onChange={e => setSelectedInsurer(e.target.value)} className="input-glass" style={{ fontSize: 12.5, minWidth: 160 }}>
-            <option value="all">全部</option>
+            <option value="all">{t.finAll}</option>
             {premiumSummaries.map(s => <option key={s.insurerId} value={s.insurerShort}>{s.insurerShort}</option>)}
           </select>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['保险公司', '账期', '保单数', '应收保费', '已到账', '差异', '匹配率', '异常条数'].map(h => (
+              {[t.finThInsurer, t.finThPeriod, t.finThPolicies, t.finKpiExpected, t.finThReceived, t.finThDiff, t.finThMatchRate, t.finThExceptionCount].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -823,7 +884,7 @@ function PremiumReconcileTab() {
       </Card>
 
       {/* Detail records */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>保费对账明细</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{t.finDetailTitle}</div>
       <div className="flex flex-col gap-3">
         {filtered.map(r => {
           const ss = statusStyle[r.status]
@@ -838,21 +899,21 @@ function PremiumReconcileTab() {
                     <Mono style={{ fontSize: 12, color: '#0058BC', fontWeight: 700 }}>{r.policyNumber}</Mono>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>{r.insuredName}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: '#717786' }}>{r.channelName} · {r.insurerShort} · {r.state} · 到期日：<Mono style={{ fontWeight: 600, color: '#181C23' }}>{r.dueDate}</Mono></div>
-                  {r.note && <div style={{ fontSize: 12, color: '#B06000', marginTop: 6, padding: '6px 10px', borderRadius: 7, background: 'rgba(255,159,10,0.08)' }}>{r.note}</div>}
+                  <div style={{ fontSize: 12, color: '#717786' }}>{r.channelName} · {r.insurerShort} · {r.state} · {t.finDueDate}<Mono style={{ fontWeight: 600, color: '#181C23' }}>{r.dueDate}</Mono></div>
+                  {r.note && <div style={{ fontSize: 12, color: '#B06000', marginTop: 6, padding: '6px 10px', borderRadius: 7, background: 'rgba(255,159,10,0.08)' }}>{lang === 'en' ? r.noteEn ?? r.note : r.note}</div>}
                 </div>
                 <div className="flex items-center gap-6 ml-6">
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 11, color: '#717786' }}>应收</div>
+                    <div style={{ fontSize: 11, color: '#717786' }}>{t.finExpected}</div>
                     <Mono style={{ fontSize: 14, fontWeight: 700, color: '#0058BC' }}>{fmt(r.expectedPremium)}</Mono>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 11, color: '#717786' }}>到账</div>
-                    <Mono style={{ fontSize: 14, fontWeight: 700, color: r.remittedPremium === 0 ? '#C1C6D7' : '#181C23' }}>{r.remittedPremium === 0 ? '未到账' : fmt(r.remittedPremium)}</Mono>
+                    <div style={{ fontSize: 11, color: '#717786' }}>{t.finReceived}</div>
+                    <Mono style={{ fontSize: 14, fontWeight: 700, color: r.remittedPremium === 0 ? '#C1C6D7' : '#181C23' }}>{r.remittedPremium === 0 ? t.finNotReceived : fmt(r.remittedPremium)}</Mono>
                   </div>
                   {r.diffAmount !== 0 && (
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 11, color: '#717786' }}>差额</div>
+                      <div style={{ fontSize: 11, color: '#717786' }}>{t.finThDiffAmount}</div>
                       <Mono style={{ fontSize: 14, fontWeight: 700, color: r.diffAmount > 0 ? '#C0392B' : '#B06000' }}>
                         {r.diffAmount > 0 ? '+' : ''}{fmt(r.diffAmount)}
                       </Mono>
@@ -860,8 +921,8 @@ function PremiumReconcileTab() {
                   )}
                   {isException && (
                     <div className="flex gap-1">
-                      <button style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>催缴</button>
-                      <button style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(123,63,202,0.1)', color: '#7B3FCA', border: '1px solid rgba(123,63,202,0.2)', cursor: 'pointer' }}>调整</button>
+                      <button style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>{t.finUrge}</button>
+                      <button style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(123,63,202,0.1)', color: '#7B3FCA', border: '1px solid rgba(123,63,202,0.2)', cursor: 'pointer' }}>{t.finAdjust}</button>
                     </div>
                   )}
                 </div>
@@ -877,12 +938,12 @@ function PremiumReconcileTab() {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'import',    icon: <Upload size={15} />,    label: '账单导入' },
-  { id: 'parse',     icon: <Zap size={15} />,       label: '账单解析' },
-  { id: 'reconcile', icon: <ArrowUpDown size={15} />, label: '佣金对账' },
-  { id: 'diff',      icon: <AlertCircle size={15} />, label: '差异处理' },
-  { id: 'cycle',     icon: <Settings size={15} />,  label: '结算周期配置' },
-  { id: 'premium',   icon: <DollarSign size={15} />, label: '保费对账' },
+  { id: 'import',    icon: <Upload size={15} /> },
+  { id: 'parse',     icon: <Zap size={15} /> },
+  { id: 'reconcile', icon: <ArrowUpDown size={15} /> },
+  { id: 'diff',      icon: <AlertCircle size={15} /> },
+  { id: 'cycle',     icon: <Settings size={15} /> },
+  { id: 'premium',   icon: <DollarSign size={15} /> },
 ] as const
 
 type TabId = typeof TABS[number]['id']
@@ -892,6 +953,7 @@ interface Props {
 }
 
 export default function FinanceView({ navigateTo: _navigateTo }: Props) {
+  const { t } = useLang()
   const [tab, setTab] = useState<TabId>('import')
   const [focusBillId, setFocusBillId] = useState<string | null>(null)
 
@@ -904,23 +966,32 @@ export default function FinanceView({ navigateTo: _navigateTo }: Props) {
   const diffCount = reconciliationDiffs.filter(d => d.status === 'open').length
   const exceptionCount = premiumRecords.filter(r => r.status === 'exception').length
 
+  const tabLabel: Record<TabId, string> = {
+    import: t.finTabImport,
+    parse: t.finTabParse,
+    reconcile: t.finTabReconcile,
+    diff: t.finTabDiff,
+    cycle: t.finTabCycle,
+    premium: t.finTabPremium,
+  }
+
   return (
     <div>
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>财务与结算管理</h1>
-          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>佣金账单导入解析、对账差异处理、结算周期配置与保费核对</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>{t.finTitle}</h1>
+          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>{t.finSubtitle}</p>
         </div>
         <div className="flex items-center gap-3">
           {pendingCount > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.25)', fontSize: 12.5, fontWeight: 600, color: '#B06000' }}>
-              <Clock size={13} /> {pendingCount} 张账单待解析
+              <Clock size={13} /> {t.finHeaderPending(pendingCount)}
             </div>
           )}
           {diffCount > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,59,48,0.1)', border: '1px solid rgba(255,59,48,0.25)', fontSize: 12.5, fontWeight: 600, color: '#C0392B' }}>
-              <AlertTriangle size={13} /> {diffCount} 条差异待处理
+              <AlertTriangle size={13} /> {t.finHeaderDiff(diffCount)}
             </div>
           )}
         </div>
@@ -928,13 +999,13 @@ export default function FinanceView({ navigateTo: _navigateTo }: Props) {
 
       {/* Tab bar */}
       <div className="flex items-center gap-1 mb-6" style={{ borderBottom: '0.5px solid rgba(193,198,215,0.4)' }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: '10px 10px 0 0', fontSize: 13, fontWeight: tab === t.id ? 700 : 500, background: tab === t.id ? 'rgba(0,88,188,0.08)' : 'transparent', color: tab === t.id ? '#0058BC' : '#717786', border: tab === t.id ? '0.5px solid rgba(0,88,188,0.2)' : '0.5px solid transparent', borderBottom: tab === t.id ? '2px solid #0058BC' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
-            {t.icon}
-            {t.label}
-            {t.id === 'import' && pendingCount > 0 && <span style={{ background: '#FF9F0A', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{pendingCount}</span>}
-            {t.id === 'diff' && diffCount > 0 && <span style={{ background: '#FF3B30', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{diffCount}</span>}
-            {t.id === 'premium' && exceptionCount > 0 && <span style={{ background: '#FF3B30', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{exceptionCount}</span>}
+        {TABS.map(d => (
+          <button key={d.id} onClick={() => setTab(d.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: '10px 10px 0 0', fontSize: 13, fontWeight: tab === d.id ? 700 : 500, background: tab === d.id ? 'rgba(0,88,188,0.08)' : 'transparent', color: tab === d.id ? '#0058BC' : '#717786', border: tab === d.id ? '0.5px solid rgba(0,88,188,0.2)' : '0.5px solid transparent', borderBottom: tab === d.id ? '2px solid #0058BC' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
+            {d.icon}
+            {tabLabel[d.id]}
+            {d.id === 'import' && pendingCount > 0 && <span style={{ background: '#FF9F0A', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{pendingCount}</span>}
+            {d.id === 'diff' && diffCount > 0 && <span style={{ background: '#FF3B30', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{diffCount}</span>}
+            {d.id === 'premium' && exceptionCount > 0 && <span style={{ background: '#FF3B30', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{exceptionCount}</span>}
           </button>
         ))}
       </div>

@@ -1,5 +1,6 @@
 {
-  "title": "总览",
+  "title": "平台总览",
+  "dataAsOf": "数据截至 {date} · 美国市场",
   "kpiCards": {
     "totalPremium": "本年总保费",
     "policiesCount": "有效保单数",
@@ -14,7 +15,7 @@
     "businessDistribution": "业务分布分析",
     "performanceTrend": "绩效趋势分析",
     "lossRatioAnalysis": "赔付率分析",
-    "recentActivities": "最近活动"
+    "recentActivities": "近期操作"
   },
   "charts": {
     "revenueByCarrier": {
@@ -23,7 +24,10 @@
       "yLabel": "保费金额（万美元）"
     },
     "marketShare": {
-      "title": "市场份额分布",
+      "title": "保费市场份额",
+      "subtitle": "按保险公司分布",
+      "share": "占比",
+      "premium": "保费",
       "legend": {
         "top3": "Top 3 保险公司",
         "others": "其他"
@@ -38,7 +42,7 @@
       }
     },
     "premiumTrend": {
-      "title": "保费月度趋势",
+      "title": "保费趋势",
       "xLabel": "月份",
       "yLabel": "保费总额",
       "description": "近 12 个月 · 单位：百万美元"
@@ -66,6 +70,12 @@
     "title": "待处理事项",
     "countUnit": "项",
     "viewAll": "查看全部",
+    "expiring": "AIG 合作合同将于 {days} 天后到期（{date}）",
+    "appointments": "{count} 个渠道 Appointment 将在 {days} 天内到期",
+    "lossRatio": "Markel 赔付率 {ratio}，超出预警阈值 {threshold}",
+    "profileReview": "BHSI 保险公司档案审核待处理",
+    "licenseExpired": "Northeast Professional Services NPN 牌照已过期",
+    "reconciled": "{monthLabel}佣金对账已完成，待确认金额 {amount}",
     "recentActivityItem": {
       "status": {
         "info": "信息",
@@ -96,5 +106,42 @@
     "added": "新增",
     "thisMonth": "本月",
     "channelsAdded": "{count} 个 | 本月"
+  },
+  "ranking": {
+    "title": "保险公司业绩排名"
+  },
+  "activity": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "daysAgo": "{n} 天前",
+    "minAgo": "{n} 分钟前",
+    "hourAgo": "{n} 小时前",
+    "monthLabel": "{m}月",
+    "months": {
+      "1": "1月",
+      "2": "2月",
+      "3": "3月",
+      "4": "4月",
+      "5": "5月",
+      "6": "6月",
+      "7": "7月",
+      "8": "8月",
+      "9": "9月",
+      "10": "10月",
+      "11": "11月",
+      "12": "12月"
+    },
+    "actions": {
+      "newInsurer": "保险公司新增",
+      "newInsurerDetail": "{name} 档案已提交审核",
+      "productLaunch": "产品上架",
+      "productLaunchDetail": "{product} 在 {states} 州完成上架",
+      "appointment": "Appointment 申请",
+      "appointmentDetail": "{channel} 向 {carrier} 提交 {state} 州申请",
+      "reconciliation": "佣金对账",
+      "reconciliationDetail": "{carrier} {monthLabel}账单对账完成，差异率 {variance}",
+      "channelSuspended": "渠道暂停",
+      "channelSuspendedDetail": "{name} 因合规问题被暂停"
+    }
   }
 }

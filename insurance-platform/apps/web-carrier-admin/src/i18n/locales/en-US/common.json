@@ -1,88 +1,5 @@
 {
-  "dashboard": {
-    "title": "Overview",
-    "kpiCards": {
-      "totalPremium": "Total Premium (YTD)",
-      "policiesCount": "Active Policies",
-      "channelCount": "Partner Channels",
-      "commission": "Commission Income (YTD)"
-    },
-    "trendVsLastYear": {
-      "up": "↑ {percent} vs Last Year",
-      "down": "↓ {percent} vs Last Year"
-    },
-    "monthsAgo": {
-      "one": "1 month ago",
-      "other": "{count} months ago"
-    },
-    "chapters": {
-      "businessDistribution": "Business Distribution Analysis",
-      "performanceTrend": "Performance Trend Analysis",
-      "lossRatioAnalysis": "Loss Ratio Analysis",
-      "recentActivities": "Recent Activities"
-    },
-    "charts": {
-      "revenueByCarrier": {
-        "title": "Revenue Ranking by Carrier",
-        "xLabel": "Insurance Carrier",
-        "yLabel": "Premium (10K USD)"
-      },
-      "marketShare": {
-        "title": "Market Share Distribution",
-        "legend": {
-          "top3": "Top 3 Carriers",
-          "others": "Others"
-        }
-      },
-      "alertStats": {
-        "title": "Compliance Alerts Statistics",
-        "legends": {
-          "overdue": "Due Soon",
-          "expired": "Expired",
-          "warning": "Warning"
-        }
-      },
-      "premiumTrend": {
-        "title": "Monthly Premium Trend",
-        "xLabel": "Month",
-        "yLabel": "Total Premium"
-      },
-      "lossRatioChart": {
-        "title": "Loss Ratio Distribution",
-        "xLabel": "Insurance Carrier",
-        "yLabel": "Loss Ratio"
-      },
-      "channelPerformance": {
-        "title": "Channel Performance Distribution",
-        "xLabel": "Channel Category",
-        "yLabel": "Performance Value"
-      }
-    },
-    "dataLabels": {
-      "latestDate": "Latest Date: {{date}}",
-      "unit": {
-        "currency": "10K USD",
-        "policy": "Policies",
-        "rate": "%",
-        "channel": "Channels"
-      }
-    },
-    "alerts": {
-      "viewAll": "View All",
-      "recentActivityItem": {
-        "status": {
-          "info": "Info",
-          "warning": "Warning",
-          "success": "Completed"
-        }
-      }
-    },
-    "buttons": {
-      "viewDetails": "View Details",
-      "exportReport": "Export Report",
-      "refreshData": "Refresh Data"
-    }
-  },
+  "loading": "Loading",
   "menu": {
     "overview": "Overview",
     "insurers": "Insurance Carriers",
@@ -109,7 +26,10 @@
     "trainingCertification": "Training & Certification",
     "channelPortal": "Channel Portal",
     "channelAnalytics": "Channel Analytics",
-    "i18nManagement": "Interface Copy Management"
+    "i18nManagement": "Interface Copy Management",
+    "permissionManagement": "Permission Management",
+    "userManagement": "User Management",
+    "systemManagement": "System Management"
   },
   "carriers": {
     "title": "Insurance Carriers",
@@ -123,6 +43,8 @@
     "notifications": "Notifications",
     "help": "Help",
     "admin": "Admin",
+    "adminRole": "Platform Admin",
+    "brandTagline": "Overseas Insurance Platform",
     "language": "Language / LANGUAGE",
     "theme": "Theme",
     "notificationsSetting": "Notifications",
@@ -141,6 +63,157 @@
     "yes": "Yes",
     "no": "No",
     "settings": "Settings",
-    "enabled": "Enabled"
+    "enabled": "Enabled",
+    "languageZh": "中文",
+    "languageEn": "English",
+    "themeLight": "Light",
+    "themeSystem": "System",
+    "notifOff": "Off"
+  },
+  "comingSoon": "This module is under development",
+  "backToDashboard": "Back to Dashboard",
+  "batchImportDescription": "Batch import optimization feature is under development",
+  "mobileAdaptationDescription": "Responsive mobile adaptation feature is under development",
+  "pwaDescription": "PWA advanced feature is under development",
+  "i18nMgmt": {
+    "title": "Multilingual Management",
+    "subtitle": "Manage all page copy (en/zh) · {count} entries",
+    "pendingCount": "● {count} pending publish",
+    "exportJson": "Export JSON",
+    "import": "Import",
+    "publish": "Publish Changes ({count})",
+    "publishedBanner": "Copy published, page text updated in real time",
+    "toastPreview": "Toast Preview",
+    "searchPlaceholder": "Search copy key, English or Chinese…",
+    "filterAll": "All Types",
+    "clear": "Clear",
+    "resultCount": "{count} items",
+    "noResults": "No matching copy found",
+    "save": "Save",
+    "modified": "● Modified",
+    "notFilled": "Not filled",
+    "modules": {
+      "all": "All Copy",
+      "common": "Common",
+      "channel": "Channel",
+      "carrier": "Insurer",
+      "commission": "Commission",
+      "toast": "Toast Messages",
+      "modal": "Confirm Dialogs",
+      "validate": "Form Validation",
+      "errorPage": "Error Pages"
+    },
+    "types": {
+      "label": "Label",
+      "button": "Button",
+      "placeholder": "Placeholder",
+      "toast": "Toast",
+      "confirm": "Confirm Dialog",
+      "validate": "Form Validation",
+      "errorPage": "Error Page"
+    },
+    "col": {
+      "type": "Type",
+      "actions": "Actions",
+      "key": "Key",
+      "en": "English (en-US)",
+      "zh": "中文 (zh-CN)"
+    },
+    "previewZh": "中",
+    "previewEn": "EN"
+  },
+  "settings": {
+    "title": "Settings",
+    "langSection": "Language",
+    "langZh": "中文",
+    "langEn": "English",
+    "themeSection": "Theme",
+    "themeLight": "Light",
+    "themeSystem": "System",
+    "notifSection": "Notifications",
+    "notifOn": "On",
+    "notifOff": "Off",
+    "timezoneSection": "Timezone",
+    "timezone": "America/Los_Angeles (PT)",
+    "version": "Version",
+    "logout": "Sign out"
+  },
+  "nav": {
+    "overview": "Overview",
+    "insuranceCarrierMgmt": "Insurance Carrier Management",
+    "insuranceCarrierList": "Insurance Carrier List",
+    "insuranceCarrierDetail": "Insurance Carrier Detail",
+    "newInsuranceCarrier": "New Insurance Carrier",
+    "editInsuranceCarrier": "Edit Insurance Carrier",
+    "bulkImport": "Bulk Import",
+    "duplicateDetection": "Duplicate Detection",
+    "productMgmt": "Product Management",
+    "productDetail": "Product Detail",
+    "newProduct": "New Product",
+    "editProduct": "Edit Product",
+    "cooperationMgmt": "Cooperation Management",
+    "appointmentCompliance": "Appointment & Compliance",
+    "complianceDashboard": "Compliance Module Dashboard",
+    "auditReports": "Audit Reports",
+    "generationWizard": "Generation Wizard",
+    "createNewReport": "Create New Report",
+    "auditReportPreview": "Audit Report Preview",
+    "reportPreview": "Report Preview",
+    "riskAssessment": "Risk Assessment",
+    "regulatoryNotices": "Regulatory Notices",
+    "financeDashboard": "Finance & Settlement Dashboard",
+    "financeSettlement": "Finance & Settlement",
+    "commissionBillImport": "Commission Bill Import",
+    "billParsing": "Bill Parsing",
+    "commissionReconciliation": "Commission Reconciliation",
+    "disputeMgmt": "Dispute Management",
+    "settlementConfig": "Settlement Configuration",
+    "premiumReconciliation": "Premium Reconciliation",
+    "financeEnhancement": "Finance Enhancement",
+    "dataAnalytics": "Data Analytics",
+    "channelMgmt": "Channel Management",
+    "channelList": "Channel List",
+    "newChannel": "New Channel",
+    "editChannel": "Edit Channel",
+    "channelMasterData": "Channel Master Data",
+    "channelHierarchy": "Channel Hierarchy",
+    "onboardingMgmt": "Onboarding Management",
+    "productAuth": "Product Authorization",
+    "commissionScheme": "Commission Scheme",
+    "commissionSettlement": "Commission Settlement",
+    "performanceReview": "Performance Review",
+    "trainingCertification": "Training & Certification",
+    "channelPortal": "Channel Portal",
+    "channelAnalytics": "Channel Analytics",
+    "systemSettings": "System Settings",
+    "i18nManagement": "i18n Management",
+    "permissionMgmt": "Permission Management",
+    "roleMgmt": "Role Management",
+    "newRole": "New Role",
+    "editRole": "Edit Role",
+    "userMgmt": "User Management",
+    "newUser": "New User",
+    "editUser": "Edit User",
+    "menuPermission": "Menu Permission",
+    "menuPermissionConfig": "Menu Permission Configuration",
+    "dataPermission": "Data Permission",
+    "dataPermissionConfig": "Data Permission Configuration",
+    "operationLog": "Operation Log",
+    "operationLogAudit": "Operation Log Audit",
+    "loginLog": "Login Log",
+    "loginLogAudit": "Login Log Audit",
+    "newAppointment": "New Appointment",
+    "statusTracking": "Status Tracking",
+    "renewalMgmt": "Renewal Management",
+    "terminationMgmt": "Termination Management",
+    "niprLicenseCheck": "NIPR License Check",
+    "complianceRules": "Compliance Rules",
+    "complianceInterceptor": "Compliance Interception",
+    "complianceReportGenerator": "Compliance Report Generation",
+    "licenseExpiryReminder": "License Expiry Reminder",
+    "ofacScreening": "OFAC Screening",
+    "batchImportOptimization": "Batch Import Optimization",
+    "responsiveMobileAdaptation": "Responsive Mobile Adaptation",
+    "pwaAdvanceFeature": "PWA Advanced Features"
   }
 }

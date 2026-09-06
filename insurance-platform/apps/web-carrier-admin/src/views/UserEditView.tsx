@@ -44,7 +44,8 @@ const mockUsers: User[] = [
 ];
 
 export default function UserEditView({ userId, navigateTo }: Props) {
-  const { t } = useTranslation('permission');
+  const { t, i18n } = useTranslation('permission');
+  const isEn = i18n.language?.startsWith?.('en') ?? false;
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -73,35 +74,35 @@ export default function UserEditView({ userId, navigateTo }: Props) {
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // 🔴 todo: 调用真实 API 更新用户
-    console.log('更新用户数据:', { id: userId, ...formData });
-    
-    alert(t('updateSuccess') || '用户信息更新成功！');
+    console.log('Update user data:', { id: userId, ...formData });
+
+    alert(t('userUpdateSuccess'));
     navigateTo('user-list');
   };
 
   const handleResetPassword = () => {
-    if (confirm(t('confirmResetPassword') || '确定要重置此用户的密码吗？用户将收到邮件通知。')) {
+    if (confirm(t('confirmResetPassword'))) {
       // 🔴 todo: 调用真实 API 重置密码
-      console.log('重置密码:', userId);
-      
-      alert(t('passwordResetSuccess') || '密码重置邮件已发送！');
+      console.log('Reset password:', userId);
+
+      alert(t('passwordResetSuccess'));
     }
   };
 
   const handleDelete = () => {
-    if (confirm(t('confirmDeleteUser') || '确定要删除此用户吗？此操作不可恢复。')) {
+    if (confirm(t('confirmDeleteUser'))) {
       // 🔴 todo: 调用真实 API 删除用户
-      console.log('删除用户:', userId);
-      
-      alert(t('deleteSuccess') || '用户已删除！');
+      console.log('Delete user:', userId);
+
+      alert(t('userDeleteSuccess'));
       navigateTo('user-list');
     }
   };
 
   if (loading) {
-    return <div className="p-6 text-center">加载中...</div>;
+    return <div className="p-6 text-center">{t('loading')}</div>;
   }
 
   return (
@@ -165,7 +166,7 @@ export default function UserEditView({ userId, navigateTo }: Props) {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('enterEmailPlaceholder') || 'example@email.com'}
+                placeholder={t('enterEmailPlaceholder')}
               />
             </div>
 
@@ -179,7 +180,7 @@ export default function UserEditView({ userId, navigateTo }: Props) {
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('enterPhoneNumberPlaceholder') || '+86 138****1234'}
+                placeholder={t('enterPhoneNumberPlaceholder')}
               />
             </div>
 
@@ -193,9 +194,9 @@ export default function UserEditView({ userId, navigateTo }: Props) {
                 onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
               >
-                <option value="r1">超级管理员</option>
-                <option value="r2">普通管理员</option>
-                <option value="r3">只读用户</option>
+                <option value="r1">{t('roleSuperAdmin')}</option>
+                <option value="r2">{t('roleGeneralAdmin')}</option>
+                <option value="r3">{t('roleReadonlyUser')}</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">{t('changeRoleWarning')}</p>
             </div>
@@ -241,7 +242,7 @@ export default function UserEditView({ userId, navigateTo }: Props) {
                   {t('createTime')}
                 </label>
                 <div className="px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-600">
-                  {new Date().toLocaleDateString('zh-CN')}
+                  {new Date().toLocaleDateString(i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US')}
                 </div>
               </div>
               

@@ -3,7 +3,9 @@ import {
   ArrowLeft, ArrowRight, Save, Check, Users, MapPin, DollarSign, FileText,
   Info, AlertCircle, Plus, Trash2,
 } from 'lucide-react'
-import { channels } from '../data/mockData'
+import { channelStore } from '../data/channelStore'
+import type { Channel } from '../data/mockData'
+import { useLang } from '../i18n'
 import type { ViewId } from '../components/Sidebar'
 
 interface Props {
@@ -13,10 +15,10 @@ interface Props {
 }
 
 const STEPS = [
-  { id: 'basic', label: '基本信息', icon: Users, desc: '渠道名称、类型、负责人' },
-  { id: 'region', label: '区域配置', icon: MapPin, desc: '所属大区、合作州、上级渠道' },
-  { id: 'commission', label: '佣金配置', icon: DollarSign, desc: '佣金率、分润结构' },
-  { id: 'documents', label: '资质文件', icon: FileText, desc: '执照、合规文件、合同' },
+  { id: 'basic', label: { zh: '基本信息', en: 'Basic Info' }, icon: Users, desc: { zh: '渠道名称、类型、负责人', en: 'Channel name, type, manager' } },
+  { id: 'region', label: { zh: '区域配置', en: 'Region & Licensing' }, icon: MapPin, desc: { zh: '所属大区、合作州、上级渠道', en: 'Region, licensed states, parent channel' } },
+  { id: 'commission', label: { zh: '佣金配置', en: 'Commission' }, icon: DollarSign, desc: { zh: '佣金率、分润结构', en: 'Commission rates, payment setup' } },
+  { id: 'documents', label: { zh: '资质文件', en: 'Documents' }, icon: FileText, desc: { zh: '执照、合规文件、合同', en: 'Licenses, compliance, contracts' } },
 ]
 
 const REGIONS = ['Northeast', 'Southeast', 'Midwest', 'West']
@@ -27,17 +29,17 @@ const US_STATES = [
   'VA','WA','WV','WI','WY','DC',
 ]
 const CHANNEL_TYPES = [
-  { value: 'Independent Agency', label: '独立代理' },
-  { value: 'Broker', label: '经纪商' },
-  { value: 'MGA', label: 'MGA（Managing General Agent）' },
-  { value: 'Wholesale Broker', label: '批发经纪' },
-  { value: 'Direct', label: '直销' },
+  { value: 'Independent Agency', zh: '独立代理', en: 'Independent Agency' },
+  { value: 'Broker', zh: '经纪商', en: 'Broker' },
+  { value: 'MGA', zh: 'MGA（Managing General Agent）', en: 'MGA (Managing General Agent)' },
+  { value: 'Wholesale Broker', zh: '批发经纪', en: 'Wholesale Broker' },
+  { value: 'Direct', zh: '直销', en: 'Direct' },
 ]
 const TIER_OPTIONS = [
-  { value: 'Platinum', label: '铂金' },
-  { value: 'Gold', label: '金级' },
-  { value: 'Silver', label: '银级' },
-  { value: 'Standard', label: '标准' },
+  { value: 'Platinum', zh: '铂金', en: 'Platinum' },
+  { value: 'Gold', zh: '金级', en: 'Gold' },
+  { value: 'Silver', zh: '银级', en: 'Silver' },
+  { value: 'Standard', zh: '标准', en: 'Standard' },
 ]
 const LINES_OF_BUSINESS = ['Auto', 'Home', 'Life', 'Health', 'Commercial', 'P&C', 'Cyber', 'Specialty']
 
@@ -73,11 +75,15 @@ function Grid({ cols = 2, children }: { cols?: number; children: React.ReactNode
 const INPUT = { className: 'input-glass w-full', style: { fontSize: 13.5 } }
 
 export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
-  const existing = channelId ? channels.find(c => c.id === channelId) : undefined
+  const { lang } = useLang()
+  const en = lang === 'en'
+  // 渠道详情从共享 store 加载（保证列表删除/编辑后的数据一致）
+  const existing = channelId ? channelStore.getChannels().find(c => c.id === channelId) : undefined
   const [step, setStep] = useState(0)
   const [saved, setSaved] = useState(false)
   const [contacts, setContacts] = useState([{ name: '', phone: '', email: '', role: '' }])
-  const [selectedStates, setSelectedStates] = useState<string[]>([])
+  // 持牌州：编辑时默认勾选渠道主营州（渠道在主营州必然持牌）
+  const [selectedStates, setSelectedStates] = useState<string[]>(existing?.state ? [existing.state] : [])
   const [selectedLines, setSelectedLines] = useState<string[]>([])
 
   const [form, setForm] = useState({
@@ -92,7 +98,7 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
     website: '',
     address: '',
     city: '',
-    state: '',
+    state: existing?.state ?? '',
     zip: '',
     commissionRate: existing ? (existing.commissionRate * 100).toFixed(0) : '10',
     settlementCycle: '月结',
@@ -114,85 +120,127 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
     setSelectedLines(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l])
 
   const handleSave = () => {
+    // 表单填写的可持久化字段（回写共享 store，返回列表即时生效）
+    const patch = {
+      name: form.name.trim() || existing?.name || '未命名渠道',
+      npnCode: form.npnCode.trim(),
+      type: form.type as Channel['type'],
+      tier: form.tier as Channel['tier'],
+      status: form.status as Channel['status'],
+      manager: form.manager.trim(),
+      region: form.region as Channel['region'],
+      state: form.state,
+      commissionRate: Number(form.commissionRate) > 0 ? Number(form.commissionRate) / 100 : (existing?.commissionRate ?? 0.1),
+      joinDate: form.joinDate,
+      ...(form.parentId ? { parentId: form.parentId } : { parentId: undefined }),
+      level: form.parentId ? 2 : 1,
+    }
+
+    if (mode === 'edit' && channelId) {
+      channelStore.updateChannel(channelId, patch)
+    } else {
+      const newChannel: Channel = {
+        id: `c-${Date.now()}`,
+        agentCount: 0,
+        totalPremium: 0,
+        policyCount: 0,
+        lossRatio: 0,
+        renewalRate: 0,
+        name: patch.name,
+        npnCode: patch.npnCode || '—',
+        type: patch.type,
+        tier: patch.tier,
+        status: patch.status,
+        manager: patch.manager || '—',
+        region: patch.region,
+        state: patch.state || '—',
+        commissionRate: patch.commissionRate,
+        joinDate: patch.joinDate,
+        level: patch.level,
+        ...(patch.parentId ? { parentId: patch.parentId } : {}),
+      }
+      channelStore.addChannel(newChannel)
+    }
+
     setSaved(true)
     setTimeout(() => navigateTo('channel-list'), 1200)
   }
 
-  const topLevelChannels = channels.filter(c => !c.parentId && c.id !== channelId)
+  const topLevelChannels = channelStore.getChannels().filter(c => !c.parentId && c.id !== channelId)
 
   const renderStep = () => {
     switch (step) {
       case 0:
         return (
           <>
-            <Section title="渠道基本信息">
+            <Section title={en ? 'Channel Information' : '渠道基本信息'}>
               <Grid cols={2}>
                 <div>
-                  <FieldLabel label="渠道名称" required />
-                  <input {...INPUT} value={form.name} placeholder="例：Pacific Coast Insurance Agency" onChange={e => set('name', e.target.value)} />
+                  <FieldLabel label={en ? 'Channel Name' : '渠道名称'} required />
+                  <input {...INPUT} value={form.name} placeholder={en ? 'e.g. Pacific Coast Insurance Agency' : '例：Pacific Coast Insurance Agency'} onChange={e => set('name', e.target.value)} />
                 </div>
                 <div>
-                  <FieldLabel label="NPN编码" required hint="National Producer Number，全国生产者编号" />
-                  <input {...INPUT} value={form.npnCode} placeholder="例：NPN-20340001" onChange={e => set('npnCode', e.target.value)} />
+                  <FieldLabel label={en ? 'NPN Code' : 'NPN编码'} required hint={en ? 'National Producer Number' : 'National Producer Number，全国生产者编号'} />
+                  <input {...INPUT} value={form.npnCode} placeholder={en ? 'e.g. NPN-20340001' : '例：NPN-20340001'} onChange={e => set('npnCode', e.target.value)} />
                 </div>
                 <div>
-                  <FieldLabel label="渠道类型" required />
+                  <FieldLabel label={en ? 'Channel Type' : '渠道类型'} required />
                   <select {...INPUT} value={form.type} onChange={e => set('type', e.target.value)}>
                     {CHANNEL_TYPES.map(t => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
+                      <option key={t.value} value={t.value}>{en ? t.en : t.zh}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <FieldLabel label="渠道等级" />
+                  <FieldLabel label={en ? 'Tier' : '渠道等级'} />
                   <select {...INPUT} value={form.tier} onChange={e => set('tier', e.target.value)}>
                     {TIER_OPTIONS.map(t => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
+                      <option key={t.value} value={t.value}>{en ? t.en : t.zh}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <FieldLabel label="渠道状态" />
+                  <FieldLabel label={en ? 'Status' : '渠道状态'} />
                   <select {...INPUT} value={form.status} onChange={e => set('status', e.target.value)}>
-                    <option value="onboarding">入驻中</option>
-                    <option value="active">活跃</option>
-                    <option value="inactive">停用</option>
-                    <option value="suspended">已暂停</option>
+                    <option value="onboarding">{en ? 'Onboarding' : '入驻中'}</option>
+                    <option value="active">{en ? 'Active' : '活跃'}</option>
+                    <option value="inactive">{en ? 'Inactive' : '停用'}</option>
+                    <option value="suspended">{en ? 'Suspended' : '已暂停'}</option>
                   </select>
                 </div>
                 <div>
-                  <FieldLabel label="入驻日期" required />
+                  <FieldLabel label={en ? 'Join Date' : '入驻日期'} required />
                   <input {...INPUT} type="date" value={form.joinDate} onChange={e => set('joinDate', e.target.value)} />
                 </div>
                 <div>
-                  <FieldLabel label="负责人" required />
-                  <input {...INPUT} value={form.manager} placeholder="渠道对接负责人姓名" onChange={e => set('manager', e.target.value)} />
+                  <FieldLabel label={en ? 'Manager' : '负责人'} required />
+                  <input {...INPUT} value={form.manager} placeholder={en ? 'Primary contact name' : '渠道对接负责人姓名'} onChange={e => set('manager', e.target.value)} />
                 </div>
                 <div>
-                  <FieldLabel label="官网" />
+                  <FieldLabel label={en ? 'Website' : '官网'} />
                   <input {...INPUT} value={form.website} placeholder="https://" onChange={e => set('website', e.target.value)} />
                 </div>
               </Grid>
             </Section>
 
-            <Section title="联系人信息">
+            <Section title={en ? 'Contacts' : '联系人信息'}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {contacts.map((c, i) => (
                   <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: 10, alignItems: 'end' }}>
                     <div>
-                      {i === 0 && <FieldLabel label="姓名" required />}
-                      <input {...INPUT} value={c.name} placeholder="联系人姓名" onChange={e => setContacts(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
+                      {i === 0 && <FieldLabel label={en ? 'Name' : '姓名'} required />}
+                      <input {...INPUT} value={c.name} placeholder={en ? 'Contact name' : '联系人姓名'} onChange={e => setContacts(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
                     </div>
                     <div>
-                      {i === 0 && <FieldLabel label="职位" />}
-                      <input {...INPUT} value={c.role} placeholder="职位头衔" onChange={e => setContacts(prev => prev.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} />
+                      {i === 0 && <FieldLabel label={en ? 'Title' : '职位'} />}
+                      <input {...INPUT} value={c.role} placeholder={en ? 'Job title' : '职位头衔'} onChange={e => setContacts(prev => prev.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} />
                     </div>
                     <div>
-                      {i === 0 && <FieldLabel label="电话" />}
+                      {i === 0 && <FieldLabel label={en ? 'Phone' : '电话'} />}
                       <input {...INPUT} value={c.phone} placeholder="+1 (555) 000-0000" onChange={e => setContacts(prev => prev.map((x, j) => j === i ? { ...x, phone: e.target.value } : x))} />
                     </div>
                     <div>
-                      {i === 0 && <FieldLabel label="邮箱" />}
+                      {i === 0 && <FieldLabel label={en ? 'Email' : '邮箱'} />}
                       <input {...INPUT} value={c.email} placeholder="email@example.com" onChange={e => setContacts(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} />
                     </div>
                     <div style={{ paddingBottom: 1 }}>
@@ -206,13 +254,13 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
                 ))}
                 <button className="btn-ghost" style={{ fontSize: 12.5, alignSelf: 'flex-start', color: '#4F46E5', paddingLeft: 0 }}
                   onClick={() => setContacts(prev => [...prev, { name: '', phone: '', email: '', role: '' }])}>
-                  <Plus size={13} /> 添加联系人
+                  <Plus size={13} /> {en ? 'Add Contact' : '添加联系人'}
                 </button>
               </div>
             </Section>
 
-            <Section title="业务范围">
-              <FieldLabel label="承保险种" />
+            <Section title={en ? 'Lines of Business' : '业务范围'}>
+              <FieldLabel label={en ? 'Lines of Business' : '承保险种'} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {LINES_OF_BUSINESS.map(l => (
                   <button key={l}
@@ -228,7 +276,7 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
                 ))}
               </div>
               {selectedLines.length === 0 && (
-                <div style={{ fontSize: 12, color: '#C1C6D7', marginTop: 6 }}>未选择险种，请至少选择一项</div>
+                <div style={{ fontSize: 12, color: '#C1C6D7', marginTop: 6 }}>{en ? 'Select at least one line of business' : '未选择险种，请至少选择一项'}</div>
               )}
             </Section>
           </>
@@ -237,43 +285,43 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
       case 1:
         return (
           <>
-            <Section title="区域配置">
+            <Section title={en ? 'Region & Licensing' : '区域配置'}>
               <Grid cols={2}>
                 <div>
-                  <FieldLabel label="所属大区" required />
+                  <FieldLabel label={en ? 'Region' : '所属大区'} required />
                   <select {...INPUT} value={form.region} onChange={e => set('region', e.target.value)}>
                     {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
-                  <FieldLabel label="上级渠道" hint="若为子渠道，选择所属上级" />
+                  <FieldLabel label={en ? 'Parent Channel' : '上级渠道'} hint={en ? 'Select the parent if this is a sub-channel' : '若为子渠道，选择所属上级'} />
                   <select {...INPUT} value={form.parentId} onChange={e => set('parentId', e.target.value)}>
-                    <option value="">无（顶级渠道）</option>
+                    <option value="">{en ? 'None (top-level channel)' : '无（顶级渠道）'}</option>
                     {topLevelChannels.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <FieldLabel label="城市" />
-                  <input {...INPUT} value={form.city} placeholder="城市" onChange={e => set('city', e.target.value)} />
+                  <FieldLabel label={en ? 'City' : '城市'} />
+                  <input {...INPUT} value={form.city} placeholder={en ? 'City' : '城市'} onChange={e => set('city', e.target.value)} />
                 </div>
                 <div>
-                  <FieldLabel label="州" />
+                  <FieldLabel label={en ? 'State' : '州'} />
                   <select {...INPUT} value={form.state} onChange={e => set('state', e.target.value)}>
-                    <option value="">选择州</option>
+                    <option value="">{en ? 'Select state' : '选择州'}</option>
                     {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <FieldLabel label="地址" />
-                  <input {...INPUT} value={form.address} placeholder="街道地址" onChange={e => set('address', e.target.value)} />
+                  <FieldLabel label={en ? 'Address' : '地址'} />
+                  <input {...INPUT} value={form.address} placeholder={en ? 'Street address' : '街道地址'} onChange={e => set('address', e.target.value)} />
                 </div>
               </Grid>
             </Section>
 
-            <Section title="持牌州">
-              <FieldLabel label="已持牌州（可多选）" hint="渠道在哪些州拥有合法经营许可" />
+            <Section title={en ? 'Licensed States' : '持牌州'}>
+              <FieldLabel label={en ? 'Licensed states (multi-select)' : '已持牌州（可多选）'} hint={en ? 'States where this channel is licensed to operate' : '渠道在哪些州拥有合法经营许可'} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                 {US_STATES.map(s => (
                   <button key={s}
@@ -289,7 +337,9 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
                 ))}
               </div>
               <div style={{ fontSize: 12, color: '#717786', marginTop: 8 }}>
-                已选 <strong>{selectedStates.length}</strong> 个州
+                {en
+                  ? <><strong>{selectedStates.length}</strong> state{selectedStates.length !== 1 ? 's' : ''} selected</>
+                  : <>已选 <strong>{selectedStates.length}</strong> 个州</>}
               </div>
             </Section>
           </>
@@ -298,41 +348,41 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
       case 2:
         return (
           <>
-            <Section title="佣金基础配置">
+            <Section title={en ? 'Commission Setup' : '佣金基础配置'}>
               <Grid cols={2}>
                 <div>
-                  <FieldLabel label="基础佣金率（%）" required hint="新单佣金比例" />
+                  <FieldLabel label={en ? 'Base Commission Rate (%)' : '基础佣金率（%）'} required hint={en ? 'New-business commission rate' : '新单佣金比例'} />
                   <input {...INPUT} type="number" min="0" max="100" value={form.commissionRate} placeholder="10" onChange={e => set('commissionRate', e.target.value)} />
                 </div>
                 <div>
-                  <FieldLabel label="结算周期" required />
+                  <FieldLabel label={en ? 'Settlement Cycle' : '结算周期'} required />
                   <select {...INPUT} value={form.settlementCycle} onChange={e => set('settlementCycle', e.target.value)}>
-                    <option value="周结">周结</option>
-                    <option value="月结">月结</option>
-                    <option value="季结">季结</option>
-                    <option value="年结">年结</option>
+                    <option value="周结">{en ? 'Weekly' : '周结'}</option>
+                    <option value="月结">{en ? 'Monthly' : '月结'}</option>
+                    <option value="季结">{en ? 'Quarterly' : '季结'}</option>
+                    <option value="年结">{en ? 'Annual' : '年结'}</option>
                   </select>
                 </div>
                 <div>
-                  <FieldLabel label="超额奖励门槛（$）" hint="超过此保费额度后按奖励佣金率结算" />
+                  <FieldLabel label={en ? 'Bonus Threshold ($)' : '超额奖励门槛（$）'} hint={en ? 'Premium above this volume is paid at the bonus rate' : '超过此保费额度后按奖励佣金率结算'} />
                   <input {...INPUT} type="number" min="0" value={form.bonusThreshold} placeholder="1,000,000" onChange={e => set('bonusThreshold', e.target.value)} />
                 </div>
                 <div>
-                  <FieldLabel label="超额奖励佣金率（%）" />
+                  <FieldLabel label={en ? 'Bonus Commission Rate (%)' : '超额奖励佣金率（%）'} />
                   <input {...INPUT} type="number" min="0" max="100" value={form.bonusRate} placeholder="12" onChange={e => set('bonusRate', e.target.value)} />
                 </div>
               </Grid>
             </Section>
 
-            <Section title="收款账户">
+            <Section title={en ? 'Payment Account' : '收款账户'}>
               <div style={{ background: 'rgba(79,70,229,0.04)', border: '0.5px solid rgba(79,70,229,0.18)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#4F46E5' }}>
-                  <Info size={13} /> 账户信息将用于结算打款，请确保信息准确无误
+                  <Info size={13} /> {en ? 'Account details are used for settlement payouts. Please verify carefully.' : '账户信息将用于结算打款，请确保信息准确无误'}
                 </div>
               </div>
               <Grid cols={2}>
                 <div>
-                  <FieldLabel label="开户银行" />
+                  <FieldLabel label={en ? 'Bank Name' : '开户银行'} />
                   <input {...INPUT} value={form.bankName} placeholder="Bank of America" onChange={e => set('bankName', e.target.value)} />
                 </div>
                 <div>
@@ -340,18 +390,18 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
                   <input {...INPUT} value={form.bankRouting} placeholder="021000021" onChange={e => set('bankRouting', e.target.value)} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <FieldLabel label="账户号码" />
-                  <input {...INPUT} value={form.bankAccount} placeholder="账户号码" onChange={e => set('bankAccount', e.target.value)} />
+                  <FieldLabel label={en ? 'Account Number' : '账户号码'} />
+                  <input {...INPUT} value={form.bankAccount} placeholder={en ? 'Account number' : '账户号码'} onChange={e => set('bankAccount', e.target.value)} />
                 </div>
               </Grid>
             </Section>
 
-            <Section title="备注">
+            <Section title={en ? 'Notes' : '备注'}>
               <textarea
                 className="input-glass w-full"
                 style={{ fontSize: 13.5, minHeight: 80, resize: 'vertical' }}
                 value={form.notes}
-                placeholder="其他备注信息…"
+                placeholder={en ? 'Additional notes…' : '其他备注信息…'}
                 onChange={e => set('notes', e.target.value)}
               />
             </Section>
@@ -361,18 +411,18 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
       case 3:
         return (
           <>
-            <Section title="资质文件上传">
+            <Section title={en ? 'Document Upload' : '资质文件上传'}>
               <div style={{ background: 'rgba(255,249,231,0.6)', border: '0.5px solid rgba(219,166,21,0.3)', borderRadius: 10, padding: '12px 16px', marginBottom: 18 }}>
                 <div style={{ display: 'flex', gap: 6, fontSize: 12.5, color: '#a05800' }}>
                   <AlertCircle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
-                  请上传最新有效版本的文件，过期文件将影响渠道审核进度
+                  {en ? 'Please upload the latest valid versions. Expired documents will delay channel review.' : '请上传最新有效版本的文件，过期文件将影响渠道审核进度'}
                 </div>
               </div>
               {[
-                { label: '营业执照 / E&O保险证书', required: true, hint: '有效期内的保险经纪执照' },
-                { label: '渠道合作协议', required: true, hint: '已签署的合作框架协议' },
-                { label: '合规声明文件', required: false, hint: 'Compliance statement 或 W-9 表格' },
-                { label: 'NPN核验截图', required: false, hint: '来自 NIPR 的持牌截图' },
+                { label: en ? 'Business License / E&O Certificate' : '营业执照 / E&O保险证书', required: true, hint: en ? 'Valid insurance broker license' : '有效期内的保险经纪执照' },
+                { label: en ? 'Channel Cooperation Agreement' : '渠道合作协议', required: true, hint: en ? 'Signed master cooperation agreement' : '已签署的合作框架协议' },
+                { label: en ? 'Compliance Statement' : '合规声明文件', required: false, hint: en ? 'Compliance statement or W-9 form' : 'Compliance statement 或 W-9 表格' },
+                { label: en ? 'NPN Verification Screenshot' : 'NPN核验截图', required: false, hint: en ? 'License screenshot from NIPR' : '来自 NIPR 的持牌截图' },
               ].map(doc => (
                 <div key={doc.label} style={{ marginBottom: 14, padding: '16px 18px', background: 'rgba(255,255,255,0.6)', border: '0.5px dashed rgba(193,198,215,0.7)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
@@ -383,26 +433,26 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
                     <div style={{ fontSize: 12, color: '#717786', marginTop: 3 }}>{doc.hint}</div>
                   </div>
                   <button className="btn-secondary" style={{ fontSize: 12.5 }}>
-                    <FileText size={13} /> 上传文件
+                    <FileText size={13} /> {en ? 'Upload' : '上传文件'}
                   </button>
                 </div>
               ))}
             </Section>
 
-            <Section title="信息确认">
+            <Section title={en ? 'Review & Confirm' : '信息确认'}>
               <div style={{ background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(193,198,215,0.5)', borderRadius: 12, padding: '16px 20px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 32px', fontSize: 13 }}>
                   {[
-                    ['渠道名称', form.name || '—'],
-                    ['NPN编码', form.npnCode || '—'],
-                    ['渠道类型', CHANNEL_TYPES.find(t => t.value === form.type)?.label ?? '—'],
-                    ['渠道等级', TIER_OPTIONS.find(t => t.value === form.tier)?.label ?? '—'],
-                    ['负责人', form.manager || '—'],
-                    ['所属大区', form.region || '—'],
-                    ['基础佣金率', form.commissionRate ? `${form.commissionRate}%` : '—'],
-                    ['结算周期', form.settlementCycle],
-                    ['持牌州数量', selectedStates.length > 0 ? `${selectedStates.length} 个州` : '—'],
-                    ['承保险种', selectedLines.length > 0 ? selectedLines.join(', ') : '—'],
+                    [en ? 'Channel Name' : '渠道名称', form.name || '—'],
+                    ['NPN', form.npnCode || '—'],
+                    [en ? 'Channel Type' : '渠道类型', en ? (CHANNEL_TYPES.find(t => t.value === form.type)?.en ?? '—') : (CHANNEL_TYPES.find(t => t.value === form.type)?.zh ?? '—')],
+                    [en ? 'Tier' : '渠道等级', en ? (TIER_OPTIONS.find(t => t.value === form.tier)?.en ?? '—') : (TIER_OPTIONS.find(t => t.value === form.tier)?.zh ?? '—')],
+                    [en ? 'Manager' : '负责人', form.manager || '—'],
+                    [en ? 'Region' : '所属大区', form.region || '—'],
+                    [en ? 'Base Commission Rate' : '基础佣金率', form.commissionRate ? `${form.commissionRate}%` : '—'],
+                    [en ? 'Settlement Cycle' : '结算周期', { '周结': en ? 'Weekly' : '周结', '月结': en ? 'Monthly' : '月结', '季结': en ? 'Quarterly' : '季结', '年结': en ? 'Annual' : '年结' }[form.settlementCycle] || form.settlementCycle],
+                    [en ? 'Licensed States' : '持牌州数量', selectedStates.length > 0 ? (en ? `${selectedStates.length} state${selectedStates.length !== 1 ? 's' : ''}` : `${selectedStates.length} 个州`) : '—'],
+                    [en ? 'Lines of Business' : '承保险种', selectedLines.length > 0 ? selectedLines.join(', ') : '—'],
                   ].map(([k, v]) => (
                     <div key={k} style={{ display: 'flex', gap: 8 }}>
                       <span style={{ color: '#717786', flexShrink: 0 }}>{k}：</span>
@@ -426,10 +476,12 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
         </button>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>
-            {mode === 'create' ? '新增渠道' : '编辑渠道'}
+            {mode === 'create' ? (en ? 'Add Channel' : '新增渠道') : (en ? 'Edit Channel' : '编辑渠道')}
           </h1>
           <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>
-            {mode === 'create' ? '填写渠道信息，完成入驻配置' : `编辑渠道：${existing?.name ?? channelId}`}
+            {mode === 'create'
+              ? (en ? 'Complete the channel onboarding setup' : '填写渠道信息，完成入驻配置')
+              : (en ? `Editing: ${existing?.name ?? channelId}` : `编辑渠道：${existing?.name ?? channelId}`)}
           </p>
         </div>
       </div>
@@ -459,8 +511,8 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
                     {isDone ? <Check size={13} /> : <Icon size={13} />}
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: 12.5, fontWeight: isActive ? 700 : 500, color: isActive ? '#4F46E5' : isDone ? '#1a7a2e' : '#717786' }}>{s.label}</div>
-                    <div style={{ fontSize: 11, color: '#C1C6D7', display: isActive ? 'block' : 'none' }}>{s.desc}</div>
+                    <div style={{ fontSize: 12.5, fontWeight: isActive ? 700 : 500, color: isActive ? '#4F46E5' : isDone ? '#1a7a2e' : '#717786' }}>{en ? s.label.en : s.label.zh}</div>
+                    <div style={{ fontSize: 11, color: '#C1C6D7', display: isActive ? 'block' : 'none' }}>{en ? s.desc.en : s.desc.zh}</div>
                   </div>
                 </button>
                 {i < STEPS.length - 1 && (
@@ -480,12 +532,12 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
       {/* Footer actions */}
       <div className="card" style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button className="btn-secondary" onClick={() => step > 0 ? setStep(step - 1) : navigateTo('channel-list')} style={{ fontSize: 13 }}>
-          <ArrowLeft size={14} /> {step > 0 ? '上一步' : '取消'}
+          <ArrowLeft size={14} /> {step > 0 ? (en ? 'Back' : '上一步') : (en ? 'Cancel' : '取消')}
         </button>
         <div style={{ display: 'flex', gap: 8 }}>
           {step < STEPS.length - 1 ? (
             <button className="btn-primary" onClick={() => setStep(step + 1)} style={{ fontSize: 13 }}>
-              下一步 <ArrowRight size={14} />
+              {en ? 'Next' : '下一步'} <ArrowRight size={14} />
             </button>
           ) : (
             <button
@@ -493,7 +545,9 @@ export default function ChannelForm({ mode, channelId, navigateTo }: Props) {
               onClick={handleSave}
               disabled={saved}
               style={{ fontSize: 13, background: saved ? '#1a7a2e' : undefined, minWidth: 100 }}>
-              {saved ? <><Check size={14} /> 已保存</> : <><Save size={14} /> {mode === 'create' ? '提交入驻' : '保存修改'}</>}
+              {saved
+                ? <><Check size={14} /> {en ? 'Saved' : '已保存'}</>
+                : <><Save size={14} /> {mode === 'create' ? (en ? 'Submit Onboarding' : '提交入驻') : (en ? 'Save Changes' : '保存修改')}</>}
             </button>
           )}
         </div>

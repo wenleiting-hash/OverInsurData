@@ -215,15 +215,16 @@ export interface LossAlert {
   trend: 'rising' | 'stable' | 'improving'
   period: string
   note: string
+  noteEn: string
   severity: 'critical' | 'warning' | 'watch'
 }
 
 export const lossAlerts: LossAlert[] = [
-  { id: 'la1', insurerShort: 'AIG',           line: 'Professional', state: 'FL', currentRatio: 0.724, threshold: 0.70, trend: 'rising',    period: '2026-08', note: 'FL职业责任险赔案集中，已触发再保险报告阈值', severity: 'critical' },
-  { id: 'la2', insurerShort: 'Liberty Mutual', line: 'Auto',        state: 'TX', currentRatio: 0.712, threshold: 0.70, trend: 'rising',    period: '2026-08', note: 'TX自然灾害季节影响，车险赔付率偏高', severity: 'critical' },
-  { id: 'la3', insurerShort: 'AIG',           line: 'Professional', state: 'NY', currentRatio: 0.688, threshold: 0.70, trend: 'rising',    period: '2026-08', note: '趋势向上，若维持将在 2 个月内超阈值', severity: 'warning' },
-  { id: 'la4', insurerShort: 'Liberty Mutual', line: 'Commercial',  state: 'FL', currentRatio: 0.681, threshold: 0.70, trend: 'stable',    period: '2026-08', note: '连续 3 个月高于行业均值，需关注', severity: 'warning' },
-  { id: 'la5', insurerShort: 'Travelers',     line: 'Commercial',  state: 'CA', currentRatio: 0.642, threshold: 0.70, trend: 'improving', period: '2026-08', note: '较上季度下降 2.1ppt，改善明显', severity: 'watch' },
+  { id: 'la1', insurerShort: 'AIG',           line: 'Professional', state: 'FL', currentRatio: 0.724, threshold: 0.70, trend: 'rising',    period: '2026-08', note: 'FL职业责任险赔案集中，已触发再保险报告阈值', noteEn: 'Cluster of professional liability claims in FL; reinsurance reporting threshold triggered', severity: 'critical' },
+  { id: 'la2', insurerShort: 'Liberty Mutual', line: 'Auto',        state: 'TX', currentRatio: 0.712, threshold: 0.70, trend: 'rising',    period: '2026-08', note: 'TX自然灾害季节影响，车险赔付率偏高', noteEn: 'Elevated auto loss ratio driven by the TX catastrophe season', severity: 'critical' },
+  { id: 'la3', insurerShort: 'AIG',           line: 'Professional', state: 'NY', currentRatio: 0.688, threshold: 0.70, trend: 'rising',    period: '2026-08', note: '趋势向上，若维持将在 2 个月内超阈值', noteEn: 'Rising trend; will breach the threshold within 2 months if sustained', severity: 'warning' },
+  { id: 'la4', insurerShort: 'Liberty Mutual', line: 'Commercial',  state: 'FL', currentRatio: 0.681, threshold: 0.70, trend: 'stable',    period: '2026-08', note: '连续 3 个月高于行业均值，需关注', noteEn: 'Above industry average for 3 consecutive months; monitoring required', severity: 'warning' },
+  { id: 'la5', insurerShort: 'Travelers',     line: 'Commercial',  state: 'CA', currentRatio: 0.642, threshold: 0.70, trend: 'improving', period: '2026-08', note: '较上季度下降 2.1ppt，改善明显', noteEn: 'Down 2.1ppt vs last quarter; clear improvement', severity: 'watch' },
 ]
 
 export const lossRatioByLine = [

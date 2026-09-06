@@ -1,136 +1,74 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/react-query-config';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from '@/components/Layout';
-import Dashboard from '@/views/Dashboard';
-import InsurerList from '@/views/InsurerList';
-import InsurerDetail from '@/views/InsurerDetail';
-import InsurerForm from '@/views/InsurerForm';
-import InsurerImport from '@/views/InsurerImport';
-import InsurerDuplicate from '@/views/InsurerDuplicate';
-import ProductList from '@/views/ProductList';
-import ProductDetail from '@/views/ProductDetail';
-import ProductForm from '@/views/ProductForm';
-import I18nManagementView from '@/views/I18nManagementView';
-import PermissionView from '@/views/PermissionView';
+import LoginPage from '@/pages/LoginPage';
+import { VIEW_LABELS } from '@/navigation/viewMeta';
+import type { ViewId } from '@/navigation/viewMeta';
+import { useRTLManager } from '@/hooks/useRTLManager';
+
+// 视图按需加载（代码分割）：启动只加载 Layout + Dashboard，
+// 各模块视图在导航到时才拉取，隔离非当前模块的存量问题
+const Dashboard = lazy(() => import('@/views/Dashboard'));
+const InsurerList = lazy(() => import('@/views/InsurerList'));
+const InsurerDetail = lazy(() => import('@/views/InsurerDetail'));
+const InsurerForm = lazy(() => import('@/views/InsurerForm'));
+const InsurerImport = lazy(() => import('@/views/InsurerImport'));
+const InsurerDuplicate = lazy(() => import('@/views/InsurerDuplicate'));
+const ProductList = lazy(() => import('@/views/ProductList'));
+const ProductDetail = lazy(() => import('@/views/ProductDetail'));
+const ProductForm = lazy(() => import('@/views/ProductForm'));
+const I18nManagementView = lazy(() => import('@/views/I18nManagementView'));
+const PermissionView = lazy(() => import('@/views/PermissionView'));
+const RoleListView = lazy(() => import('@/views/RoleListView'));
+const UserListView = lazy(() => import('@/views/UserListView'));
 
 // Compliance Views
-import AppointmentApplicationView from '@/views/AppointmentApplicationView';
-import AppointmentNewView from '@/views/AppointmentNewView';
-import AppointmentStatusTrackingView from '@/views/AppointmentStatusTrackingView';
-import AppointmentRenewalView from '@/views/AppointmentRenewalView';
-import AppointmentTerminationView from '@/views/AppointmentTerminationView';
-import ComplianceInterceptorView from '@/views/ComplianceInterceptorView';
-import ComplianceReportGeneratorView from '@/views/ComplianceReportGeneratorView';
-import NIPRLicenseCheckView from '@/views/NIPRLicenseCheckView';
-import LicenseExpiryReminderView from '@/views/LicenseExpiryReminderView';
-import ComplianceRulesView from '@/views/ComplianceRulesView';
-import OFACScreeningView from '@/views/OFACScreeningView';
+const AppointmentApplicationView = lazy(() => import('@/views/AppointmentApplicationView'));
+const AppointmentNewView = lazy(() => import('@/views/AppointmentNewView'));
+const AppointmentStatusTrackingView = lazy(() => import('@/views/AppointmentStatusTrackingView'));
+const AppointmentRenewalView = lazy(() => import('@/views/AppointmentRenewalView'));
+const AppointmentTerminationView = lazy(() => import('@/views/AppointmentTerminationView'));
+const ComplianceInterceptorView = lazy(() => import('@/views/ComplianceInterceptorView'));
+const ComplianceReportGeneratorView = lazy(() => import('@/views/ComplianceReportGeneratorView'));
+const NIPRLicenseCheckView = lazy(() => import('@/views/NIPRLicenseCheckView'));
+const LicenseExpiryReminderView = lazy(() => import('@/views/LicenseExpiryReminderView'));
+const ComplianceRulesView = lazy(() => import('@/views/ComplianceRulesView'));
+const OFACScreeningView = lazy(() => import('@/views/OFACScreeningView'));
+const ComplianceDashboardView = lazy(() => import('@/views/ComplianceDashboardView'));
 
 // Finance Views
-import FinanceDashboardView from '@/views/FinanceDashboardView';
-import CommissionBillImportView from '@/views/CommissionBillImportView';
-import BillParsingView from '@/views/BillParsingView';
-import CommissionReconciliationView from '@/views/CommissionReconciliationView';
-import DisputeManagementView from '@/views/DisputeManagementView';
-import SettlementConfigView from '@/views/SettlementConfigView';
-import PremiumReconciliationView from '@/views/PremiumReconciliationView';
-import FinanceEnhancementView from '@/views/FinanceEnhancementView';
-import BatchImportOptimizationView from '@/views/BatchImportOptimizationView';
-import ResponsiveMobileAdaptationView from '@/views/ResponsiveMobileAdaptationView';
-import PWAAvanceFeatureView from '@/views/PWAAvanceFeatureView';
-import ChannelMasterView from '@/views/ChannelMasterView';
-import ChannelHierarchyView from '@/views/ChannelHierarchyView';
-import ChannelOnboardingView from '@/views/ChannelOnboardingView';
-import ProductAuthView from '@/views/ProductAuthView';
-import CommissionSchemeView from '@/views/CommissionSchemeView';
-import ChannelCommissionSettlementView from '@/views/ChannelCommissionSettlementView';
-import ChannelPerformanceView from '@/views/ChannelPerformanceView';
-import ChannelTrainingView from '@/views/ChannelTrainingView';
-import ChannelPortalView from '@/views/ChannelPortalView';
-import ChannelAnalyticsView from '@/views/ChannelAnalyticsView';
-import CooperationManagementView from '@/views/CooperationManagementView';
+const FinanceDashboardView = lazy(() => import('@/views/FinanceDashboardView'));
+const CommissionBillImportView = lazy(() => import('@/views/CommissionBillImportView'));
+const BillParsingView = lazy(() => import('@/views/BillParsingView'));
+const CommissionReconciliationView = lazy(() => import('@/views/CommissionReconciliationView'));
+const DisputeManagementView = lazy(() => import('@/views/DisputeManagementView'));
+const SettlementConfigView = lazy(() => import('@/views/SettlementConfigView'));
+const PremiumReconciliationView = lazy(() => import('@/views/PremiumReconciliationView'));
+const FinanceEnhancementView = lazy(() => import('@/views/FinanceEnhancementView'));
+const ChannelMasterView = lazy(() => import('@/views/ChannelMasterView'));
+const ChannelList = lazy(() => import('@/views/ChannelList'));
+const ChannelNewView = lazy(() => import('@/views/ChannelNewView'));
+const ChannelHierarchyView = lazy(() => import('@/views/ChannelHierarchyView'));
+const ChannelOnboardingView = lazy(() => import('@/views/ChannelOnboardingView'));
+const ProductAuthView = lazy(() => import('@/views/ProductAuthView'));
+const CommissionSchemeView = lazy(() => import('@/views/CommissionSchemeView'));
+const CommissionSettlementView = lazy(() => import('@/views/CommissionSettlementView'));
+const ChannelPerformanceView = lazy(() => import('@/views/ChannelPerformanceView'));
+const ChannelTrainingView = lazy(() => import('@/views/ChannelTrainingView'));
+const ChannelPortalView = lazy(() => import('@/views/ChannelPortalView'));
+const ChannelAnalyticsView = lazy(() => import('@/views/ChannelAnalyticsView'));
+const CooperationManagementView = lazy(() => import('@/views/CooperationManagementView'));
 
-import RoleCreateView from '@/views/RoleCreateView';
-import RoleEditView from '@/views/RoleEditView';
-import UserCreateView from '@/views/UserCreateView';
-import UserEditView from '@/views/UserEditView';
-import RBACMatrixEditorView from '@/views/RBACMatrixEditorView';
-import PermissionTemplateManagerView from '@/views/PermissionTemplateManagerView';
-import DataExportGatewayView from '@/views/DataExportGatewayView';
-import RealTimeNotificationsView from '@/views/RealTimeNotificationsView';
-import ClaimReservingCalculatorView from '@/views/ClaimReservingCalculatorView';
-import ReinsuranceOptimizerView from '@/views/ReinsuranceOptimizerView';
-export type ViewId =
-  | 'dashboard'
-  | 'insurer-list'
-  | 'insurer-detail'
-  | 'insurer-new'
-  | 'insurer-edit'
-  | 'insurer-import'
-  | 'insurer-duplicate'
-  | 'product-list'
-  | 'product-detail'
-  | 'product-new'
-  | 'product-edit'
-  | 'cooperation'
-  | 'appointment'
-  | 'finance-dashboard'
-  | 'finance-bill-import'
-  | 'finance-bill-parsing'
-  | 'finance-reconciliation'
-  | 'finance-disputes'
-  | 'finance-settlement-config'
-  | 'finance-premium-recon'
-  | 'finance-enhancement'
-  | 'insurer-analytics'
-  | 'channel-list'
-  | 'channel-master'
-  | 'channel-hierarchy'
-  | 'channel-onboarding'
-  | 'product-auth'
-  | 'commission-scheme'
-  | 'commission-settlement'
-  | 'channel-performance'
-  | 'channel-training'
-  | 'channel-portal'
-  | 'channel-analytics'
-  | 'i18n-management'
-  // 🔴 Phase 0: 权限管理模块（P0 最高优先级）
-  | 'permission-management'
-  | 'role-list'
-  | 'role-create'
-  | 'role-edit'
-  | 'user-list'
-  | 'user-create'
-  | 'user-edit'
-  | 'menu-permission'
-  | 'data-permission'
-  | 'operation-log'
-  | 'login-log'
-  
-  // 🔴 Phase 2: Appointment & 合规模块
-  | 'appointment-application'
-  | 'appointment-new'
-  | 'appointment-tracking'
-  | 'appointment-renewal'
-  | 'appointment-termination'
-  | 'license-check'
-  | 'compliance-rules'
-  | 'ofac-screening'
-  | 'compliance-interceptor'
-  | 'compliance-report-generator'
-  | 'license-expiry-reminder'
-  
-  // 🔵 Phase 4: 高级特性增强
-  | 'batch-import-optimization'
-  | 'responsive-mobile-adaptation'
-  | 'pwa-advance-feature'
-  
-  // 🔵 Phase 5: 产品深度优化模块
-  | 'rate-plan-engine'
-  | 'actuarial-model-integration'
-  | 'underwriting-rule-engine'
-  | 'product-lifecycle-dashboard'
-  | 'multi-currency-settlement';
+// Analytics Views
+const InsurerAnalyticsView = lazy(() => import('@/views/InsurerAnalyticsView'));
+
+const RoleCreateView = lazy(() => import('@/views/RoleCreateView'));
+const RoleEditView = lazy(() => import('@/views/RoleEditView'));
+const UserCreateView = lazy(() => import('@/views/UserCreateView'));
+const UserEditView = lazy(() => import('@/views/UserEditView'));
 
 interface AppState {
   currentView: ViewId;
@@ -138,56 +76,38 @@ interface AppState {
   selectedProductId: string | null;
   selectedUserId: string | null;
   selectedRoleId: string | null;
+  selectedChannelId: string | null;
 }
 
-const VIEW_LABELS: Record<string, { crumbs: string[]; title: string }> = {
-  dashboard: { crumbs: [], title: '总览' },
-  'insurer-list': { crumbs: ['保险公司管理'], title: '保险公司列表' },
-  'insurer-detail': { crumbs: ['保险公司管理', '保险公司列表'], title: '保险公司详情' },
-  'insurer-new': { crumbs: ['保险公司管理', '保险公司列表'], title: '新增保险公司' },
-  'insurer-edit': { crumbs: ['保险公司管理', '保险公司列表'], title: '编辑保险公司' },
-  'insurer-import': { crumbs: ['保险公司管理', '保险公司列表'], title: '批量导入' },
-  'insurer-duplicate': { crumbs: ['保险公司管理', '保险公司列表'], title: '重复数据检测' },
-  'product-list': { crumbs: ['保险公司管理'], title: '产品管理' },
-  'product-detail': { crumbs: ['保险公司管理', '产品管理'], title: '产品详情' },
-  'product-new': { crumbs: ['保险公司管理', '产品管理'], title: '新增产品' },
-  'product-edit': { crumbs: ['保险公司管理', '产品管理'], title: '编辑产品' },
-  'cooperation': { crumbs: ['保险公司管理'], title: '合作管理' },
-  'appointment': { crumbs: ['保险公司管理'], title: 'Appointment & 合规' },
-  'finance': { crumbs: ['保险公司管理'], title: '财务与结算 Dashboard' },
-  'insurer-analytics': { crumbs: ['保险公司管理'], title: '数据分析' },
-  'channel-list': { crumbs: ['渠道管理'], title: '渠道列表' },
-  'channel-hierarchy': { crumbs: ['渠道管理'], title: '渠道层级' },
-  'channel-onboarding': { crumbs: ['渠道管理'], title: '入驻管理' },
-  'product-auth': { crumbs: ['渠道管理'], title: '产品授权' },
-  'commission-scheme': { crumbs: ['渠道管理'], title: '佣金方案' },
-  'commission-settlement': { crumbs: ['渠道管理'], title: '佣金结算' },
-  'channel-performance': { crumbs: ['渠道管理'], title: '绩效考核' },
-  'channel-training': { crumbs: ['渠道管理'], title: '培训认证' },
-  'channel-portal': { crumbs: ['渠道管理'], title: '渠道门户' },
-  'channel-analytics': { crumbs: ['渠道管理'], title: '渠道分析' },
-  'i18n-management': { crumbs: ['系统设置'], title: '界面文案管理' },
-  // 🔴 Phase 0: 权限管理模块
-  'permission-management': { crumbs: ['系统设置', '权限管理'], title: '权限管理' },
-  'role-list': { crumbs: ['系统设置', '权限管理', '角色管理'], title: '角色管理' },
-  'role-create': { crumbs: ['系统设置', '权限管理', '角色管理'], title: '新建角色' },
-  'role-edit': { crumbs: ['系统设置', '权限管理', '角色管理'], title: '编辑角色' },
-  'user-list': { crumbs: ['系统设置', '权限管理', '用户管理'], title: '用户管理' },
-  'user-create': { crumbs: ['系统设置', '权限管理', '用户管理'], title: '新建用户' },
-  'user-edit': { crumbs: ['系统设置', '权限管理', '用户管理'], title: '编辑用户' },
-  'menu-permission': { crumbs: ['系统设置', '权限管理', '菜单权限'], title: '菜单权限配置' },
-  'data-permission': { crumbs: ['系统设置', '权限管理', '数据权限'], title: '数据权限配置' },
-  'operation-log': { crumbs: ['系统设置', '权限管理', '操作日志'], title: '操作日志审计' },
-  'login-log': { crumbs: ['系统设置', '权限管理', '登录日志'], title: '登录日志审计' },
-};
+// ViewId 类型抽离至 navigation/viewMeta（独立叶子模块，避免 App↔TopBar 循环依赖）
+// 此处 re-export 保持全仓 type-only import 兼容
+export type { ViewId } from '@/navigation/viewMeta';
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+// Internal component that uses auth context
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  // Initialize RTL direction manager
+  useRTLManager();
+
+  // ✅ CRITICAL FIX: All hooks must be at top level BEFORE any conditional returns
+  // useState/useEffect MUST be called before the if (isLoading) and if (!isAuthenticated) checks
   const [state, setState] = useState<AppState>(() => ({
     currentView: 'dashboard',
     selectedCarrierId: null,
     selectedProductId: null,
     selectedUserId: null,
     selectedRoleId: null,
+    selectedChannelId: null,
   }));
 
   // URL 同步
@@ -202,6 +122,7 @@ export default function App() {
       else if (state.currentView === 'product-detail' && state.selectedProductId) path = `/product-detail/${state.selectedProductId}`;
       else if (state.currentView === 'cooperation') path = '/cooperation';
       else if (state.currentView === 'appointment') path = '/appointment';
+      else if (state.currentView === 'appointment-new') path = '/appointment/new';
       else if (state.currentView === 'ofac-screening') path = '/ofac-screening';
       else if (state.currentView === 'finance-dashboard') path = '/finance/dashboard';
       else if (state.currentView === 'finance-bill-import') path = '/finance/bills/import';
@@ -212,6 +133,8 @@ export default function App() {
       else if (state.currentView === 'finance-premium-recon') path = '/finance/premiums/reconciliation';
       else if (state.currentView === 'insurer-analytics') path = '/insurer-analytics';
       else if (state.currentView === 'channel-list') path = '/channel-list';
+      else if (state.currentView === 'channel-new') path = '/channel-list/new';
+      else if (state.currentView === 'channel-edit' && state.selectedChannelId) path = '/channel-list/edit';
       else if (state.currentView === 'channel-master') path = '/channel-master';
       else if (state.currentView === 'channel-hierarchy') path = '/channel-hierarchy';
       else if (state.currentView === 'channel-onboarding') path = '/channel-onboarding';
@@ -238,33 +161,58 @@ export default function App() {
       
       // 🟢 Phase 2: Appointment & 合规模块路径
       else if (state.currentView === 'appointment-application') path = '/appointment';
+      else if (state.currentView === 'appointment-tracking') path = '/appointment/tracking';
+      else if (state.currentView === 'appointment-renewal') path = '/appointment/renewal';
+      else if (state.currentView === 'appointment-termination') path = '/appointment/termination';
+      else if (state.currentView === 'license-check') path = '/compliance/license-check';
+      else if (state.currentView === 'compliance-rules') path = '/compliance/rules';
+      else if (state.currentView === 'compliance-dashboard') path = '/compliance-dashboard';
       else if (state.currentView === 'compliance-interceptor') path = '/compliance-interceptor';
       else if (state.currentView === 'compliance-report-generator') path = '/compliance-report-generator';
       else if (state.currentView === 'license-expiry-reminder') path = '/license-expiry-reminder';
-      
+
       window.history.replaceState({}, '', path);
     };
     
     syncUrl();
-  }, [state.currentView, state.selectedCarrierId, state.selectedProductId]);
+  }, [state.currentView, state.selectedCarrierId, state.selectedProductId, state.selectedChannelId]);
 
+  // ✅ ALL useEffects MUST be at top level (before any early returns)
   // Back button support
   useEffect(() => {
     const handlePopState = () => {
-      // Simplified: reset to dashboard for now
       setState(prev => ({ ...prev, currentView: 'dashboard' }));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigateTo = (view: ViewId, params?: { carrierId?: string; productId?: string; userId?: string }) => {
+  // ✅ CRITICAL: Early returns MUST be AFTER all hooks (useState/useEffect) are called
+  // Loading state during initial auth check - moved AFTER useState/useEffect
+  if (isLoading) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-[#0058BC] text-lg font-semibold">Loading...</div>
+        </div>
+      </QueryClientProvider>
+    );
+  }
+
+  // Redirect to login if not authenticated - moved AFTER useState/useEffect
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  const navigateTo = (view: ViewId, params?: { carrierId?: string; productId?: string; userId?: string; channelId?: string }) => {
     if (params?.carrierId) {
       setState(prev => ({ ...prev, selectedCarrierId: params.carrierId || null, currentView: view }));
     } else if (params?.productId) {
       setState(prev => ({ ...prev, selectedProductId: params.productId || null, currentView: view }));
     } else if (params?.userId) {
       setState(prev => ({ ...prev, selectedUserId: params.userId || null, currentView: view }));
+    } else if (params?.channelId) {
+      setState(prev => ({ ...prev, selectedChannelId: params.channelId || null, currentView: view }));
     } else {
       setState(prev => ({ ...prev, currentView: view }));
     }
@@ -322,6 +270,39 @@ export default function App() {
       // 🔵 Phase 2: Appointment & Compliance Unified View
       case 'appointment':
         return <AppointmentApplicationView navigateTo={navigateTo} />;
+
+      case 'appointment-new':
+        return <AppointmentNewView navigateTo={navigateTo} />;
+
+      case 'compliance-dashboard':
+        return <ComplianceDashboardView navigateTo={navigateTo} />;
+
+      case 'appointment-tracking':
+        return <AppointmentStatusTrackingView navigateTo={navigateTo} />;
+
+      case 'appointment-renewal':
+        return <AppointmentRenewalView navigateTo={navigateTo} />;
+
+      case 'appointment-termination':
+        return <AppointmentTerminationView navigateTo={navigateTo} />;
+
+      case 'license-check':
+        return <NIPRLicenseCheckView navigateTo={navigateTo} />;
+
+      case 'compliance-rules':
+        return <ComplianceRulesView navigateTo={navigateTo} />;
+
+      case 'ofac-screening':
+        return <OFACScreeningView navigateTo={navigateTo} />;
+
+      case 'compliance-interceptor':
+        return <ComplianceInterceptorView navigateTo={navigateTo} />;
+
+      case 'compliance-report-generator':
+        return <ComplianceReportGeneratorView navigateTo={navigateTo} />;
+
+      case 'license-expiry-reminder':
+        return <LicenseExpiryReminderView navigateTo={navigateTo} />;
       
       case 'finance-bill-import':
         return <CommissionBillImportView navigateTo={navigateTo} />;
@@ -344,20 +325,12 @@ export default function App() {
       case 'finance-enhancement':
         return <FinanceEnhancementView navigateTo={navigateTo} />;
 
-      case 'batch-import-optimization':
-        return <BatchImportOptimizationView navigateTo={navigateTo} />;
-
-      case 'responsive-mobile-adaptation':
-        return <ResponsiveMobileAdaptationView navigateTo={navigateTo} />;
-
-      case 'pwa-advance-feature':
-        return <PWAAvanceFeatureView navigateTo={navigateTo} />;
       case 'channel-list':
-        return <div className="text-center py-20 text-[#717786]" style={{ padding: '80px 20px' }}>
-          <h2 className="text-xl font-semibold mb-2">此功能模块正在开发中</h2>
-          <p>敬请期待...</p>
-          <button className="btn-primary mt-6" onClick={() => navigateTo('dashboard')}>返回首页</button>
-        </div>;
+        return <ChannelList navigateTo={navigateTo} />;
+      case 'channel-new':
+        return <ChannelNewView navigateTo={navigateTo} />;
+      case 'channel-edit':
+        return <ChannelNewView navigateTo={navigateTo} channelId={state.selectedChannelId || ''} />;
 
       case 'channel-master':
         return <ChannelMasterView navigateTo={navigateTo} />;
@@ -367,6 +340,15 @@ export default function App() {
 
       case 'permission-management':
         return <PermissionView navigateTo={navigateTo} />;
+
+      case 'role-list':
+        return <RoleListView navigateTo={navigateTo} />;
+
+      case 'role-create':
+        return <RoleCreateView navigateTo={navigateTo} />;
+
+      case 'user-list':
+        return <UserListView navigateTo={navigateTo} />;
 
       case 'role-edit':
         return <RoleEditView roleId={state.selectedRoleId || ''} navigateTo={navigateTo} />;
@@ -380,7 +362,7 @@ export default function App() {
       case 'commission-scheme':
         return <CommissionSchemeView navigateTo={navigateTo} />
       case 'commission-settlement':
-        return <ChannelCommissionSettlementView navigateTo={navigateTo} />
+        return <CommissionSettlementView navigateTo={navigateTo} />
 
       case 'channel-performance':
         return <ChannelPerformanceView navigateTo={navigateTo} />
@@ -389,10 +371,13 @@ export default function App() {
         return <ChannelTrainingView navigateTo={navigateTo} />
 
       case 'channel-portal':
-        return <ChannelPortalView navigateTo={navigateTo} />
+        return <ChannelPortalView />
 
       case 'channel-analytics':
         return <ChannelAnalyticsView navigateTo={navigateTo} />
+
+      case 'insurer-analytics':
+        return <InsurerAnalyticsView navigateTo={navigateTo} />;
 
       default:
         return (
@@ -404,11 +389,20 @@ export default function App() {
     }
   };
 
+  // Note: Auth check is handled in the top-level AppContent() component
+  // This ensures all routes are protected via the useAuth() hook
+  
   return (
-    <Layout 
-      children={renderView()}
-      currentView={state.currentView}
-      navigateTo={navigateTo}
-    />
+    <QueryClientProvider client={queryClient}>
+      <Layout
+        children={
+          <Suspense fallback={<div style={{ padding: 40, color: '#717786' }}>Loading…</div>}>
+            {renderView()}
+          </Suspense>
+        }
+        currentView={state.currentView}
+        navigateTo={navigateTo}
+      />
+    </QueryClientProvider>
   );
 }

@@ -1,0 +1,122 @@
+{
+  "header": {
+    "title": "数据分析",
+    "subtitle": "业绩总览 · 产品分析 · 区域分析 · 渠道贡献 · 赔付率 · 续保率",
+    "criticalAlerts": "{n} 项赔付率预警",
+    "export": "导出报告"
+  },
+  "tabs": {
+    "overview": "业绩总览",
+    "product": "产品业绩",
+    "regional": "区域业绩",
+    "channel": "渠道贡献",
+    "loss": "赔付率监控",
+    "renewal": "续保率分析"
+  },
+  "kpi": {
+    "productName": "产品名称",
+    "insurer": "保险公司",
+    "line": "业务线",
+    "premium": "保费规模",
+    "premiumShort": "保费",
+    "growth": "增速",
+    "premiumGrowth": "保费增速",
+    "policies": "保单数",
+    "avgPremium": "件均保费",
+    "lossRatio": "赔付率",
+    "renewalRate": "续保率",
+    "topState": "主要州",
+    "state": "州",
+    "region": "区域",
+    "topInsurer": "主要保险公司",
+    "channels": "渠道数",
+    "tier": "层级",
+    "premiumContribution": "保费贡献",
+    "share": "占比",
+    "commission": "佣金收入",
+    "product": "产品",
+    "scale": "规模"
+  },
+  "overview": {
+    "kpiPremium": "平台年化保费收入",
+    "kpiPremiumSub": "较上年 +13.2%",
+    "kpiCommission": "平台佣金收入",
+    "kpiCommissionSub": "综合费率 12.0%",
+    "kpiLossRatio": "综合赔付率",
+    "kpiLossRatioSub": "较上月 -0.6pp",
+    "kpiRenewal": "综合续保率",
+    "kpiRenewalSub": "较上月 +0.3pp",
+    "highGrowth": "高增长",
+    "unitPolicies": "张保单",
+    "unitChannels": "个渠道",
+    "unitProducts": "款产品",
+    "chartPremiumTrend": "月度保费趋势（万美元）",
+    "chartTarget": "YTD 保费达成率（百万美元）",
+    "actual": "实际",
+    "target": "目标"
+  },
+  "product": {
+    "topGrowth": "增速 TOP {n}",
+    "sortLossRatio": "赔付率↑佳",
+    "filterAll": "全部保险公司",
+    "chartMonthly": "主要产品月度保费趋势（万美元）"
+  },
+  "regional": {
+    "statesCount": "{n} 州",
+    "lossRatioLabel": "赔付率：",
+    "chartMonthly": "各区域月度保费趋势（万美元）",
+    "chartCompare": "区域保费 & 赔付率对比",
+    "stateDetail": "{region} 区域州级明细",
+    "top8States": "保费前 8 州明细",
+    "viewAll": "查看全部"
+  },
+  "channel": {
+    "name": "渠道名称",
+    "insurersCount": "{n} 家",
+    "shareOf": "占比 {v}",
+    "chartRanking": "渠道保费规模排名（百万美元）",
+    "chartMonthly": "主要渠道月度保费趋势（万美元）"
+  },
+  "loss": {
+    "alerts": "预警事项",
+    "criticalCount": "{n} 严重",
+    "warningCount": "{n} 警告",
+    "trendRising": "上升趋势",
+    "trendImproving": "改善中",
+    "trendStable": "平稳",
+    "threshold": "阈值 {v}",
+    "chartTrend": "各保险公司赔付率趋势",
+    "thresholdLine": "预警线 70%",
+    "chartByLine": "各业务线赔付率 vs 行业基准",
+    "actualRatio": "实际赔付率",
+    "benchmark": "行业基准",
+    "summary": "保险公司赔付率汇总"
+  },
+  "renewal": {
+    "kpiOverall": "平台综合续保率",
+    "kpiOverallSub": "较上月 +0.3pp",
+    "kpiDue": "本月到期保单",
+    "kpiDueSub": "待续保",
+    "kpiRenewed": "本月已续保",
+    "kpiGrowth": "续保保费增长",
+    "kpiGrowthSub": "件均保费同比增长",
+    "chartTrend": "各保险公司续保率趋势",
+    "chartCohort": "续保队列分析 — 到期保单构成",
+    "renewed": "已续保",
+    "cancelled": "主动取消",
+    "lapsed": "自动失效",
+    "chartRanking": "各保险公司续保率排名",
+    "chartByProduct": "各产品续保率对比",
+    "cohortDetail": "月度续保队列明细",
+    "period": "账期",
+    "dueCount": "到期保单数",
+    "avgPremiumChange": "件均保费变动"
+  },
+  "alert": {
+    "la1": "FL职业责任险赔案集中，已触发再保险报告阈值",
+    "la2": "TX自然灾害季节影响，车险赔付率偏高",
+    "la3": "趋势向上，若维持将在 2 个月内超阈值",
+    "la4": "连续 3 个月高于行业均值，需关注",
+    "la5": "较上季度下降 2.1ppt，改善明显"
+  }
+}

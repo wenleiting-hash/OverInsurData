@@ -59,14 +59,15 @@ export interface BillLineItem {
   matchStatus: MatchStatus
   diffAmount?: number
   diffNote?: string
+  diffNoteEn?: string
 }
 
 export const billLineItems: BillLineItem[] = [
   { id: 'li1', billId: 'cb1', lineNumber: 1, policyNumber: 'TRV-2026-0048821', insuredName: 'Bay Area Tech Ventures', channelId: 'c1', channelName: 'Pacific Coast Insurance Group', state: 'CA', line: 'P&C', effectiveDate: '2026-08-01', premium: 67800, commissionRate: 0.12, commissionAmount: 8136, ourPolicyNumber: 'INS-2026-0048821', ourCommissionRate: 0.12, ourCommissionAmount: 8136, matchStatus: 'matched' },
-  { id: 'li2', billId: 'cb1', lineNumber: 2, policyNumber: 'TRV-2026-0048944', insuredName: 'Golden Gate Logistics', channelId: 'c1', channelName: 'Pacific Coast Insurance Group', state: 'CA', line: 'P&C', effectiveDate: '2026-08-03', premium: 42500, commissionRate: 0.12, commissionAmount: 5100, ourPolicyNumber: 'INS-2026-0048944', ourCommissionRate: 0.125, ourCommissionAmount: 5313, matchStatus: 'rate-diff', diffAmount: -213, diffNote: '费率差异：账单12% vs 系统12.5%' },
+  { id: 'li2', billId: 'cb1', lineNumber: 2, policyNumber: 'TRV-2026-0048944', insuredName: 'Golden Gate Logistics', channelId: 'c1', channelName: 'Pacific Coast Insurance Group', state: 'CA', line: 'P&C', effectiveDate: '2026-08-03', premium: 42500, commissionRate: 0.12, commissionAmount: 5100, ourPolicyNumber: 'INS-2026-0048944', ourCommissionRate: 0.125, ourCommissionAmount: 5313, matchStatus: 'rate-diff', diffAmount: -213, diffNote: '费率差异：账单12% vs 系统12.5%', diffNoteEn: 'Rate variance: bill 12% vs system 12.5%' },
   { id: 'li3', billId: 'cb1', lineNumber: 3, policyNumber: 'TRV-2026-0049012', insuredName: 'Pacific Rim Manufacturing', channelId: 'c2', channelName: 'Lone Star Brokerage', state: 'TX', line: 'Commercial', effectiveDate: '2026-08-05', premium: 89200, commissionRate: 0.10, commissionAmount: 8920, ourPolicyNumber: 'INS-2026-0049012', ourCommissionRate: 0.10, ourCommissionAmount: 8920, matchStatus: 'matched' },
-  { id: 'li4', billId: 'cb1', lineNumber: 4, policyNumber: 'TRV-2026-0049188', insuredName: 'Summit Medical Group', channelId: 'c3', channelName: 'Great Lakes Insurance Partners', state: 'IL', line: 'Professional', effectiveDate: '2026-08-07', premium: 34600, commissionRate: 0.15, commissionAmount: 5190, ourPolicyNumber: undefined, ourCommissionRate: undefined, ourCommissionAmount: undefined, matchStatus: 'unmatched', diffNote: '系统中未找到匹配保单' },
-  { id: 'li5', billId: 'cb1', lineNumber: 5, policyNumber: 'TRV-2026-0049302', insuredName: 'Metro Construction LLC', channelId: 'c4', channelName: 'Empire State Insurance Services', state: 'NY', line: 'Commercial', effectiveDate: '2026-08-09', premium: 156700, commissionRate: 0.10, commissionAmount: 15670, ourPolicyNumber: 'INS-2026-0049302', ourCommissionRate: 0.10, ourCommissionAmount: 14800, matchStatus: 'amount-diff', diffAmount: 870, diffNote: '金额差异：账单 $15,670 vs 系统 $14,800（保费录入差异）' },
+  { id: 'li4', billId: 'cb1', lineNumber: 4, policyNumber: 'TRV-2026-0049188', insuredName: 'Summit Medical Group', channelId: 'c3', channelName: 'Great Lakes Insurance Partners', state: 'IL', line: 'Professional', effectiveDate: '2026-08-07', premium: 34600, commissionRate: 0.15, commissionAmount: 5190, ourPolicyNumber: undefined, ourCommissionRate: undefined, ourCommissionAmount: undefined, matchStatus: 'unmatched', diffNote: '系统中未找到匹配保单', diffNoteEn: 'No matching policy found in the system' },
+  { id: 'li5', billId: 'cb1', lineNumber: 5, policyNumber: 'TRV-2026-0049302', insuredName: 'Metro Construction LLC', channelId: 'c4', channelName: 'Empire State Insurance Services', state: 'NY', line: 'Commercial', effectiveDate: '2026-08-09', premium: 156700, commissionRate: 0.10, commissionAmount: 15670, ourPolicyNumber: 'INS-2026-0049302', ourCommissionRate: 0.10, ourCommissionAmount: 14800, matchStatus: 'amount-diff', diffAmount: 870, diffNote: '金额差异：账单 $15,670 vs 系统 $14,800（保费录入差异）', diffNoteEn: 'Amount variance: bill $15,670 vs system $14,800 (premium entry discrepancy)' },
   { id: 'li6', billId: 'cb2', lineNumber: 1, policyNumber: 'LM-2026-0073421', insuredName: 'Desert Solar Holdings', channelId: 'c9', channelName: 'Southwest Insurance Network', state: 'AZ', line: 'Commercial', effectiveDate: '2026-08-02', premium: 45200, commissionRate: 0.11, commissionAmount: 4972, ourPolicyNumber: 'INS-2026-0073421', ourCommissionRate: 0.11, ourCommissionAmount: 4972, matchStatus: 'matched' },
   { id: 'li7', billId: 'cb2', lineNumber: 2, policyNumber: 'LM-2026-0073589', insuredName: 'Coastal Medical Associates', channelId: 'c5', channelName: 'Sunshine State Brokers', state: 'FL', line: 'Professional', effectiveDate: '2026-08-04', premium: 89600, commissionRate: 0.13, commissionAmount: 11648, ourPolicyNumber: 'INS-2026-0073589', ourCommissionRate: 0.13, ourCommissionAmount: 11648, matchStatus: 'matched' },
 ]
@@ -90,18 +91,19 @@ export interface ReconciliationDiff {
   status: DiffStatus
   assignedTo?: string
   note?: string
+  noteEn?: string
   createdDate: string
   resolvedDate?: string
 }
 
 export const reconciliationDiffs: ReconciliationDiff[] = [
-  { id: 'rd1', billId: 'cb1', billName: 'Travelers_Commission_202608.csv', insurerShort: 'Travelers', policyNumber: 'TRV-2026-0049302', insuredName: 'Metro Construction LLC', diffType: 'amount-mismatch', billAmount: 15670, ourAmount: 14800, diffAmount: 870, status: 'under-review', assignedTo: 'Zhang Wei', note: '待核查保费基数是否录入有误', createdDate: '2026-08-18' },
-  { id: 'rd2', billId: 'cb1', billName: 'Travelers_Commission_202608.csv', insurerShort: 'Travelers', policyNumber: 'TRV-2026-0048944', insuredName: 'Golden Gate Logistics', diffType: 'rate-mismatch', billAmount: 5100, ourAmount: 5313, diffAmount: -213, status: 'disputed', assignedTo: 'Sarah Chen', note: '已向 Travelers 发送确认请求，等待回复', createdDate: '2026-08-18' },
+  { id: 'rd1', billId: 'cb1', billName: 'Travelers_Commission_202608.csv', insurerShort: 'Travelers', policyNumber: 'TRV-2026-0049302', insuredName: 'Metro Construction LLC', diffType: 'amount-mismatch', billAmount: 15670, ourAmount: 14800, diffAmount: 870, status: 'under-review', assignedTo: 'Zhang Wei', note: '待核查保费基数是否录入有误', noteEn: 'Verifying whether the premium base was entered incorrectly', createdDate: '2026-08-18' },
+  { id: 'rd2', billId: 'cb1', billName: 'Travelers_Commission_202608.csv', insurerShort: 'Travelers', policyNumber: 'TRV-2026-0048944', insuredName: 'Golden Gate Logistics', diffType: 'rate-mismatch', billAmount: 5100, ourAmount: 5313, diffAmount: -213, status: 'disputed', assignedTo: 'Sarah Chen', note: '已向 Travelers 发送确认请求，等待回复', noteEn: 'Confirmation request sent to Travelers; awaiting reply', createdDate: '2026-08-18' },
   { id: 'rd3', billId: 'cb1', billName: 'Travelers_Commission_202608.csv', insurerShort: 'Travelers', policyNumber: 'TRV-2026-0049188', insuredName: 'Summit Medical Group', diffType: 'missing-policy', billAmount: 5190, ourAmount: 0, diffAmount: 5190, status: 'open', createdDate: '2026-08-18' },
   { id: 'rd4', billId: 'cb2', billName: 'LibertyMutual_Stmt_Aug2026.xlsx', insurerShort: 'Liberty Mutual', policyNumber: 'LM-2026-0074122', insuredName: 'Gulf Coast Petrochemical', diffType: 'rate-mismatch', billAmount: 28440, ourAmount: 26100, diffAmount: 2340, status: 'open', createdDate: '2026-08-19' },
-  { id: 'rd5', billId: 'cb2', billName: 'LibertyMutual_Stmt_Aug2026.xlsx', insurerShort: 'Liberty Mutual', policyNumber: 'LM-2026-0074290', insuredName: 'Sunrise Healthcare', diffType: 'duplicate', billAmount: 12800, ourAmount: 0, diffAmount: 12800, status: 'accepted', assignedTo: 'Liu Yang', note: '确认为重复提交，已通知 Liberty Mutual 纠正', createdDate: '2026-08-19', resolvedDate: '2026-08-21' },
-  { id: 'rd6', billId: 'cb2', billName: 'LibertyMutual_Stmt_Aug2026.xlsx', insurerShort: 'Liberty Mutual', policyNumber: 'LM-2026-0074401', insuredName: 'Mountain View Hotels', diffType: 'amount-mismatch', billAmount: 9870, ourAmount: 10450, diffAmount: -580, status: 'adjusted', assignedTo: 'Sarah Chen', note: '系统金额已调整为账单金额，差额记入调整账', createdDate: '2026-08-19', resolvedDate: '2026-08-22' },
-  { id: 'rd7', billId: 'cb6', billName: 'Travelers_Commission_202607.csv', insurerShort: 'Travelers', policyNumber: 'TRV-2026-0041188', insuredName: 'Pacific Network Corp', diffType: 'amount-mismatch', billAmount: 4210, ourAmount: 3840, diffAmount: 370, status: 'waived', assignedTo: 'Zhang Wei', note: '差额小于阈值 $500，按政策免于追偿', createdDate: '2026-07-22', resolvedDate: '2026-07-25' },
+  { id: 'rd5', billId: 'cb2', billName: 'LibertyMutual_Stmt_Aug2026.xlsx', insurerShort: 'Liberty Mutual', policyNumber: 'LM-2026-0074290', insuredName: 'Sunrise Healthcare', diffType: 'duplicate', billAmount: 12800, ourAmount: 0, diffAmount: 12800, status: 'accepted', assignedTo: 'Liu Yang', note: '确认为重复提交，已通知 Liberty Mutual 纠正', noteEn: 'Confirmed duplicate submission; Liberty Mutual notified to correct', createdDate: '2026-08-19', resolvedDate: '2026-08-21' },
+  { id: 'rd6', billId: 'cb2', billName: 'LibertyMutual_Stmt_Aug2026.xlsx', insurerShort: 'Liberty Mutual', policyNumber: 'LM-2026-0074401', insuredName: 'Mountain View Hotels', diffType: 'amount-mismatch', billAmount: 9870, ourAmount: 10450, diffAmount: -580, status: 'adjusted', assignedTo: 'Sarah Chen', note: '系统金额已调整为账单金额，差额记入调整账', noteEn: 'System amount adjusted to the billed amount; variance posted to the adjustment account', createdDate: '2026-08-19', resolvedDate: '2026-08-22' },
+  { id: 'rd7', billId: 'cb6', billName: 'Travelers_Commission_202607.csv', insurerShort: 'Travelers', policyNumber: 'TRV-2026-0041188', insuredName: 'Pacific Network Corp', diffType: 'amount-mismatch', billAmount: 4210, ourAmount: 3840, diffAmount: 370, status: 'waived', assignedTo: 'Zhang Wei', note: '差额小于阈值 $500，按政策免于追偿', noteEn: 'Variance below the $500 threshold; waived per policy', createdDate: '2026-07-22', resolvedDate: '2026-07-25' },
 ]
 
 // ── Settlement Cycles ─────────────────────────────────────────────────────────
@@ -161,6 +163,7 @@ export interface PremiumRecRecord {
   diffType?: PremiumDiffType
   status: PremiumRecStatus
   note?: string
+  noteEn?: string
   dueDate: string
 }
 
@@ -179,12 +182,12 @@ export interface PremiumSummary {
 export const premiumRecords: PremiumRecRecord[] = [
   { id: 'pr1', period: '2026-08', insurerId: '1', insurerShort: 'Travelers', policyNumber: 'INS-2026-0049302', insuredName: 'Metro Construction LLC', channelName: 'Empire State Insurance Services', state: 'NY', expectedPremium: 156700, remittedPremium: 156700, diffAmount: 0, status: 'matched', dueDate: '2026-09-01' },
   { id: 'pr2', period: '2026-08', insurerId: '1', insurerShort: 'Travelers', policyNumber: 'INS-2026-0048821', insuredName: 'Bay Area Tech Ventures', channelName: 'Pacific Coast Insurance Group', state: 'CA', expectedPremium: 67800, remittedPremium: 67800, diffAmount: 0, status: 'matched', dueDate: '2026-09-01' },
-  { id: 'pr3', period: '2026-08', insurerId: '1', insurerShort: 'Travelers', policyNumber: 'INS-2026-0050012', insuredName: 'Sunrise Technologies', channelName: 'Pacific Coast Insurance Group', state: 'CA', expectedPremium: 45600, remittedPremium: 0, diffAmount: 45600, diffType: 'missing-remittance', status: 'exception', note: '渠道逾期未缴保费，已发催缴通知', dueDate: '2026-08-15' },
+  { id: 'pr3', period: '2026-08', insurerId: '1', insurerShort: 'Travelers', policyNumber: 'INS-2026-0050012', insuredName: 'Sunrise Technologies', channelName: 'Pacific Coast Insurance Group', state: 'CA', expectedPremium: 45600, remittedPremium: 0, diffAmount: 45600, diffType: 'missing-remittance', status: 'exception', note: '渠道逾期未缴保费，已发催缴通知', noteEn: 'Channel premium overdue; demand notice issued', dueDate: '2026-08-15' },
   { id: 'pr4', period: '2026-08', insurerId: '2', insurerShort: 'Liberty Mutual', policyNumber: 'INS-2026-0073421', insuredName: 'Desert Solar Holdings', channelName: 'Southwest Insurance Network', state: 'AZ', expectedPremium: 45200, remittedPremium: 45200, diffAmount: 0, status: 'matched', dueDate: '2026-09-01' },
-  { id: 'pr5', period: '2026-08', insurerId: '2', insurerShort: 'Liberty Mutual', policyNumber: 'INS-2026-0074122', insuredName: 'Gulf Coast Petrochemical', channelName: 'Lone Star Brokerage', state: 'TX', expectedPremium: 258600, remittedPremium: 269400, diffAmount: -10800, diffType: 'over-remittance', status: 'exception', note: '多缴差额疑为背书批单保费计算错误', dueDate: '2026-09-01' },
-  { id: 'pr6', period: '2026-08', insurerId: '3', insurerShort: 'Nationwide', policyNumber: 'INS-2026-0034512', insuredName: 'Chicago Fleet Leasing', channelName: 'Great Lakes Insurance Partners', state: 'IL', expectedPremium: 34100, remittedPremium: 31200, diffAmount: 2900, diffType: 'cancellation-adj', status: 'adjusted', note: '保单中途取消，保费按日比例调整', dueDate: '2026-09-15' },
+  { id: 'pr5', period: '2026-08', insurerId: '2', insurerShort: 'Liberty Mutual', policyNumber: 'INS-2026-0074122', insuredName: 'Gulf Coast Petrochemical', channelName: 'Lone Star Brokerage', state: 'TX', expectedPremium: 258600, remittedPremium: 269400, diffAmount: -10800, diffType: 'over-remittance', status: 'exception', note: '多缴差额疑为背书批单保费计算错误', noteEn: 'Overpayment variance suspected to be an endorsement premium calculation error', dueDate: '2026-09-01' },
+  { id: 'pr6', period: '2026-08', insurerId: '3', insurerShort: 'Nationwide', policyNumber: 'INS-2026-0034512', insuredName: 'Chicago Fleet Leasing', channelName: 'Great Lakes Insurance Partners', state: 'IL', expectedPremium: 34100, remittedPremium: 31200, diffAmount: 2900, diffType: 'cancellation-adj', status: 'adjusted', note: '保单中途取消，保费按日比例调整', noteEn: 'Policy cancelled mid-term; premium prorated on a daily basis', dueDate: '2026-09-15' },
   { id: 'pr7', period: '2026-08', insurerId: '4', insurerShort: 'Chubb', policyNumber: 'INS-2026-0062810', insuredName: 'Pinnacle Financial Group', channelName: 'Lone Star Brokerage', state: 'TX', expectedPremium: 189400, remittedPremium: 189400, diffAmount: 0, status: 'matched', dueDate: '2026-08-25' },
-  { id: 'pr8', period: '2026-08', insurerId: '5', insurerShort: 'AIG', policyNumber: 'INS-2026-0089221', insuredName: 'Coastal Medical Associates', channelName: 'Sunshine State Brokers', state: 'FL', expectedPremium: 89600, remittedPremium: 0, diffAmount: 89600, diffType: 'missing-remittance', status: 'exception', note: '对接渠道提交 Appointment 审核中，暂缓收款', dueDate: '2026-08-20' },
+  { id: 'pr8', period: '2026-08', insurerId: '5', insurerShort: 'AIG', policyNumber: 'INS-2026-0089221', insuredName: 'Coastal Medical Associates', channelName: 'Sunshine State Brokers', state: 'FL', expectedPremium: 89600, remittedPremium: 0, diffAmount: 89600, diffType: 'missing-remittance', status: 'exception', note: '对接渠道提交 Appointment 审核中，暂缓收款', noteEn: 'Channel appointment under review; collection on hold', dueDate: '2026-08-20' },
 ]
 
 export const premiumSummaries: PremiumSummary[] = [
@@ -245,28 +248,20 @@ export const settlementHistory: SettlementRecord[] = [
   { id: 'sh5', insurerId: '1', insurerShort: 'Travelers', period: '2026-08', settledDate: '', amount: 576210, method: 'wire-transfer', referenceNumber: '', status: 'pending' },
 ]
 
-export const FREQ_LABEL: Record<CycleFrequency, string> = {
-  monthly: '月结', quarterly: '季结', 'semi-annual': '半年结', annual: '年结', custom: '自定义',
+// Presentational styles only; display labels are localized in the view via i18n.
+export const DIFF_STATUS_STYLE: Record<DiffStatus, { bg: string; color: string }> = {
+  open:          { bg: 'rgba(255,59,48,0.1)',  color: '#C0392B' },
+  'under-review':{ bg: 'rgba(0,122,255,0.1)',  color: '#005DC7' },
+  accepted:      { bg: 'rgba(52,199,89,0.1)',  color: '#1E8033' },
+  disputed:      { bg: 'rgba(255,159,10,0.1)', color: '#B06000' },
+  adjusted:      { bg: 'rgba(130,80,255,0.1)', color: '#7B3FCA' },
+  waived:        { bg: 'rgba(180,180,180,0.15)', color: '#666' },
 }
-export const METHOD_LABEL: Record<SettlementMethod, string> = {
-  'wire-transfer': '电汇', ach: 'ACH', check: '支票', offset: '冲账',
-}
-export const DIFF_TYPE_LABEL: Record<DiffType, string> = {
-  'rate-mismatch': '费率差异', 'amount-mismatch': '金额差异', 'missing-policy': '账单有我方无', 'duplicate': '重复行', 'missing-in-bill': '我方有账单无',
-}
-export const DIFF_STATUS_STYLE: Record<DiffStatus, { bg: string; color: string; label: string }> = {
-  open:          { bg: 'rgba(255,59,48,0.1)',  color: '#C0392B', label: '待处理' },
-  'under-review':{ bg: 'rgba(0,122,255,0.1)',  color: '#005DC7', label: '审核中' },
-  accepted:      { bg: 'rgba(52,199,89,0.1)',  color: '#1E8033', label: '已认可' },
-  disputed:      { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '争议中' },
-  adjusted:      { bg: 'rgba(130,80,255,0.1)', color: '#7B3FCA', label: '已调整' },
-  waived:        { bg: 'rgba(180,180,180,0.15)', color: '#666', label: '已豁免' },
-}
-export const BILL_STATUS_STYLE: Record<BillImportStatus, { bg: string; color: string; label: string }> = {
-  'pending-parse': { bg: 'rgba(180,180,180,0.15)', color: '#717786', label: '待解析' },
-  parsed:          { bg: 'rgba(255,159,10,0.1)',  color: '#B06000', label: '已解析' },
-  reconciled:      { bg: 'rgba(0,122,255,0.1)',   color: '#005DC7', label: '已对账' },
-  exception:       { bg: 'rgba(255,59,48,0.1)',   color: '#C0392B', label: '存在差异' },
-  settled:         { bg: 'rgba(52,199,89,0.1)',   color: '#1E8033', label: '已结算' },
-  archived:        { bg: 'rgba(180,180,180,0.15)', color: '#A0A5B1', label: '已归档' },
+export const BILL_STATUS_STYLE: Record<BillImportStatus, { bg: string; color: string }> = {
+  'pending-parse': { bg: 'rgba(180,180,180,0.15)', color: '#717786' },
+  parsed:          { bg: 'rgba(255,159,10,0.1)',  color: '#B06000' },
+  reconciled:      { bg: 'rgba(0,122,255,0.1)',   color: '#005DC7' },
+  exception:       { bg: 'rgba(255,59,48,0.1)',   color: '#C0392B' },
+  settled:         { bg: 'rgba(52,199,89,0.1)',   color: '#1E8033' },
+  archived:        { bg: 'rgba(180,180,180,0.15)', color: '#A0A5B1' },
 }

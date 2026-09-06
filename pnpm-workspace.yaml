@@ -1,0 +1,12 @@
+packages:
+  # 主项目 (insurance-platform)
+  - 'insurance-platform'
+  # 后端服务
+  - 'services/*'
+  # 共享包
+  - 'packages/*'
+allowBuilds:
+  '@nestjs/core': true
+  bcrypt: set this to true or false
+  es5-ext: true
+  esbuild: true

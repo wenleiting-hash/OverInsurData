@@ -11,10 +11,11 @@ import {
   ToggleLeft, ToggleRight, CheckCircle2, Clock,
 } from 'lucide-react'
 import type { ViewId } from '../components/Sidebar'
+import { useLang } from '../i18n'
 import {
   channelNodes, hierarchyRelations, pendingChanges, whiteLabelConfigs, teamPerfSummary,
   buildChildrenMap, getNodeById,
-  NODE_TYPE_LABEL, NODE_TYPE_COLOR, STATUS_STYLE, CHANGE_TYPE_LABEL,
+  NODE_TYPE_LABEL, NODE_TYPE_LABEL_EN, NODE_TYPE_COLOR, STATUS_STYLE, CHANGE_TYPE_LABEL, CHANGE_TYPE_LABEL_EN,
   type ChannelNode, type NodeType, type WhiteLabelConfig,
 } from '../data/channelHierarchyData'
 
@@ -46,6 +47,7 @@ function TreeNode({
   expanded: Set<string>
   onToggle: (id: string) => void
 }) {
+  const { lang } = useLang()
   const children = (childrenMap[node.id] || []).map(id => getNodeById(id)).filter(Boolean) as ChannelNode[]
   const hasChildren = children.length > 0
   const isExpanded = expanded.has(node.id)
@@ -53,6 +55,7 @@ function TreeNode({
   const typeColor = NODE_TYPE_COLOR[node.type]
   const statusSt = STATUS_STYLE[node.status]
   const isMultiParent = node.parentIds.length > 1
+  const typeLabel = lang === 'en' ? NODE_TYPE_LABEL_EN[node.type] : NODE_TYPE_LABEL[node.type]
 
   return (
     <div>
@@ -73,13 +76,13 @@ function TreeNode({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="flex items-center gap-2">
               <span style={{ fontSize: 13, fontWeight: 600, color: '#181C23', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.name}</span>
-              {isMultiParent && <span title="多上级节点" style={{ fontSize: 9.5, background: 'rgba(0,88,188,0.12)', color: '#0058BC', borderRadius: 4, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>多上级</span>}
-              {node.status !== 'active' && <Badge bg={statusSt.bg} color={statusSt.color}>{statusSt.label}</Badge>}
+              {isMultiParent && <span title={lang === 'en' ? 'Multi-parent node' : '多上级节点'} style={{ fontSize: 9.5, background: 'rgba(0,88,188,0.12)', color: '#0058BC', borderRadius: 4, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{lang === 'en' ? 'Multi-parent' : '多上级'}</span>}
+              {node.status !== 'active' && <Badge bg={statusSt.bg} color={statusSt.color}>{lang === 'en' ? statusSt.labelEn : statusSt.label}</Badge>}
             </div>
           </div>
 
           <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
-            <span style={{ fontSize: 10.5, background: `${typeColor}12`, color: typeColor, borderRadius: 5, padding: '1px 6px', fontWeight: 700 }}>{NODE_TYPE_LABEL[node.type]}</span>
+            <span style={{ fontSize: 10.5, background: `${typeColor}12`, color: typeColor, borderRadius: 5, padding: '1px 6px', fontWeight: 700 }}>{typeLabel}</span>
             {node.ytdPremium > 0 && <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#717786' }}>{fmt(node.ytdPremium)}</span>}
             {hasChildren && <span style={{ fontSize: 11, color: '#A0A5B1' }}>{children.length}</span>}
           </div>
@@ -97,6 +100,7 @@ function TreeNode({
 // ── Tab 1 — 组织架构树 ─────────────────────────────────────────────────────────
 
 function OrgTreeTab() {
+  const { lang } = useLang()
   const childrenMap = buildChildrenMap()
   const roots = channelNodes.filter(n => n.depth === 0)
   const [selected, setSelected] = useState<ChannelNode | null>(channelNodes.find(n => n.id === 'c1') ?? null)
@@ -120,12 +124,12 @@ function OrgTreeTab() {
         <div className="flex flex-col gap-2">
           <div className="relative">
             <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索节点名称…" className="input-glass" style={{ paddingLeft: 30, width: '100%', fontSize: 12.5 }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={lang === 'en' ? 'Search nodes…' : '搜索节点名称…'} className="input-glass" style={{ paddingLeft: 30, width: '100%', fontSize: 12.5 }} />
           </div>
           <div className="flex items-center gap-1" style={{ flexWrap: 'wrap' }}>
             {(['all', 'region', 'agency', 'branch', 'agent'] as const).map(t => (
               <button key={t} onClick={() => setFilterType(t)} style={{ padding: '3px 10px', borderRadius: 7, fontSize: 11.5, fontWeight: 600, border: filterType === t ? `1.5px solid ${t === 'all' ? '#0058BC' : NODE_TYPE_COLOR[t]}` : '1px solid rgba(193,198,215,0.4)', background: filterType === t ? `${t === 'all' ? '#0058BC' : NODE_TYPE_COLOR[t]}10` : 'rgba(255,255,255,0.5)', color: filterType === t ? (t === 'all' ? '#0058BC' : NODE_TYPE_COLOR[t]) : '#717786', cursor: 'pointer' }}>
-                {t === 'all' ? '全部' : NODE_TYPE_LABEL[t]}
+                {t === 'all' ? (lang === 'en' ? 'All' : '全部') : (lang === 'en' ? NODE_TYPE_LABEL_EN[t] : NODE_TYPE_LABEL[t])}
               </button>
             ))}
           </div>
@@ -136,7 +140,7 @@ function OrgTreeTab() {
           {(['region','agency','branch','agent'] as NodeType[]).map(t => (
             <span key={t} className="flex items-center gap-1">
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: NODE_TYPE_COLOR[t], display: 'inline-block' }} />
-              {NODE_TYPE_LABEL[t]}
+              {lang === 'en' ? NODE_TYPE_LABEL_EN[t] : NODE_TYPE_LABEL[t]}
             </span>
           ))}
         </div>
@@ -150,11 +154,23 @@ function OrgTreeTab() {
 
         {/* Stats */}
         <div className="flex gap-3" style={{ fontSize: 11.5, color: '#717786' }}>
-          <span>共 <strong style={{ color: '#181C23' }}>{channelNodes.length - 1}</strong> 个节点</span>
-          <span>·</span>
-          <span>多上级 <strong style={{ color: '#0058BC' }}>{multiParentNodes.length}</strong> 个</span>
-          <span>·</span>
-          <span>暂停 <strong style={{ color: '#C0392B' }}>{channelNodes.filter(n => n.status === 'suspended').length}</strong> 个</span>
+          {lang === 'en' ? (
+            <>
+              <span><strong style={{ color: '#181C23' }}>{channelNodes.length - 1}</strong> {channelNodes.length - 1 === 1 ? 'node' : 'nodes'}</span>
+              <span>·</span>
+              <span><strong style={{ color: '#0058BC' }}>{multiParentNodes.length}</strong> multi-parent</span>
+              <span>·</span>
+              <span><strong style={{ color: '#C0392B' }}>{channelNodes.filter(n => n.status === 'suspended').length}</strong> suspended</span>
+            </>
+          ) : (
+            <>
+              <span>共 <strong style={{ color: '#181C23' }}>{channelNodes.length - 1}</strong> 个节点</span>
+              <span>·</span>
+              <span>多上级 <strong style={{ color: '#0058BC' }}>{multiParentNodes.length}</strong> 个</span>
+              <span>·</span>
+              <span>暂停 <strong style={{ color: '#C0392B' }}>{channelNodes.filter(n => n.status === 'suspended').length}</strong> 个</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -172,15 +188,15 @@ function OrgTreeTab() {
                   <div>
                     <div style={{ fontSize: 17, fontWeight: 800, color: '#181C23' }}>{selected.name}</div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge bg={`${NODE_TYPE_COLOR[selected.type]}12`} color={NODE_TYPE_COLOR[selected.type]}>{NODE_TYPE_LABEL[selected.type]}</Badge>
-                      <Badge bg={STATUS_STYLE[selected.status].bg} color={STATUS_STYLE[selected.status].color}>{STATUS_STYLE[selected.status].label}</Badge>
-                      {selected.parentIds.length > 1 && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">多上级 ({selected.parentIds.length})</Badge>}
+                      <Badge bg={`${NODE_TYPE_COLOR[selected.type]}12`} color={NODE_TYPE_COLOR[selected.type]}>{lang === 'en' ? NODE_TYPE_LABEL_EN[selected.type] : NODE_TYPE_LABEL[selected.type]}</Badge>
+                      <Badge bg={STATUS_STYLE[selected.status].bg} color={STATUS_STYLE[selected.status].color}>{lang === 'en' ? STATUS_STYLE[selected.status].labelEn : STATUS_STYLE[selected.status].label}</Badge>
+                      {selected.parentIds.length > 1 && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{lang === 'en' ? `Multi-parent (${selected.parentIds.length})` : `多上级 (${selected.parentIds.length})`}</Badge>}
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="btn-ghost" style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}><Edit2 size={12} />编辑</button>
-                  <button className="btn-ghost" style={{ padding: '6px 12px', fontSize: 12, color: '#C0392B', display: 'flex', alignItems: 'center', gap: 4 }}><XCircle size={12} />终止</button>
+                  <button className="btn-ghost" style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}><Edit2 size={12} />{lang === 'en' ? 'Edit' : '编辑'}</button>
+                  <button className="btn-ghost" style={{ padding: '6px 12px', fontSize: 12, color: '#C0392B', display: 'flex', alignItems: 'center', gap: 4 }}><XCircle size={12} />{lang === 'en' ? 'Terminate' : '终止'}</button>
                 </div>
               </div>
             </Card>
@@ -188,37 +204,36 @@ function OrgTreeTab() {
             {/* Two-column info */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <Card style={{ padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>基本信息</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>{lang === 'en' ? 'Basic Info' : '基本信息'}</div>
                 {[
-                  ['加入日期', selected.joinDate],
-                  ['主营州', selected.primaryState],
-                  selected.npn ? ['NPN 编号', selected.npn] : null,
-                  selected.contractId ? ['合同编号', selected.contractId] : null,
-                  selected.managerName ? ['负责人', selected.managerName] : null,
-                  selected.email ? ['邮箱', selected.email] : null,
-                ].filter(Boolean).map((row) => {
-                  const [k, v] = row as string[]
+                  { key: 'join', label: lang === 'en' ? 'Join Date' : '加入日期', value: selected.joinDate },
+                  { key: 'state', label: lang === 'en' ? 'Primary State' : '主营州', value: selected.primaryState },
+                  ...(selected.npn ? [{ key: 'npn', label: lang === 'en' ? 'NPN' : 'NPN 编号', value: selected.npn, mono: true }] : []),
+                  ...(selected.contractId ? [{ key: 'contract', label: lang === 'en' ? 'Contract ID' : '合同编号', value: selected.contractId, mono: true }] : []),
+                  ...(selected.managerName ? [{ key: 'manager', label: lang === 'en' ? 'Manager' : '负责人', value: selected.managerName }] : []),
+                  ...(selected.email ? [{ key: 'email', label: lang === 'en' ? 'Email' : '邮箱', value: selected.email }] : []),
+                ].map((row) => {
                   return (
-                    <div key={k} className="flex justify-between" style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', padding: '6px 0', fontSize: 12 }}>
-                      <span style={{ color: '#717786' }}>{k}</span>
-                      <span style={{ fontWeight: 600, color: '#181C23', fontFamily: k === 'NPN 编号' || k === '合同编号' ? "'JetBrains Mono', monospace" : undefined }}>{v}</span>
+                    <div key={row.key} className="flex justify-between" style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', padding: '6px 0', fontSize: 12 }}>
+                      <span style={{ color: '#717786' }}>{row.label}</span>
+                      <span style={{ fontWeight: 600, color: '#181C23', fontFamily: row.mono ? "'JetBrains Mono', monospace" : undefined }}>{row.value}</span>
                     </div>
                   )
                 })}
               </Card>
 
               <Card style={{ padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>业绩指标</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>{lang === 'en' ? 'Performance Metrics' : '业绩指标'}</div>
                 {[
-                  ['YTD 保费', fmt(selected.ytdPremium), '#0058BC'],
-                  ['YTD 佣金', fmt(selected.ytdCommission), '#1E8033'],
-                  ['赔付率', pct(selected.lossRatio), selected.lossRatio > 0.65 ? '#C0392B' : selected.lossRatio > 0.62 ? '#B06000' : '#1E8033'],
-                  ['续保率', pct(selected.renewalRate), selected.renewalRate > 0.9 ? '#1E8033' : '#B06000'],
-                  ['团队规模', selected.teamSize.toString(), '#181C23'],
-                ].map(([k, v, c]) => (
-                  <div key={k} className="flex justify-between" style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', padding: '6px 0', fontSize: 12 }}>
-                    <span style={{ color: '#717786' }}>{k}</span>
-                    <span style={{ fontWeight: 700, color: c, fontFamily: "'JetBrains Mono', monospace" }}>{v}</span>
+                  { key: 'premium', label: lang === 'en' ? 'YTD Premium' : 'YTD 保费', value: fmt(selected.ytdPremium), color: '#0058BC' },
+                  { key: 'commission', label: lang === 'en' ? 'YTD Commission' : 'YTD 佣金', value: fmt(selected.ytdCommission), color: '#1E8033' },
+                  { key: 'loss', label: lang === 'en' ? 'Loss Ratio' : '赔付率', value: pct(selected.lossRatio), color: selected.lossRatio > 0.65 ? '#C0392B' : selected.lossRatio > 0.62 ? '#B06000' : '#1E8033' },
+                  { key: 'renewal', label: lang === 'en' ? 'Renewal Rate' : '续保率', value: pct(selected.renewalRate), color: selected.renewalRate > 0.9 ? '#1E8033' : '#B06000' },
+                  { key: 'team', label: lang === 'en' ? 'Team Size' : '团队规模', value: selected.teamSize.toString(), color: '#181C23' },
+                ].map((row) => (
+                  <div key={row.key} className="flex justify-between" style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', padding: '6px 0', fontSize: 12 }}>
+                    <span style={{ color: '#717786' }}>{row.label}</span>
+                    <span style={{ fontWeight: 700, color: row.color, fontFamily: "'JetBrains Mono', monospace" }}>{row.value}</span>
                   </div>
                 ))}
               </Card>
@@ -227,7 +242,7 @@ function OrgTreeTab() {
             {/* Parent relations */}
             {selected.parentIds.length > 0 && (
               <Card style={{ padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>上级关系</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>{lang === 'en' ? 'Parent Relations' : '上级关系'}</div>
                 {selected.parentIds.map((pid, i) => {
                   const parent = getNodeById(pid)
                   if (!parent) return null
@@ -237,11 +252,11 @@ function OrgTreeTab() {
                       <div className="flex items-center gap-2">
                         <div style={{ width: 7, height: 7, borderRadius: '50%', background: NODE_TYPE_COLOR[parent.type] }} />
                         <span style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>{parent.name}</span>
-                        {pid === selected.primaryParentId && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">主上级</Badge>}
+                        {pid === selected.primaryParentId && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{lang === 'en' ? 'Primary Parent' : '主上级'}</Badge>}
                       </div>
                       {rel && (
                         <span style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: '#717786' }}>
-                          收入分配 <strong style={{ color: '#0058BC' }}>{pct(rel.revenueShare)}</strong>
+                          {lang === 'en' ? 'Revenue Split ' : '收入分配 '}<strong style={{ color: '#0058BC' }}>{pct(rel.revenueShare)}</strong>
                         </span>
                       )}
                     </div>
@@ -253,7 +268,7 @@ function OrgTreeTab() {
             {/* Sub-nodes */}
             {(childrenMap[selected.id] || []).length > 0 && (
               <Card style={{ padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>下级节点 ({(childrenMap[selected.id] || []).length})</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#A0A5B1', letterSpacing: 0.5, marginBottom: 10, textTransform: 'uppercase' as const }}>{lang === 'en' ? `Child Nodes (${(childrenMap[selected.id] || []).length})` : `下级节点 (${(childrenMap[selected.id] || []).length})`}</div>
                 <div className="flex flex-col gap-1">
                   {(childrenMap[selected.id] || []).map(cid => {
                     const child = getNodeById(cid)
@@ -263,7 +278,7 @@ function OrgTreeTab() {
                         <div className="flex items-center gap-2">
                           <div style={{ width: 7, height: 7, borderRadius: '50%', background: NODE_TYPE_COLOR[child.type] }} />
                           <span style={{ fontSize: 12.5, fontWeight: 600, color: '#181C23' }}>{child.name}</span>
-                          <Badge bg={`${NODE_TYPE_COLOR[child.type]}12`} color={NODE_TYPE_COLOR[child.type]}>{NODE_TYPE_LABEL[child.type]}</Badge>
+                          <Badge bg={`${NODE_TYPE_COLOR[child.type]}12`} color={NODE_TYPE_COLOR[child.type]}>{lang === 'en' ? NODE_TYPE_LABEL_EN[child.type] : NODE_TYPE_LABEL[child.type]}</Badge>
                         </div>
                         <span style={{ fontSize: 11.5, fontFamily: "'JetBrains Mono', monospace", color: '#717786' }}>{fmt(child.ytdPremium)}</span>
                       </div>
@@ -276,7 +291,7 @@ function OrgTreeTab() {
         ) : (
           <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: '#A0A5B1', gap: 10 }}>
             <Network size={36} />
-            <span style={{ fontSize: 14, fontWeight: 600 }}>点击左侧节点查看详情</span>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>{lang === 'en' ? 'Click a node on the left to view details' : '点击左侧节点查看详情'}</span>
           </Card>
         )}
       </div>
@@ -287,6 +302,7 @@ function OrgTreeTab() {
 // ── Tab 2 — 层级关系管理（新增/调整/终止）──────────────────────────────────────
 
 function RelationManagementTab() {
+  const { lang } = useLang()
   const [subTab, setSubTab] = useState<'add' | 'adjust' | 'terminate'>('add')
   const [addForm, setAddForm] = useState({ childId: '', parentId: '', isPrimary: true, revenueShare: 100 })
   const [adjustForm, setAdjustForm] = useState({ nodeId: '', currentParentId: '', newParentId: '', reason: '', effectiveDate: '' })
@@ -306,7 +322,7 @@ function RelationManagementTab() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-5">
-        {([['add', '新增层级关系'], ['adjust', '调整层级关系'], ['terminate', '终止层级关系']] as const).map(([v, l]) => (
+        {([['add', lang === 'en' ? 'Add Relation' : '新增层级关系'], ['adjust', lang === 'en' ? 'Adjust Relation' : '调整层级关系'], ['terminate', lang === 'en' ? 'Terminate Relation' : '终止层级关系']] as const).map(([v, l]) => (
           <button key={v} onClick={() => setSubTab(v)} style={{ padding: '7px 18px', borderRadius: 9, fontSize: 13, fontWeight: 600, border: subTab === v ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: subTab === v ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: subTab === v ? '#0058BC' : '#717786', cursor: 'pointer' }}>{l}</button>
         ))}
       </div>
@@ -314,43 +330,43 @@ function RelationManagementTab() {
       {subTab === 'add' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <Card>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>新增层级关系</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>{lang === 'en' ? 'Add Hierarchy Relation' : '新增层级关系'}</div>
             <div className="flex flex-col gap-4">
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>子节点（下级）</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Child Node (Subordinate)' : '子节点（下级）'}</label>
                 <select value={addForm.childId} onChange={e => setAddForm(f => ({ ...f, childId: e.target.value }))} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                  <option value="">请选择节点…</option>
-                  {nodeOptions.map(n => <option key={n.id} value={n.id}>{n.name} [{NODE_TYPE_LABEL[n.type]}]</option>)}
+                  <option value="">{lang === 'en' ? 'Select a node…' : '请选择节点…'}</option>
+                  {nodeOptions.map(n => <option key={n.id} value={n.id}>{n.name} [{lang === 'en' ? NODE_TYPE_LABEL_EN[n.type] : NODE_TYPE_LABEL[n.type]}]</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>父节点（上级）</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Parent Node (Superior)' : '父节点（上级）'}</label>
                 <select value={addForm.parentId} onChange={e => setAddForm(f => ({ ...f, parentId: e.target.value }))} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                  <option value="">请选择上级…</option>
-                  {parentOptions.map(n => <option key={n.id} value={n.id}>{n.name} [{NODE_TYPE_LABEL[n.type]}]</option>)}
+                  <option value="">{lang === 'en' ? 'Select a parent…' : '请选择上级…'}</option>
+                  {parentOptions.map(n => <option key={n.id} value={n.id}>{n.name} [{lang === 'en' ? NODE_TYPE_LABEL_EN[n.type] : NODE_TYPE_LABEL[n.type]}]</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>收入分配比例（%）</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Revenue Split (%)' : '收入分配比例（%）'}</label>
                 <input type="number" min={0} max={100} value={addForm.revenueShare} onChange={e => setAddForm(f => ({ ...f, revenueShare: parseInt(e.target.value) }))} className="input-glass" style={{ width: '100%', fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }} />
-                <div style={{ fontSize: 11.5, color: '#A0A5B1', marginTop: 4 }}>多上级时各上级分配之和需等于 100%</div>
+                <div style={{ fontSize: 11.5, color: '#A0A5B1', marginTop: 4 }}>{lang === 'en' ? 'For multi-parent nodes, the sum of all parent splits must equal 100%' : '多上级时各上级分配之和需等于 100%'}</div>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="isPrimary" checked={addForm.isPrimary} onChange={e => setAddForm(f => ({ ...f, isPrimary: e.target.checked }))} />
-                <label htmlFor="isPrimary" style={{ fontSize: 13, color: '#181C23', cursor: 'pointer' }}>设为主上级（Primary Parent）</label>
+                <label htmlFor="isPrimary" style={{ fontSize: 13, color: '#181C23', cursor: 'pointer' }}>{lang === 'en' ? 'Set as Primary Parent' : '设为主上级（Primary Parent）'}</label>
               </div>
               <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(0,88,188,0.05)', border: '1px solid rgba(0,88,188,0.15)', fontSize: 12.5, color: '#4A6A9C' }}>
-                主上级决定佣金合同版本、产品授权范围和合规归属；次上级仅享有收入分配权。
+                {lang === 'en' ? 'The primary parent determines the commission contract version, product authorization scope, and compliance ownership; secondary parents only receive their revenue split.' : '主上级决定佣金合同版本、产品授权范围和合规归属；次上级仅享有收入分配权。'}
               </div>
               <button onClick={doSubmit} disabled={!addForm.childId || !addForm.parentId || submitting} style={{ padding: '9px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: addForm.childId && addForm.parentId ? '#0058BC' : 'rgba(0,88,188,0.3)', color: '#fff', border: 'none', cursor: addForm.childId && addForm.parentId ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                {submitting ? <><Loader2 size={13} className="animate-spin" />提交中…</> : <><Check size={13} />提交申请</>}
+                {submitting ? <><Loader2 size={13} className="animate-spin" />{lang === 'en' ? 'Submitting…' : '提交中…'}</> : <><Check size={13} />{lang === 'en' ? 'Submit Request' : '提交申请'}</>}
               </button>
             </div>
           </Card>
 
           {/* Preview */}
           <Card style={{ background: 'rgba(0,88,188,0.03)' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>关系预览</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{lang === 'en' ? 'Relation Preview' : '关系预览'}</div>
             {addForm.childId && addForm.parentId ? (() => {
               const child = getNodeById(addForm.childId)
               const parent = getNodeById(addForm.parentId)
@@ -358,21 +374,21 @@ function RelationManagementTab() {
               return (
                 <div className="flex flex-col gap-3">
                   <div style={{ padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${NODE_TYPE_COLOR[parent.type]}`, background: `${NODE_TYPE_COLOR[parent.type]}08` }}>
-                    <div style={{ fontSize: 10.5, color: '#A0A5B1', marginBottom: 3 }}>上级 · {NODE_TYPE_LABEL[parent.type]}</div>
+                    <div style={{ fontSize: 10.5, color: '#A0A5B1', marginBottom: 3 }}>{lang === 'en' ? 'Parent · ' : '上级 · '}{lang === 'en' ? NODE_TYPE_LABEL_EN[parent.type] : NODE_TYPE_LABEL[parent.type]}</div>
                     <div style={{ fontWeight: 700, color: '#181C23' }}>{parent.name}</div>
                   </div>
                   <div className="flex justify-center"><div style={{ width: 2, height: 20, background: '#C1C6D7', borderRadius: 1 }} /></div>
                   <div style={{ padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${NODE_TYPE_COLOR[child.type]}`, background: `${NODE_TYPE_COLOR[child.type]}08` }}>
-                    <div style={{ fontSize: 10.5, color: '#A0A5B1', marginBottom: 3 }}>下级 · {NODE_TYPE_LABEL[child.type]}</div>
+                    <div style={{ fontSize: 10.5, color: '#A0A5B1', marginBottom: 3 }}>{lang === 'en' ? 'Child · ' : '下级 · '}{lang === 'en' ? NODE_TYPE_LABEL_EN[child.type] : NODE_TYPE_LABEL[child.type]}</div>
                     <div style={{ fontWeight: 700, color: '#181C23' }}>{child.name}</div>
                   </div>
                   <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(52,199,89,0.06)', border: '1px solid rgba(52,199,89,0.2)', fontSize: 12.5 }}>
-                    <div className="flex justify-between"><span style={{ color: '#717786' }}>收入分配</span><span style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: '#1E8033' }}>{addForm.revenueShare}%</span></div>
-                    <div className="flex justify-between mt-1"><span style={{ color: '#717786' }}>关系类型</span><span style={{ fontWeight: 700, color: '#0058BC' }}>{addForm.isPrimary ? '主上级' : '次上级'}</span></div>
+                    <div className="flex justify-between"><span style={{ color: '#717786' }}>{lang === 'en' ? 'Revenue Split' : '收入分配'}</span><span style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: '#1E8033' }}>{addForm.revenueShare}%</span></div>
+                    <div className="flex justify-between mt-1"><span style={{ color: '#717786' }}>{lang === 'en' ? 'Relation Type' : '关系类型'}</span><span style={{ fontWeight: 700, color: '#0058BC' }}>{addForm.isPrimary ? (lang === 'en' ? 'Primary Parent' : '主上级') : (lang === 'en' ? 'Secondary Parent' : '次上级')}</span></div>
                   </div>
                 </div>
               )
-            })() : <div style={{ textAlign: 'center', color: '#C1C6D7', paddingTop: 40, fontSize: 13 }}>请先选择节点</div>}
+            })() : <div style={{ textAlign: 'center', color: '#C1C6D7', paddingTop: 40, fontSize: 13 }}>{lang === 'en' ? 'Please select nodes first' : '请先选择节点'}</div>}
           </Card>
         </div>
       )}
@@ -380,70 +396,70 @@ function RelationManagementTab() {
       {subTab === 'adjust' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <Card>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>调整层级关系</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>{lang === 'en' ? 'Adjust Hierarchy Relation' : '调整层级关系'}</div>
             <div className="flex flex-col gap-4">
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>选择节点</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Select Node' : '选择节点'}</label>
                 <select value={adjustForm.nodeId} onChange={e => setAdjustForm(f => ({ ...f, nodeId: e.target.value }))} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                  <option value="">请选择要调整的节点…</option>
+                  <option value="">{lang === 'en' ? 'Select the node to adjust…' : '请选择要调整的节点…'}</option>
                   {nodeOptions.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>当前上级</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Current Parent' : '当前上级'}</label>
                 <select value={adjustForm.currentParentId} onChange={e => setAdjustForm(f => ({ ...f, currentParentId: e.target.value }))} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                  <option value="">选择当前上级…</option>
+                  <option value="">{lang === 'en' ? 'Select current parent…' : '选择当前上级…'}</option>
                   {parentOptions.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
                 </select>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#A0A5B1' }}>
                 <ArrowRightLeft size={16} />
-                <span style={{ fontSize: 12 }}>调整为</span>
+                <span style={{ fontSize: 12 }}>{lang === 'en' ? 'Change to' : '调整为'}</span>
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>新上级</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'New Parent' : '新上级'}</label>
                 <select value={adjustForm.newParentId} onChange={e => setAdjustForm(f => ({ ...f, newParentId: e.target.value }))} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                  <option value="">选择新上级…</option>
+                  <option value="">{lang === 'en' ? 'Select new parent…' : '选择新上级…'}</option>
                   {parentOptions.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>生效日期</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Effective Date' : '生效日期'}</label>
                 <input type="date" value={adjustForm.effectiveDate} onChange={e => setAdjustForm(f => ({ ...f, effectiveDate: e.target.value }))} className="input-glass" style={{ width: '100%', fontSize: 13 }} />
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>调整原因 *</label>
-                <textarea value={adjustForm.reason} onChange={e => setAdjustForm(f => ({ ...f, reason: e.target.value }))} rows={3} placeholder="请说明调整原因（将记录至变更历史）…" className="input-glass" style={{ width: '100%', fontSize: 13, resize: 'vertical' }} />
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Reason for Adjustment *' : '调整原因 *'}</label>
+                <textarea value={adjustForm.reason} onChange={e => setAdjustForm(f => ({ ...f, reason: e.target.value }))} rows={3} placeholder={lang === 'en' ? 'Explain the reason for this adjustment (recorded in change history)…' : '请说明调整原因（将记录至变更历史）…'} className="input-glass" style={{ width: '100%', fontSize: 13, resize: 'vertical' }} />
               </div>
               <button onClick={doSubmit} disabled={submitting} style={{ padding: '9px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                {submitting ? <><Loader2 size={13} className="animate-spin" />提交中…</> : <><ArrowRightLeft size={13} />提交调整申请</>}
+                {submitting ? <><Loader2 size={13} className="animate-spin" />{lang === 'en' ? 'Submitting…' : '提交中…'}</> : <><ArrowRightLeft size={13} />{lang === 'en' ? 'Submit Adjustment' : '提交调整申请'}</>}
               </button>
             </div>
           </Card>
 
           {/* Pending changes list */}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>待处理变更申请</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{lang === 'en' ? 'Pending Change Requests' : '待处理变更申请'}</div>
             <div className="flex flex-col gap-3">
               {pendingChanges.filter(c => c.changeType === 'move-parent' || c.changeType === 'add-parent').map(c => {
-                const statusS = c.status === 'pending-approval' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '待审批' } : c.status === 'approved' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: '已批准' } : { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: '已拒绝' }
+                const statusS = c.status === 'pending-approval' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: lang === 'en' ? 'Pending Approval' : '待审批' } : c.status === 'approved' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: lang === 'en' ? 'Approved' : '已批准' } : { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: lang === 'en' ? 'Rejected' : '已拒绝' }
                 return (
                   <Card key={c.id} style={{ padding: '12px 14px' }}>
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{CHANGE_TYPE_LABEL[c.changeType]}</Badge>
+                          <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{lang === 'en' ? CHANGE_TYPE_LABEL_EN[c.changeType] : CHANGE_TYPE_LABEL[c.changeType]}</Badge>
                           <span style={{ fontWeight: 700, fontSize: 13, color: '#181C23' }}>{c.nodeName}</span>
                         </div>
                         <div style={{ fontSize: 12, color: '#717786' }}>{c.fromParentName} → {c.toParentName}</div>
-                        <div style={{ fontSize: 11.5, color: '#A0A5B1', marginTop: 3 }}>申请人：{c.requestedBy} · 生效日：{c.effectiveDate}</div>
+                        <div style={{ fontSize: 11.5, color: '#A0A5B1', marginTop: 3 }}>{lang === 'en' ? `Requested by: ${c.requestedBy} · Effective: ${c.effectiveDate}` : `申请人：${c.requestedBy} · 生效日：${c.effectiveDate}`}</div>
                       </div>
                       <Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge>
                     </div>
                     {c.status === 'pending-approval' && (
                       <div className="flex gap-2 mt-3">
-                        <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12, color: '#1E8033', display: 'flex', alignItems: 'center', gap: 4 }}><Check size={11} />批准</button>
-                        <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12, color: '#C0392B', display: 'flex', alignItems: 'center', gap: 4 }}><X size={11} />拒绝</button>
+                        <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12, color: '#1E8033', display: 'flex', alignItems: 'center', gap: 4 }}><Check size={11} />{lang === 'en' ? 'Approve' : '批准'}</button>
+                        <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12, color: '#C0392B', display: 'flex', alignItems: 'center', gap: 4 }}><X size={11} />{lang === 'en' ? 'Reject' : '拒绝'}</button>
                       </div>
                     )}
                   </Card>
@@ -457,15 +473,15 @@ function RelationManagementTab() {
       {subTab === 'terminate' && (
         <div>
           <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.2)', fontSize: 12.5, color: '#7A2020', marginBottom: 18 }}>
-            <div className="flex items-center gap-1.5" style={{ fontWeight: 600, marginBottom: 2 }}><AlertTriangle size={13} />终止须知</div>
-            终止层级关系后，子节点将脱离该上级，相关收入分配及产品授权将停止。如子节点仅有此一个上级，终止后须重新指定上级方可恢复出单。
+            <div className="flex items-center gap-1.5" style={{ fontWeight: 600, marginBottom: 2 }}><AlertTriangle size={13} />{lang === 'en' ? 'Termination Notice' : '终止须知'}</div>
+            {lang === 'en' ? 'After terminating the relation, the child node will be detached from this parent, and the associated revenue split and product authorization will stop. If this is the child’s only parent, a new parent must be assigned before writing authority can be restored.' : '终止层级关系后，子节点将脱离该上级，相关收入分配及产品授权将停止。如子节点仅有此一个上级，终止后须重新指定上级方可恢复出单。'}
           </div>
 
           <Card style={{ padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-                  {['子节点', '上级节点', '关系类型', '生效日', '收入分配', '状态', '操作'].map(h => (
+                  {(lang === 'en' ? ['Child Node', 'Parent Node', 'Relation Type', 'Effective', 'Revenue Split', 'Status', 'Actions'] : ['子节点', '上级节点', '关系类型', '生效日', '收入分配', '状态', '操作']).map(h => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -479,17 +495,17 @@ function RelationManagementTab() {
                     <tr key={r.id} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ fontWeight: 600, color: '#181C23' }}>{child.name}</div>
-                        <div style={{ fontSize: 11, color: '#717786' }}><span style={{ background: `${NODE_TYPE_COLOR[child.type]}12`, color: NODE_TYPE_COLOR[child.type], borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>{NODE_TYPE_LABEL[child.type]}</span></div>
+                        <div style={{ fontSize: 11, color: '#717786' }}><span style={{ background: `${NODE_TYPE_COLOR[child.type]}12`, color: NODE_TYPE_COLOR[child.type], borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>{lang === 'en' ? NODE_TYPE_LABEL_EN[child.type] : NODE_TYPE_LABEL[child.type]}</span></div>
                       </td>
                       <td style={{ padding: '10px 14px', fontWeight: 600, color: '#181C23', fontSize: 12.5 }}>{parent.name}</td>
                       <td style={{ padding: '10px 14px' }}>
-                        {r.isPrimary ? <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">主上级</Badge> : <Badge bg="rgba(180,180,180,0.15)" color="#717786">次上级</Badge>}
+                        {r.isPrimary ? <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{lang === 'en' ? 'Primary Parent' : '主上级'}</Badge> : <Badge bg="rgba(180,180,180,0.15)" color="#717786">{lang === 'en' ? 'Secondary Parent' : '次上级'}</Badge>}
                       </td>
                       <td style={{ padding: '10px 14px', fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{r.startDate}</td>
                       <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: '#0058BC', fontSize: 12.5 }}>{pct(r.revenueShare)}</td>
-                      <td style={{ padding: '10px 14px' }}><Badge bg="rgba(52,199,89,0.1)" color="#1E8033">生效中</Badge></td>
+                      <td style={{ padding: '10px 14px' }}><Badge bg="rgba(52,199,89,0.1)" color="#1E8033">{lang === 'en' ? 'Active' : '生效中'}</Badge></td>
                       <td style={{ padding: '10px 14px' }}>
-                        <button onClick={() => setTerminateId(r.id)} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(255,59,48,0.1)', color: '#C0392B', border: '1px solid rgba(255,59,48,0.25)', cursor: 'pointer' }}>终止</button>
+                        <button onClick={() => setTerminateId(r.id)} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(255,59,48,0.1)', color: '#C0392B', border: '1px solid rgba(255,59,48,0.25)', cursor: 'pointer' }}>{lang === 'en' ? 'Terminate' : '终止'}</button>
                       </td>
                     </tr>
                   )
@@ -501,24 +517,24 @@ function RelationManagementTab() {
           {terminateId && (
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(24,28,35,0.55)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="glass-strong" style={{ borderRadius: 18, width: 480, padding: '28px 30px' }}>
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>确认终止层级关系</h3>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>{lang === 'en' ? 'Confirm Terminate Relation' : '确认终止层级关系'}</h3>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>生效日期</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Effective Date' : '生效日期'}</label>
                     <input type="date" className="input-glass" style={{ width: '100%', fontSize: 13 }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>终止原因</label>
-                    {['合作到期', '渠道主动申请', '合规违规处理', '架构重组', '其他'].map(r => (
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Termination Reason' : '终止原因'}</label>
+                    {(lang === 'en' ? [['合作到期', 'Contract expired'], ['渠道主动申请', 'Channel requested'], ['合规违规处理', 'Compliance violation'], ['架构重组', 'Reorganization'], ['其他', 'Other']] : [['合作到期', '合作到期'], ['渠道主动申请', '渠道主动申请'], ['合规违规处理', '合规违规处理'], ['架构重组', '架构重组'], ['其他', '其他']] as const).map(([r, l]) => (
                       <label key={r} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', fontSize: 13 }}>
-                        <input type="radio" name="term-reason" />{r}
+                        <input type="radio" name="term-reason" />{l}
                       </label>
                     ))}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
-                  <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => setTerminateId(null)}>取消</button>
-                  <button onClick={() => setTerminateId(null)} style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#C0392B', color: '#fff', border: 'none', cursor: 'pointer' }}>确认终止</button>
+                  <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => setTerminateId(null)}>{lang === 'en' ? 'Cancel' : '取消'}</button>
+                  <button onClick={() => setTerminateId(null)} style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#C0392B', color: '#fff', border: 'none', cursor: 'pointer' }}>{lang === 'en' ? 'Confirm Terminate' : '确认终止'}</button>
                 </div>
               </div>
             </div>
@@ -532,20 +548,21 @@ function RelationManagementTab() {
 // ── Tab 3 — 多上级配置 ─────────────────────────────────────────────────────────
 
 function MultiParentTab() {
+  const { lang } = useLang()
   const multiNodes = channelNodes.filter(n => n.parentIds.length > 1)
   const [editNodeId, setEditNodeId] = useState<string | null>(null)
 
   return (
     <div>
       <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(0,88,188,0.05)', border: '1px solid rgba(0,88,188,0.15)', fontSize: 12.5, color: '#3A5A8C', marginBottom: 20 }}>
-        <div className="flex items-center gap-1.5" style={{ fontWeight: 600, marginBottom: 3 }}><Link size={13} />多上级配置说明</div>
-        当渠道节点跨区域或跨机构合作时，可配置多个上级节点。各上级的收入分配比例之和必须等于 100%。主上级（Primary Parent）决定合规归属、产品授权和佣金合同版本；次上级仅享有保费收入分配权。
+        <div className="flex items-center gap-1.5" style={{ fontWeight: 600, marginBottom: 3 }}><Link size={13} />{lang === 'en' ? 'About Multi-parent Configuration' : '多上级配置说明'}</div>
+        {lang === 'en' ? 'When a channel node collaborates across regions or agencies, multiple parent nodes can be configured. The revenue split across all parents must sum to 100%. The Primary Parent determines compliance ownership, product authorization, and the commission contract version; secondary parents only receive their premium revenue split.' : '当渠道节点跨区域或跨机构合作时，可配置多个上级节点。各上级的收入分配比例之和必须等于 100%。主上级（Primary Parent）决定合规归属、产品授权和佣金合同版本；次上级仅享有保费收入分配权。'}
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>已配置多上级的节点（{multiNodes.length}）</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{lang === 'en' ? `Nodes with Multi-parent Configured (${multiNodes.length})` : `已配置多上级的节点（${multiNodes.length}）`}</div>
         {multiNodes.length === 0 ? (
-          <Card style={{ textAlign: 'center', color: '#A0A5B1', padding: '40px 20px' }}>暂无多上级节点</Card>
+          <Card style={{ textAlign: 'center', color: '#A0A5B1', padding: '40px 20px' }}>{lang === 'en' ? 'No multi-parent nodes' : '暂无多上级节点'}</Card>
         ) : multiNodes.map(node => {
           const relations = hierarchyRelations.filter(r => r.childId === node.id)
           const total = relations.reduce((s, r) => s + r.revenueShare, 0)
@@ -559,15 +576,15 @@ function MultiParentTab() {
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>{node.name}</div>
-                    <div style={{ fontSize: 11.5, color: '#717786' }}>{NODE_TYPE_LABEL[node.type]} · {node.parentIds.length} 个上级</div>
+                    <div style={{ fontSize: 11.5, color: '#717786' }}>{lang === 'en' ? NODE_TYPE_LABEL_EN[node.type] : NODE_TYPE_LABEL[node.type]} · {node.parentIds.length} {lang === 'en' ? (node.parentIds.length === 1 ? 'parent' : 'parents') : '个上级'}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: total === 1 ? '#1E8033' : '#C0392B', fontWeight: 700, background: total === 1 ? 'rgba(52,199,89,0.1)' : 'rgba(255,59,48,0.1)', padding: '3px 9px', borderRadius: 7 }}>
-                    分配合计 {pct(total)}
-                    {total !== 1 && ' ⚠ 需调整'}
+                    {lang === 'en' ? 'Total split ' : '分配合计 '}{pct(total)}
+                    {total !== 1 && (lang === 'en' ? ' ⚠ Adjustment needed' : ' ⚠ 需调整')}
                   </span>
-                  <button className="btn-ghost" style={{ padding: '5px 10px', fontSize: 12 }} onClick={() => setEditNodeId(isEditing ? null : node.id)}>{isEditing ? '收起' : '编辑分配'}</button>
+                  <button className="btn-ghost" style={{ padding: '5px 10px', fontSize: 12 }} onClick={() => setEditNodeId(isEditing ? null : node.id)}>{isEditing ? (lang === 'en' ? 'Collapse' : '收起') : (lang === 'en' ? 'Edit Split' : '编辑分配')}</button>
                 </div>
               </div>
 
@@ -581,15 +598,15 @@ function MultiParentTab() {
                       <div style={{ width: 7, height: 7, borderRadius: '50%', background: NODE_TYPE_COLOR[parent.type], flexShrink: 0 }} />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>{parent.name}</div>
-                        <div style={{ fontSize: 11.5, color: '#717786' }}>{NODE_TYPE_LABEL[parent.type]}</div>
+                        <div style={{ fontSize: 11.5, color: '#717786' }}>{lang === 'en' ? NODE_TYPE_LABEL_EN[parent.type] : NODE_TYPE_LABEL[parent.type]}</div>
                       </div>
-                      {rel.isPrimary && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">主上级</Badge>}
+                      {rel.isPrimary && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{lang === 'en' ? 'Primary Parent' : '主上级'}</Badge>}
                       {isEditing ? (
                         <input type="number" min={0} max={100} defaultValue={Math.round(rel.revenueShare * 100)} className="input-glass" style={{ width: 80, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", textAlign: 'right' }} />
                       ) : (
                         <span style={{ fontSize: 14, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: '#0058BC', minWidth: 50, textAlign: 'right' }}>{pct(rel.revenueShare)}</span>
                       )}
-                      <span style={{ fontSize: 11, color: '#A0A5B1', minWidth: 20 }}>分配</span>
+                      <span style={{ fontSize: 11, color: '#A0A5B1', minWidth: 20 }}>{lang === 'en' ? 'split' : '分配'}</span>
                     </div>
                   )
                 })}
@@ -597,8 +614,8 @@ function MultiParentTab() {
 
               {isEditing && (
                 <div className="flex justify-end gap-2 mt-3">
-                  <button className="btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }} onClick={() => setEditNodeId(null)}>取消</button>
-                  <button style={{ padding: '6px 16px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }} onClick={() => setEditNodeId(null)}>保存分配</button>
+                  <button className="btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }} onClick={() => setEditNodeId(null)}>{lang === 'en' ? 'Cancel' : '取消'}</button>
+                  <button style={{ padding: '6px 16px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }} onClick={() => setEditNodeId(null)}>{lang === 'en' ? 'Save Split' : '保存分配'}</button>
                 </div>
               )}
             </Card>
@@ -608,20 +625,20 @@ function MultiParentTab() {
 
       {/* Pending multi-parent change */}
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>待审批的多上级变更</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{lang === 'en' ? 'Pending Multi-parent Changes' : '待审批的多上级变更'}</div>
         <div className="flex flex-col gap-3">
           {pendingChanges.filter(c => c.changeType === 'add-parent' || c.changeType === 'remove-parent').map(c => {
-            const statusS = c.status === 'pending-approval' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '待审批' } : { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: '已批准' }
+            const statusS = c.status === 'pending-approval' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: lang === 'en' ? 'Pending Approval' : '待审批' } : { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: lang === 'en' ? 'Approved' : '已批准' }
             return (
               <Card key={c.id} style={{ padding: '12px 14px' }}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{CHANGE_TYPE_LABEL[c.changeType]}</Badge>
+                      <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{lang === 'en' ? CHANGE_TYPE_LABEL_EN[c.changeType] : CHANGE_TYPE_LABEL[c.changeType]}</Badge>
                       <span style={{ fontWeight: 700, fontSize: 13, color: '#181C23' }}>{c.nodeName}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#717786' }}>新增上级：{c.toParentName} · 分配比例：{c.newRevenueShare ? pct(c.newRevenueShare) : '—'}</div>
-                    <div style={{ fontSize: 11.5, color: '#A0A5B1', marginTop: 2 }}>原因：{c.reason}</div>
+                    <div style={{ fontSize: 12, color: '#717786' }}>{lang === 'en' ? `New parent: ${c.toParentName} · Revenue split: ${c.newRevenueShare ? pct(c.newRevenueShare) : '—'}` : `新增上级：${c.toParentName} · 分配比例：${c.newRevenueShare ? pct(c.newRevenueShare) : '—'}`}</div>
+                    <div style={{ fontSize: 11.5, color: '#A0A5B1', marginTop: 2 }}>{lang === 'en' ? `Reason: ${c.reasonEn ?? c.reason}` : `原因：${c.reason}`}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge>
@@ -645,22 +662,30 @@ function MultiParentTab() {
 // ── Tab 4 — White-label 品牌配置 ──────────────────────────────────────────────
 
 function WhiteLabelTab() {
+  const { lang } = useLang()
   const [editing, setEditing] = useState<WhiteLabelConfig | null>(null)
   const [showNew, setShowNew] = useState(false)
 
-  const statusS = (s: string) => s === 'active' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: '已启用' } : s === 'draft' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '草稿' } : { bg: 'rgba(180,180,180,0.15)', color: '#717786', label: '已停用' }
+  const statusS = (s: string) => s === 'active' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: lang === 'en' ? 'Enabled' : '已启用' } : s === 'draft' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: lang === 'en' ? 'Draft' : '草稿' } : { bg: 'rgba(180,180,180,0.15)', color: '#717786', label: lang === 'en' ? 'Disabled' : '已停用' }
 
   const featureIcons: Record<string, React.ReactNode> = {
     '自定义报价页面': <Globe size={12} />, '白标移动 APP': <Smartphone size={12} />, '品牌化保单文档': <FileText size={12} />,
     '自定义报告封面': <FileText size={12} />, 'API 接入': <Zap size={12} />, '客户门户': <Globe size={12} />,
   }
 
+  // 中文 feature 串为逻辑 key（features.includes），显示层做英文映射
+  const featureLabelEn: Record<string, string> = {
+    '自定义报价页面': 'Custom Quote Page', '白标移动 APP': 'White-label Mobile App', '品牌化保单文档': 'Branded Policy Documents',
+    '自定义报告封面': 'Custom Report Covers', 'API 接入': 'API Integration', '客户门户': 'Customer Portal',
+  }
+  const featureLabel = (f: string) => lang === 'en' ? (featureLabelEn[f] ?? f) : f
+
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>White-label 品牌配置（{whiteLabelConfigs.length}）</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>{lang === 'en' ? `White-label Brand Configurations (${whiteLabelConfigs.length})` : `White-label 品牌配置（${whiteLabelConfigs.length}）`}</div>
         <button onClick={() => setShowNew(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>
-          <Plus size={14} /> 新增品牌配置
+          <Plus size={14} /> {lang === 'en' ? 'New Brand Configuration' : '新增品牌配置'}
         </button>
       </div>
 
@@ -688,39 +713,39 @@ function WhiteLabelTab() {
 
               {/* Color swatches */}
               <div className="flex items-center gap-2 mb-3">
-                <div style={{ width: 24, height: 24, borderRadius: 6, background: wl.primaryColor, border: '2px solid rgba(255,255,255,0.5)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} title={`主色 ${wl.primaryColor}`} />
-                <div style={{ width: 24, height: 24, borderRadius: 6, background: wl.secondaryColor, border: '2px solid rgba(255,255,255,0.5)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} title={`辅色 ${wl.secondaryColor}`} />
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: wl.primaryColor, border: '2px solid rgba(255,255,255,0.5)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} title={lang === 'en' ? `Primary ${wl.primaryColor}` : `主色 ${wl.primaryColor}`} />
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: wl.secondaryColor, border: '2px solid rgba(255,255,255,0.5)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} title={lang === 'en' ? `Secondary ${wl.secondaryColor}` : `辅色 ${wl.secondaryColor}`} />
                 <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#A0A5B1' }}>{wl.primaryColor} / {wl.secondaryColor}</span>
               </div>
 
               {/* Domain / email */}
               <div className="flex flex-col gap-1 mb-3" style={{ fontSize: 12 }}>
-                {wl.domain && <div><span style={{ color: '#717786' }}>门户域名：</span><span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#0058BC' }}>{wl.domain}</span></div>}
-                {wl.emailDomain && <div><span style={{ color: '#717786' }}>邮件域名：</span><span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>@{wl.emailDomain}</span></div>}
+                {wl.domain && <div><span style={{ color: '#717786' }}>{lang === 'en' ? 'Portal domain: ' : '门户域名：'}</span><span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#0058BC' }}>{wl.domain}</span></div>}
+                {wl.emailDomain && <div><span style={{ color: '#717786' }}>{lang === 'en' ? 'Email domain: ' : '邮件域名：'}</span><span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>@{wl.emailDomain}</span></div>}
               </div>
 
               {/* Toggles */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {[['门户', wl.portalEnabled], ['移动 APP', wl.mobileAppEnabled], ['文档模板', wl.customDocTemplates], ['品牌报告', wl.reportingBranded], ['API', wl.apiEnabled]].map(([label, enabled]) => (
-                  <span key={label as string} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, background: enabled ? 'rgba(52,199,89,0.1)' : 'rgba(180,180,180,0.12)', color: enabled ? '#1E8033' : '#A0A5B1', borderRadius: 6, padding: '2px 8px' }}>
-                    {enabled ? <CheckCircle2 size={10} /> : <X size={10} />}{label as string}
+                {([['portal', lang === 'en' ? 'Portal' : '门户', wl.portalEnabled], ['mobile', lang === 'en' ? 'Mobile App' : '移动 APP', wl.mobileAppEnabled], ['docs', lang === 'en' ? 'Doc Templates' : '文档模板', wl.customDocTemplates], ['reports', lang === 'en' ? 'Branded Reports' : '品牌报告', wl.reportingBranded], ['api', 'API', wl.apiEnabled]] as const).map(([k, label, enabled]) => (
+                  <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, background: enabled ? 'rgba(52,199,89,0.1)' : 'rgba(180,180,180,0.12)', color: enabled ? '#1E8033' : '#A0A5B1', borderRadius: 6, padding: '2px 8px' }}>
+                    {enabled ? <CheckCircle2 size={10} /> : <X size={10} />}{label}
                   </span>
                 ))}
               </div>
 
               {/* Features */}
               <div style={{ borderTop: '0.5px solid rgba(193,198,215,0.3)', paddingTop: 10 }}>
-                <div style={{ fontSize: 10.5, color: '#A0A5B1', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>已配置功能</div>
+                <div style={{ fontSize: 10.5, color: '#A0A5B1', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>{lang === 'en' ? 'Enabled Features' : '已配置功能'}</div>
                 <div className="flex flex-wrap gap-1">
                   {wl.features.map(f => (
                     <span key={f} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, background: `${wl.primaryColor}12`, color: wl.primaryColor, borderRadius: 5, padding: '2px 7px', fontWeight: 600 }}>
-                      {featureIcons[f]}{f}
+                      {featureIcons[f]}{featureLabel(f)}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div style={{ marginTop: 10, fontSize: 10.5, color: '#C1C6D7' }}>最后修改：{wl.lastModified}</div>
+              <div style={{ marginTop: 10, fontSize: 10.5, color: '#C1C6D7' }}>{lang === 'en' ? `Last modified: ${wl.lastModified}` : `最后修改：${wl.lastModified}`}</div>
             </Card>
           )
         })}
@@ -728,7 +753,7 @@ function WhiteLabelTab() {
         {/* Add placeholder */}
         <button onClick={() => setShowNew(true)} style={{ borderRadius: 14, border: '2px dashed rgba(193,198,215,0.5)', background: 'rgba(255,255,255,0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', color: '#A0A5B1', minHeight: 220 }}>
           <Plus size={22} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>新增品牌配置</span>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>{lang === 'en' ? 'New Brand Configuration' : '新增品牌配置'}</span>
         </button>
       </div>
 
@@ -737,17 +762,17 @@ function WhiteLabelTab() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(24,28,35,0.55)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="glass-strong" style={{ borderRadius: 20, width: 560, padding: '28px 32px', maxHeight: '85vh', overflowY: 'auto' }}>
             <div className="flex items-center justify-between mb-6">
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#181C23' }}>{editing ? '编辑品牌配置' : '新增品牌配置'}</h2>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#181C23' }}>{editing ? (lang === 'en' ? 'Edit Brand Configuration' : '编辑品牌配置') : (lang === 'en' ? 'New Brand Configuration' : '新增品牌配置')}</h2>
               <button className="btn-ghost" style={{ padding: 6 }} onClick={() => { setEditing(null); setShowNew(false) }}><X size={16} /></button>
             </div>
             <div className="flex flex-col gap-4">
               {[
-                { label: '渠道', type: 'select' },
-                { label: '品牌名称', type: 'text', placeholder: '例：Pacific Coast Pro', value: editing?.brandName },
-                { label: '门户域名', type: 'text', placeholder: 'portal.channelname.com', value: editing?.domain },
-                { label: '邮件域名', type: 'text', placeholder: 'channelname.com', value: editing?.emailDomain },
+                { key: 'channel', label: lang === 'en' ? 'Channel' : '渠道', type: 'select' as const },
+                { key: 'brand', label: lang === 'en' ? 'Brand Name' : '品牌名称', type: 'text' as const, placeholder: lang === 'en' ? 'e.g. Pacific Coast Pro' : '例：Pacific Coast Pro', value: editing?.brandName },
+                { key: 'portal', label: lang === 'en' ? 'Portal Domain' : '门户域名', type: 'text' as const, placeholder: 'portal.channelname.com', value: editing?.domain },
+                { key: 'email', label: lang === 'en' ? 'Email Domain' : '邮件域名', type: 'text' as const, placeholder: 'channelname.com', value: editing?.emailDomain },
               ].map(f => (
-                <div key={f.label}>
+                <div key={f.key}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 5 }}>{f.label}</label>
                   {f.type === 'select' ? (
                     <select className="input-glass" style={{ width: '100%', fontSize: 13 }}>
@@ -760,14 +785,14 @@ function WhiteLabelTab() {
               ))}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 5 }}>主色调</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 5 }}>{lang === 'en' ? 'Primary Color' : '主色调'}</label>
                   <div className="flex items-center gap-2">
                     <input type="color" defaultValue={editing?.primaryColor ?? '#0058BC'} style={{ width: 36, height: 36, padding: 2, borderRadius: 8, border: '1px solid rgba(193,198,215,0.4)', cursor: 'pointer' }} />
                     <input type="text" defaultValue={editing?.primaryColor ?? '#0058BC'} className="input-glass" style={{ flex: 1, fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }} />
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 5 }}>辅色调</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 5 }}>{lang === 'en' ? 'Secondary Color' : '辅色调'}</label>
                   <div className="flex items-center gap-2">
                     <input type="color" defaultValue={editing?.secondaryColor ?? '#60CDFF'} style={{ width: 36, height: 36, padding: 2, borderRadius: 8, border: '1px solid rgba(193,198,215,0.4)', cursor: 'pointer' }} />
                     <input type="text" defaultValue={editing?.secondaryColor ?? '#60CDFF'} className="input-glass" style={{ flex: 1, fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }} />
@@ -775,19 +800,19 @@ function WhiteLabelTab() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 8 }}>功能模块</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 8 }}>{lang === 'en' ? 'Feature Modules' : '功能模块'}</label>
                 <div className="flex flex-col gap-2">
                   {['客户门户', '白标移动 APP', '品牌化保单文档', '自定义报告封面', 'API 接入', '自定义报价页面'].map(f => (
                     <label key={f} className="flex items-center gap-2" style={{ cursor: 'pointer', fontSize: 13 }}>
-                      <input type="checkbox" defaultChecked={editing?.features.includes(f)} />{f}
+                      <input type="checkbox" defaultChecked={editing?.features.includes(f)} />{featureLabel(f)}
                     </label>
                   ))}
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => { setEditing(null); setShowNew(false) }}>取消</button>
-              <button style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }} onClick={() => { setEditing(null); setShowNew(false) }}>保存配置</button>
+              <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => { setEditing(null); setShowNew(false) }}>{lang === 'en' ? 'Cancel' : '取消'}</button>
+              <button style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }} onClick={() => { setEditing(null); setShowNew(false) }}>{lang === 'en' ? 'Save Configuration' : '保存配置'}</button>
             </div>
           </div>
         </div>
@@ -799,12 +824,14 @@ function WhiteLabelTab() {
 // ── Tab 5 — 变更历史 ────────────────────────────────────────────────────────────
 
 function ChangeHistoryTab() {
+  const { lang } = useLang()
+  // typeLabel 保留中文作为 changeTypeColor 的查找 key；显示用 typeLabelEn
   const allChanges = [
-    ...pendingChanges.map(c => ({ ...c, date: c.requestDate, typeLabel: CHANGE_TYPE_LABEL[c.changeType], node: c.nodeName, actor: c.requestedBy, desc: c.reason })),
-    { id: 'ch1', date: '2026-07-12', typeLabel: '新增层级', node: 'Rocky Mountain Insurance Advisors', actor: 'Admin', desc: '新渠道加入 West Region', status: 'approved', changeType: 'add-relation' as const },
-    { id: 'ch2', date: '2026-06-10', typeLabel: '合规暂停', node: 'NE Professional Services', actor: 'Zhang Wei', desc: '赔付率持续超标，合规委员会决议暂停出单', status: 'approved', changeType: 'adjust-share' as const },
-    { id: 'ch3', date: '2026-05-20', typeLabel: '增加上级', node: 'Ryan Chen', actor: 'Marcus Lee', desc: 'Ryan Chen 承接 SF 分支业务，新增 PC SF 分支为次上级', status: 'approved', changeType: 'add-parent' as const },
-    { id: 'ch4', date: '2026-03-01', typeLabel: '新增层级', node: 'PC Seattle Branch', actor: 'Sarah Chen', desc: '西雅图市场扩张，新增 Seattle 分支', status: 'approved', changeType: 'add-relation' as const },
+    ...pendingChanges.map(c => ({ ...c, date: c.requestDate, typeLabel: CHANGE_TYPE_LABEL[c.changeType], typeLabelEn: CHANGE_TYPE_LABEL_EN[c.changeType], node: c.nodeName, actor: c.requestedBy, desc: c.reason, descEn: c.reasonEn ?? c.reason })),
+    { id: 'ch1', date: '2026-07-12', typeLabel: '新增层级', typeLabelEn: 'New Relation', node: 'Rocky Mountain Insurance Advisors', actor: 'Admin', desc: '新渠道加入 West Region', descEn: 'New channel joined West Region', status: 'approved', changeType: 'add-relation' as const },
+    { id: 'ch2', date: '2026-06-10', typeLabel: '合规暂停', typeLabelEn: 'Compliance Suspension', node: 'NE Professional Services', actor: 'Zhang Wei', desc: '赔付率持续超标，合规委员会决议暂停出单', descEn: 'Persistent loss-ratio exceedance; the compliance committee resolved to suspend writing authority', status: 'approved', changeType: 'adjust-share' as const },
+    { id: 'ch3', date: '2026-05-20', typeLabel: '增加上级', typeLabelEn: 'Add Parent', node: 'Ryan Chen', actor: 'Marcus Lee', desc: 'Ryan Chen 承接 SF 分支业务，新增 PC SF 分支为次上级', descEn: 'Ryan Chen takes on the SF Branch book of business; PC SF Branch added as secondary parent', status: 'approved', changeType: 'add-parent' as const },
+    { id: 'ch4', date: '2026-03-01', typeLabel: '新增层级', typeLabelEn: 'New Relation', node: 'PC Seattle Branch', actor: 'Sarah Chen', desc: '西雅图市场扩张，新增 Seattle 分支', descEn: 'Seattle market expansion; Seattle branch added', status: 'approved', changeType: 'add-relation' as const },
   ]
 
   const changeTypeColor: Record<string, string> = {
@@ -814,13 +841,13 @@ function ChangeHistoryTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>层级变更记录</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>{lang === 'en' ? 'Hierarchy Change History' : '层级变更记录'}</div>
         <div className="flex items-center gap-2">
           <button className="btn-ghost" style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Search size={12} /> 搜索
+            <Search size={12} /> {lang === 'en' ? 'Search' : '搜索'}
           </button>
           <button className="btn-ghost" style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <ArrowRightLeft size={12} /> 筛选
+            <ArrowRightLeft size={12} /> {lang === 'en' ? 'Filter' : '筛选'}
           </button>
         </div>
       </div>
@@ -831,7 +858,7 @@ function ChangeHistoryTab() {
 
         {allChanges.sort((a, b) => b.date.localeCompare(a.date)).map((c, i) => {
           const color = changeTypeColor[c.typeLabel] ?? '#717786'
-          const statusS = c.status === 'approved' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: '已批准' } : c.status === 'pending-approval' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '待审批' } : { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: '已拒绝' }
+          const statusS = c.status === 'approved' ? { bg: 'rgba(52,199,89,0.1)', color: '#1E8033', label: lang === 'en' ? 'Approved' : '已批准' } : c.status === 'pending-approval' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: lang === 'en' ? 'Pending Approval' : '待审批' } : { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: lang === 'en' ? 'Rejected' : '已拒绝' }
           return (
             <div key={c.id} style={{ display: 'flex', gap: 16, paddingBottom: i < allChanges.length - 1 ? 16 : 0, position: 'relative' }}>
               <div style={{ width: 24, height: 24, borderRadius: '50%', background: `${color}15`, border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1, marginTop: 4 }}>
@@ -840,14 +867,14 @@ function ChangeHistoryTab() {
               <div style={{ flex: 1, padding: '10px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(193,198,215,0.3)' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span style={{ fontSize: 11.5, fontWeight: 700, background: `${color}12`, color, borderRadius: 5, padding: '2px 7px' }}>{c.typeLabel}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, background: `${color}12`, color, borderRadius: 5, padding: '2px 7px' }}>{lang === 'en' ? c.typeLabelEn : c.typeLabel}</span>
                     <span style={{ fontWeight: 700, fontSize: 13, color: '#181C23' }}>{c.node}</span>
                     <Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge>
                   </div>
                   <span style={{ fontSize: 11.5, fontFamily: "'JetBrains Mono', monospace", color: '#A0A5B1' }}>{c.date}</span>
                 </div>
-                <div style={{ marginTop: 4, fontSize: 12.5, color: '#717786' }}>{c.desc}</div>
-                <div style={{ marginTop: 3, fontSize: 11.5, color: '#A0A5B1' }}>操作人：{c.actor}</div>
+                <div style={{ marginTop: 4, fontSize: 12.5, color: '#717786' }}>{lang === 'en' ? c.descEn : c.desc}</div>
+                <div style={{ marginTop: 3, fontSize: 11.5, color: '#A0A5B1' }}>{lang === 'en' ? `By: ${c.actor}` : `操作人：${c.actor}`}</div>
               </div>
             </div>
           )
@@ -860,6 +887,7 @@ function ChangeHistoryTab() {
 // ── Tab 6 — 团队业绩汇总 ──────────────────────────────────────────────────────
 
 function TeamPerformanceTab() {
+  const { lang } = useLang()
   const [viewLevel, setViewLevel] = useState<'region' | 'agency'>('region')
   const data = teamPerfSummary.filter(t => viewLevel === 'region' ? t.nodeType === 'region' : t.nodeType === 'agency')
 
@@ -881,10 +909,10 @@ function TeamPerformanceTab() {
       {/* Summary strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '团队总数', value: data.length.toString(), color: '#0058BC' },
-          { label: '达标率（≥100%）', value: pct(data.filter(t => t.achievementRate >= 1.0).length / data.length), color: '#1E8033' },
-          { label: '平均完成率', value: pct(avgAchievement), color: avgAchievement >= 1.0 ? '#1E8033' : '#B06000' },
-          { label: '综合续保率', value: pct(avgRenewal), color: '#7B3FCA' },
+          { label: lang === 'en' ? 'Total Teams' : '团队总数', value: data.length.toString(), color: '#0058BC' },
+          { label: lang === 'en' ? 'Target Hit Rate (≥100%)' : '达标率（≥100%）', value: pct(data.filter(t => t.achievementRate >= 1.0).length / data.length), color: '#1E8033' },
+          { label: lang === 'en' ? 'Avg Achievement' : '平均完成率', value: pct(avgAchievement), color: avgAchievement >= 1.0 ? '#1E8033' : '#B06000' },
+          { label: lang === 'en' ? 'Overall Renewal Rate' : '综合续保率', value: pct(avgRenewal), color: '#7B3FCA' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -894,14 +922,14 @@ function TeamPerformanceTab() {
       </div>
 
       <div className="flex items-center gap-2 mb-4">
-        <button onClick={() => setViewLevel('region')} style={{ padding: '6px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: viewLevel === 'region' ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: viewLevel === 'region' ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: viewLevel === 'region' ? '#0058BC' : '#717786', cursor: 'pointer' }}>大区汇总</button>
-        <button onClick={() => setViewLevel('agency')} style={{ padding: '6px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: viewLevel === 'agency' ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: viewLevel === 'agency' ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: viewLevel === 'agency' ? '#0058BC' : '#717786', cursor: 'pointer' }}>代理机构汇总</button>
+        <button onClick={() => setViewLevel('region')} style={{ padding: '6px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: viewLevel === 'region' ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: viewLevel === 'region' ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: viewLevel === 'region' ? '#0058BC' : '#717786', cursor: 'pointer' }}>{lang === 'en' ? 'Regional Summary' : '大区汇总'}</button>
+        <button onClick={() => setViewLevel('agency')} style={{ padding: '6px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: viewLevel === 'agency' ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: viewLevel === 'agency' ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: viewLevel === 'agency' ? '#0058BC' : '#717786', cursor: 'pointer' }}>{lang === 'en' ? 'Agency Summary' : '代理机构汇总'}</button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
         {/* Achievement bar chart */}
         <Card>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>YTD 保费达成率（百万美元）</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{lang === 'en' ? 'YTD Premium Achievement (USD millions)' : 'YTD 保费达成率（百万美元）'}</div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
@@ -909,8 +937,8 @@ function TeamPerformanceTab() {
               <YAxis tick={{ fontSize: 10, fill: '#A0A5B1' }} />
               <Tooltip {...tooltipStyle} formatter={(v: any) => [`$${v}M`, '']} />
               <ReferenceLine y={0} stroke="rgba(193,198,215,0.3)" />
-              <Bar dataKey="target" name="目标" fill="rgba(193,198,215,0.3)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="actual" name="实际" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="target" name={lang === 'en' ? 'Target' : '目标'} fill="rgba(193,198,215,0.3)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="actual" name={lang === 'en' ? 'Actual' : '实际'} radius={[4, 4, 0, 0]}>
                 {chartData.map((e, i) => <Cell key={i} fill={e.achievement >= 100 ? '#34C759' : e.achievement >= 90 ? '#FF9F0A' : '#FF3B30'} fillOpacity={0.85} />)}
               </Bar>
             </BarChart>
@@ -919,7 +947,7 @@ function TeamPerformanceTab() {
 
         {/* Renewal rate comparison */}
         <Card>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>团队续保率 & 赔付率对比</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{lang === 'en' ? 'Team Renewal Rate & Loss Ratio Comparison' : '团队续保率 & 赔付率对比'}</div>
           <div className="flex flex-col gap-3">
             {data.sort((a, b) => b.renewalRate - a.renewalRate).map(t => (
               <div key={t.nodeId} className="flex items-center gap-3">
@@ -941,8 +969,8 @@ function TeamPerformanceTab() {
               </div>
             ))}
             <div className="flex items-center gap-8" style={{ fontSize: 11, color: '#A0A5B1', paddingTop: 4 }}>
-              <span className="flex items-center gap-1"><span style={{ width: 8, height: 3, borderRadius: 2, background: '#0058BC', display: 'inline-block' }} />续保率</span>
-              <span className="flex items-center gap-1"><span style={{ width: 8, height: 3, borderRadius: 2, background: '#FF9F0A', display: 'inline-block' }} />赔付率</span>
+              <span className="flex items-center gap-1"><span style={{ width: 8, height: 3, borderRadius: 2, background: '#0058BC', display: 'inline-block' }} />{lang === 'en' ? 'Renewal Rate' : '续保率'}</span>
+              <span className="flex items-center gap-1"><span style={{ width: 8, height: 3, borderRadius: 2, background: '#FF9F0A', display: 'inline-block' }} />{lang === 'en' ? 'Loss Ratio' : '赔付率'}</span>
             </div>
           </div>
         </Card>
@@ -950,11 +978,11 @@ function TeamPerformanceTab() {
 
       {/* Team ranking table */}
       <Card style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', fontSize: 13, fontWeight: 700, color: '#181C23' }}>团队业绩排行</div>
+        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', fontSize: 13, fontWeight: 700, color: '#181C23' }}>{lang === 'en' ? 'Team Performance Ranking' : '团队业绩排行'}</div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['等级', '团队名称', '上级', '成员数', 'YTD 保费', '目标达成率', '新保单', '续保率', '赔付率', '标杆人员'].map(h => (
+              {(lang === 'en' ? ['Tier', 'Team Name', 'Parent', 'Members', 'YTD Premium', 'Target Achievement', 'New Policies', 'Renewal Rate', 'Loss Ratio', 'Top Performer'] : ['等级', '团队名称', '上级', '成员数', 'YTD 保费', '目标达成率', '新保单', '续保率', '赔付率', '标杆人员']).map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -998,12 +1026,12 @@ function TeamPerformanceTab() {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'tree',       icon: <Network size={15} />,       label: '组织架构树' },
-  { id: 'relation',   icon: <Link size={15} />,          label: '层级关系管理' },
-  { id: 'multi',      icon: <Layers size={15} />,        label: '多上级配置' },
-  { id: 'whitelabel', icon: <Palette size={15} />,       label: 'White-label 配置' },
-  { id: 'history',    icon: <ArrowRightLeft size={15} />, label: '变更历史' },
-  { id: 'perf',       icon: <BarChart2 size={15} />,     label: '团队业绩汇总' },
+  { id: 'tree',       icon: <Network size={15} />,       label: '组织架构树', labelEn: 'Org Tree' },
+  { id: 'relation',   icon: <Link size={15} />,          label: '层级关系管理', labelEn: 'Hierarchy Relations' },
+  { id: 'multi',      icon: <Layers size={15} />,        label: '多上级配置', labelEn: 'Multi-parent' },
+  { id: 'whitelabel', icon: <Palette size={15} />,       label: 'White-label 配置', labelEn: 'White-label' },
+  { id: 'history',    icon: <ArrowRightLeft size={15} />, label: '变更历史', labelEn: 'Change History' },
+  { id: 'perf',       icon: <BarChart2 size={15} />,     label: '团队业绩汇总', labelEn: 'Team Performance' },
 ] as const
 
 type TabId = typeof TABS[number]['id']
@@ -1013,6 +1041,7 @@ interface Props {
 }
 
 export default function ChannelHierarchyView({ navigateTo: _navigateTo }: Props) {
+  const { lang } = useLang()
   const [tab, setTab] = useState<TabId>('tree')
 
   const pendingApprovals = pendingChanges.filter(c => c.status === 'pending-approval').length
@@ -1023,18 +1052,18 @@ export default function ChannelHierarchyView({ navigateTo: _navigateTo }: Props)
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>渠道层级与组织架构管理</h1>
-          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>架构树查看 · 层级关系 · 多上级配置 · White-label · 变更历史 · 团队业绩</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>{lang === 'en' ? 'Channel Hierarchy & Organization Management' : '渠道层级与组织架构管理'}</h1>
+          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>{lang === 'en' ? 'Org tree · Hierarchy relations · Multi-parent · White-label · Change history · Team performance' : '架构树查看 · 层级关系 · 多上级配置 · White-label · 变更历史 · 团队业绩'}</p>
         </div>
         <div className="flex items-center gap-3">
           {suspendedNodes > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,59,48,0.1)', border: '1px solid rgba(255,59,48,0.25)', fontSize: 12.5, fontWeight: 600, color: '#C0392B' }}>
-              <AlertTriangle size={13} /> {suspendedNodes} 个节点已暂停
+              <AlertTriangle size={13} /> {lang === 'en' ? `${suspendedNodes} ${suspendedNodes === 1 ? 'node' : 'nodes'} suspended` : `${suspendedNodes} 个节点已暂停`}
             </div>
           )}
           {pendingApprovals > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.25)', fontSize: 12.5, fontWeight: 600, color: '#B06000' }}>
-              <Clock size={13} /> {pendingApprovals} 项待审批
+              <Clock size={13} /> {lang === 'en' ? `${pendingApprovals} pending approval${pendingApprovals === 1 ? '' : 's'}` : `${pendingApprovals} 项待审批`}
             </div>
           )}
         </div>
@@ -1045,7 +1074,7 @@ export default function ChannelHierarchyView({ navigateTo: _navigateTo }: Props)
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: '10px 10px 0 0', fontSize: 13, fontWeight: tab === t.id ? 700 : 500, background: tab === t.id ? 'rgba(0,88,188,0.08)' : 'transparent', color: tab === t.id ? '#0058BC' : '#717786', border: tab === t.id ? '0.5px solid rgba(0,88,188,0.2)' : '0.5px solid transparent', borderBottom: tab === t.id ? '2px solid #0058BC' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
             {t.icon}
-            {t.label}
+            {lang === 'en' ? t.labelEn : t.label}
             {t.id === 'relation' && pendingApprovals > 0 && <span style={{ background: '#FF9F0A', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{pendingApprovals}</span>}
           </button>
         ))}

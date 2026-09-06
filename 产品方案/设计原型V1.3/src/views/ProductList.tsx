@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Search, Plus, Download, XCircle, MoreHorizontal, Eye, Edit2, ToggleRight, ChevronUp, ChevronDown } from 'lucide-react'
+import { Search, Plus, Download, XCircle, Eye, Edit2, ToggleRight, ChevronUp, ChevronDown } from 'lucide-react'
 import { products, insurers, formatCurrency, formatPercent } from '../data/mockData'
+import { useLang } from '../i18n'
 import type { ViewId } from '../components/Sidebar'
 
 interface Props {
@@ -18,6 +19,7 @@ type SortKey = 'name' | 'premium' | 'lossRatio' | 'renewalRate' | 'policyCount'
 type SortDir = 'asc' | 'desc'
 
 export default function ProductList({ navigateTo, onStatusChange }: Props) {
+  const { t } = useLang()
   const [search, setSearch] = useState('')
   const [filterInsurer, setFilterInsurer] = useState('all')
   const [filterLine, setFilterLine] = useState('all')
@@ -62,10 +64,10 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
   )
 
   const statusLabels: Record<string, { cls: string; orb: string; label: string }> = {
-    'on-sale': { cls: 'badge-green', orb: 'orb-green', label: '在售' },
-    'off-sale': { cls: 'badge-gray', orb: 'orb-gray', label: '停售' },
-    'paused': { cls: 'badge-yellow', orb: 'orb-yellow', label: '暂停' },
-    'pending': { cls: 'badge-purple', orb: 'orb-purple', label: '待审核' },
+    'on-sale': { cls: 'badge-green', orb: 'orb-green', label: t.prdStatusOnSale },
+    'off-sale': { cls: 'badge-gray', orb: 'orb-gray', label: t.prdStatusOffSale },
+    'paused': { cls: 'badge-yellow', orb: 'orb-yellow', label: t.prdStatusPaused },
+    'pending': { cls: 'badge-purple', orb: 'orb-purple', label: t.prdStatusPending },
   }
 
   const lines = [...new Set(products.map(p => p.line))]
@@ -74,13 +76,13 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
     <div style={{ maxWidth: 1440, margin: '0 auto' }}>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>产品管理</h1>
-          <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>共 {products.length} 个产品 · {filtered.length} 条结果</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{t.prdTitle}</h1>
+          <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>{t.prdCountSummary(products.length, filtered.length)}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary" style={{ fontSize: 13 }}><Download size={14} />导出</button>
+          <button className="btn-secondary" style={{ fontSize: 13 }}><Download size={14} />{t.prdExport}</button>
           <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => navigateTo('product-new')}>
-            <Plus size={14} />新增产品
+            <Plus size={14} />{t.prdNewProduct}
           </button>
         </div>
       </div>
@@ -89,28 +91,28 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
       <div className="card flex items-center gap-3 flex-wrap" style={{ padding: '14px 18px', marginBottom: 14 }}>
         <div className="relative" style={{ flex: 1, minWidth: 180 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
-          <input type="text" placeholder="搜索产品名称、产品代码…" className="input-glass w-full" style={{ paddingLeft: 30, fontSize: 13 }}
+          <input type="text" placeholder={t.prdSearchPlaceholder} className="input-glass w-full" style={{ paddingLeft: 30, fontSize: 13 }}
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterInsurer} onChange={e => setFilterInsurer(e.target.value)}>
-          <option value="all">全部保险公司</option>
+          <option value="all">{t.prdAllInsurers}</option>
           {insurers.map(i => <option key={i.id} value={i.id}>{i.shortName}</option>)}
         </select>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterLine} onChange={e => setFilterLine(e.target.value)}>
-          <option value="all">业务线</option>
+          <option value="all">{t.prdLblLine}</option>
           {lines.map(l => <option key={l} value={l}>{l}</option>)}
         </select>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="all">产品状态</option>
-          <option value="on-sale">在售</option>
-          <option value="off-sale">停售</option>
-          <option value="paused">暂停销售</option>
-          <option value="pending">待审核</option>
+          <option value="all">{t.prdFilterStatus}</option>
+          <option value="on-sale">{t.prdStatusOnSale}</option>
+          <option value="off-sale">{t.prdStatusOffSale}</option>
+          <option value="paused">{t.prdStatusPausedSales}</option>
+          <option value="pending">{t.prdStatusPending}</option>
         </select>
         {(search || filterInsurer !== 'all' || filterLine !== 'all' || filterStatus !== 'all') && (
           <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}
             onClick={() => { setSearch(''); setFilterInsurer('all'); setFilterLine('all'); setFilterStatus('all') }}>
-            <XCircle size={13} /> 重置
+            <XCircle size={13} /> {t.prdReset}
           </button>
         )}
       </div>
@@ -118,10 +120,10 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
       {/* Bulk actions */}
       {selected.size > 0 && (
         <div className="glass-light flex items-center gap-3 px-4 py-2.5 mb-3" style={{ borderRadius: 10 }}>
-          <span style={{ fontSize: 13, color: '#0058BC', fontWeight: 500 }}>已选 {selected.size} 项</span>
-          <button className="btn-ghost" style={{ fontSize: 12.5 }}><ToggleRight size={13} />批量上架</button>
-          <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}><ToggleRight size={13} />批量下架</button>
-          <button className="btn-ghost ml-auto" style={{ fontSize: 12.5 }} onClick={() => setSelected(new Set())}>取消选择</button>
+          <span style={{ fontSize: 13, color: '#0058BC', fontWeight: 500 }}>{t.prdSelectedCount(selected.size)}</span>
+          <button className="btn-ghost" style={{ fontSize: 12.5 }}><ToggleRight size={13} />{t.prdBulkList}</button>
+          <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}><ToggleRight size={13} />{t.prdBulkDelist}</button>
+          <button className="btn-ghost ml-auto" style={{ fontSize: 12.5 }} onClick={() => setSelected(new Set())}>{t.prdClearSelection}</button>
         </div>
       )}
 
@@ -137,28 +139,28 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
                     style={{ cursor: 'pointer' }} />
                 </th>
                 <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                  <span className="flex items-center gap-1">产品名称 <SortIcon k="name" /></span>
+                  <span className="flex items-center gap-1">{t.prdColName} <SortIcon k="name" /></span>
                 </th>
-                <th>产品代码</th>
-                <th>所属保险公司</th>
-                <th>业务线</th>
-                <th>产品类型</th>
-                <th>可售州数</th>
+                <th>{t.prdLblCode}</th>
+                <th>{t.prdColInsurer}</th>
+                <th>{t.prdLblLine}</th>
+                <th>{t.prdLblType}</th>
+                <th>{t.prdColStates}</th>
                 <th onClick={() => handleSort('premium')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">总保费 <SortIcon k="premium" /></span>
+                  <span className="flex items-center gap-1 justify-end">{t.prdLblPremium} <SortIcon k="premium" /></span>
                 </th>
                 <th onClick={() => handleSort('policyCount')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">保单数 <SortIcon k="policyCount" /></span>
+                  <span className="flex items-center gap-1 justify-end">{t.prdLblPolicies} <SortIcon k="policyCount" /></span>
                 </th>
                 <th onClick={() => handleSort('lossRatio')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">赔付率 <SortIcon k="lossRatio" /></span>
+                  <span className="flex items-center gap-1 justify-end">{t.prdLblLossRatio} <SortIcon k="lossRatio" /></span>
                 </th>
                 <th onClick={() => handleSort('renewalRate')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">续保率 <SortIcon k="renewalRate" /></span>
+                  <span className="flex items-center gap-1 justify-end">{t.prdLblRenewal} <SortIcon k="renewalRate" /></span>
                 </th>
-                <th>上架日期</th>
-                <th>状态</th>
-                <th style={{ width: 90 }}>操作</th>
+                <th>{t.prdLblLaunch}</th>
+                <th>{t.prdColStatus}</th>
+                <th style={{ width: 90 }}>{t.prdColActions}</th>
               </tr>
             </thead>
             <tbody>
@@ -185,10 +187,10 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
                       <span className={`badge ${LINE_COLORS[p.line] || 'badge-gray'}`} style={{ fontSize: 11.5 }}>{p.line}</span>
                     </td>
                     <td>
-                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{p.type === 'Individual' ? '个人险' : p.type === 'Group' ? '团体险' : '自愿福利险'}</span>
+                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{p.type === 'Individual' ? t.prdTypeIndividual : p.type === 'Group' ? t.prdTypeGroup : t.prdTypeVoluntary}</span>
                     </td>
                     <td style={{ textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}>
-                      {p.states[0] === 'ALL' ? <span className="badge badge-blue" style={{ fontSize: 11 }}>全国</span> : p.states.length}
+                      {p.states[0] === 'ALL' ? <span className="badge badge-blue" style={{ fontSize: 11 }}>{t.prdNationwide}</span> : p.states.length}
                     </td>
                     <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 500 }}>
                       {formatCurrency(p.premium, true)}
@@ -213,15 +215,15 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
                     </td>
                     <td onClick={e => e.stopPropagation()}>
                       <div className="flex items-center gap-0.5">
-                        <button className="btn-ghost" style={{ padding: 5 }} title="查看详情"
+                        <button className="btn-ghost" style={{ padding: 5 }} title={t.prdViewDetail}
                           onClick={() => navigateTo('product-detail', { productId: p.id })}>
                           <Eye size={14} />
                         </button>
-                        <button className="btn-ghost" style={{ padding: 5 }} title="编辑"
+                        <button className="btn-ghost" style={{ padding: 5 }} title={t.prdEdit}
                           onClick={() => navigateTo('product-edit', { productId: p.id })}>
                           <Edit2 size={14} />
                         </button>
-                        <button className="btn-ghost" style={{ padding: 5 }} title={p.status === 'on-sale' ? '下架' : '上架'}
+                        <button className="btn-ghost" style={{ padding: 5 }} title={p.status === 'on-sale' ? t.prdDelist : t.prdList}
                           onClick={() => onStatusChange(p.id)}>
                           <ToggleRight size={14} />
                         </button>
@@ -234,7 +236,7 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
           </table>
         </div>
         <div style={{ padding: '12px 18px', borderTop: '0.5px solid rgba(193,198,215,0.4)' }}>
-          <span style={{ fontSize: 12.5, color: '#717786' }}>共 {sorted.length} 条产品记录</span>
+          <span style={{ fontSize: 12.5, color: '#717786' }}>{t.prdFooterCount(sorted.length)}</span>
         </div>
       </div>
     </div>

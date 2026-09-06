@@ -12,8 +12,8 @@ import React from 'react';
 
 interface FixedColumnsTableProps {
   children: React.ReactNode;
-  leftStickyWidth?: number;      // 左侧固定宽度总和
-  rightStickyWidth?: number;      // 右侧固定宽度总和
+  leftStickyWidth?: number;      // total left sticky width
+  rightStickyWidth?: number;      // total right sticky width
   className?: string;
 }
 

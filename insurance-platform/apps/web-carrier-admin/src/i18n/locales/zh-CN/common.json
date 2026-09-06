@@ -1,88 +1,5 @@
 {
-  "dashboard": {
-    "title": "总览",
-    "kpiCards": {
-      "totalPremium": "本年总保费",
-      "policiesCount": "有效保单数",
-      "channelCount": "合作渠道数",
-      "commission": "本年佣金收入"
-    },
-    "trendVsLastYear": {
-      "up": "↑ {percent} vs 去年",
-      "down": "↓ {percent} vs 去年"
-    },
-    "monthsAgo": {
-      "one": "1 个月前",
-      "other": "{count} 个月前"
-    },
-    "chapters": {
-      "businessDistribution": "业务分布分析",
-      "performanceTrend": "绩效趋势分析",
-      "lossRatioAnalysis": "赔付率分析",
-      "recentActivities": "最近活动"
-    },
-    "charts": {
-      "revenueByCarrier": {
-        "title": "各保险公司保费排行",
-        "xLabel": "保险公司",
-        "yLabel": "保费金额（万美元）"
-      },
-      "marketShare": {
-        "title": "市场份额分布",
-        "legend": {
-          "top3": "Top 3 保险公司",
-          "others": "其他"
-        }
-      },
-      "alertStats": {
-        "title": "合规提醒统计",
-        "legends": {
-          "overdue": "即将到期",
-          "expired": "已过期",
-          "warning": "警告"
-        }
-      },
-      "premiumTrend": {
-        "title": "保费月度趋势",
-        "xLabel": "月份",
-        "yLabel": "保费总额"
-      },
-      "lossRatioChart": {
-        "title": "赔付率分布",
-        "xLabel": "保险公司",
-        "yLabel": "赔付率"
-      },
-      "channelPerformance": {
-        "title": "渠道绩效分布",
-        "xLabel": "渠道类别",
-        "yLabel": "业绩值"
-      }
-    },
-    "dataLabels": {
-      "latestDate": "最新日期：{{date}}",
-      "unit": {
-        "currency": "万美元",
-        "policy": "份",
-        "rate": "%",
-        "channel": "个"
-      }
-    },
-    "alerts": {
-      "viewAll": "查看全部",
-      "recentActivityItem": {
-        "status": {
-          "info": "信息",
-          "warning": "警告",
-          "success": "完成"
-        }
-      }
-    },
-    "buttons": {
-      "viewDetails": "查看详情",
-      "exportReport": "导出报告",
-      "refreshData": "刷新数据"
-    }
-  },
+  "loading": "加载中",
   "menu": {
     "overview": "总览",
     "insurers": "保险公司管理",
@@ -91,7 +8,7 @@
     "products": "产品",
     "commission": "佣金",
     "analytics": "数据分析",
-    "settings": "设置",
+    "settings": "系统管理",
     "insurerList": "保险公司",
     "productManagement": "产品管理",
     "cooperationManagement": "合作管理",
@@ -109,7 +26,10 @@
     "trainingCertification": "培训认证",
     "channelPortal": "渠道门户",
     "channelAnalytics": "渠道分析",
-    "i18nManagement": "界面文案管理"
+    "i18nManagement": "多语言管理",
+    "permissionManagement": "权限管理",
+    "userManagement": "用户管理",
+    "systemManagement": "系统管理"
   },
   "carriers": {
     "title": "保险公司管理",
@@ -123,6 +43,8 @@
     "notifications": "通知",
     "help": "帮助",
     "admin": "管理员",
+    "adminRole": "平台管理员",
+    "brandTagline": "海外保险管理平台",
     "language": "语言 / LANGUAGE",
     "theme": "主题",
     "notificationsSetting": "通知",
@@ -141,6 +63,157 @@
     "yes": "是",
     "no": "否",
     "settings": "设置",
-    "enabled": "已开启"
+    "enabled": "已开启",
+    "languageZh": "中文",
+    "languageEn": "English",
+    "themeLight": "浅色",
+    "themeSystem": "跟随系统",
+    "notifOff": "已关闭"
+  },
+  "comingSoon": "此功能模块正在开发中",
+  "backToDashboard": "返回首页",
+  "batchImportDescription": "批量导入优化功能开发中",
+  "mobileAdaptationDescription": "响应式移动端适配功能开发中",
+  "pwaDescription": "PWA 高级功能开发中",
+  "i18nMgmt": {
+    "title": "多语言管理",
+    "subtitle": "管理所有页面的中英文文案 · {count} 个文案条目",
+    "pendingCount": "● {count} 项待发布",
+    "exportJson": "导出 JSON",
+    "import": "导入",
+    "publish": "发布修改（{count}）",
+    "publishedBanner": "文案已发布，页面文字实时更新",
+    "toastPreview": "提示框预览",
+    "searchPlaceholder": "搜索文案 Key、英文或中文…",
+    "filterAll": "所有类型",
+    "clear": "清除",
+    "resultCount": "{count} 条",
+    "noResults": "未找到匹配的文案",
+    "save": "保存",
+    "modified": "● 已修改",
+    "notFilled": "未填写",
+    "modules": {
+      "all": "全部文案",
+      "common": "通用",
+      "channel": "渠道",
+      "carrier": "保险公司",
+      "commission": "佣金",
+      "toast": "提示消息",
+      "modal": "确认弹窗",
+      "validate": "表单校验",
+      "errorPage": "错误页面"
+    },
+    "types": {
+      "label": "标签",
+      "button": "按钮",
+      "placeholder": "提示文",
+      "toast": "提示框",
+      "confirm": "确认弹窗",
+      "validate": "表单校验",
+      "errorPage": "错误页面"
+    },
+    "col": {
+      "type": "类型",
+      "actions": "操作",
+      "key": "Key",
+      "en": "English (en-US)",
+      "zh": "中文 (zh-CN)"
+    },
+    "previewZh": "中",
+    "previewEn": "EN"
+  },
+  "settings": {
+    "title": "设置",
+    "langSection": "语言 / Language",
+    "langZh": "中文",
+    "langEn": "English",
+    "themeSection": "主题",
+    "themeLight": "浅色",
+    "themeSystem": "跟随系统",
+    "notifSection": "通知",
+    "notifOn": "已开启",
+    "notifOff": "已关闭",
+    "timezoneSection": "时区",
+    "timezone": "America/Los_Angeles (PT)",
+    "version": "版本",
+    "logout": "退出登录"
+  },
+  "nav": {
+    "overview": "总览",
+    "insuranceCarrierMgmt": "保险公司管理",
+    "insuranceCarrierList": "保险公司列表",
+    "insuranceCarrierDetail": "保险公司详情",
+    "newInsuranceCarrier": "新增保险公司",
+    "editInsuranceCarrier": "编辑保险公司",
+    "bulkImport": "批量导入",
+    "duplicateDetection": "重复数据检测",
+    "productMgmt": "产品管理",
+    "productDetail": "产品详情",
+    "newProduct": "新增产品",
+    "editProduct": "编辑产品",
+    "cooperationMgmt": "合作管理",
+    "appointmentCompliance": "Appointment & 合规",
+    "complianceDashboard": "合规模块 Dashboard",
+    "auditReports": "审计报告",
+    "generationWizard": "生成向导",
+    "createNewReport": "创建新报告",
+    "auditReportPreview": "审计报告预览",
+    "reportPreview": "报告预览",
+    "riskAssessment": "风险评估",
+    "regulatoryNotices": "监管通知",
+    "financeDashboard": "财务与结算 Dashboard",
+    "financeSettlement": "财务与结算",
+    "commissionBillImport": "佣金账单导入",
+    "billParsing": "账单解析",
+    "commissionReconciliation": "佣金对账",
+    "disputeMgmt": "争议管理",
+    "settlementConfig": "结算配置",
+    "premiumReconciliation": "保费对账",
+    "financeEnhancement": "财务增强",
+    "dataAnalytics": "数据分析",
+    "channelMgmt": "渠道管理",
+    "channelList": "渠道列表",
+    "newChannel": "新增渠道",
+    "editChannel": "编辑渠道",
+    "channelMasterData": "渠道主数据",
+    "channelHierarchy": "渠道层级",
+    "onboardingMgmt": "入驻管理",
+    "productAuth": "产品授权",
+    "commissionScheme": "佣金方案",
+    "commissionSettlement": "佣金结算",
+    "performanceReview": "绩效考核",
+    "trainingCertification": "培训认证",
+    "channelPortal": "渠道门户",
+    "channelAnalytics": "渠道分析",
+    "systemSettings": "系统设置",
+    "i18nManagement": "多语言管理",
+    "permissionMgmt": "权限管理",
+    "roleMgmt": "角色管理",
+    "newRole": "新建角色",
+    "editRole": "编辑角色",
+    "userMgmt": "用户管理",
+    "newUser": "新建用户",
+    "editUser": "编辑用户",
+    "menuPermission": "菜单权限",
+    "menuPermissionConfig": "菜单权限配置",
+    "dataPermission": "数据权限",
+    "dataPermissionConfig": "数据权限配置",
+    "operationLog": "操作日志",
+    "operationLogAudit": "操作日志审计",
+    "loginLog": "登录日志",
+    "loginLogAudit": "登录日志审计",
+    "newAppointment": "新增 Appointment",
+    "statusTracking": "状态跟踪",
+    "renewalMgmt": "续约管理",
+    "terminationMgmt": "终止管理",
+    "niprLicenseCheck": "NIPR 执照核查",
+    "complianceRules": "合规规则",
+    "complianceInterceptor": "合规拦截",
+    "complianceReportGenerator": "合规报告生成",
+    "licenseExpiryReminder": "执照到期提醒",
+    "ofacScreening": "OFAC 筛查",
+    "batchImportOptimization": "批量导入优化",
+    "responsiveMobileAdaptation": "响应式移动适配",
+    "pwaAdvanceFeature": "PWA 高级特性"
   }
 }

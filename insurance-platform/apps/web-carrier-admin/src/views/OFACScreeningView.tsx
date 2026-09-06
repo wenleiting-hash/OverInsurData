@@ -1,8 +1,23 @@
-import { useState } from 'react';
-import { ArrowLeft, Search, ShieldAlert, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+/**
+ * OFAC Screening View - Glassmorphism Design
+ * Part of the Compliance Module for Overseas Insurance Digital Platform
+ * 
+ * Features:
+ * - Full list page with advanced filtering and sorting
+ * - Real-time screening interface
+ * - History tracking and audit trail
+ */
+
+import { useState, useMemo } from 'react';
+import { ArrowLeft, Search, ShieldAlert, CheckCircle, XCircle, AlertTriangle, Eye, Clock, FileText, Filter, Download, RefreshCw, PlusCircle } from 'lucide-react';
 import type { ViewId } from '@/App';
-import { OFAC_SCREENINGS, type OFACResult } from './data/mockComplianceData';
+import { OFAC_SCREENINGS, type OFACScreening } from '@/views/data/mockComplianceData';
 import { useTranslation } from 'react-i18next';
+import { formatOFACResult, getMatchScoreLevel, type SanctionListSource } from '@/types/compliance/ofac-screening';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 
 interface Props {
   navigateTo: (view: ViewId) => void;
@@ -11,330 +26,486 @@ interface Props {
 export default function OFACScreeningView({ navigateTo }: Props) {
   const { t } = useTranslation('ofac');
   
+  // State management
   const [searchKey, setSearchKey] = useState('');
-  const [screeningEntityName, setScreeningEntityName] = useState('');
-  const [screeningEntityType, setScreeningEntityType] = useState<'Individual' | 'Company' | 'Vessel' | 'Aircraft'>('Company');
-  const [isScreening, setIsScreening] = useState(false);
-  const [screeningResult, setScreeningResult] = useState<any>(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [selectedResult, setSelectedResult] = useState<string>('all');
+  const [selectedEntityType, setSelectedEntityType] = useState<string>('all');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortBy, setSortBy] = useState<'timestamp' | 'entityName' | 'result' | 'matchScore'>('timestamp');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Get all screenings data
-  const allScreenings = OFAC_SCREENINGS;
+  const allScreenings: OFACScreening[] = useMemo(() => OFAC_SCREENINGS, []);
 
-  // Filter by search key
-  const filteredScreenings = allScreenings.filter(screening => 
-    screening.entityName.toLowerCase().includes(searchKey.toLowerCase()) ||
-    screening.result === searchKey
-  );
+  // Extract unique countries for filter dropdown
+  const uniqueCountries = useMemo(() => {
+    const countries = new Set<string>();
+    allScreenings.forEach(screening => {
+      if (screening.country && Array.isArray(screening.country)) {
+        screening.country.forEach(c => countries.add(c));
+      }
+    });
+    return Array.from(countries).sort();
+  }, [allScreenings]);
 
-  const handleScreenEntity = () => {
-    if (!screeningEntityName.trim()) {
-      alert('请输入实体名称进行 OFAC 筛查');
-      return;
+  // Filter screenings
+  const filteredScreenings = useMemo(() => {
+    let result = [...allScreenings];
+
+    // Search filter
+    if (searchKey.trim()) {
+      const key = searchKey.toLowerCase();
+      result = result.filter(screening => 
+        screening.entityName.toLowerCase().includes(key) ||
+        screening.policyId?.toLowerCase().includes(key)
+      );
     }
 
-    setIsScreening(true);
-    setScreeningResult(null);
+    // Result filter
+    if (selectedResult !== 'all') {
+      result = result.filter(s => s.result === selectedResult);
+    }
 
-    // Simulate NIPR API call
-    setTimeout(() => {
-      setIsScreening(false);
-      
-      // Mock response - randomly show different results for demo
-      const mockResults: Array<{ result: OFACResult; matchScore?: number; matchedEntry?: string; matchedList?: string; reviewNote?: string }> = [
-        { result: 'clear' },
-        { result: 'watchlist', matchScore: 78, matchedEntry: 'Sample Matched Entry', matchedList: 'SDN List', reviewNote: '经人工核查，确认为不同实体' },
-        { result: 'blocked', matchScore: 96, matchedEntry: 'BLACKLISTED ENTITY', matchedList: 'SDN List', reviewNote: '确认为制裁名单人员/实体，拒绝出单' }
-      ];
+    // Entity type filter
+    if (selectedEntityType !== 'all') {
+      result = result.filter(s => s.entityType === selectedEntityType);
+    }
 
-      const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)];
-      
-      setScreeningResult({
-        entityName: screeningEntityName,
-        entityType: screeningEntityType,
-        screenedAt: new Date().toLocaleString('zh-CN'),
-        ...randomResult
-      });
-    }, 1500);
-  };
+    // Country filter
+    if (selectedCountry !== 'all') {
+      result = result.filter(s => s.country?.includes(selectedCountry));
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      result = result.filter(s => s.timestamp >= dateFrom);
+    }
+    if (dateTo) {
+      result = result.filter(s => s.timestamp <= dateTo);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'timestamp':
+          comparison = a.timestamp.localeCompare(b.timestamp);
+          break;
+        case 'entityName':
+          comparison = a.entityName.localeCompare(b.entityName);
+          break;
+        case 'result':
+          comparison = a.result.localeCompare(b.result);
+          break;
+        case 'matchScore':
+          comparison = (a.matchScore || 0) - (b.matchScore || 0);
+          break;
+      }
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    return result;
+  }, [allScreenings, searchKey, selectedResult, selectedEntityType, selectedCountry, dateFrom, dateTo, sortBy, sortOrder]);
+
+  // Statistics
+  const stats = useMemo(() => ({
+    total: allScreenings.length,
+    clear: allScreenings.filter(s => s.result === 'clear').length,
+    watchlist: allScreenings.filter(s => s.result === 'watchlist').length,
+    blocked: allScreenings.filter(s => s.result === 'blocked').length,
+    pending: allScreenings.filter(s => s.result === 'pending').length,
+    avgScore: allScreenings
+      .filter(s => s.matchScore)
+      .reduce((sum, s) => sum + (s.matchScore || 0), 0) / Math.max(allScreenings.filter(s => s.matchScore).length, 1)
+  }), [allScreenings]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   };
 
-  const getStatusBadge = (result: OFACResult) => {
-    const styles: Record<OFACResult, { bg: string; text: string; border: string; label: string; icon: any }> = {
-      clear: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', label: '通过 Clear', icon: CheckCircle },
-      watchlist: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', label: '预警 Watchlist', icon: AlertTriangle },
-      blocked: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: '阻断 Blocked', icon: XCircle },
-      pending: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: '待筛查 Pending', icon: Search },
+  const getStatusBadge = (result: string) => {
+    const styles: Record<string, { bg: string; text: string; border: string; icon: any }> = {
+      clear: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
+      watchlist: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: AlertTriangle },
+      blocked: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', icon: XCircle },
+      pending: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: Clock },
     };
     const s = styles[result];
     const Icon = s.icon;
     return (
-      <span className={`px-3 py-1.5 border rounded-md text-xs font-semibold flex items-center gap-2 ${s.bg} ${s.text} ${s.border}`}>
-        <Icon className="w-3 h-3" />
-        {s.label}
+      <span className={`px-3 py-1.5 border rounded-full text-xs font-semibold flex items-center gap-2 backdrop-blur-sm shadow-sm ${s.bg} ${s.text} ${s.border}`}>
+        <Icon className="w-3.5 h-3.5" />
+        {t(`result.${result}`, formatOFACResult(result as any).label)}
       </span>
     );
   };
 
-  const canOverride = (result: OFACResult) => {
-    return result !== 'blocked'; // Only clear and watchlist can be overridden
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return 'text-red-600 font-bold';
+    if (score >= 75) return 'text-orange-600 font-semibold';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-gray-600';
+  };
+
+  const handleSort = (field: typeof sortBy) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const handleScreenNow = () => {
+    navigateTo('appointment-new');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      {/* Header Section */}
+      <div className="mb-8">
         <button
-          onClick={() => navigateTo('appointment')} // Navigate to compliance main page (ViewId needs update)
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          onClick={() => navigateTo('compliance-dashboard')}
+          className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-4 transition-all duration-200 group"
         >
-          <ArrowLeft className="w-5 h-5" />
-          返回合规模块主页
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-medium">{t('page.backToDashboard')}</span>
         </button>
         
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          OFAC Screening Center
-        </h1>
-        <p className="text-gray-600">
-          筛查保单持有人、被保险人和受益人是否与美国财政部海外资产控制办公室制裁名单匹配
-        </p>
-      </div>
-
-      {/* Warning Box */}
-      <div className="mb-6 glass px-6 py-4 rounded-lg border-l-4 border-red-500">
-        <div className="flex items-start gap-3">
-          <ShieldAlert className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-red-800 mb-2">OFAC 筛查强制要求</h3>
-            <p className="text-sm text-red-700 leading-relaxed">
-              ⚠️ 根据美国联邦法律，所有保险交易在进行前必须筛查 OFAC SDN List（特别指定国民名单）、SDGT List（制裁目标全球恐怖分子名单）等制裁名单。未通过 OFAC 筛查的交易不得执行。
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-3">
+              {t('page.title')}
+            </h1>
+            <p className="text-lg text-slate-600 max-w-2xl">
+              {t('page.description')}
             </p>
           </div>
+          <Button
+            onClick={handleScreenNow}
+            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2"
+          >
+            <PlusCircle className="w-5 h-5" />
+            {t('actions.addManualScreening')}
+          </Button>
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Screening Form */}
-        <div className="lg:col-span-1">
-          <div className="glass p-6 rounded-xl sticky top-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">New Screening Request</h2>
+      {/* Warning Banner */}
+      <Card className="mb-8 border-l-4 border-l-red-500 bg-gradient-to-r from-red-50/80 to-orange-50/80 backdrop-blur-xl shadow-md">
+        <div className="p-5">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <ShieldAlert className="w-8 h-8 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-red-800 text-lg mb-2">
+                ⚠️ {t('warning.mandatory')}
+              </h3>
+              <p className="text-sm text-red-700 leading-relaxed mb-2">
+                {t('warning.message')}
+              </p>
+              <p className="text-xs text-red-600 italic font-medium">
+                {t('warning.legal')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
 
-            {/* Entity Name Input */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+        <Card className="bg-white/80 backdrop-blur-xl border border-slate-200 shadow-lg hover:shadow-xl transition-shadow p-5">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{t('stats.totalScreenings')}</p>
+          <p className="text-3xl font-bold text-slate-800">{stats.total}</p>
+        </Card>
+        <Card className="bg-white/80 backdrop-blur-xl border border-emerald-200 shadow-lg hover:shadow-xl transition-shadow p-5">
+          <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-2">{t('stats.clearCount')}</p>
+          <p className="text-3xl font-bold text-emerald-700">{stats.clear}</p>
+        </Card>
+        <Card className="bg-white/80 backdrop-blur-xl border border-amber-200 shadow-lg hover:shadow-xl transition-shadow p-5">
+          <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">{t('stats.watchlistCount')}</p>
+          <p className="text-3xl font-bold text-amber-700">{stats.watchlist}</p>
+        </Card>
+        <Card className="bg-white/80 backdrop-blur-xl border border-red-200 shadow-lg hover:shadow-xl transition-shadow p-5">
+          <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">{t('stats.blockedCount')}</p>
+          <p className="text-3xl font-bold text-red-700">{stats.blocked}</p>
+        </Card>
+        <Card className="bg-white/80 backdrop-blur-xl border border-blue-200 shadow-lg hover:shadow-xl transition-shadow p-5">
+          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">{t('stats.avgMatchScore')}</p>
+          <p className="text-3xl font-bold text-blue-700">{stats.avgScore.toFixed(0)}%</p>
+        </Card>
+        <Card className="bg-white/80 backdrop-blur-xl border border-purple-200 shadow-lg hover:shadow-xl transition-shadow p-5">
+          <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">{t('stats.reviewRequired')}</p>
+          <p className="text-3xl font-bold text-purple-700">{stats.watchlist + stats.blocked}</p>
+        </Card>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Left Column: Quick Screening Form */}
+        <div className="xl:col-span-1">
+          <Card className="p-6 sticky top-6 glass-effect">
+            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-indigo-600" />
+              Quick Screening
+            </h2>
+
+            {/* Subject Name Input */}
             <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                实体名称 *
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                {t('form.entityName.label')} *
               </label>
-              <input
-                type="text"
-                placeholder="输入公司或个人名称..."
-                value={screeningEntityName}
-                onChange={e => setScreeningEntityName(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && handleScreenEntity()}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              <Input
+                placeholder={t('form.entityName.placeholder')}
+                className="w-full px-4 py-3 border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl"
               />
+              <p className="text-xs text-slate-500 mt-1">{t('form.entityName.help')}</p>
             </div>
 
             {/* Entity Type Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                实体类型 *
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                {t('form.entityType.label')} *
               </label>
               <div className="space-y-2">
                 {['Company', 'Individual', 'Vessel', 'Aircraft'].map(type => (
                   <label
                     key={type}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                      screeningEntityType === type
-                        ? 'bg-orange-50 border-orange-300'
-                        : 'bg-white hover:bg-gray-50'
-                    }`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer transition-all hover:bg-slate-50 has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-300"
                   >
                     <input
                       type="radio"
                       name="entityType"
                       value={type}
-                      checked={screeningEntityType === type}
-                      onChange={e => setScreeningEntityType(e.target.value as any)}
-                      className="w-4 h-4 text-orange-600 focus:ring-orange-500"
+                      className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                      defaultChecked={type === 'Company'}
                     />
-                    <span className="text-sm font-medium text-gray-700">{type}</span>
+                    <span className="text-sm font-medium text-slate-700">{t(`entityType.${type?.toLowerCase()}`, type)}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Submit Button */}
+              {/* Submit Button */}
             <button
-              onClick={handleScreenEntity}
-              disabled={isScreening || !screeningEntityName.trim()}
-              className="w-full px-8 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleScreenNow}
+              className="w-full px-8 py-6 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:from-indigo-700 hover:to-blue-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
             >
-              {isScreening ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  筛查中...
-                </span>
-              ) : (
-                '开始 OFAC 筛查'
-              )}
+              {t('form.submit')}
             </button>
-
-            {/* Quick Examples */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-xs font-semibold text-gray-600 mb-3">快速示例:</p>
-              <div className="space-y-2">
-                {['Desert Solar Holdings', 'Gulf Coast Energy Partners', 'Ali Hassan Al-Rashid'].map(name => (
-                  <button
-                    key={name}
-                    onClick={() => {
-                      setScreeningEntityName(name);
-                      setScreeningResult(null);
-                    }}
-                    className="block w-full text-left px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors truncate"
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          </Card>
         </div>
 
-        {/* Right Column: Results & History */}
-        <div className="lg:col-span-2">
-          {/* Screening Result Display */}
-          {screeningResult && (
-            <div className="glass p-6 rounded-xl mb-6 animate-fade-in">
-              <div className="flex items-start justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Screening Result</h2>
-                {getStatusBadge(screeningResult.result)}
+        {/* Right Column: Table & Filters */}
+        <div className="xl:col-span-3">
+          {/* Toolbar */}
+          <Card className="p-5 mb-6 bg-white/80 backdrop-blur-xl border border-slate-200 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-slate-900">{t('table.title')}</h2>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Download className="w-4 h-4" />
+                  {t('actions.downloadCSV')}
+                </Button>
               </div>
-
-              {/* Result Info */}
-              <dl className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <dt className="text-sm text-gray-600">被筛查实体</dt>
-                  <dd className="text-lg font-semibold text-gray-900">{screeningResult.entityName}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-600">实体类型</dt>
-                  <dd className="text-sm font-medium text-gray-900">{screeningResult.entityType}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-600">筛查时间</dt>
-                  <dd className="text-sm font-mono text-gray-700">{screeningResult.screenedAt}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-600">筛查引擎</dt>
-                  <dd className="text-sm font-medium text-gray-900">System Auto</dd>
-                </div>
-              </dl>
-
-              {/* Alert for Watchlist/Blocked */}
-              {(screeningResult.result === 'watchlist' || screeningResult.result === 'blocked') && (
-                <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg">
-                  <p className="text-sm text-yellow-800 font-semibold mb-2">⚠️ 风险识别</p>
-                  {screeningResult.matchScore && (
-                    <p className="text-sm text-yellow-700 mb-1">相似度得分：<span className="font-semibold">{screeningResult.matchScore}%</span></p>
-                  )}
-                  {screeningResult.matchedEntry && (
-                    <p className="text-sm text-yellow-700 mb-1">匹配条目：<span className="font-mono">{screeningResult.matchedEntry}</span></p>
-                  )}
-                  {screeningResult.matchedList && (
-                    <p className="text-sm text-yellow-700">匹配清单：<span className="font-mono">{screeningResult.matchedList}</span></p>
-                  )}
-                </div>
-              )}
-
-              {/* Review Section for Watchlist/Blocked */}
-              {screeningResult.result !== 'clear' && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">人工审核意见 (Required)</h3>
-                  <textarea
-                    rows={3}
-                    placeholder="填写人工核查结果或理由..."
-                    defaultValue={screeningResult.reviewNote || ''}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                  />
-                  <div className="flex gap-3 mt-4">
-                    <button className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors shadow-md">
-                      ✓ 确认通过 (Override)
-                    </button>
-                    <button className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-md">
-                      × 保持拦截 (Block)
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Clear Result Success Message */}
-              {screeningResult.result === 'clear' && (
-                <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-                  <p className="text-sm text-green-800 font-semibold">✓ OFAC 筛查通过</p>
-                  <p className="text-xs text-green-700 mt-1">该实体不在任何制裁名单上，可以继续交易流程。</p>
-                </div>
-              )}
             </div>
-          )}
-
-          {/* Recent Screening History */}
-          <div className="glass p-6 rounded-xl">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Screening History</h2>
 
             {/* Search Box */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="搜索筛查记录..."
+            <div className="relative mb-4">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Input
+                placeholder={t('table.searchPlaceholder')}
                 value={searchKey}
                 onChange={e => setSearchKey(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-12 pr-4 py-3 border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl"
               />
             </div>
 
-            {/* Table */}
+            {/* Advanced Filters */}
+            {showAdvancedFilters && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 pt-4 border-t border-slate-200 animate-fade-in">
+                <select
+                  value={selectedResult}
+                  onChange={e => setSelectedResult(e.target.value)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                >
+                  <option value="all">{t('filters.byResult')}</option>
+                  <option value="clear">Clear</option>
+                  <option value="watchlist">Watchlist</option>
+                  <option value="blocked">Blocked</option>
+                </select>
+
+                <select
+                  value={selectedEntityType}
+                  onChange={e => setSelectedEntityType(e.target.value)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                >
+                  <option value="all">{t('filters.byEntityType')}</option>
+                  <option value="Company">Company</option>
+                  <option value="Individual">Individual</option>
+                  <option value="Vessel">Vessel</option>
+                  <option value="Aircraft">Aircraft</option>
+                </select>
+
+                <select
+                  value={selectedCountry}
+                  onChange={e => setSelectedCountry(e.target.value)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                >
+                  <option value="all">{t('filters.byCountry')}</option>
+                  {uniqueCountries.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+
+                <div className="flex gap-2">
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={e => setDateFrom(e.target.value)}
+                    placeholder={t('filters.fromDate')}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  />
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={e => setDateTo(e.target.value)}
+                    placeholder={t('filters.toDate')}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Active Filters Display */}
+            {(selectedResult !== 'all' || selectedEntityType !== 'all' || selectedCountry !== 'all' || dateFrom || dateTo) && (
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-slate-600">Active filters:</span>
+                {[selectedResult, selectedEntityType, selectedCountry].filter(Boolean).map((val, i) => (
+                  <Badge key={i} variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                    {val}
+                    <button onClick={() => {
+                      if ([selectedResult, selectedEntityType, selectedCountry][i] === val) {
+                        [selectedResult, selectedEntityType, selectedCountry][i] = 'all';
+                      }
+                    }} className="ml-2 hover:text-indigo-900">&times;</button>
+                  </Badge>
+                ))}
+                {dateFrom && <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">From: {dateFrom}</Badge>}
+                {dateTo && <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">To: {dateTo}</Badge>}
+                <button onClick={() => {
+                  setSelectedResult('all');
+                  setSelectedEntityType('all');
+                  setSelectedCountry('all');
+                  setDateFrom('');
+                  setDateTo('');
+                }} className="text-sm text-slate-500 hover:text-slate-700 underline">
+                  {t('filters.resetFilters')}
+                </button>
+              </div>
+            )}
+          </Card>
+
+          {/* Data Table */}
+          <Card className="overflow-hidden bg-white/80 backdrop-blur-xl border border-slate-200 shadow-lg">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">实体名称</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">类型</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">结果</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">匹配度</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">筛查时间</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">操作</th>
+                    <th 
+                      className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100"
+                      onClick={() => handleSort('entityName')}
+                    >
+                      <div className="flex items-center gap-2">
+                        {t('table.columns.entityName')}
+                        {sortBy === 'entityName' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      {t('table.columns.type')}
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      {t('table.columns.country')}
+                    </th>
+                    <th 
+                      className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100"
+                      onClick={() => handleSort('result')}
+                    >
+                      <div className="flex items-center gap-2">
+                        {t('table.columns.result')}
+                        {sortBy === 'result' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100"
+                      onClick={() => handleSort('matchScore')}
+                    >
+                      <div className="flex items-center gap-2">
+                        {t('table.columns.matchScore')}
+                        {sortBy === 'matchScore' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100"
+                      onClick={() => handleSort('timestamp')}
+                    >
+                      <div className="flex items-center gap-2">
+                        {t('table.columns.screeningDate')}
+                        {sortBy === 'timestamp' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      {t('table.columns.actions')}
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-200">
                   {filteredScreenings.map(screening => (
-                    <tr key={screening.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{screening.entityName}</div>
+                    <tr key={screening.id} className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 transition-all duration-200">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-semibold text-slate-900">{screening.entityName}</div>
                         {screening.policyId && (
-                          <div className="text-xs text-gray-500 mt-1">Policy: {screening.policyId}</div>
+                          <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            Policy: {screening.policyId}
+                          </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{screening.entityType}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">{getStatusBadge(screening.result)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        {t(`entityType.${screening.entityType?.toLowerCase()}`, screening.entityType)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        {screening.country?.join(', ') || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(screening.result)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {screening.matchScore ? (
-                          <span className="text-sm font-semibold text-red-600">{screening.matchScore}%</span>
+                          <span className={`text-sm ${getScoreColor(screening.matchScore)}`}>
+                            {screening.matchScore}%
+                          </span>
                         ) : (
-                          <span className="text-xs text-gray-400">-</span>
+                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{formatDate(screening.timestamp)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {screening.reviewedBy && (
-                          <span className="text-xs text-gray-500">Reviewed by: {screening.reviewedBy}</span>
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        {formatDate(screening.timestamp)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          {screening.result === 'watchlist' && (
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-orange-600">
+                              <AlertTriangle className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -343,20 +514,22 @@ export default function OFACScreeningView({ navigateTo }: Props) {
             </div>
 
             {/* Summary */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                共<span className="font-semibold text-gray-900">{allScreenings.length}</span>条筛查记录
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
+              <p className="text-sm text-slate-600">
+                Showing<span className="font-semibold text-slate-900"> {filteredScreenings.length} </span>
+                {filteredScreenings.length !== allScreenings.length && `of ${allScreenings.length}`} records
               </p>
             </div>
 
             {/* Empty State */}
             {filteredScreenings.length === 0 && (
-              <div className="py-12 text-center text-gray-500">
-                <Search className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                <p>暂无筛查记录</p>
+              <div className="py-16 text-center text-slate-500">
+                <Search className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                <p className="text-lg font-medium text-slate-600">No screening records found</p>
+                <p className="text-sm text-slate-400 mt-2">Try adjusting your filters or search criteria</p>
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>

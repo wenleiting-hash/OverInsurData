@@ -63,10 +63,10 @@ body {
 
 /* Glass surface */
 .glass {
-  background: var(--glass-bg);
+  background: rgba(255, 255, 255, 0);
   backdrop-filter: blur(32px) saturate(1.4);
   -webkit-backdrop-filter: blur(32px) saturate(1.4);
-  border: 0.5px solid var(--glass-stroke);
+  border: 1px solid rgba(229, 232, 236, 1);
   box-shadow: var(--glass-shadow);
 }
 
@@ -147,22 +147,28 @@ body {
 /* Tab bar */
 .tab-bar {
   display: flex;
-  border-bottom: 1px solid #C1C6D7;
-  gap: 0;
+  border-bottom: 1px solid rgba(193,198,215,0.55);
+  gap: 2px;
 }
 .tab-item {
-  padding: 10px 18px;
-  font-size: 13.5px;
+  padding: 9px 18px;
+  font-size: 13px;
   font-weight: 500;
-  color: #414755;
+  color: #717786;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 120ms, border-color 120ms;
+  border: 0.5px solid transparent;
+  border-bottom: 2.5px solid transparent;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  transition: all 120ms;
   white-space: nowrap;
 }
 .tab-item:hover { color: #0058BC; }
 .tab-item.active {
   color: #0058BC;
+  font-weight: 700;
+  background: rgba(0,88,188,0.09);
+  border-color: rgba(193,198,215,0.55);
   border-bottom-color: #0058BC;
 }
 
@@ -406,6 +412,26 @@ select.input-glass {
 .btn-ghost:hover {
   background: rgba(0, 88, 188, 0.07);
   color: #0058BC;
+}
+
+/* User chip (TopBar, aligns with prototype glass style) */
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 5px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: rgba(193, 198, 215, 0.15);
+  transition: background 0.15s;
+  font-family: var(--font-sans);
+}
+.user-chip:hover {
+  background: rgba(193, 198, 215, 0.25);
+}
+.user-chip.active {
+  background: rgba(0, 88, 188, 0.08);
 }
 
 /* Card container */

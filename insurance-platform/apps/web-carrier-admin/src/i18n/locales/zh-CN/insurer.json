@@ -38,7 +38,8 @@
     "selectedCount": "已选 {count} 项",
     "batchEnable": "批量启用",
     "batchDisable": "批量停用",
-    "cancelSelection": "取消选择"
+    "cancelSelection": "取消选择",
+    "exportSelected": "导出选中"
   },
   "table": {
     "selectHeader": "",
@@ -47,6 +48,7 @@
     "companyType": "公司类型",
     "amBestRating": "AM Best 评级",
     "headquartersRegion": "总部大区",
+    "region": "总部大区",
     "totalPremium": "总保费",
     "policyCount": "保单数",
     "lossRatio": "赔付率",
@@ -71,7 +73,7 @@
     "pageSize50": "每页 50 条"
   },
   "form": {
-    "title": "新增保险公司",
+    "title": "职位",
     "editTitle": "编辑保险公司",
     "sectionBasicInfo": "基本信息",
     "sectionLicensing": "牌照信息",
@@ -106,7 +108,6 @@
     "zipCode": "邮政编码",
     "country": "国家",
     "contactPerson": "联系人",
-    "title": "职位",
     "email": "邮箱",
     "phone": "电话",
     "financialDisclosure": "财务信息公开披露",
@@ -117,17 +118,590 @@
     "createdBy": "创建人",
     "updatedBy": "更新人"
   },
-  "bulkActions": {
-    "selectedCount": "已选择 {count} 家",
-    "batchEnable": "启用选中",
-    "batchDisable": "停用选中",
-    "cancelSelection": "取消选择"
-  },
   "validation": {
     "naicRequired": "NAIC 编码为必填项",
     "companyRequired": "公司名称为必填项",
     "emailInvalid": "请输入有效的邮箱地址",
     "naicLength": "NAIC 编码须为 5 位数字",
     "yearInvalid": "成立年份必须为 4 位数字且不超过当前年份"
+  },
+  "list": {
+    "csvHeaders": {
+      "naicCode": "NAIC Code",
+      "companyName": "公司名称",
+      "companyType": "公司类型",
+      "amBestRating": "AM Best 评级",
+      "status": "状态",
+      "region": "所属大区",
+      "totalPremium": "总保费",
+      "lossRatio": "赔付率",
+      "renewalRate": "续保率",
+      "settlementCycle": "结算周期"
+    }
+  },
+  "detail": {
+    "tabs": {
+      "info": "基本信息",
+      "ratings": "财务评级",
+      "creditRating": "信用评级",
+      "products": "关联产品",
+      "channels": "合作渠道",
+      "performance": "业绩概览",
+      "documents": "资质附件",
+      "history": "变更历史"
+    },
+    "backToList": "返回列表",
+    "exportPdf": "导出 PDF",
+    "edit": "编辑",
+    "saveDraft": "保存草稿",
+    "submitReview": "提交审核",
+    "comingSoon": "此功能模块正在开发中...",
+    "basicInfo": "基本资料",
+    "contactInfoTitle": "联系方式",
+    "amBestPrefix": "AM Best",
+    "status": {
+      "active": "合作中",
+      "pending": "待审核",
+      "inactive": "已停用"
+    },
+    "kpi": {
+      "totalPremium": "总保费",
+      "thisYear": "本年",
+      "policyCount": "保单数",
+      "activePolicies": "有效保单",
+      "lossRatio": "赔付率",
+      "overThreshold": "⚠ 超预警",
+      "normal": "正常",
+      "renewalRate": "续保率",
+      "channelCount": "合作渠道",
+      "channelUnit": "个渠道",
+      "productCount": "产品数量",
+      "productUnit": "个产品",
+      "productCountShort": "产品数",
+      "title": "核心业务指标",
+      "premium": "保费收入",
+      "avgPremium": "件均保费",
+      "newBizShare": "新业务占比",
+      "renewal": "续保率",
+      "commission": "佣金收入"
+    },
+    "coopStatus": "合作状态",
+    "coop": {
+      "active": "正常",
+      "expiring": "即将到期",
+      "negotiating": "洽谈中",
+      "terminated": "已终止"
+    },
+    "contractExpiry": "合同到期",
+    "foundedIn": "成立于 {{year}} 年",
+    "daysRemaining": "剩余 {{days}} 天",
+    "sections": {
+      "basicInfo": "公司基本信息",
+      "hq": "总部信息",
+      "settlement": "结算配置",
+      "contact": "联系信息"
+    },
+    "fields": {
+      "fullName": "公司全称",
+      "shortName": "公司简称",
+      "naicCode": "NAIC 编码",
+      "companyType": "公司类型",
+      "foundedYear": "成立年份",
+      "website": "官方网站",
+      "hqAddress": "总部地址",
+      "state": "所在州",
+      "region": "大区",
+      "businessLines": "业务线",
+      "settlementCycle": "结算周期",
+      "billingFormat": "账单格式",
+      "billingDueDate": "账单截止日",
+      "paymentCycle": "支付周期",
+      "contactPerson": "联系人",
+      "jobTitle": "职位",
+      "phone": "电话",
+      "email": "邮箱",
+      "currency": "结算货币",
+      "premiumCollection": "保费归集"
+    },
+    "settlement": {
+      "monthly": "月度结算",
+      "quarterly": "季度结算",
+      "apiPull": "API 自动拉取",
+      "dueDay25": "每月 25 日",
+      "paymentTerm": "月后 15 个工作日",
+      "premiumCollectionValue": "渠道代收 → 平台归集",
+      "paymentTermDaysUnit": "天"
+    },
+    "contacts": {
+      "viewAll": "查看全部 {{count}} 个对接人",
+      "roleAccountManager": "客户经理",
+      "roleUnderwriting": "核保联系人",
+      "roleFinance": "结算财务联系人",
+      "roleIt": "IT技术对接人",
+      "roleCompliance": "合规联系人"
+    },
+    "ratings": {
+      "current": "当前评级",
+      "notRated": "未评级",
+      "amBestDesc": "行业权威评级机构",
+      "spDesc": "标准普尔评级",
+      "moodysDesc": "穆迪评级",
+      "fitchDesc": "惠誉评级",
+      "trend": "评级趋势",
+      "updatedAt": "更新于 {{date}}",
+      "lossTrendTitle": "赔付率走势（近6月）",
+      "lossTrendSub": "月度赔付率 · 预警阈值 65%",
+      "lossCurrent": "当前赔付率",
+      "lossIndustry": "行业均值",
+      "lossTarget": "本年目标",
+      "healthTitle": "财务健康指标",
+      "healthSolvency": "偿付能力充足率",
+      "healthCombined": "综合成本率",
+      "healthRoi": "投资回报率",
+      "regThreshold": "监管阈值: {{value}}"
+    },
+    "channelTable": {
+      "name": "渠道名称",
+      "type": "类型",
+      "tier": "等级",
+      "contribPremium": "贡献保费",
+      "premiumShare": "保费占比",
+      "state": "州",
+      "commissionRate": "佣金率",
+      "status": "状态",
+      "agreementDate": "协议日期",
+      "actions": "操作"
+    },
+    "channels": {
+      "countPre": "已授权合作渠道共 ",
+      "countPost": " 个",
+      "independent": "独立代理",
+      "tierPlatinum": "铂金",
+      "tierGold": "金级",
+      "tierSilver": "银级"
+    },
+    "channelTypes": {
+      "direct": "直接合作",
+      "mga": "MGA",
+      "broker": "经纪商",
+      "aggregator": "聚合平台"
+    },
+    "channelStatus": {
+      "active": "活跃",
+      "pending": "审核中",
+      "inactive": "停用"
+    },
+    "documents": {
+      "count": "共 {n} 个文件",
+      "upload": "上传文件",
+      "preview": "预览",
+      "download": "下载",
+      "delete": "删除",
+      "alert": "{{count}} 个文件即将到期或已过期，请及时更新",
+      "uploadedInfo": "上传于 {{date}} · {{by}}",
+      "validUntil": " · 有效期至 {{date}}",
+      "noDocs": "暂无附件文件",
+      "docTypes": {
+        "master": "主合作协议",
+        "nda": "保密协议 (NDA)",
+        "dpa": "数据处理协议 (DPA)",
+        "ratingReport": "评级报告",
+        "stateLicense": "州营业执照",
+        "commission": "佣金补充协议",
+        "license": "营业执照",
+        "amBestReport": "AM Best 评级报告"
+      }
+    },
+    "docTable": {
+      "name": "文件名",
+      "type": "类型",
+      "status": "状态",
+      "issueDate": "发布日期",
+      "expiryDate": "到期日期",
+      "size": "文件大小",
+      "actions": "操作"
+    },
+    "docStatus": {
+      "valid": "有效",
+      "expiring": "即将到期",
+      "expired": "已过期"
+    },
+    "historyTable": {
+      "field": "字段",
+      "oldValue": "旧值",
+      "newValue": "新值",
+      "changedBy": "操作人",
+      "changedAt": "变更日期"
+    },
+    "history": {
+      "count": "共 {{count}} 条变更记录",
+      "allFields": "全部字段",
+      "allOperators": "全部操作人",
+      "exportLog": "导出日志",
+      "changeBefore": "变更前",
+      "changeAfter": "变更后",
+      "approvedByPrefix": "· 审批人: ",
+      "sections": {
+        "basic": "基本信息",
+        "rating": "财务评级",
+        "settlement": "结算信息",
+        "coop": "合作管理",
+        "contact": "对接人"
+      }
+    },
+    "productTable": {
+      "name": "产品名称",
+      "code": "产品代码",
+      "lob": "业务线",
+      "type": "类型",
+      "premium": "保费",
+      "status": "状态",
+      "effectiveDate": "生效日期",
+      "actions": "操作"
+    },
+    "products": {
+      "countPre": "该保险公司下共 ",
+      "countPost": " 个产品",
+      "addProduct": "新增产品",
+      "typeIndividual": "个人险",
+      "typeGroup": "团体险",
+      "typeVoluntary": "自愿险"
+    },
+    "productStatus": {
+      "active": "启用",
+      "inactive": "停用"
+    },
+    "performance": {
+      "premiumTrend": "保费趋势（本年）",
+      "trendSub": "近 6 个月 · 百万美元",
+      "premium": "保费",
+      "newBiz": "新业务",
+      "renewal": "续保",
+      "total": "总计",
+      "channelContribution": "渠道保费贡献占比",
+      "lossRatio": "赔付率",
+      "commission": "佣金收入",
+      "metricsTitle": "核心绩效指标",
+      "yoy": "同比",
+      "lossRanking": "产品赔付率排名",
+      "metrics": {
+        "ytdPremium": "本年累计保费",
+        "newPolicyGrowth": "新保单增长",
+        "avgPolicyValue": "平均保单价值",
+        "retentionRate": "客户留存率",
+        "cac": "获客成本"
+      }
+    },
+    "lossTable": {
+      "name": "产品名称",
+      "totalPremium": "总保费",
+      "lossAmount": "赔款额",
+      "lossRatio": "赔付率",
+      "riskLevel": "风险等级",
+      "items": {
+        "auto": "个人汽车险",
+        "home": "家庭财产险",
+        "health": "团体健康险",
+        "liability": "商业责任险",
+        "accident": "意外险"
+      }
+    },
+    "risk": {
+      "high": "高风险",
+      "medium": "中风险",
+      "low": "低风险"
+    },
+    "form": {
+      "companyCode": "公司代码",
+      "companyCodePlaceholder": "自动生成或手动输入",
+      "naicCodePlaceholder": "例如：12345",
+      "companyNamePlaceholder": "Insurance Company Name",
+      "shortNamePlaceholder": "Short Name",
+      "status": "状态",
+      "amBestRating": "AM Best 评级",
+      "selectPlaceholder": "请选择",
+      "statusNormal": "正常",
+      "notRated": "未评级",
+      "hqAddress": "总部地址",
+      "hqAddressPlaceholder": "完整地址",
+      "phone": "联系电话",
+      "phonePlaceholder": "+1 (xxx) xxx-xxxx",
+      "email": "电子邮箱",
+      "emailPlaceholder": "contact@company.com",
+      "address": "地址",
+      "currency": "货币",
+      "paymentTermDays": "账期天数"
+    },
+    "actions": {
+      "disable": "停用",
+      "enable": "启用",
+      "featurePending": "功能待实现"
+    }
+  },
+  "import": {
+    "title": "批量导入保险公司",
+    "subtitle": "通过 Excel 模板一次性导入多家保险公司数据，支持校验和错误反馈",
+    "cancel": "取消",
+    "steps": {
+      "template": "下载模板",
+      "upload": "上传文件",
+      "preview": "数据预览",
+      "validate": "数据校验",
+      "confirm": "确认导入",
+      "result": "导入结果"
+    },
+    "mockFileName": "保险公司批量导入_2026-08-22.xlsx",
+    "template": {
+      "heading": "下载标准导入模板",
+      "desc": "请使用系统提供的标准 Excel 模板，模板包含所有必填字段说明、格式要求和填写示例，非标准格式可能导致校验失败。",
+      "standardTitle": "标准模板（推荐）",
+      "standardDesc": "包含字段说明和 5 行示例数据",
+      "standardBadge": "推荐",
+      "blankTitle": "空白模板",
+      "blankDesc": "仅包含表头，无示例数据",
+      "blankBadge": "简洁版",
+      "downloadExcel": "下载 Excel",
+      "fieldsTitle": "模板字段说明",
+      "continue": "已下载模板，继续上传"
+    },
+    "templateFields": {
+      "fullName": "公司全称 *",
+      "naicCode": "NAIC 编码 *",
+      "shortName": "公司简称 *",
+      "companyType": "公司类型 *",
+      "state": "总部州 *",
+      "region": "大区 *",
+      "amBestRating": "AM Best 评级",
+      "foundedYear": "成立年份"
+    },
+    "upload": {
+      "heading": "上传 Excel 文件",
+      "desc": "仅支持 .xlsx / .xls 格式，文件大小不超过 10MB",
+      "dragHint": "拖拽文件至此处，或点击选择文件",
+      "formats": "支持 .xlsx · .xls"
+    },
+    "preview": {
+      "heading": "数据预览",
+      "parsed": "解析到 {n} 行数据，请确认数据无误后继续",
+      "totalRows": "共 {n} 行",
+      "mappingTitle": "字段映射确认",
+      "ignore": "— 忽略 —",
+      "colRow": "行号",
+      "colName": "公司全称",
+      "colShortName": "简称",
+      "colNaic": "NAIC",
+      "colType": "类型",
+      "colState": "州",
+      "colRating": "评级",
+      "colStatus": "状态",
+      "ok": "正常",
+      "toValidate": "进入校验"
+    },
+    "fieldMap": {
+      "fullName": "公司全称",
+      "shortName": "公司简称",
+      "naicCode": "NAIC 编码",
+      "companyType": "公司类型",
+      "state": "总部州",
+      "region": "大区",
+      "amBestRating": "AM Best 评级",
+      "foundedYear": "成立年份"
+    },
+    "errors": {
+      "naicRequired": "NAIC 编码不能为空",
+      "ratingRequired": "AM Best 评级不能为空"
+    },
+    "validate": {
+      "heading": "数据校验结果",
+      "passed": "校验通过",
+      "failed": "校验失败",
+      "total": "总计行数",
+      "errorDetails": "错误详情",
+      "row": "行 {n}",
+      "downloadReport": "下载错误报告",
+      "skipErrors": "跳过错误行，仅导入正常行",
+      "continue": "确认，继续导入"
+    },
+    "confirm": {
+      "heading": "确认执行导入",
+      "file": "导入文件",
+      "successRows": "成功行数",
+      "rowsUnit": "{n} 行",
+      "skippedRows": "跳过行数",
+      "skippedValue": "{n} 行（校验失败）",
+      "mode": "导入模式",
+      "modeValue": "新增（不覆盖已有数据）",
+      "review": "审核要求",
+      "reviewValue": "导入后进入待审核状态，需管理员审批",
+      "reupload": "重新上传",
+      "submit": "确认导入 {n} 条记录"
+    },
+    "result": {
+      "heading": "导入完成",
+      "desc": "已成功导入 {ok} 家保险公司，{fail} 行因校验失败已跳过",
+      "success": "成功导入",
+      "skipped": "已跳过",
+      "pendingReview": "待审核",
+      "count": "{n} 条",
+      "viewRecords": "查看导入记录",
+      "backToList": "返回保险公司列表"
+    }
+  },
+  "duplicate": {
+    "title": "重复数据检测",
+    "subtitle": "按 NAIC 编码与公司名称自动识别潜在重复记录，支持并排对比和一键合并",
+    "detecting": "检测中…",
+    "redetect": "重新检测",
+    "empty": {
+      "heading": "启动重复数据检测",
+      "desc": "系统将基于 NAIC 编码精确匹配和公司名称模糊匹配，识别可能重复的保险公司记录，支持并排对比和一键合并。",
+      "criteria": {
+        "naicExact": "NAIC 编码精确匹配",
+        "naicExactDesc": "相同 5 位 NAIC 编码",
+        "nameFuzzy": "公司名称模糊匹配",
+        "nameFuzzyDesc": "相似度 > 80%",
+        "hqMatch": "总部信息匹配",
+        "hqMatchDesc": "相同州 + 城市"
+      },
+      "start": "开始检测"
+    },
+    "groups": {
+      "title": "重复记录组",
+      "pendingCount": "{n} 待处理",
+      "resolvedCount": "{n} 已解决"
+    },
+    "badge": {
+      "merged": "已合并",
+      "dismissed": "已忽略",
+      "pending": "待处理"
+    },
+    "recordStatus": {
+      "active": "合作中",
+      "pending": "待审核"
+    },
+    "field": {
+      "naicCode": "NAIC 编码",
+      "name": "公司名称",
+      "state": "总部州",
+      "type": "公司类型",
+      "region": "大区"
+    },
+    "fields": {
+      "shortName": "公司简称",
+      "naicCode": "NAIC 编码",
+      "companyType": "公司类型",
+      "headquarters": "总部",
+      "createdAt": "创建时间",
+      "createdBy": "创建人"
+    },
+    "matchFactors": {
+      "nameFuzzy": "公司名称（模糊匹配）",
+      "naicPartial": "NAIC编码部分匹配",
+      "hqState": "总部州一致",
+      "nameSimilar": "公司名称高度相似",
+      "hqCity": "总部城市一致",
+      "shortNameEqual": "公司简称相同",
+      "naicFormat": "NAIC编码格式匹配"
+    },
+    "similarity": "相似度",
+    "matchBasis": "匹配依据：",
+    "markNotDuplicate": "标记非重复",
+    "mergeRecords": "合并记录",
+    "selectPrimary": "选择主记录（保留的记录）：",
+    "primaryRecord": "主记录",
+    "mergeWarning": "合并后此记录将被删除",
+    "mergeNote": "关联数据将迁移至主记录",
+    "viewFullRecord": "查看完整记录",
+    "mergeAsPrimary": "以「{name}」为主记录合并",
+    "allDone": {
+      "title": "所有重复记录已处理",
+      "desc": "共处理 {n} 组，已合并或标记为非重复"
+    }
+  },
+  "modals": {
+    "disable": {
+      "titleDisable": "停用保险公司",
+      "titleEnable": "启用保险公司",
+      "impactTitle": "停用影响范围",
+      "impactProducts": "关联产品",
+      "impactChannels": "合作渠道",
+      "impactPolicies": "有效保单",
+      "impactQuotes": "在途报价",
+      "impactCommission": "待结佣金",
+      "impactNote": "停用后：不再分配新业务，已有保单和佣金继续正常处理，渠道产品授权将被批量收回。",
+      "reasonDisable": "停用原因",
+      "reasonEnable": "启用原因",
+      "reason": {
+        "contractExpired": "合作协议到期，不再续约",
+        "compliance": "保险公司合规问题",
+        "lineExit": "业务线调整，退出该市场",
+        "migration": "系统迁移或整合",
+        "mutual": "双方协商终止",
+        "carrier": "保险公司主动要求终止",
+        "other": "其他原因（请在备注中说明）",
+        "resolved": "合规问题已解决",
+        "migrationDone": "完成系统迁移，恢复合作",
+        "newContract": "新合同已签署",
+        "mgmt": "管理层决策恢复合作",
+        "otherShort": "其他原因"
+      },
+      "noteLabel": "备注说明",
+      "notePlaceholder": "可选填写详细说明或背景信息…",
+      "effectLabel": "生效时间",
+      "effectImmediate": "立即生效",
+      "effectScheduled": "定时生效",
+      "scheduledNote": "定时停用：该日期前渠道可继续处理在途业务（过渡期），到期后自动停用",
+      "confirmDisablePre": "我已了解此操作的影响范围，确认停用",
+      "confirmEnablePre": "我已了解此操作的影响范围，确认启用",
+      "confirmPost": "，并已告知相关团队成员。本操作将记录至审计日志并需主管审批后生效。",
+      "btnDisable": "提交停用申请",
+      "btnEnable": "确认启用"
+    },
+    "batchExport": {
+      "title": "批量导出",
+      "scopeTitle": "导出范围",
+      "scopeFiltered": "当前筛选结果",
+      "scopeSelected": "已勾选记录",
+      "scopeAll": "全部数据",
+      "count": "{{count}} 条",
+      "formatTitle": "导出格式",
+      "fmtXlsxDesc": "推荐，支持格式化",
+      "fmtCsvDesc": "通用，纯文本",
+      "fieldsTitle": "导出字段",
+      "fieldsSelected": "（已选 {{count}} / {{total}} 个）",
+      "selectAll": "全选",
+      "clearAll": "清空",
+      "relatedTitle": "关联数据",
+      "fName": "公司全称",
+      "fShortName": "公司简称",
+      "fNaic": "NAIC 编码",
+      "fType": "公司类型",
+      "fAmBest": "AM Best 评级",
+      "fSp": "S&P 评级",
+      "fHq": "总部信息",
+      "fRegion": "大区",
+      "fFounded": "成立年份",
+      "fWebsite": "官方网站",
+      "fPremium": "总保费",
+      "fPolicies": "保单数",
+      "fLossRatio": "赔付率",
+      "fRenewal": "续保率",
+      "fChannels": "合作渠道数",
+      "fProducts": "产品数",
+      "fSettlement": "结算周期",
+      "fCoop": "合作状态",
+      "fContractExpiry": "合同到期日",
+      "fCommission": "佣金收入",
+      "relProducts": "关联产品列表",
+      "relChannels": "合作渠道列表",
+      "relPerformance": "业绩数据摘要",
+      "relContacts": "对接人信息",
+      "footerPrefix": "将导出 ",
+      "footerRecords": "{{count}} 条",
+      "footerFields": "{{count}} 个字段",
+      "footerRelated": " + 关联数据",
+      "exporting": "导出中…",
+      "exportBtn": "导出 {{format}}"
+    }
   }
 }

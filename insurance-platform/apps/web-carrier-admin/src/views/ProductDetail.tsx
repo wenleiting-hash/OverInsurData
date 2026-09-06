@@ -1,480 +1,686 @@
-// Product Detail View - One-stop product information display with tab navigation and charts (功能点 10-14)
-// Features: KPI summary, multi-tab navigation, performance charts, document management, audit history
+// Product Detail View - One-stop product information display (功能点 10-14)
+// Synced with 设计原型V1.3 ProductDetail: header card + KPI strip + 6 tabs
+// (info / rate plans / salable states / underwriting rules / training materials / performance)
+// Status change wires through ProductStatusModal with session-memory state
 
 import { useState } from 'react'
-import { 
-  ArrowLeft, MoreVertical, Edit, Trash2, Download, Upload, Eye, FileText,
-  TrendingUp, TrendingDown, CheckCircle, XCircle, AlertTriangle, Shield, Calendar, FileCheck
+import {
+  ArrowLeft, Edit2, ToggleRight, Download, Plus, Shield,
+  CheckCircle, Upload, FileText, BookOpen, Video,
+  TrendingUp, TrendingDown, Star, Globe, MapPin,
+  ChevronRight, Settings, BarChart2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ViewId } from '@/App'
-import { products, formatCurrency, formatPercent, type InsuranceProduct, productPremiumTrendData } from './data/mockProductData'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import ProductStatusModal from '@/components/ProductStatusModal'
+import { products, formatCurrency, formatPercent, type InsuranceProduct } from './data/mockProductData'
+import {
+  ratePlans, getProductStates, underwritingRules, trainingMaterials, getProductPerf,
+  type RatingFactorKey,
+} from './data/productDetails'
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+} from 'recharts'
 
 interface Props {
   productId: string
-  navigateTo: (view: ViewId) => void
+  navigateTo: (view: ViewId, params?: { carrierId?: string; productId?: string; userId?: string }) => void
 }
 
-const TABS = [
-  { id: 'info', label: '基本信息', icon: Eye },
-  { id: 'ratingPlan', label: '费率方案', icon: TrendingUp },
-  { id: 'availableStates', label: '可售州', icon: CheckCircle },
-  { id: 'performance', label: '业绩表现', icon: TrendingUp },
-  { id: 'documents', label: '附件文件', icon: FileText },
-  { id: 'auditHistory', label: '变更历史', icon: MoreVertical },
-]
+const LINE_COLORS: Record<string, string> = {
+  AUTO: '#0058BC', HOME: '#34C759', COMMERCIAL: '#AF52DE',
+  LIFE: '#FF9500', HEALTH: '#FF3B30', 'P&C': '#64748b',
+}
+
+const RULE_ACTION_COLOR: Record<string, string> = {
+  approve: '#34C759', decline: '#BA1A1A', refer: '#a05800', surcharge: '#FF9500', discount: '#0058BC',
+}
+
+const MATERIAL_TYPE_ICON: Record<string, any> = {
+  'product-guide': BookOpen,
+  'rate-manual': BarChart2,
+  'underwriting-guide': Shield,
+  'compliance': CheckCircle,
+  'training-deck': Star,
+  'faq': FileText,
+  'video': Video,
+}
+
+// coverage stable key → i18n label/desc keys (detail.info.*)
+const COVERAGE_LABEL_KEYS: Record<string, { label: string; desc?: string }> = {
+  Liability: { label: 'detail.info.liability', desc: 'detail.info.liabilityDesc' },
+  Comprehensive: { label: 'detail.info.comprehensive', desc: 'detail.info.comprehensiveDesc' },
+  Collision: { label: 'detail.info.collision', desc: 'detail.info.collisionDesc' },
+  MedicalPayments: { label: 'detail.info.medical', desc: 'detail.info.medicalDesc' },
+  UninsuredMotorist: { label: 'detail.info.um', desc: 'detail.info.umDesc' },
+  RoadsideAssistance: { label: 'detail.info.roadside', desc: 'detail.info.roadsideDesc' },
+  VehicleReplacement: { label: 'detail.info.substitute' },
+  NewCarValue: { label: 'detail.info.newCarValue' },
+  DeductibleWaiver: { label: 'detail.info.deductibleWaiver' },
+}
+
+const COVERAGE_ICONS: Record<string, any> = {
+  Liability: Shield,
+  Comprehensive: CheckCircle,
+  Collision: TrendingUp,
+  MedicalPayments: Globe,
+  UninsuredMotorist: Star,
+  RoadsideAssistance: BookOpen,
+  VehicleReplacement: Star,
+  NewCarValue: TrendingUp,
+  DeductibleWaiver: CheckCircle,
+}
 
 export default function ProductDetail({ productId, navigateTo }: Props) {
-  const { t } = useTranslation('product')
+  const { t, i18n } = useTranslation('product')
+  const lang = i18n.language
+  const [productState, setProductState] = useState<InsuranceProduct[]>(products)
+  const [statusModalId, setStatusModalId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('info')
-  
-  const product = products.find(p => p.productId === productId)
-  const [toastMessage, setToastMessage] = useState<string>('')
-  const [showToast, setShowToast] = useState<boolean>(false)
+  const [stateSearch, setStateSearch] = useState('')
 
-  if (!product) {
-    return (
-      <div className="w-full h-full flex" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontSize: '16px', color: '#9CA3AF' }}>产品不存在</div>
-      </div>
-    )
-  }
+  const prod = productState.find(p => p.productId === productId) ?? productState[0]
+  const myRatePlans = ratePlans.filter(r => r.productId === prod.productId)
+  const allStates = getProductStates(prod.productId)
+  const myRules = underwritingRules.filter(r => r.productId === prod.productId)
+  const myMaterials = trainingMaterials.filter(m => m.productId === prod.productId)
+  const perfData = getProductPerf(prod.productId)
 
-  const showToastMsg = (msg: string) => {
-    setToastMessage(msg)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
+  const activeStates = allStates.filter(s => s.status === 'active')
+  const pendingStates = allStates.filter(s => s.status === 'pending')
 
-  const downloadDocument = (docName: string) => {
-    showToastMsg(`正在下载：${docName}`)
-  }
+  const filteredStates = allStates.filter(s =>
+    !stateSearch || s.code.toLowerCase().includes(stateSearch.toLowerCase()) || s.name.toLowerCase().includes(stateSearch.toLowerCase())
+  )
 
-  // KPI Summary Cards
-  const kpiCards = [
-    { label: '本年保费', value: `$${((product.premiumYTD ?? 0) / 1000000).toFixed(1)}M`, sub: 'YTD 2026', warn: false },
-    { label: '保单数量', value: (product.policyCount ?? 0).toLocaleString(), sub: '有效保单', warn: false },
-    { label: '赔付率', value: `${((product.lossRatio ?? 0) * 100).toFixed(1)}%`, sub: product.lossRatio! > 0.65 ? '⚠ 超预警' : '正常', warn: product.lossRatio! > 0.65 },
-    { label: '续保率', value: `${((product.renewalRate ?? 0) * 100).toFixed(1)}%`, sub: '本年', warn: false },
-    { label: '授权渠道', value: (product.authorizedChannels?.length || 0).toString(), sub: '个渠道', warn: false },
-    { label: '可售州数', value: product.availableStates.length.toString(), sub: '获批州', warn: false },
+  const tabs = [
+    { id: 'info', label: t('detail.tabs.info') },
+    { id: 'rates', label: t('detail.tabs.rates') },
+    { id: 'states', label: t('detail.tabs.states') },
+    { id: 'underwriting', label: t('detail.tabs.underwriting') },
+    { id: 'training', label: t('detail.tabs.training') },
+    { id: 'performance', label: t('detail.tabs.performance') },
   ]
 
-  // Performance Chart Data
-  const premiumTrendData = productPremiumTrendData.map(d => ({
-    ...d,
-    newBizStr: `新业务 $${d.newBiz.toFixed(1)}M`,
-    renewalStr: `续保 $${d.renewal.toFixed(1)}M`,
-    totalStr: `总计 $${d.premium.toFixed(1)}M`,
-  }))
+  const statusMap: Record<InsuranceProduct['status'], { label: string; orb: string }> = {
+    'Active': { label: t('values.statusOnSale'), orb: 'orb-green' },
+    'Inactive': { label: t('values.statusOffSale'), orb: 'orb-gray' },
+    'Paused': { label: t('values.statusPaused'), orb: 'orb-yellow' },
+    'Pending': { label: t('values.statusPending'), orb: 'orb-purple' },
+  }
+  const sc = statusMap[prod.status]
+  const lineColor = LINE_COLORS[prod.lineOfBusiness] ?? '#0058BC'
+  const launchDate = prod.effectiveDate.split('T')[0]
 
-  const monthlyPerformanceData = [
-    { month: '1 月', premium: 12.5, policies: 650 },
-    { month: '2 月', premium: 14.2, policies: 720 },
-    { month: '3 月', premium: 15.8, policies: 810 },
-    { month: '4 月', premium: 16.9, policies: 850 },
-    { month: '5 月', premium: 18.3, policies: 920 },
-    { month: '6 月', premium: 19.1, policies: 980 },
-    { month: '7 月', premium: 20.5, policies: 1050 },
-    { month: '8 月', premium: 21.8, policies: 1120 },
-  ]
+  const typeLabel = t(`values.type${prod.type}`)
 
-  const renderKpiSection = () => (
-    <div style={{ marginBottom: '24px' }}>
-      <div style={{ fontSize: '15px', fontWeight: 600, color: '#404757', marginBottom: '16px' }}>核心指标概览</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '14px' }}>
-        {kpiCards.map(card => (
-          <div key={card.label} style={{
-            padding: '14px 16px', borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(247,248,250,0.8) 100%)',
-            border: `1px solid ${card.warn ? 'rgba(186,26,26,0.2)' : 'rgba(24,28,35,0.08)'}`,
-            boxShadow: card.warn ? '0 4px 16px rgba(186,26,26,0.1)' : '0 2px 8px rgba(0,0,0,0.04)'
-          }}>
-            <div style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '8px' }}>{card.label}</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: card.warn ? '#BA1A1A' : '#181C23' }}>
-              {card.value}
-            </div>
-            <div style={{ fontSize: '11px', color: card.warn ? '#BA1A1A' : '#9CA3AF', marginTop: '4px' }}>{card.sub}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+  const rpStatusLabels: Record<string, { cls: string; label: string }> = {
+    active: { cls: 'badge-green', label: t('detail.rates.active') },
+    draft: { cls: 'badge-gray', label: t('detail.rates.draft') },
+    expired: { cls: 'badge-red', label: t('detail.rates.expired') },
+    pending: { cls: 'badge-yellow', label: t('detail.rates.pending') },
+  }
 
-  const renderInfoTab = () => (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>产品全称</div>
-        <div style={{ fontSize: '16px', fontWeight: 600, color: '#181C23' }}>{product.productName}</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>产品简称</div>
-        <div style={{ fontSize: '16px', fontWeight: 500, color: '#404757' }}>{product.shortName || '-'}</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>产品代码</div>
-        <div style={{ fontSize: '14px', fontWeight: 500, fontFamily: 'monospace', color: '#181C23' }}>{product.productCode}</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>NAIC 表单编号</div>
-        <div style={{ fontSize: '14px', color: '#404757' }}>{product.naicFormNumber || '-'}</div>
-      </div>
-      
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>所属保险公司</div>
-        <div style={{ fontSize: '16px', fontWeight: 500, color: '#181C23' }}>{product.insurerName}</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>业务线</div>
-        <div style={{ fontSize: '16px', fontWeight: 500, color: '#181C23' }}>{t(`values.lob${product.lineOfBusiness}`)}</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>子险种</div>
-        <div style={{ fontSize: '16px', fontWeight: 500, color: '#404757' }}>{product.subLine || '-'}</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>产品类型</div>
-        <div style={{ fontSize: '16px', fontWeight: 500, color: '#181C23' }}>{t(`values.type${product.type}`)}</div>
-      </div>
+  const ruleCatLabels: Record<string, { cls: string; label: string }> = {
+    eligibility: { cls: 'badge-red', label: t('detail.underwriting.eligibility') },
+    rating: { cls: 'badge-blue', label: t('detail.underwriting.rating') },
+    exclusion: { cls: 'badge-orange', label: t('detail.underwriting.exclusion') },
+    referral: { cls: 'badge-yellow', label: t('detail.underwriting.referral') },
+  }
 
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}><Shield size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }}/>{t('fields.underwritingMode')}</div>
-        <div style={{ fontSize: '16px', fontWeight: 500, color: '#181C23' }}>{t(`values.underwriting${product.underwritingMode}`)}</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>最大出单限额</div>
-        <div style={{ fontSize: '16px', fontWeight: 600, color: '#181C23', fontFamily: 'monospace' }}>
-          ${product.maxPolicyLimit?.toLocaleString() || '-'}
-        </div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>核保期限</div>
-        <div style={{ fontSize: '16px', fontWeight: 500, color: '#404757' }}>{product.policyTermYears}年</div>
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>销售状态</div>
-        <span className={`status-badge ${product.status.toLowerCase()}`} style={{ fontSize: '14px', padding: '6px 14px' }}>{t(`values.status${product.status}`)}</span>
-      </div>
-    </div>
-  )
+  const matLabels: Record<string, string> = {
+    'product-guide': t('detail.training.guide'),
+    'rate-manual': t('detail.training.rateManual'),
+    'underwriting-guide': t('detail.training.uwGuide'),
+    'compliance': t('detail.training.compliance'),
+    'training-deck': t('detail.training.deck'),
+    'faq': t('detail.training.faq'),
+    'video': t('detail.training.video'),
+  }
 
-  const renderRatingPlanTab = () => (
-    <div>
-      <div style={{ marginBottom: '16px', fontSize: '14px', color: '#404757' }}>
-        该产品在各州的费率方案配置（模拟数据）
-      </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
-          <thead>
-            <tr style={{ background: 'rgba(247,248,250,0.8)', borderBottom: '2px solid rgba(24,28,35,0.08)' }}>
-              <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#404757' }}>州</th>
-              <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#404757' }}>费率版本</th>
-              <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#404757' }}>生效日期</th>
-              <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#404757' }}>失效日期</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#404757' }}>状态</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#404757' }}>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {product.availableStates.map((state, idx) => (
-              <tr key={state} style={{ borderBottom: '1px solid rgba(24,28,35,0.06)' }}>
-                <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: '#181C23' }}>{state}</td>
-                <td style={{ padding: '16px', fontSize: '13px', color: '#404757' }}>{`v${1 + idx}.${idx}`}</td>
-                <td style={{ padding: '16px', fontSize: '13px', color: '#404757' }}>{new Date(product.effectiveDate).toLocaleDateString()}</td>
-                <td style={{ padding: '16px', fontSize: '13px', color: '#404757' }}>{product.expirationDate ? new Date(product.expirationDate).toLocaleDateString() : '-'}</td>
-                <td style={{ padding: '16px', textAlign: 'center' }}>
-                  <span className="status-badge active">已生效</span>
-                </td>
-                <td style={{ padding: '16px', textAlign: 'center' }}>
-                  <button className="icon-btn" onClick={() => showToastMsg('费率编辑功能开发中...')} style={{ padding: '6px 12px', fontSize: '12px' }}>
-                    <Edit size={12} />
-                    <span style={{ marginLeft: '4px' }}>编辑</span>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
+  const factorLabels: Record<RatingFactorKey, string> = {
+    drivingRecord: t('detail.rates.facDrivingRecord'),
+    vehicleType: t('detail.rates.facVehicleType'),
+    drivingExperience: t('detail.rates.facDrivingExp'),
+    creditScore: t('detail.rates.facCredit'),
+    territory: t('detail.rates.facTerritory'),
+    usage: t('detail.rates.facUsage'),
+    homeRebuildCost: t('detail.rates.facHomeRebuildCost'),
+    securityFeatures: t('detail.rates.facSecurityFeatures'),
+    naturalRisk: t('detail.rates.facNatRisk'),
+    lossHistory: t('detail.rates.facLossHistory'),
+    annualRevenue: t('detail.rates.facAnnualRevenue'),
+    industryRisk: t('detail.rates.facIndustryRisk'),
+    securityPosture: t('detail.rates.facSecurityPosture'),
+    incidentHistory: t('detail.rates.facIncidentHistory'),
+    employeeCount: t('detail.rates.facEmployeeCount'),
+    supplyChain: t('detail.rates.facSupplyChain'),
+  }
 
-  const renderAvailableStatesTab = () => (
-    <div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '14px', color: '#404757' }}>获批销售的州列表 (共 {product.availableStates.length} 个州)</div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px' }}>
-        {product.availableStates.map(state => (
-          <div key={state} style={{
-            padding: '12px 16px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, rgba(0, 88, 188, 0.1) 0%, rgba(255,255,255,0.8) 100%)',
-            border: '2px solid #0058BC',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '16px', fontWeight: 600, color: '#181C23'
-          }}>
-            {state}
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0, 88, 188, 0.08)', borderRadius: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'start', gap: '10px' }}>
-          <AlertTriangle size={18} style={{ color: '#0058BC', marginTop: '2px' }} />
-          <div style={{ fontSize: '13px', color: '#0058BC' }}>每个州均需单独获得监管批准才能销售。未获批的州将无法生成保单。</div>
-        </div>
-      </div>
-    </div>
-  )
+  const latestPerf = perfData[perfData.length - 1]
+  const prevPerf = perfData[perfData.length - 2]
+  const premiumGrowth = prevPerf ? ((latestPerf.premium - prevPerf.premium) / prevPerf.premium) : 0
 
-  const renderPerformanceTab = () => (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-      {/* Premium Trend Chart */}
-      <div style={{ padding: '20px', borderRadius: '12px', background: 'rgba(255,255,255,0.7)', height: '320px' }}>
-        <div style={{ fontSize: '15px', fontWeight: 600, color: '#181C23', marginBottom: '16px' }}>月度保费趋势</div>
-        <ResponsiveContainer width="100%" height="85%">
-          <LineChart data={premiumTrendData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#606778' }} />
-            <YAxis tick={{ fontSize: 12, fill: '#606778' }} tickFormatter={(v: any) => `$${v}M`} />
-            <Tooltip formatter={(value: any) => [`$${value}M`, '保费']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }} />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line type="monotone" dataKey="newBiz" stroke="#34C759" name="新业务" strokeWidth={2} dot={{ r: 4 }} />
-            <Line type="monotone" dataKey="renewal" stroke="#0058BC" name="续保" strokeWidth={2} dot={{ r: 4 }} />
-            <Line type="monotone" dataKey="premium" stroke="#9E3D00" name="总计" strokeWidth={2} dot={{ r: 4, fill: '#9E3D00', strokeWidth: 0 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+  const confirmStatusChange = () => {
+    // Session-memory only: status change is applied to the local product copy
+    if (!statusModalId) return
+    setProductState(prev => prev.map(p => p.productId === statusModalId
+      ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active', isActive: p.status !== 'Active' }
+      : p
+    ))
+    setStatusModalId(null)
+  }
 
-      {/* Monthly Policies & Average Premium */}
-      <div style={{ padding: '20px', borderRadius: '12px', background: 'rgba(255,255,255,0.7)', height: '320px' }}>
-        <div style={{ fontSize: '15px', fontWeight: 600, color: '#181C23', marginBottom: '16px' }}>月度保单量与件均</div>
-        <ResponsiveContainer width="100%" height="85%">
-          <BarChart data={monthlyPerformanceData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#606778' }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 12, fill: '#606778' }} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: '#606778' }} />
-            <Tooltip formatter={(value: any, name: any) => {
-              if (name === 'premium') return [`$${value}M`, '保费'];
-              return [value.toLocaleString(), '保单数'];
-            }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }} />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Bar yAxisId="left" dataKey="policies" fill="#0058BC" name="保单数" radius={[4, 4, 0, 0]} />
-            <Bar yAxisId="right" dataKey="premium" fill="#34C759" name="保费" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  )
-
-  const renderDocumentsTab = () => (
-    <div>
-      <div style={{ marginBottom: '20px', fontSize: '14px', color: '#606778' }}>{t('documents.uploadHint')}</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-        {[
-          { key: 'terms', label: 'documents.docs.terms', icon: FileText },
-          { key: 'rateBook', label: '费率手册', icon: FileText },
-          { key: 'salesGuide', label: 'documents.docs.salesGuide', icon: FileText },
-          { key: 'underwritingGuide', label: 'documents.docs.underwritingGuide', icon: Shield },
-          { key: 'complianceCertificate', label: 'documents.docs.complianceCertificate', icon: Shield },
-        ].map(doc => (
-          <div key={doc.key} style={{
-            padding: '20px', borderRadius: '12px',
-            background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(24,28,35,0.08)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px'
-          }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'rgba(52, 199, 89, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileCheck size={24} style={{ color: '#34C759' }} />
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: '#181C23' }}>{t(doc.label)}</div>
-            <div style={{ fontSize: '12px', color: '#9CA3AF' }}>v1.0 • 2026-01-15</div>
-            <button className="icon-btn" onClick={() => downloadDocument(t(doc.label))}>
-              <Download size={14} />
-              <span style={{ marginLeft: '4px' }}>下载</span>
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
-  const renderAuditHistoryTab = () => (
-    <div>
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '14px', color: '#404757' }}>所有变更记录追溯 (模拟数据)</div>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {[
-          { date: '2026-08-20T14:30:00Z', action: '更新', user: '管理员', changes: ['费率方案 v2.0'], details: '修改了 CA 州的费率结构' },
-          { date: '2026-07-15T09:20:00Z', action: '新增', user: '产品经理', changes: ['初版发布'], details: '初始产品配置并提交审核' },
-          { date: '2026-06-01T16:45:00Z', action: '更新', user: '合规专员', changes: ['扩展可售州'], details: '新增 NY、NJ、PA 三个州的销售许可' },
-          { date: '2026-05-10T11:00:00Z', action: '提交', user: '申请人', changes: ['审核提交'], details: '提交至财务部审核' },
-        ].map((log, idx) => (
-          <div key={idx} style={{
-            padding: '16px 20px', borderRadius: '10px',
-            background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(24,28,35,0.08)',
-            display: 'flex', gap: '16px', alignItems: 'start'
-          }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(0, 88, 188, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Calendar size={16} style={{ color: '#0058BC' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#181C23' }}>{log.action} - {log.details}</div>
-                <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{new Date(log.date).toLocaleString()}</div>
-              </div>
-              <div style={{ fontSize: '13px', color: '#404757' }}>操作人：{log.user}</div>
-              <div style={{ fontSize: '12px', color: '#606778' }}>变更项：{log.changes.join(', ')}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+  const statusModalProduct = statusModalId ? productState.find(p => p.productId === statusModalId) : undefined
 
   return (
-    <div className="w-full h-full flex">
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div style={{ padding: '32px 36px' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-              <button className="icon-btn" onClick={() => navigateTo('product-list')}>
-              <ArrowLeft size={16} />
-              <span>{t('navigation.backToList')}</span>
-            </button>
-              <div>
-                <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#181C23', margin: 0 }}>{product.productName}</h1>
-                <div style={{ fontSize: '14px', color: '#717786', marginTop: '4px' }}>
-                  {product.productCode} • {product.insurerName}
+    <div className="flex-1 overflow-auto">
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 36px' }}>
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
+          <div className="flex items-center gap-2 mb-4">
+            <button className="btn-ghost" onClick={() => navigateTo('product-list')}><ArrowLeft size={15} /></button>
+            <span style={{ fontSize: 13, color: '#717786' }}>{t('pages.productManagement')}</span>
+            <ChevronRight size={13} style={{ color: '#C1C6D7' }} />
+            <span style={{ fontSize: 13, color: '#181C23', fontWeight: 500 }}>{prod.productName}</span>
+          </div>
+
+          <div className="card" style={{ padding: '22px 24px' }}>
+            <div className="flex items-start justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-4">
+                {/* Product icon */}
+                <div style={{
+                  width: 56, height: 56, borderRadius: 16,
+                  background: `linear-gradient(135deg, ${lineColor}22, ${lineColor}44)`,
+                  border: `1.5px solid ${lineColor}33`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{ fontSize: 22, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: lineColor }}>
+                    {prod.lineOfBusiness.slice(0, 2)}
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{prod.productName}</h1>
+                    <span className={`badge ${sc.orb === 'orb-green' ? 'badge-green' : sc.orb === 'orb-yellow' ? 'badge-yellow' : sc.orb === 'orb-purple' ? 'badge-purple' : 'badge-gray'}`}>{sc.label}</span>
+                    <span className="badge badge-gray" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{prod.productCode}</span>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap" style={{ fontSize: 13, color: '#717786' }}>
+                    <span className="flex items-center gap-1">
+                      <span className="badge badge-blue" style={{ fontSize: 11.5, background: lineColor + '18', color: lineColor, borderColor: lineColor + '30' }}>{t(`values.lob${prod.lineOfBusiness}`)}</span>
+                      {prod.subLine ? t(`values.${prod.subLine}`) : ''}
+                    </span>
+                    <span>·</span>
+                    <span>{typeLabel}</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1"><Globe size={12} />{prod.insurerName}</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1"><MapPin size={12} />{t('detail.kpi.statesSelling', { count: activeStates.length })}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="action-btn" onClick={() => showToastMsg('查看详情功能开发中...')}>
-                <Eye size={16} />
-                <span style={{ marginLeft: '6px' }}>{t('actions.viewDetails')}</span>
-              </button>
-              <button className="action-btn" style={{ background: '#0058BC', color: '#FFFFFF' }} onClick={() => navigateTo(`product-edit`, { productId })}>
-                <Edit size={16} />
-                <span style={{ marginLeft: '6px' }}>{t('actions.edit')}</span>
-              </button>
-              <button className="action-btn" style={{ background: '#BA1A1A', color: '#FFFFFF' }} onClick={() => showToastMsg('删除功能开发中...')}>
-                <Trash2 size={16} />
-                <span style={{ marginLeft: '6px' }}>{t('actions.delete')}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* KPI Cards */}
-          {renderKpiSection()}
-
-          {/* Tab Navigation */}
-          <div className="glass-card rounded-xl" style={{ overflow: 'hidden' }}>
-            <div style={{ borderBottom: '1px solid rgba(24,28,35,0.08)', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', gap: '8px', padding: '14px 16px' }}>
-                {TABS.map(tab => {
-                  const isActive = activeTab === tab.id
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      className={`tab-button ${isActive ? 'active' : ''}`}
-                      onClick={() => setActiveTab(tab.id)}
-                    >
-                      {Icon && <Icon size={16} style={{ marginRight: '6px' }} />}
-                      <span>{t(tab.label)}</span>
+              <div className="flex items-center gap-2">
+                <button className="btn-ghost" style={{ fontSize: 13 }}><Download size={14} />{t('actions.export')}</button>
+                {prod.status === 'Active'
+                  ? <button className="btn-ghost" style={{ fontSize: 13, color: '#BA1A1A' }} onClick={() => setStatusModalId(prod.productId)}>
+                      <ToggleRight size={14} />{t('actions.delist')}
                     </button>
-                  )
-                })}
+                  : <button className="btn-ghost" style={{ fontSize: 13, color: '#1a7a2e' }} onClick={() => setStatusModalId(prod.productId)}>
+                      <ToggleRight size={14} />{t('actions.list')}
+                    </button>
+                }
+                <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => navigateTo('product-edit', { productId: prod.productId })}>
+                  <Edit2 size={14} />{t('actions.edit')}
+                </button>
               </div>
             </div>
 
-            {/* Tab Content */}
-            <div style={{ padding: '28px' }}>
-              {activeTab === 'info' && renderInfoTab()}
-              {activeTab === 'ratingPlan' && renderRatingPlanTab()}
-              {activeTab === 'availableStates' && renderAvailableStatesTab()}
-              {activeTab === 'performance' && renderPerformanceTab()}
-              {activeTab === 'documents' && renderDocumentsTab()}
-              {activeTab === 'auditHistory' && renderAuditHistoryTab()}
+            {/* KPI strip */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginTop: 22, paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.3)' }}>
+              {[
+                { label: t('detail.kpi.premium'), value: formatCurrency(prod.premiumYTD ?? 0, true), sub: `+${(premiumGrowth * 100).toFixed(1)}% MoM`, color: '#0058BC' },
+                { label: t('detail.kpi.policies'), value: (prod.policyCount ?? 0).toLocaleString(), sub: t('detail.kpi.statesValid', { count: activeStates.length }) },
+                { label: t('detail.kpi.lossRatio'), value: formatPercent(prod.lossRatio ?? 0), sub: (prod.lossRatio ?? 0) > 0.65 ? t('detail.kpi.lossWarn') : t('detail.kpi.normalRange'), color: (prod.lossRatio ?? 0) > 0.65 ? '#BA1A1A' : undefined },
+                { label: t('detail.kpi.renewal'), value: formatPercent(prod.renewalRate ?? 0), sub: (prod.renewalRate ?? 0) > 0.85 ? t('detail.kpi.highRetention') : t('detail.kpi.normal') },
+                { label: t('detail.kpi.states'), value: `${activeStates.length} / 50`, sub: pendingStates.length > 0 ? t('detail.kpi.pendingApproval', { count: pendingStates.length }) : t('detail.kpi.allActive') },
+                { label: t('detail.kpi.launch'), value: launchDate, sub: t('detail.kpi.onlineMonths', { count: Math.max(0, Math.floor((Date.now() - new Date(prod.effectiveDate).getTime()) / 86400000 / 30)) }) },
+              ].map(k => (
+                <div key={k.label} style={{ padding: '12px 14px', background: 'rgba(241,243,254,0.6)', borderRadius: 12 }}>
+                  <div style={{ fontSize: 11, color: '#717786', marginBottom: 4 }}>{k.label}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: k.color ?? '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{k.value}</div>
+                  <div style={{ fontSize: 11, color: '#717786', marginTop: 3 }}>{k.sub}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+
+        {/* Tab bar */}
+        <div className="tab-bar" style={{ marginBottom: 18 }}>
+          {tabs.map(tb => (
+            <button key={tb.id} className={`tab-item${activeTab === tb.id ? ' active' : ''}`} onClick={() => setActiveTab(tb.id)}>
+              {tb.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Tab: Basic info ── */}
+        {activeTab === 'info' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="card" style={{ padding: '22px 24px' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 18 }}>{t('detail.info.basicTitle')}</div>
+              {[
+                [t('detail.info.productName'), prod.productName],
+                [t('tables.productCode'), prod.productCode],
+                [t('tables.lineOfBusiness'), t(`values.lob${prod.lineOfBusiness}`)],
+                [t('tables.subLine'), prod.subLine ? t(`values.${prod.subLine}`) : '-'],
+                [t('tables.type'), typeLabel],
+                [t('detail.kpi.launch'), launchDate],
+                [t('detail.info.status'), sc.label],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 13 }}>
+                  <div style={{ width: 100, fontSize: 12.5, color: '#717786', flexShrink: 0 }}>{label}</div>
+                  <div style={{ fontSize: 13.5, color: '#181C23', fontWeight: 500 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding: '22px 24px' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 18 }}>{t('sections.carrierRelation')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${lineColor}22, ${lineColor}44)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: lineColor }}>
+                  {prod.insurerName.slice(0, 2)}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23' }}>{prod.insurerName}</div>
+                  <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>NAIC {prod.naicCode}</div>
+                </div>
+              </div>
+              {[
+                [t('fields.underwritingMode'), t(`values.underwriting${prod.underwritingMode}`)],
+                [t('fields.maxPolicyLimit'), prod.maxPolicyLimit ? `$${prod.maxPolicyLimit.toLocaleString()}` : '-'],
+                [t('fields.renewalType'), prod.renewalType],
+                [t('fields.policyTermYears'), `${prod.policyTermYears} ${lang.startsWith('en') ? (prod.policyTermYears === 1 ? 'year' : 'years') : '年'}`],
+                [t('fields.naicFormNumber'), prod.naicFormNumber ?? '-'],
+                [t('fields.productCode'), prod.productCode],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
+                  <div style={{ width: 100, fontSize: 12.5, color: '#717786', flexShrink: 0 }}>{label}</div>
+                  <div style={{ fontSize: 13.5, color: '#181C23', fontWeight: 500 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding: '22px 24px', gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{t('detail.info.coverageTitle')}</div>
+              {prod.coverages && prod.coverages.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                  {prod.coverages.map(c => {
+                    const meta = COVERAGE_LABEL_KEYS[c]
+                    if (!meta) return null
+                    const Icon = COVERAGE_ICONS[c] ?? Shield
+                    return (
+                      <div key={c} style={{ padding: '12px 14px', background: 'rgba(241,243,254,0.7)', borderRadius: 10, display: 'flex', gap: 12 }}>
+                        <Icon size={16} style={{ color: '#0058BC', flexShrink: 0, marginTop: 1 }} />
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>{t(meta.label)}</div>
+                          {meta.desc && <div style={{ fontSize: 11.5, color: '#717786', marginTop: 2 }}>{t(meta.desc)}</div>}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: '#717786' }}>{t('emptyState')}</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Rate plans ── */}
+        {activeTab === 'rates' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div style={{ fontSize: 14, color: '#717786' }}>
+                {t('detail.rates.summary', { total: myRatePlans.length, active: myRatePlans.filter(r => r.status === 'active').length })}
+              </div>
+              <button className="btn-primary" style={{ fontSize: 13 }}><Plus size={14} />{t('detail.rates.add')}</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {myRatePlans.map(rp => (
+                <div key={rp.id} className="card" style={{ padding: '20px 24px' }}>
+                  <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>{rp.name}</span>
+                        <span className={`badge ${rpStatusLabels[rp.status].cls}`}>{rpStatusLabels[rp.status].label}</span>
+                        <span className="badge badge-gray" style={{ fontSize: 11 }}>{rp.tier}</span>
+                        <span className={`badge ${rp.filingStatus === 'approved' ? 'badge-green' : rp.filingStatus === 'pending' ? 'badge-yellow' : 'badge-gray'}`} style={{ fontSize: 10.5 }}>
+                          {rp.filingStatus === 'approved' ? t('detail.rates.filingApproved') : rp.filingStatus === 'pending' ? t('detail.rates.filingPending') : t('detail.rates.filingNotRequired')}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12.5, color: '#717786' }}>
+                        {t('detail.rates.validity', { from: rp.effectiveDate, to: rp.expiryDate })}
+                      </div>
+                    </div>
+                    {rp.status !== 'expired' && (
+                      <div className="flex gap-2">
+                        <button className="btn-ghost" style={{ fontSize: 12.5 }}><Edit2 size={13} />{t('actions.edit')}</button>
+                        {rp.status === 'draft' && <button className="btn-primary" style={{ fontSize: 12.5 }}>{t('detail.rates.submitApproval')}</button>}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {[
+                        [t('detail.rates.baseRate'), `$${rp.baseRate.toLocaleString()}`],
+                        [t('detail.rates.minPremium'), `$${rp.minPremium.toLocaleString()}`],
+                        [t('detail.rates.maxPremium'), `$${rp.maxPremium.toLocaleString()}`],
+                      ].map(([l, v]) => (
+                        <div key={l} style={{ padding: '9px 12px', background: 'rgba(241,243,254,0.7)', borderRadius: 9 }}>
+                          <div style={{ fontSize: 11, color: '#717786', marginBottom: 2 }}>{l}</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {rp.ratingFactors.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: '#414755', marginBottom: 10 }}>{t('detail.rates.ratingFactors')}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {rp.ratingFactors.map(f => (
+                            <div key={f.factor} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div style={{ width: 100, fontSize: 12.5, color: '#181C23', fontWeight: 500, flexShrink: 0 }}>{factorLabels[f.factor]}</div>
+                              <div style={{ flex: 1, height: 6, background: 'rgba(193,198,215,0.3)', borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${f.weight * 100}%`, background: '#0058BC', borderRadius: 3 }} />
+                              </div>
+                              <div style={{ width: 42, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: '#0058BC', textAlign: 'right', flexShrink: 0 }}>{(f.weight * 100).toFixed(0)}%</div>
+                              <div style={{ fontSize: 11.5, color: '#717786', flex: 1, minWidth: 140 }}>{lang.startsWith('en') ? f.descriptionEn : f.description}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Salable states ── */}
+        {activeTab === 'states' && (
+          <div>
+            <div className="card" style={{ padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {[
+                { label: t('detail.rates.active'), count: activeStates.length, color: '#34C759' },
+                { label: t('detail.rates.pending'), count: pendingStates.length, color: '#FFCC00' },
+                { label: t('detail.states.notAvail'), count: allStates.filter(s => s.status === 'not-available').length, color: '#C1C6D7' },
+              ].map(s => (
+                <div key={s.label} className="flex items-center gap-2" style={{ padding: '6px 14px', background: 'rgba(241,243,254,0.7)', borderRadius: 9 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>{s.count}</span>
+                  <span style={{ fontSize: 12.5, color: '#717786' }}>{s.label}</span>
+                </div>
+              ))}
+              <div className="relative" style={{ marginLeft: 'auto' }}>
+                <input
+                  type="text"
+                  placeholder={t('detail.states.search')}
+                  className="input-glass"
+                  style={{ fontSize: 13, paddingLeft: 10, width: 180 }}
+                  value={stateSearch}
+                  onChange={e => setStateSearch(e.target.value)}
+                />
+              </div>
+              <button className="btn-primary" style={{ fontSize: 13 }}><Plus size={14} />{t('detail.states.applyNewState')}</button>
+            </div>
+            <div className="card" style={{ padding: '18px 20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+                {filteredStates.map(s => (
+                  <div
+                    key={s.code}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: `0.5px solid ${s.status === 'active' ? 'rgba(52,199,89,0.3)' : s.status === 'pending' ? 'rgba(255,204,0,0.35)' : 'rgba(193,198,215,0.3)'}`,
+                      background: s.status === 'active' ? 'rgba(52,199,89,0.06)' : s.status === 'pending' ? 'rgba(255,204,0,0.06)' : 'rgba(255,255,255,0.4)',
+                      cursor: s.status === 'not-available' ? 'default' : 'pointer',
+                      opacity: s.status === 'not-available' ? 0.55 : 1,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: s.status === 'active' ? '#1a7a2e' : s.status === 'pending' ? '#a05800' : '#717786' }}>
+                        {s.code}
+                      </span>
+                      {s.status === 'active' && <span className="orb orb-green" />}
+                      {s.status === 'pending' && <span className="orb orb-yellow" />}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: '#717786', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                    {s.status === 'active' && s.channelCount !== undefined && (
+                      <div style={{ fontSize: 10.5, color: '#34C759', marginTop: 2 }}>{t('detail.states.channels', { count: s.channelCount })}</div>
+                    )}
+                    {s.status === 'pending' && <div style={{ fontSize: 10.5, color: '#a05800', marginTop: 2 }}>{t('detail.states.underReview')}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Underwriting rules ── */}
+        {activeTab === 'underwriting' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div style={{ fontSize: 14, color: '#717786' }}>
+                {t('detail.underwriting.summary', {
+                  total: myRules.length,
+                  active: myRules.filter(r => r.status === 'active').length,
+                  testing: myRules.filter(r => r.status === 'testing').length,
+                })}
+              </div>
+              <button className="btn-primary" style={{ fontSize: 13 }}><Plus size={14} />{t('detail.underwriting.add')}</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {myRules.map(rule => (
+                <div key={rule.id} className="card" style={{ padding: '18px 22px' }}>
+                  <div className="flex items-start gap-4">
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(241,243,254,0.8)', fontSize: 12, fontWeight: 700, color: '#414755', fontFamily: "'JetBrains Mono', monospace",
+                    }}>
+                      {rule.priority}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#181C23' }}>{lang.startsWith('en') ? rule.nameEn : rule.name}</span>
+                        <span className={`badge ${ruleCatLabels[rule.category].cls}`} style={{ fontSize: 11 }}>{ruleCatLabels[rule.category].label}</span>
+                        {rule.status === 'testing' && <span className="badge badge-purple" style={{ fontSize: 11 }}>{t('detail.underwriting.testing')}</span>}
+                        {rule.status === 'inactive' && <span className="badge badge-gray" style={{ fontSize: 11 }}>{t('detail.underwriting.inactive')}</span>}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: '#414755', marginBottom: 8, fontFamily: "'JetBrains Mono', monospace", background: 'rgba(241,243,254,0.8)', padding: '6px 10px', borderRadius: 7 }}>
+                        IF {lang.startsWith('en') ? rule.conditionEn : rule.condition}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 8 }}>{lang.startsWith('en') ? rule.conditionDetailEn : rule.conditionDetail}</div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          padding: '4px 10px', borderRadius: 7, fontSize: 12.5, fontWeight: 600,
+                          background: `${RULE_ACTION_COLOR[rule.action]}15`,
+                          color: RULE_ACTION_COLOR[rule.action],
+                        }}>
+                          THEN → {lang.startsWith('en') ? (rule.actionValueEn ?? rule.action) : (rule.actionValue ?? rule.action)}
+                        </div>
+                        <span style={{ fontSize: 11.5, color: '#717786' }}>{t('detail.underwriting.lastModified', { date: rule.lastModified, by: rule.modifiedBy })}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button className="btn-ghost" style={{ padding: 6 }}><Edit2 size={13} /></button>
+                      <button className="btn-ghost" style={{ padding: 6 }}><Settings size={13} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Training materials ── */}
+        {activeTab === 'training' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div style={{ fontSize: 14, color: '#717786' }}>
+                {t('detail.training.summary', { count: myMaterials.length, downloads: myMaterials.reduce((a, m) => a + m.downloads, 0) })}
+              </div>
+              <button className="btn-primary" style={{ fontSize: 13 }}><Upload size={14} />{t('detail.training.uploadMaterial')}</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {myMaterials.map(m => {
+                const Icon = MATERIAL_TYPE_ICON[m.type] ?? FileText
+                const isExpiring = m.expiryDate && new Date(m.expiryDate) < new Date(Date.now() + 60 * 86400000)
+                return (
+                  <div key={m.id} className="card" style={{ padding: '18px 20px' }}>
+                    <div className="flex items-start gap-3">
+                      <div style={{ width: 40, height: 40, borderRadius: 11, background: 'rgba(0,88,188,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={18} style={{ color: '#0058BC' }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#181C23' }}>{lang.startsWith('en') ? m.titleEn : m.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="badge badge-gray" style={{ fontSize: 11 }}>{matLabels[m.type]}</span>
+                          <span className="badge badge-blue" style={{ fontSize: 10.5 }}>v{m.version}</span>
+                          {isExpiring && <span className="badge badge-orange" style={{ fontSize: 10.5 }}>{t('detail.training.expiringSoon')}</span>}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#717786', marginBottom: 8 }}>
+                          {m.fileName} · {m.fileSize} · {m.uploadDate} · {m.uploadedBy}
+                        </div>
+                        {m.requiredFor.length > 0 && (
+                          <div style={{ fontSize: 11.5, color: '#0058BC', marginBottom: 8 }}>
+                            {t('detail.training.requiredFor', { list: m.requiredFor.join(' / ') })}
+                          </div>
+                        )}
+                        {m.expiryDate && (
+                          <div style={{ fontSize: 11.5, color: isExpiring ? '#BA1A1A' : '#717786' }}>
+                            {t('detail.training.validUntil', { date: m.expiryDate })}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1.5 items-end shrink-0">
+                        <div style={{ fontSize: 12.5, color: '#717786', textAlign: 'right' }}>
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: '#181C23' }}>{m.downloads}</span> {t('detail.training.downloadsSuffix')}
+                        </div>
+                        <button className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }}><Download size={12} />{t('detail.training.download')}</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {myMaterials.length === 0 && (
+              <div className="card" style={{ padding: 60, textAlign: 'center' }}>
+                <FileText size={32} style={{ color: '#C1C6D7', margin: '0 auto 12px' }} />
+                <div style={{ fontSize: 15, color: '#717786' }}>{t('detail.training.empty')}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Tab: Performance dashboard ── */}
+        {activeTab === 'performance' && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 18 }}>
+              {[
+                {
+                  label: t('detail.performance.premium'),
+                  value: `$${latestPerf.premium.toFixed(1)}M`,
+                  delta: `${premiumGrowth >= 0 ? '+' : ''}${(premiumGrowth * 100).toFixed(1)}%`,
+                  up: premiumGrowth >= 0,
+                },
+                {
+                  label: t('detail.performance.newBiz'),
+                  value: `$${latestPerf.newBiz.toFixed(1)}M`,
+                  delta: `${latestPerf.newBiz > (prevPerf?.newBiz ?? 0) ? '+' : ''}${prevPerf ? (((latestPerf.newBiz - prevPerf.newBiz) / prevPerf.newBiz) * 100).toFixed(1) : '0'}%`,
+                  up: latestPerf.newBiz >= (prevPerf?.newBiz ?? 0),
+                },
+                {
+                  label: t('detail.kpi.lossRatio'),
+                  value: formatPercent(latestPerf.lossRatio),
+                  delta: latestPerf.lossRatio < 0.65 ? t('detail.kpi.normalRange') : t('detail.performance.overThreshold'),
+                  up: latestPerf.lossRatio < 0.65,
+                  warn: latestPerf.lossRatio >= 0.65,
+                },
+                {
+                  label: t('detail.performance.policies'),
+                  value: latestPerf.policies.toLocaleString(),
+                  delta: t('detail.performance.claims', { count: latestPerf.claimsCount }),
+                  up: true,
+                },
+              ].map(k => (
+                <div key={k.label} className="card" style={{ padding: '18px 20px' }}>
+                  <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 8 }}>{k.label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: k.warn ? '#BA1A1A' : '#181C23', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>{k.value}</div>
+                  <div className="flex items-center gap-1" style={{ fontSize: 12.5, color: k.up ? '#1a7a2e' : '#BA1A1A' }}>
+                    {k.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    {k.delta}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="card" style={{ padding: '20px 22px' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', marginBottom: 16 }}>{t('detail.performance.chartPremiumTrend')}</div>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={perfData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.3)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `$${v}M`} width={44} />
+                    <Tooltip formatter={(v: any) => [`$${v}M`, '']} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                    <Line type="monotone" dataKey="premium" stroke={lineColor} strokeWidth={2.5} dot={false} name={t('detail.kpi.premium')} />
+                    <Line type="monotone" dataKey="renewal" stroke="#34C759" strokeWidth={1.5} dot={false} strokeDasharray="4 2" name={t('detail.performance.seriesRenewal')} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="card" style={{ padding: '20px 22px' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', marginBottom: 16 }}>{t('detail.performance.chartNewVsRenewal')}</div>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={perfData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.3)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `$${v}M`} width={44} />
+                    <Tooltip formatter={(v: any) => [`$${v}M`, '']} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="newBiz" name={t('detail.performance.seriesNewBiz')} fill={lineColor} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="renewal" name={t('detail.performance.seriesRenewal')} fill="#34C759" radius={[4, 4, 0, 0]} opacity={0.75} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="card" style={{ padding: '20px 22px', gridColumn: '1 / -1' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', marginBottom: 16 }}>{t('detail.performance.chartLossTrend')}</div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={perfData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.3)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `${(v * 100).toFixed(0)}%`} width={42} domain={[0.4, 0.8]} />
+                    <Tooltip formatter={(v: any) => [`${(v * 100).toFixed(1)}%`, t('detail.kpi.lossRatio')]} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                    <Line type="monotone" dataKey="lossRatio" stroke="#FF9500" strokeWidth={2.5} dot={{ r: 3, fill: '#FF9500' }} name={t('detail.kpi.lossRatio')} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Toast Notification */}
-      {showToast && (
-        <div style={{ position: 'fixed', top: '56px', right: '24px', zIndex: 9999, animation: 'slideIn 0.3s ease-out' }}>
-          <div style={{
-            padding: '14px 20px',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(247,248,250,0.9) 100%)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-            border: '1px solid rgba(24, 28, 35, 0.1)',
-            display: 'flex', alignItems: 'center', gap: '12px',
-            minWidth: '300px'
-          }}>
-            <CheckCircle size={20} style={{ color: '#34C759' }} />
-            <div style={{ fontSize: '14px', color: '#181C23', fontWeight: 500 }}>{toastMessage}</div>
-            <button onClick={() => setShowToast(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: '0' }}>
-              <XCircle size={16} style={{ color: '#9CA3AF' }} />
-            </button>
-          </div>
-        </div>
+      {/* Product status modal (list / delist) */}
+      {statusModalProduct && (
+        <ProductStatusModal
+          product={statusModalProduct}
+          onClose={() => setStatusModalId(null)}
+          onConfirm={confirmStatusChange}
+        />
       )}
-
-      <style>{`
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        .glass-card {
-          background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(247,248,250,0.7) 100%);
-          backdrop-filter: blur(20px);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-          border: 1px solid rgba(24, 28, 35, 0.08);
-        }
-        .icon-btn {
-          display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(24,28,35,0.1);
-          background: rgba(255,255,255,0.8); color: #404757; font-size: 13px; font-weight: 500;
-          cursor: pointer; transition: all 0.2s;
-        }
-        .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,1); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .action-btn {
-          display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 8px 14px; border-radius: 8px; border: none;
-          background: rgba(240,242,245,0.9); color: #404757; font-size: 13px; font-weight: 500;
-          cursor: pointer; transition: all 0.2s;
-        }
-        .action-btn:hover { background: rgba(240,242,245,1); transform: translateY(-1px); }
-        .tab-button {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 10px 16px; border-radius: 8px; border: none;
-          background: transparent; color: #606778; font-size: 14px; font-weight: 500;
-          cursor: pointer; transition: all 0.2s;
-          white-space: nowrap;
-        }
-        .tab-button.active {
-          background: rgba(0, 88, 188, 0.15); color: #0058BC;
-        }
-        .tab-button:hover:not(.active) {
-          background: rgba(247,248,250,0.8);
-        }
-        .status-badge {
-          display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
-          font-family: system-ui;
-        }
-        .status-badge.active { background: rgba(52, 199, 89, 0.15); color: #1E8E4C; }
-        .status-badge.paused { background: rgba(255, 173, 50, 0.15); color: #BF690B; }
-        .status-badge.inactive { background: rgba(149, 159, 175, 0.15); color: #5A606C; }
-        .status-badge.pending { background: rgba(0, 88, 188, 0.12); color: #0058BC; }
-      `}</style>
     </div>
   )
 }

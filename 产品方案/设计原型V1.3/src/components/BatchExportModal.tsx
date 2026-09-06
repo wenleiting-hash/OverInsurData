@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, Download, FileText, Table, CheckCircle } from 'lucide-react'
+import { useLang } from '../i18n'
 
 interface Props {
   totalCount: number
@@ -10,36 +11,65 @@ interface Props {
 }
 
 const FIELDS = [
-  { key: 'name', label: '公司全称', selected: true },
-  { key: 'shortName', label: '公司简称', selected: true },
-  { key: 'naicCode', label: 'NAIC 编码', selected: true },
-  { key: 'type', label: '公司类型', selected: true },
-  { key: 'amBestRating', label: 'AM Best 评级', selected: true },
-  { key: 'spRating', label: 'S&P 评级', selected: false },
-  { key: 'headquarters', label: '总部信息', selected: true },
-  { key: 'region', label: '大区', selected: true },
-  { key: 'founded', label: '成立年份', selected: false },
-  { key: 'website', label: '官方网站', selected: false },
-  { key: 'totalPremium', label: '总保费', selected: true },
-  { key: 'policyCount', label: '保单数', selected: true },
-  { key: 'lossRatio', label: '赔付率', selected: true },
-  { key: 'renewalRate', label: '续保率', selected: true },
-  { key: 'channelCount', label: '合作渠道数', selected: false },
-  { key: 'productCount', label: '产品数', selected: false },
-  { key: 'settlementCycle', label: '结算周期', selected: true },
-  { key: 'coopStatus', label: '合作状态', selected: true },
-  { key: 'contractExpiry', label: '合同到期日', selected: true },
-  { key: 'commissionIncome', label: '佣金收入', selected: false },
+  { key: 'name', selected: true },
+  { key: 'shortName', selected: true },
+  { key: 'naicCode', selected: true },
+  { key: 'type', selected: true },
+  { key: 'amBestRating', selected: true },
+  { key: 'spRating', selected: false },
+  { key: 'headquarters', selected: true },
+  { key: 'region', selected: true },
+  { key: 'founded', selected: false },
+  { key: 'website', selected: false },
+  { key: 'totalPremium', selected: true },
+  { key: 'policyCount', selected: true },
+  { key: 'lossRatio', selected: true },
+  { key: 'renewalRate', selected: true },
+  { key: 'channelCount', selected: false },
+  { key: 'productCount', selected: false },
+  { key: 'settlementCycle', selected: true },
+  { key: 'coopStatus', selected: true },
+  { key: 'contractExpiry', selected: true },
+  { key: 'commissionIncome', selected: false },
 ]
 
 const RELATED_DATA = [
-  { key: 'products', label: '关联产品列表' },
-  { key: 'channels', label: '合作渠道列表' },
-  { key: 'performance', label: '业绩数据摘要' },
-  { key: 'contacts', label: '对接人信息' },
+  { key: 'products' },
+  { key: 'channels' },
+  { key: 'performance' },
+  { key: 'contacts' },
 ]
 
 export default function BatchExportModal({ totalCount, selectedCount, filteredCount, onClose, onExport }: Props) {
+  const { t } = useLang()
+  const fieldLabel: Record<string, string> = {
+    name: t.bemFName,
+    shortName: t.bemFShortName,
+    naicCode: t.bemFNaic,
+    type: t.bemFType,
+    amBestRating: t.bemFAmBest,
+    spRating: t.bemFSp,
+    headquarters: t.bemFHq,
+    region: t.bemFRegion,
+    founded: t.bemFFounded,
+    website: t.bemFWebsite,
+    totalPremium: t.bemFPremium,
+    policyCount: t.bemFPolicies,
+    lossRatio: t.bemFLossRatio,
+    renewalRate: t.bemFRenewal,
+    channelCount: t.bemFChannels,
+    productCount: t.bemFProducts,
+    settlementCycle: t.bemFSettlement,
+    coopStatus: t.bemFCoop,
+    contractExpiry: t.bemFContractExpiry,
+    commissionIncome: t.bemFCommission,
+  }
+  const relatedLabel: Record<string, string> = {
+    products: t.bemRelProducts,
+    channels: t.bemRelChannels,
+    performance: t.bemRelPerformance,
+    contacts: t.bemRelContacts,
+  }
   const [scope, setScope] = useState<'filtered' | 'selected' | 'all'>('filtered')
   const [format, setFormat] = useState<'xlsx' | 'csv'>('xlsx')
   const [fields, setFields] = useState(() => Object.fromEntries(FIELDS.map(f => [f.key, f.selected])))
@@ -67,7 +97,7 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(0,88,188,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Download size={16} style={{ color: '#0058BC' }} />
             </div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>批量导出</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>{t.bemTitle}</div>
           </div>
           <button className="btn-ghost" style={{ padding: 6 }} onClick={onClose}><X size={16} /></button>
         </div>
@@ -75,12 +105,12 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
         <div style={{ padding: '22px 24px', maxHeight: '72vh', overflowY: 'auto' }}>
           {/* Scope */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>导出范围</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>{t.bemScopeTitle}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[
-                { val: 'filtered', label: '当前筛选结果', count: filteredCount },
-                { val: 'selected', label: '已勾选记录', count: selectedCount, disabled: selectedCount === 0 },
-                { val: 'all', label: '全部数据', count: totalCount },
+                { val: 'filtered', label: t.bemScopeFiltered, count: filteredCount },
+                { val: 'selected', label: t.bemScopeSelected, count: selectedCount, disabled: selectedCount === 0 },
+                { val: 'all', label: t.bemScopeAll, count: totalCount },
               ].map(opt => (
                 <label
                   key={opt.val}
@@ -91,7 +121,7 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
                 >
                   <input type="radio" name="scope" checked={scope === opt.val} disabled={opt.disabled} onChange={() => !opt.disabled && setScope(opt.val as any)} style={{ accentColor: '#0058BC' }} />
                   <span style={{ fontSize: 13.5, flex: 1 }}>{opt.label}</span>
-                  <span className="badge badge-blue" style={{ fontSize: 11 }}>{opt.count} 条</span>
+                  <span className="badge badge-blue" style={{ fontSize: 11 }}>{t.bemCount(opt.count)}</span>
                 </label>
               ))}
             </div>
@@ -99,11 +129,11 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
 
           {/* Format */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>导出格式</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>{t.bemFormatTitle}</div>
             <div style={{ display: 'flex', gap: 10 }}>
               {[
-                { val: 'xlsx', label: 'Excel (.xlsx)', icon: <Table size={16} />, desc: '推荐，支持格式化' },
-                { val: 'csv', label: 'CSV (.csv)', icon: <FileText size={16} />, desc: '通用，纯文本' },
+                { val: 'xlsx', label: 'Excel (.xlsx)', icon: <Table size={16} />, desc: t.bemFmtXlsxDesc },
+                { val: 'csv', label: 'CSV (.csv)', icon: <FileText size={16} />, desc: t.bemFmtCsvDesc },
               ].map(opt => (
                 <label key={opt.val} style={{ flex: 1, display: 'flex', gap: 12, padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
                   background: format === opt.val ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
@@ -124,17 +154,17 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
           {/* Fields */}
           <div style={{ marginBottom: 18 }}>
             <div className="flex items-center justify-between mb-2">
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#414755' }}>导出字段 <span style={{ color: '#717786', fontWeight: 400 }}>（已选 {selectedFieldCount} / {FIELDS.length} 个）</span></div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#414755' }}>{t.bemFieldsTitle} <span style={{ color: '#717786', fontWeight: 400 }}>{t.bemFieldsSelected(selectedFieldCount, FIELDS.length)}</span></div>
               <div className="flex gap-2">
-                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(FIELDS.map(f => [f.key, true])))}>全选</button>
-                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(FIELDS.map(f => [f.key, false])))}>清空</button>
+                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(FIELDS.map(f => [f.key, true])))}>{t.bemSelectAll}</button>
+                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(FIELDS.map(f => [f.key, false])))}>{t.bemClearAll}</button>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, background: 'rgba(241,243,254,0.6)', borderRadius: 12, padding: '12px 14px' }}>
               {FIELDS.map(f => (
                 <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', padding: '4px 0' }}>
                   <input type="checkbox" checked={fields[f.key]} onChange={e => setFields(p => ({ ...p, [f.key]: e.target.checked }))} style={{ accentColor: '#0058BC', width: 13, height: 13 }} />
-                  <span style={{ fontSize: 12.5, color: '#181C23' }}>{f.label}</span>
+                  <span style={{ fontSize: 12.5, color: '#181C23' }}>{fieldLabel[f.key]}</span>
                 </label>
               ))}
             </div>
@@ -142,7 +172,7 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
 
           {/* Related data */}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>关联数据</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>{t.bemRelatedTitle}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {RELATED_DATA.map(r => (
                 <label key={r.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 9, cursor: 'pointer',
@@ -150,7 +180,7 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
                   border: `0.5px solid ${related[r.key] ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
                 }}>
                   <input type="checkbox" checked={related[r.key]} onChange={e => setRelated(p => ({ ...p, [r.key]: e.target.checked }))} style={{ accentColor: '#0058BC' }} />
-                  <span style={{ fontSize: 13, color: '#181C23' }}>{r.label}</span>
+                  <span style={{ fontSize: 13, color: '#181C23' }}>{relatedLabel[r.key]}</span>
                 </label>
               ))}
             </div>
@@ -160,11 +190,11 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
         {/* Footer */}
         <div style={{ padding: '14px 24px', borderTop: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(241,243,254,0.5)' }}>
           <div style={{ fontSize: 12.5, color: '#717786' }}>
-            将导出 <strong style={{ color: '#181C23' }}>{scopeCount} 条</strong> · <strong style={{ color: '#181C23' }}>{selectedFieldCount} 个字段</strong>
-            {Object.values(related).some(Boolean) && <span> + 关联数据</span>}
+            {t.bemFooterPrefix}<strong style={{ color: '#181C23' }}>{t.bemFooterRecords(scopeCount)}</strong> · <strong style={{ color: '#181C23' }}>{t.bemFooterFields(selectedFieldCount)}</strong>
+            {Object.values(related).some(Boolean) && <span>{t.bemFooterRelated}</span>}
           </div>
           <div className="flex gap-2">
-            <button className="btn-secondary" style={{ fontSize: 13 }} onClick={onClose}>取消</button>
+            <button className="btn-secondary" style={{ fontSize: 13 }} onClick={onClose}>{t.insCancel}</button>
             <button
               className="btn-primary"
               style={{ fontSize: 13 }}
@@ -172,8 +202,8 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
               disabled={exporting || selectedFieldCount === 0}
             >
               {exporting
-                ? <><span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />导出中…</>
-                : <><Download size={14} />导出 {format.toUpperCase()}</>
+                ? <><span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />{t.bemExporting}</>
+                : <><Download size={14} />{t.bemExportBtn(format.toUpperCase())}</>
               }
             </button>
           </div>

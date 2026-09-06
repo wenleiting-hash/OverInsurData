@@ -1,0 +1,165 @@
+{
+  "page": {
+    "title": "OFAC Screening Center",
+    "subtitle": "US Treasury Sanctions Screening Management System",
+    "breadcrumb": "Compliance",
+    "backToDashboard": "Compliance Dashboard",
+    "description": "Screen policyholders, insured parties, and beneficiaries against US Treasury Office of Foreign Assets Control (OFAC) sanctions lists"
+  },
+  "warning": {
+    "mandatory": "OFAC Screening Mandatory Requirement",
+    "message": "⚠️ Under US federal law, all insurance transactions must be screened against OFAC SDN List (Specially Designated Nationals), SDGT List (Global Terrorism Sanctions), and other sanctions lists. Transactions shall not proceed without passing OFAC screening.",
+    "legal": "Legal Basis: Executive Order 13224, 50 U.S.C. § 1701 et seq."
+  },
+  "entityType": {
+    "label": "Entity Type",
+    "individual": "Individual",
+    "company": "Company",
+    "vessel": "Vessel",
+    "aircraft": "Aircraft"
+  },
+  "form": {
+    "entityName": {
+      "label": "Subject Name *",
+      "placeholder": "Enter full legal or individual name",
+      "help": "Please enter the complete legal name or full name"
+    },
+    "entityType": {
+      "label": "Entity Type *"
+    },
+    "country": {
+      "label": "Nationality/Registration Country",
+      "placeholder": "Select country or region",
+      "help": "Can be multiple countries"
+    },
+    "dateOfBirth": {
+      "label": "Date of Birth",
+      "placeholder": "YYYY-MM-DD"
+    },
+    "dateRegistered": {
+      "label": "Date of Registration",
+      "placeholder": "YYYY-MM-DD"
+    },
+    "identificationNumber": {
+      "label": "Identification Number",
+      "placeholder": "Passport/Tax ID/SSN",
+      "help": "Individual: Passport Number | Company: Tax ID/EIN"
+    },
+    "address": {
+      "label": "Address Information",
+      "placeholder": "Complete address (including city and country)"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Enter additional information..."
+    },
+    "attachments": {
+      "label": "Attachments Upload",
+      "helpText": "Supports PDF, JPG, PNG formats, max 10MB per file"
+    },
+    "submit": "Start OFAC Screening",
+    "reset": "Reset Form"
+  },
+  "result": {
+    "passed": "OFAC Screening Passed",
+    "passedDesc": "The entity is not on any sanctions list and can proceed with the transaction",
+    "watchlist": "Watchlist Alert",
+    "blocked": "Blocked",
+    "pending": "Pending Screening",
+    "score": "Match Score",
+    "matchedEntry": "Matched Entry",
+    "matchedList": "Sanctions List",
+    "screenedAt": "Screening Date",
+    "screenedBy": "Screening Engine",
+    "riskLevel": "Risk Level",
+    "manualReviewRequired": "Manual Review Comment (Required)",
+    "overrideApproved": "Confirm Override",
+    "blockAndReport": "Maintain Block"
+  },
+  "table": {
+    "title": "Recent Screening History",
+    "columns": {
+      "entityName": "Subject Name",
+      "type": "Type",
+      "country": "Country/Region",
+      "result": "Result",
+      "matchScore": "Match Score",
+      "screeningDate": "Screening Date",
+      "reviewedBy": "Reviewer",
+      "actions": "Actions",
+      "policyId": "Related Policy"
+    },
+    "searchPlaceholder": "Search screenings...",
+    "pagination": {
+      "itemsPerPage": "per page",
+      "ofTotal": "{total} total records"
+    }
+  },
+  "filters": {
+    "advancedFilters": "Advanced Filters",
+    "resetFilters": "Reset Filters",
+    "applyFilters": "Apply Filters",
+    "byResult": "Filter by Result",
+    "byEntityType": "Filter by Entity Type",
+    "byCountry": "Filter by Country",
+    "byDateRange": "Filter by Date Range",
+    "fromDate": "Start Date",
+    "toDate": "End Date",
+    "byMatchScore": "Match Score Range",
+    "minScore": "Minimum Score",
+    "maxScore": "Maximum Score",
+    "byListSource": "Sanctions List Source",
+    "results": "Screening Results"
+  },
+  "sanctionLists": {
+    "SDN": "SDN List - Specially Designated Nationals",
+    "CONSOLIDATED": "Consolidated List",
+    "SDGT": "SDGT List - Global Terrorism Sanctions",
+    "IRAN": "Iran Sanctions",
+    "CYBER2": "Cyber-related Sanctions",
+    "FOREIGN SANCTIONS MAGNITSKY ACT": "Magnitsky Act Sanctions",
+    "SSI": "Sectoral Sanctions Identification List",
+    "NONSDN": "Non-SDN List"
+  },
+  "programs": {
+    "SYRIA": "Syria Sanctions",
+    "TERRORISM": "Counter-Terrorism Sanctions",
+    "GLOBAL_TERRORISM": "Global Terrorism",
+    "IRAN": "Iran Sanctions",
+    "NORTH_KOREA": "North Korea Sanctions",
+    "MAGNITSKY": "Magnitsky Sanctions",
+    "CYBER": "Cyber Sanctions"
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "reviewMatch": "Review Match",
+    "exportReport": "Export Report",
+    "addManualScreening": "Add Manual Screening",
+    "refresh": "Refresh List",
+    "downloadCSV": "Download CSV",
+    "exportPDF": "Export PDF"
+  },
+  "reviews": {
+    "falsePositive": "Mark as False Positive",
+    "truePositive": "Confirm True Positive",
+    "needsInvestigation": "Needs Further Investigation",
+    "reasoning": "Reason for Decision (Required)",
+    "reasoningPlaceholder": "Detail your reasoning including key differentiators...",
+    "supportingEvidence": "Supporting Evidence/Notes",
+    "submitReview": "Submit Review Decision",
+    "cancelReview": "Cancel"
+  },
+  "stats": {
+    "totalScreenings": "Total Screenings",
+    "clearCount": "Cleared",
+    "watchlistCount": "Watchlist",
+    "blockedCount": "Blocked",
+    "avgMatchScore": "Average Match Score",
+    "reviewRequired": "Requires Review"
+  },
+  "validation": {
+    "nameRequired": "Please enter the subject name to screen",
+    "reasoningRequired": "Please provide a reason for your decision",
+    "invalidDate": "Invalid date format"
+  }
+}

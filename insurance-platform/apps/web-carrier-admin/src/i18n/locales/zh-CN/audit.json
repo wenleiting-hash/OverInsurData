@@ -1,0 +1,33 @@
+{
+  "title": "登录历史记录",
+  "filters": {
+    "title": "筛选条件",
+    "dateRange": "日期范围",
+    "search": "搜索",
+    "status": "状态"
+  },
+  "filtersAll": "全部",
+  "actions": {
+    "exportCSV": "导出 CSV",
+    "clearFilters": "清除筛选"
+  },
+  "columns": {
+    "timestamp": "时间戳",
+    "username": "用户名",
+    "ipAddr": "IP 地址",
+    "userAgent": "用户代理",
+    "status": "状态",
+    "reason": "原因"
+  },
+  "status": {
+    "success": "成功",
+    "failure": "失败"
+  },
+  "emptyState": "暂无记录",
+  "pagination": {
+    "info": "显示 {{start}}-{{end}} 条，共 {{total}} 条",
+    "prev": "上一页",
+    "next": "下一页",
+    "page": "第 {{page}} / {{total}} 页"
+  }
+}

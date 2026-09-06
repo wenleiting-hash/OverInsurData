@@ -1,12 +1,7 @@
-node_modules:
-  only:
-    - development
 packages:
-  # 主项目
+  # 根目录项目
   - '.'
-  # apps 下的所有应用
+  # apps 下的所有应用（前端 + 后端服务）
   - 'apps/*'
-  # services 下的后端服务
-  - 'services/*'
   # packages 下的共享包
   - 'packages/*'

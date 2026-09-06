@@ -26,16 +26,20 @@ export interface OnboardingApp {
   currentStep: number           // 1–11 pipeline step
   steps: OnboardingStep[]
   rejectionReason?: string
+  rejectionReasonEn?: string
   supplementDue?: string
 }
 
 export interface OnboardingStep {
   id: string
   name: string
+  nameEn?: string
   status: 'pending' | 'in-progress' | 'passed' | 'failed' | 'waived' | 'waiting'
   completedDate?: string
   notes?: string
+  notesEn?: string
   actionRequired?: string
+  actionRequiredEn?: string
 }
 
 export interface DocumentReview {
@@ -53,6 +57,7 @@ export interface ReviewDoc {
   fileSize: string
   status: ReviewResult
   reviewNote?: string
+  reviewNoteEn?: string
   expiryDate?: string
 }
 
@@ -86,6 +91,7 @@ export interface BgFlag {
   type: 'criminal' | 'civil' | 'regulatory' | 'credit' | 'employment'
   severity: 'low' | 'medium' | 'high'
   description: string
+  descriptionEn?: string
   disposition: 'clear' | 'review' | 'disqualify'
 }
 
@@ -101,6 +107,7 @@ export interface EOInsurance {
   status: ReviewResult
   verifiedDate?: string
   note?: string
+  noteEn?: string
 }
 
 export interface EContract {
@@ -128,6 +135,7 @@ export interface TrainingCert {
 export interface TrainingModule {
   id: string
   name: string
+  nameEn?: string
   required: boolean
   duration: string
   status: 'not-started' | 'in-progress' | 'completed' | 'failed'
@@ -152,45 +160,48 @@ export interface AccountSetup {
 // ── Step Pipeline Definition ──────────────────────────────────────────────────
 
 export const PIPELINE_STEPS = [
-  { id: 'apply',       label: '在线申请',     icon: '📝' },
-  { id: 'doc-review',  label: '资料审核',     icon: '📋' },
-  { id: 'nipr',        label: 'NIPR验证',    icon: '🔍' },
-  { id: 'bg-check',    label: '背景调查',     icon: '🔎' },
-  { id: 'eo-check',    label: 'E&O验证',     icon: '🛡' },
-  { id: 'contract',    label: '合同签署',     icon: '✍️' },
-  { id: 'appointment', label: 'Appointment', icon: '📌' },
-  { id: 'account',     label: '账号开通',     icon: '🔑' },
-  { id: 'training',    label: '培训认证',     icon: '🎓' },
-  { id: 'final',       label: '最终审批',     icon: '✅' },
+  { id: 'apply',       label: '在线申请',     labelEn: 'Application',        icon: '📝' },
+  { id: 'doc-review',  label: '资料审核',     labelEn: 'Document Review',    icon: '📋' },
+  { id: 'nipr',        label: 'NIPR验证',    labelEn: 'NIPR Verification',  icon: '🔍' },
+  { id: 'bg-check',    label: '背景调查',     labelEn: 'Background Check',   icon: '🔎' },
+  { id: 'eo-check',    label: 'E&O验证',     labelEn: 'E&O Verification',   icon: '🛡' },
+  { id: 'contract',    label: '合同签署',     labelEn: 'Contract Signing',   icon: '✍️' },
+  { id: 'appointment', label: 'Appointment', labelEn: 'Appointment',        icon: '📌' },
+  { id: 'account',     label: '账号开通',     labelEn: 'Account Setup',      icon: '🔑' },
+  { id: 'training',    label: '培训认证',     labelEn: 'Training & Certification', icon: '🎓' },
+  { id: 'final',       label: '最终审批',     labelEn: 'Final Approval',     icon: '✅' },
 ]
 
 // ── Label / Style Maps ────────────────────────────────────────────────────────
 
-export const STATUS_STYLE: Record<OnboardingStatus, { label: string; bg: string; color: string }> = {
-  'draft':              { label: '草稿',     bg: 'rgba(180,180,180,0.15)', color: '#717786' },
-  'submitted':          { label: '已提交',   bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
-  'under-review':       { label: '审核中',   bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
-  'nipr-pending':       { label: 'NIPR验证', bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
-  'bg-check':           { label: '背景调查', bg: 'rgba(123,63,202,0.12)', color: '#7B3FCA' },
-  'eo-pending':         { label: 'E&O验证',  bg: 'rgba(123,63,202,0.12)', color: '#7B3FCA' },
-  'contract-pending':   { label: '待签约',   bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
-  'appointment-pending':{ label: 'Appt待办', bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
-  'account-setup':      { label: '账号设置', bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
-  'training':           { label: '培训中',   bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
-  'approved':           { label: '已入驻',   bg: 'rgba(52,199,89,0.12)',  color: '#1E8033' },
-  'rejected':           { label: '已驳回',   bg: 'rgba(255,59,48,0.12)',  color: '#C0392B' },
-  'pending-supplement': { label: '待补充',   bg: 'rgba(255,59,48,0.10)',  color: '#C0392B' },
+export const STATUS_STYLE: Record<OnboardingStatus, { label: string; labelEn: string; bg: string; color: string }> = {
+  'draft':              { label: '草稿',     labelEn: 'Draft',                bg: 'rgba(180,180,180,0.15)', color: '#717786' },
+  'submitted':          { label: '已提交',   labelEn: 'Submitted',            bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
+  'under-review':       { label: '审核中',   labelEn: 'Under Review',         bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
+  'nipr-pending':       { label: 'NIPR验证', labelEn: 'NIPR Verification',    bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
+  'bg-check':           { label: '背景调查', labelEn: 'Background Check',     bg: 'rgba(123,63,202,0.12)', color: '#7B3FCA' },
+  'eo-pending':         { label: 'E&O验证',  labelEn: 'E&O Verification',     bg: 'rgba(123,63,202,0.12)', color: '#7B3FCA' },
+  'contract-pending':   { label: '待签约',   labelEn: 'Contract Pending',     bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
+  'appointment-pending':{ label: 'Appt待办', labelEn: 'Appt Pending',         bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
+  'account-setup':      { label: '账号设置', labelEn: 'Account Setup',        bg: 'rgba(0,88,188,0.10)',   color: '#0058BC' },
+  'training':           { label: '培训中',   labelEn: 'In Training',          bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
+  'approved':           { label: '已入驻',   labelEn: 'Onboarded',            bg: 'rgba(52,199,89,0.12)',  color: '#1E8033' },
+  'rejected':           { label: '已驳回',   labelEn: 'Rejected',             bg: 'rgba(255,59,48,0.12)',  color: '#C0392B' },
+  'pending-supplement': { label: '待补充',   labelEn: 'Pending Supplement',   bg: 'rgba(255,59,48,0.10)',  color: '#C0392B' },
 }
 
 export const CHANNEL_TYPE_LABEL: Record<ChannelType, string> = {
   agency: '代理机构', branch: '分支机构', agent: '个人代理', ga: 'GA',
 }
+export const CHANNEL_TYPE_LABEL_EN: Record<ChannelType, string> = {
+  agency: 'Agency', branch: 'Branch', agent: 'Individual Agent', ga: 'GA',
+}
 
-export const REVIEW_RESULT_STYLE: Record<ReviewResult, { label: string; bg: string; color: string }> = {
-  pass:    { label: '通过', bg: 'rgba(52,199,89,0.1)',  color: '#1E8033' },
-  fail:    { label: '不通过', bg: 'rgba(255,59,48,0.1)', color: '#C0392B' },
-  pending: { label: '待审核', bg: 'rgba(255,159,10,0.1)', color: '#B06000' },
-  waived:  { label: '豁免', bg: 'rgba(180,180,180,0.15)', color: '#717786' },
+export const REVIEW_RESULT_STYLE: Record<ReviewResult, { label: string; labelEn: string; bg: string; color: string }> = {
+  pass:    { label: '通过', labelEn: 'Passed',        bg: 'rgba(52,199,89,0.1)',  color: '#1E8033' },
+  fail:    { label: '不通过', labelEn: 'Failed',      bg: 'rgba(255,59,48,0.1)', color: '#C0392B' },
+  pending: { label: '待审核', labelEn: 'Pending Review', bg: 'rgba(255,159,10,0.1)', color: '#B06000' },
+  waived:  { label: '豁免', labelEn: 'Waived',        bg: 'rgba(180,180,180,0.15)', color: '#717786' },
 }
 
 // ── Sample Data ───────────────────────────────────────────────────────────────
@@ -198,6 +209,7 @@ export const REVIEW_RESULT_STYLE: Record<ReviewResult, { label: string; bg: stri
 const makeSteps = (upTo: number): OnboardingStep[] => PIPELINE_STEPS.map((s, i) => ({
   id: s.id,
   name: s.label,
+  nameEn: s.labelEn,
   status: i < upTo ? 'passed' : i === upTo ? 'in-progress' : 'pending',
 }))
 
@@ -211,16 +223,16 @@ export const onboardingApps: OnboardingApp[] = [
     parentChannelId: 'c1', parentChannelName: 'Pacific Coast Insurance Group',
     currentStep: 8,
     steps: [
-      { id: 'apply', name: '在线申请', status: 'passed', completedDate: '2026-08-10' },
-      { id: 'doc-review', name: '资料审核', status: 'passed', completedDate: '2026-08-12' },
-      { id: 'nipr', name: 'NIPR验证', status: 'passed', completedDate: '2026-08-13' },
-      { id: 'bg-check', name: '背景调查', status: 'passed', completedDate: '2026-08-15' },
-      { id: 'eo-check', name: 'E&O验证', status: 'passed', completedDate: '2026-08-16' },
-      { id: 'contract', name: '合同签署', status: 'passed', completedDate: '2026-08-17' },
-      { id: 'appointment', name: 'Appointment', status: 'passed', completedDate: '2026-08-18' },
-      { id: 'account', name: '账号开通', status: 'passed', completedDate: '2026-08-19' },
-      { id: 'training', name: '培训认证', status: 'in-progress' },
-      { id: 'final', name: '最终审批', status: 'pending' },
+      { id: 'apply', name: '在线申请', nameEn: 'Application', status: 'passed', completedDate: '2026-08-10' },
+      { id: 'doc-review', name: '资料审核', nameEn: 'Document Review', status: 'passed', completedDate: '2026-08-12' },
+      { id: 'nipr', name: 'NIPR验证', nameEn: 'NIPR Verification', status: 'passed', completedDate: '2026-08-13' },
+      { id: 'bg-check', name: '背景调查', nameEn: 'Background Check', status: 'passed', completedDate: '2026-08-15' },
+      { id: 'eo-check', name: 'E&O验证', nameEn: 'E&O Verification', status: 'passed', completedDate: '2026-08-16' },
+      { id: 'contract', name: '合同签署', nameEn: 'Contract Signing', status: 'passed', completedDate: '2026-08-17' },
+      { id: 'appointment', name: 'Appointment', nameEn: 'Appointment', status: 'passed', completedDate: '2026-08-18' },
+      { id: 'account', name: '账号开通', nameEn: 'Account Setup', status: 'passed', completedDate: '2026-08-19' },
+      { id: 'training', name: '培训认证', nameEn: 'Training & Certification', status: 'in-progress' },
+      { id: 'final', name: '最终审批', nameEn: 'Final Approval', status: 'pending' },
     ],
   },
   {
@@ -232,16 +244,16 @@ export const onboardingApps: OnboardingApp[] = [
     parentChannelId: 'r-west', parentChannelName: 'West Region',
     currentStep: 5,
     steps: [
-      { id: 'apply', name: '在线申请', status: 'passed', completedDate: '2026-08-14' },
-      { id: 'doc-review', name: '资料审核', status: 'passed', completedDate: '2026-08-16' },
-      { id: 'nipr', name: 'NIPR验证', status: 'passed', completedDate: '2026-08-17' },
-      { id: 'bg-check', name: '背景调查', status: 'passed', completedDate: '2026-08-19' },
-      { id: 'eo-check', name: 'E&O验证', status: 'passed', completedDate: '2026-08-20' },
-      { id: 'contract', name: '合同签署', status: 'in-progress', actionRequired: '等待申请人签署电子合同' },
-      { id: 'appointment', name: 'Appointment', status: 'pending' },
-      { id: 'account', name: '账号开通', status: 'pending' },
-      { id: 'training', name: '培训认证', status: 'pending' },
-      { id: 'final', name: '最终审批', status: 'pending' },
+      { id: 'apply', name: '在线申请', nameEn: 'Application', status: 'passed', completedDate: '2026-08-14' },
+      { id: 'doc-review', name: '资料审核', nameEn: 'Document Review', status: 'passed', completedDate: '2026-08-16' },
+      { id: 'nipr', name: 'NIPR验证', nameEn: 'NIPR Verification', status: 'passed', completedDate: '2026-08-17' },
+      { id: 'bg-check', name: '背景调查', nameEn: 'Background Check', status: 'passed', completedDate: '2026-08-19' },
+      { id: 'eo-check', name: 'E&O验证', nameEn: 'E&O Verification', status: 'passed', completedDate: '2026-08-20' },
+      { id: 'contract', name: '合同签署', nameEn: 'Contract Signing', status: 'in-progress', actionRequired: '等待申请人签署电子合同', actionRequiredEn: 'Waiting for the applicant to sign the e-contract' },
+      { id: 'appointment', name: 'Appointment', nameEn: 'Appointment', status: 'pending' },
+      { id: 'account', name: '账号开通', nameEn: 'Account Setup', status: 'pending' },
+      { id: 'training', name: '培训认证', nameEn: 'Training & Certification', status: 'pending' },
+      { id: 'final', name: '最终审批', nameEn: 'Final Approval', status: 'pending' },
     ],
   },
   {
@@ -253,18 +265,19 @@ export const onboardingApps: OnboardingApp[] = [
     parentChannelId: 'c4', parentChannelName: 'Empire State Insurance Services',
     currentStep: 1,
     steps: [
-      { id: 'apply', name: '在线申请', status: 'passed', completedDate: '2026-08-18' },
-      { id: 'doc-review', name: '资料审核', status: 'failed', notes: 'E&O证书已过期，W-9格式不符合要求', actionRequired: '请重新上传有效E&O证书及正确格式W-9表' },
-      { id: 'nipr', name: 'NIPR验证', status: 'pending' },
-      { id: 'bg-check', name: '背景调查', status: 'pending' },
-      { id: 'eo-check', name: 'E&O验证', status: 'pending' },
-      { id: 'contract', name: '合同签署', status: 'pending' },
-      { id: 'appointment', name: 'Appointment', status: 'pending' },
-      { id: 'account', name: '账号开通', status: 'pending' },
-      { id: 'training', name: '培训认证', status: 'pending' },
-      { id: 'final', name: '最终审批', status: 'pending' },
+      { id: 'apply', name: '在线申请', nameEn: 'Application', status: 'passed', completedDate: '2026-08-18' },
+      { id: 'doc-review', name: '资料审核', nameEn: 'Document Review', status: 'failed', notes: 'E&O证书已过期，W-9格式不符合要求', notesEn: 'E&O certificate expired; W-9 format does not meet requirements', actionRequired: '请重新上传有效E&O证书及正确格式W-9表', actionRequiredEn: 'Please re-upload a valid E&O certificate and a correctly formatted W-9 form' },
+      { id: 'nipr', name: 'NIPR验证', nameEn: 'NIPR Verification', status: 'pending' },
+      { id: 'bg-check', name: '背景调查', nameEn: 'Background Check', status: 'pending' },
+      { id: 'eo-check', name: 'E&O验证', nameEn: 'E&O Verification', status: 'pending' },
+      { id: 'contract', name: '合同签署', nameEn: 'Contract Signing', status: 'pending' },
+      { id: 'appointment', name: 'Appointment', nameEn: 'Appointment', status: 'pending' },
+      { id: 'account', name: '账号开通', nameEn: 'Account Setup', status: 'pending' },
+      { id: 'training', name: '培训认证', nameEn: 'Training & Certification', status: 'pending' },
+      { id: 'final', name: '最终审批', nameEn: 'Final Approval', status: 'pending' },
     ],
     rejectionReason: '入驻资料缺失或无效：E&O证书已过期（有效期至2026-07-31），W-9表单格式错误。请在7日内补充完整材料，否则申请将被关闭。',
+    rejectionReasonEn: 'Onboarding documents are missing or invalid: the E&O certificate has expired (valid through 2026-07-31) and the W-9 form is in the wrong format. Please submit complete materials within 7 days or the application will be closed.',
     supplementDue: '2026-08-29',
   },
   {
@@ -276,16 +289,16 @@ export const onboardingApps: OnboardingApp[] = [
     parentChannelId: 'r-south', parentChannelName: 'South & Southeast Region',
     currentStep: 3,
     steps: [
-      { id: 'apply', name: '在线申请', status: 'passed', completedDate: '2026-08-05' },
-      { id: 'doc-review', name: '资料审核', status: 'passed', completedDate: '2026-08-08' },
-      { id: 'nipr', name: 'NIPR验证', status: 'passed', completedDate: '2026-08-09' },
-      { id: 'bg-check', name: '背景调查', status: 'in-progress', notes: 'Checkr 报告生成中，预计2-3个工作日' },
-      { id: 'eo-check', name: 'E&O验证', status: 'pending' },
-      { id: 'contract', name: '合同签署', status: 'pending' },
-      { id: 'appointment', name: 'Appointment', status: 'pending' },
-      { id: 'account', name: '账号开通', status: 'pending' },
-      { id: 'training', name: '培训认证', status: 'pending' },
-      { id: 'final', name: '最终审批', status: 'pending' },
+      { id: 'apply', name: '在线申请', nameEn: 'Application', status: 'passed', completedDate: '2026-08-05' },
+      { id: 'doc-review', name: '资料审核', nameEn: 'Document Review', status: 'passed', completedDate: '2026-08-08' },
+      { id: 'nipr', name: 'NIPR验证', nameEn: 'NIPR Verification', status: 'passed', completedDate: '2026-08-09' },
+      { id: 'bg-check', name: '背景调查', nameEn: 'Background Check', status: 'in-progress', notes: 'Checkr 报告生成中，预计2-3个工作日', notesEn: 'Checkr report being generated; est. 2–3 business days' },
+      { id: 'eo-check', name: 'E&O验证', nameEn: 'E&O Verification', status: 'pending' },
+      { id: 'contract', name: '合同签署', nameEn: 'Contract Signing', status: 'pending' },
+      { id: 'appointment', name: 'Appointment', nameEn: 'Appointment', status: 'pending' },
+      { id: 'account', name: '账号开通', nameEn: 'Account Setup', status: 'pending' },
+      { id: 'training', name: '培训认证', nameEn: 'Training & Certification', status: 'pending' },
+      { id: 'final', name: '最终审批', nameEn: 'Final Approval', status: 'pending' },
     ],
   },
   {
@@ -306,7 +319,7 @@ export const onboardingApps: OnboardingApp[] = [
     status: 'approved', assignedReviewer: 'Sarah Chen',
     parentChannelId: 'r-midwest', parentChannelName: 'Midwest Region',
     currentStep: 10,
-    steps: PIPELINE_STEPS.map(s => ({ id: s.id, name: s.label, status: 'passed' as const, completedDate: '2026-08-20' })),
+    steps: PIPELINE_STEPS.map(s => ({ id: s.id, name: s.label, nameEn: s.labelEn, status: 'passed' as const, completedDate: '2026-08-20' })),
   },
   {
     id: 'ob-007', applicantName: 'Derek Coleman', applicantType: 'agent',
@@ -317,13 +330,14 @@ export const onboardingApps: OnboardingApp[] = [
     parentChannelId: 'c5', parentChannelName: 'Sunshine State Brokers',
     currentStep: 3,
     steps: [
-      { id: 'apply', name: '在线申请', status: 'passed', completedDate: '2026-08-12' },
-      { id: 'doc-review', name: '资料审核', status: 'passed', completedDate: '2026-08-13' },
-      { id: 'nipr', name: 'NIPR验证', status: 'passed', completedDate: '2026-08-14' },
-      { id: 'bg-check', name: '背景调查', status: 'failed', notes: '发现重大合规违规记录，不符合准入标准', completedDate: '2026-08-16' },
-      ...PIPELINE_STEPS.slice(4).map(s => ({ id: s.id, name: s.label, status: 'pending' as const })),
+      { id: 'apply', name: '在线申请', nameEn: 'Application', status: 'passed', completedDate: '2026-08-12' },
+      { id: 'doc-review', name: '资料审核', nameEn: 'Document Review', status: 'passed', completedDate: '2026-08-13' },
+      { id: 'nipr', name: 'NIPR验证', nameEn: 'NIPR Verification', status: 'passed', completedDate: '2026-08-14' },
+      { id: 'bg-check', name: '背景调查', nameEn: 'Background Check', status: 'failed', notes: '发现重大合规违规记录，不符合准入标准', notesEn: 'Major compliance violation found; admission criteria not met', completedDate: '2026-08-16' },
+      ...PIPELINE_STEPS.slice(4).map(s => ({ id: s.id, name: s.label, nameEn: s.labelEn, status: 'pending' as const })),
     ],
     rejectionReason: '背景调查发现申请人存在 2024 年 Florida DOI 吊销执照记录（保费挪用），不符合公司准入政策，申请已拒绝。',
+    rejectionReasonEn: 'The background check found a 2024 Florida DOI license revocation (premium misappropriation), which fails the company’s admission policy. The application has been rejected.',
   },
 ]
 
@@ -344,10 +358,10 @@ export const documentReviews: DocumentReview[] = [
     appId: 'ob-003', reviewerId: 'Zhang Wei', reviewStarted: '2026-08-19',
     docs: [
       { id: 'd10', name: 'NY Producer License', docType: 'license', uploadedDate: '2026-08-18', fileSize: '220 KB', status: 'pass', expiryDate: '2027-09-30' },
-      { id: 'd11', name: 'E&O Certificate (EXPIRED)', docType: 'eo-cert', uploadedDate: '2026-08-18', fileSize: '195 KB', status: 'fail', reviewNote: '证书有效期至2026-07-31，已过期。请上传有效证书。', expiryDate: '2026-07-31' },
+      { id: 'd11', name: 'E&O Certificate (EXPIRED)', docType: 'eo-cert', uploadedDate: '2026-08-18', fileSize: '195 KB', status: 'fail', reviewNote: '证书有效期至2026-07-31，已过期。请上传有效证书。', reviewNoteEn: 'Certificate expired on 2026-07-31. Please upload a valid certificate.', expiryDate: '2026-07-31' },
       { id: 'd12', name: 'Background Check Authorization', docType: 'bg-auth', uploadedDate: '2026-08-18', fileSize: '60 KB', status: 'pass' },
       { id: 'd13', name: 'Government-issued ID', docType: 'id', uploadedDate: '2026-08-18', fileSize: '280 KB', status: 'pass' },
-      { id: 'd14', name: 'W-9 Form (incorrect format)', docType: 'w9', uploadedDate: '2026-08-18', fileSize: '45 KB', status: 'fail', reviewNote: '使用了已废止的2019版本W-9表，请下载并提交2024年最新版本。' },
+      { id: 'd14', name: 'W-9 Form (incorrect format)', docType: 'w9', uploadedDate: '2026-08-18', fileSize: '45 KB', status: 'fail', reviewNote: '使用了已废止的2019版本W-9表，请下载并提交2024年最新版本。', reviewNoteEn: 'The obsolete 2019 W-9 form was used; please download and submit the latest 2024 version.' },
     ],
   },
 ]
@@ -404,7 +418,7 @@ export const backgroundChecks: BackgroundCheck[] = [
     orderedDate: '2026-08-14', completedDate: '2026-08-16',
     status: 'fail',
     flags: [
-      { type: 'regulatory', severity: 'high', description: '2024-05 Florida DOI 撤销执照（保费挪用，FSS §626.611）', disposition: 'disqualify' },
+      { type: 'regulatory', severity: 'high', description: '2024-05 Florida DOI 撤销执照（保费挪用，FSS §626.611）', descriptionEn: 'Florida DOI license revocation, 2024-05 (premium misappropriation, FSS §626.611)', disposition: 'disqualify' },
     ],
   },
 ]
@@ -433,6 +447,7 @@ export const eoInsurances: EOInsurance[] = [
     coverageAmount: 500000, perClaimAmount: 500000,
     status: 'fail', verifiedDate: '2026-08-19',
     note: '证书已过期，有效期至2026-07-31',
+    noteEn: 'Certificate expired; was valid through 2026-07-31',
   },
 ]
 
@@ -468,22 +483,22 @@ export const trainingCerts: TrainingCert[] = [
   {
     appId: 'ob-001', applicantName: 'Jennifer Walsh',
     modules: [
-      { id: 'tm1', name: 'InsureOS 平台使用入门', required: true, duration: '1.5h', status: 'completed', score: 94, completedDate: '2026-08-20', attempts: 1 },
-      { id: 'tm2', name: '产品知识认证 — Term Life', required: true, duration: '2h', status: 'completed', score: 88, completedDate: '2026-08-20', attempts: 1 },
-      { id: 'tm3', name: '合规与出单规范', required: true, duration: '1h', status: 'in-progress', score: undefined, completedDate: undefined, attempts: 0 },
-      { id: 'tm4', name: '客户服务与投诉处理', required: true, duration: '1h', status: 'not-started', score: undefined, completedDate: undefined, attempts: 0 },
-      { id: 'tm5', name: '跨州出单规则', required: false, duration: '45m', status: 'not-started', score: undefined, completedDate: undefined, attempts: 0 },
+      { id: 'tm1', name: 'InsureOS 平台使用入门', nameEn: 'InsureOS Platform Basics', required: true, duration: '1.5h', status: 'completed', score: 94, completedDate: '2026-08-20', attempts: 1 },
+      { id: 'tm2', name: '产品知识认证 — Term Life', nameEn: 'Product Knowledge Certification — Term Life', required: true, duration: '2h', status: 'completed', score: 88, completedDate: '2026-08-20', attempts: 1 },
+      { id: 'tm3', name: '合规与出单规范', nameEn: 'Compliance & Writing Rules', required: true, duration: '1h', status: 'in-progress', score: undefined, completedDate: undefined, attempts: 0 },
+      { id: 'tm4', name: '客户服务与投诉处理', nameEn: 'Customer Service & Complaint Handling', required: true, duration: '1h', status: 'not-started', score: undefined, completedDate: undefined, attempts: 0 },
+      { id: 'tm5', name: '跨州出单规则', nameEn: 'Multi-state Writing Rules', required: false, duration: '45m', status: 'not-started', score: undefined, completedDate: undefined, attempts: 0 },
     ],
     overallStatus: 'pending',
   },
   {
     appId: 'ob-006', applicantName: 'North Star Benefits LLC',
     modules: [
-      { id: 'tm1', name: 'InsureOS 平台使用入门', required: true, duration: '1.5h', status: 'completed', score: 96, completedDate: '2026-08-18', attempts: 1 },
-      { id: 'tm2', name: '产品知识认证 — Term Life', required: true, duration: '2h', status: 'completed', score: 91, completedDate: '2026-08-18', attempts: 1 },
-      { id: 'tm3', name: '合规与出单规范', required: true, duration: '1h', status: 'completed', score: 87, completedDate: '2026-08-19', attempts: 1 },
-      { id: 'tm4', name: '客户服务与投诉处理', required: true, duration: '1h', status: 'completed', score: 93, completedDate: '2026-08-19', attempts: 1 },
-      { id: 'tm5', name: '跨州出单规则', required: false, duration: '45m', status: 'completed', score: 89, completedDate: '2026-08-19', attempts: 1 },
+      { id: 'tm1', name: 'InsureOS 平台使用入门', nameEn: 'InsureOS Platform Basics', required: true, duration: '1.5h', status: 'completed', score: 96, completedDate: '2026-08-18', attempts: 1 },
+      { id: 'tm2', name: '产品知识认证 — Term Life', nameEn: 'Product Knowledge Certification — Term Life', required: true, duration: '2h', status: 'completed', score: 91, completedDate: '2026-08-18', attempts: 1 },
+      { id: 'tm3', name: '合规与出单规范', nameEn: 'Compliance & Writing Rules', required: true, duration: '1h', status: 'completed', score: 87, completedDate: '2026-08-19', attempts: 1 },
+      { id: 'tm4', name: '客户服务与投诉处理', nameEn: 'Customer Service & Complaint Handling', required: true, duration: '1h', status: 'completed', score: 93, completedDate: '2026-08-19', attempts: 1 },
+      { id: 'tm5', name: '跨州出单规则', nameEn: 'Multi-state Writing Rules', required: false, duration: '45m', status: 'completed', score: 89, completedDate: '2026-08-19', attempts: 1 },
     ],
     overallStatus: 'pass', completionDate: '2026-08-19',
   },

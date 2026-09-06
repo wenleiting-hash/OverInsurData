@@ -62,11 +62,11 @@ const kpiScheme = {
   name: '2026年度标准考核方案',
   period: '2026 Q3',
   indicators: [
-    { name: 'YTD保费', weight: 0.35, unit: '$', direction: 'higher', target: 1500000, current: 1820000 },
-    { name: '续保率', weight: 0.25, unit: '%', direction: 'higher', target: 88, current: 91 },
-    { name: '赔付率', weight: 0.20, unit: '%', direction: 'lower', target: 65, current: 58 },
-    { name: '保单件数', weight: 0.12, unit: '件', direction: 'higher', target: 80, current: 94 },
-    { name: '投诉率', weight: 0.08, unit: '%', direction: 'lower', target: 2, current: 0.5 },
+    { name: 'YTD保费', nameEn: 'YTD Premium', weight: 0.35, unit: '$', direction: 'higher', target: 1500000, current: 1820000 },
+    { name: '续保率', nameEn: 'Renewal Rate', weight: 0.25, unit: '%', direction: 'higher', target: 88, current: 91 },
+    { name: '赔付率', nameEn: 'Loss Ratio', weight: 0.20, unit: '%', direction: 'lower', target: 65, current: 58 },
+    { name: '保单件数', nameEn: 'Policy Count', weight: 0.12, unit: '件', direction: 'higher', target: 80, current: 94 },
+    { name: '投诉率', nameEn: 'Complaint Rate', weight: 0.08, unit: '%', direction: 'lower', target: 2, current: 0.5 },
   ],
 }
 
@@ -79,6 +79,7 @@ const leaderboardLines = [
 // ─── Leaderboard Tab ──────────────────────────────────────────────────────────
 
 function LeaderboardTab() {
+  const { lang } = useLang()
   const [period, setPeriod] = useState('Q3 2026')
   const [dim, setDim] = useState<'premium' | 'policies' | 'renewal' | 'commission'>('premium')
   const [scope, setScope] = useState('all')
@@ -99,11 +100,11 @@ function LeaderboardTab() {
           {['Q3 2026','Q2 2026','Q1 2026','FY 2025'].map(p => <option key={p}>{p}</option>)}
         </select>
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.4)', border: `0.5px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-          {([['premium','保费'],['policies','保单数'],['renewal','续保率'],['commission','佣金']] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setDim(v)} style={{ padding: '6px 12px', fontSize: 12, fontWeight: dim === v ? 700 : 500, background: dim === v ? C.primary : 'transparent', color: dim === v ? '#fff' : C.textSoft, border: 'none', cursor: 'pointer', borderRight: `0.5px solid ${C.border}` }}>{l}</button>
+          {([['premium','保费','Premium'],['policies','保单数','Policies'],['renewal','续保率','Renewal'],['commission','佣金','Commission']] as const).map(([v, zh, en]) => (
+            <button key={v} onClick={() => setDim(v)} style={{ padding: '6px 12px', fontSize: 12, fontWeight: dim === v ? 700 : 500, background: dim === v ? C.primary : 'transparent', color: dim === v ? '#fff' : C.textSoft, border: 'none', cursor: 'pointer', borderRight: `0.5px solid ${C.border}` }}>{lang === 'en' ? en : zh}</button>
           ))}
         </div>
-        <GhostBtn sm><Download size={12} />导出榜单</GhostBtn>
+        <GhostBtn sm><Download size={12} />{lang === 'en' ? 'Export Leaderboard' : '导出榜单'}</GhostBtn>
       </div>
 
       {/* Line leaderboards */}
@@ -112,7 +113,7 @@ function LeaderboardTab() {
           <GCard key={ll.line} style={{ overflow: 'hidden' }}>
             <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ ...mono, fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 5, background: C.primaryLight, color: C.primary }}>{ll.line}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>业务线榜单</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{lang === 'en' ? 'Line of Business Leaderboard' : '业务线榜单'}</span>
             </div>
             {ll.top.map((a, i) => (
               <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, background: i === 0 ? 'rgba(255,215,0,0.05)' : 'transparent' }}>
@@ -133,11 +134,14 @@ function LeaderboardTab() {
       <GCard style={{ overflow: 'hidden' }}>
         <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Trophy size={14} color={C.primary} />
-          <span style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>全平台代理人排名 — {period}</span>
+          <span style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>{lang === 'en' ? `Platform-Wide Agent Rankings — ${period}` : `全平台代理人排名 — ${period}`}</span>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>{['排名', '代理人', '机构', '业务线', 'YTD保费', '保单数', '续保率', '赔付率', '综合评级', '风险'].map(h => <th key={h} style={TH}>{h}</th>)}</tr>
+            <tr>{(lang === 'en'
+              ? ['Rank', 'Agent', 'Organization', 'Line of Business', 'YTD Premium', 'Policies', 'Renewal Rate', 'Loss Ratio', 'Overall Rating', 'Risk']
+              : ['排名', '代理人', '机构', '业务线', 'YTD保费', '保单数', '续保率', '赔付率', '综合评级', '风险']
+            ).map((h, i) => <th key={i} style={TH}>{h}</th>)}</tr>
           </thead>
           <tbody>
             {agents.map((a, i) => (
@@ -178,6 +182,7 @@ function LeaderboardTab() {
 // ─── Personal Dashboard ───────────────────────────────────────────────────────
 
 function PersonalDashboard() {
+  const { lang } = useLang()
   const agent = agents[0]
   const maxPremium = 2000000
   const progressPct = agent.ytdPremium / agent.goal
@@ -186,13 +191,13 @@ function PersonalDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Agent selector */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 12.5, color: C.muted }}>当前查看</span>
+        <span style={{ fontSize: 12.5, color: C.muted }}>{lang === 'en' ? 'Currently viewing' : '当前查看'}</span>
         <select defaultValue={agent.id} style={{ padding: '7px 12px', background: C.surfaceHigh, border: `0.5px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 700, color: C.text, outline: 'none', fontFamily: 'inherit' }}>
           {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.4)', border: `0.5px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-          {['本月','本季','本年','自定义'].map(l => (
-            <button key={l} style={{ padding: '5px 12px', fontSize: 12, fontWeight: l === '本季' ? 700 : 500, background: l === '本季' ? C.primary : 'transparent', color: l === '本季' ? '#fff' : C.textSoft, border: 'none', cursor: 'pointer' }}>{l}</button>
+          {([['本月','Month'],['本季','Quarter'],['本年','Year'],['自定义','Custom']] as const).map(([zh, en]) => (
+            <button key={zh} style={{ padding: '5px 12px', fontSize: 12, fontWeight: zh === '本季' ? 700 : 500, background: zh === '本季' ? C.primary : 'transparent', color: zh === '本季' ? '#fff' : C.textSoft, border: 'none', cursor: 'pointer' }}>{lang === 'en' ? en : zh}</button>
           ))}
         </div>
       </div>
@@ -206,7 +211,7 @@ function PersonalDashboard() {
             </div>
             <div>
               <div style={{ fontSize: 18, fontWeight: 800, color: C.text }}>{agent.name}</div>
-              <div style={{ fontSize: 12.5, color: C.muted, marginTop: 3 }}>{agent.org} · {agent.line} · 综合评级</div>
+              <div style={{ fontSize: 12.5, color: C.muted, marginTop: 3 }}>{agent.org} · {agent.line} · {lang === 'en' ? 'Overall Rating' : '综合评级'}</div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -217,7 +222,7 @@ function PersonalDashboard() {
               <div style={{ ...mono, fontSize: 28, fontWeight: 800, color: C.text }}>#{agent.rank}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: agent.rank < agent.prevRank ? C.green : C.red }}>
                 {agent.rank < agent.prevRank ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
-                {Math.abs(agent.rank - agent.prevRank)} 位
+                {Math.abs(agent.rank - agent.prevRank)} {lang === 'en' ? (Math.abs(agent.rank - agent.prevRank) === 1 ? 'position' : 'positions') : '位'}
               </div>
             </div>
           </div>
@@ -226,12 +231,12 @@ function PersonalDashboard() {
         {/* KPI tiles */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
           {[
-            { label: 'YTD保费', value: fmt(agent.ytdPremium), color: C.primary, sub: `目标 ${fmt(agent.goal)}` },
-            { label: 'YTD佣金', value: fmt(agent.commission), color: C.green, sub: `${(agent.commission / agent.ytdPremium * 100).toFixed(1)}% 佣金率` },
-            { label: '续保率', value: `${(agent.renewalRate * 100).toFixed(0)}%`, color: agent.renewalRate >= 0.9 ? C.green : C.amber, sub: '目标 88%' },
-            { label: '赔付率', value: `${(agent.lossRatio * 100).toFixed(0)}%`, color: agent.lossRatio > 0.65 ? C.amber : C.green, sub: '目标 <65%' },
-            { label: '保单件数', value: String(agent.policyCount), color: C.text, sub: '目标 80件' },
-            { label: '综合评分', value: String(agent.score), color: C.primary, sub: '满分100分' },
+            { label: lang === 'en' ? 'YTD Premium' : 'YTD保费', value: fmt(agent.ytdPremium), color: C.primary, sub: lang === 'en' ? `Goal ${fmt(agent.goal)}` : `目标 ${fmt(agent.goal)}` },
+            { label: lang === 'en' ? 'YTD Commission' : 'YTD佣金', value: fmt(agent.commission), color: C.green, sub: lang === 'en' ? `${(agent.commission / agent.ytdPremium * 100).toFixed(1)}% commission rate` : `${(agent.commission / agent.ytdPremium * 100).toFixed(1)}% 佣金率` },
+            { label: lang === 'en' ? 'Renewal Rate' : '续保率', value: `${(agent.renewalRate * 100).toFixed(0)}%`, color: agent.renewalRate >= 0.9 ? C.green : C.amber, sub: lang === 'en' ? 'Goal 88%' : '目标 88%' },
+            { label: lang === 'en' ? 'Loss Ratio' : '赔付率', value: `${(agent.lossRatio * 100).toFixed(0)}%`, color: agent.lossRatio > 0.65 ? C.amber : C.green, sub: lang === 'en' ? 'Goal <65%' : '目标 <65%' },
+            { label: lang === 'en' ? 'Policies' : '保单件数', value: String(agent.policyCount), color: C.text, sub: lang === 'en' ? 'Goal 80 policies' : '目标 80件' },
+            { label: lang === 'en' ? 'Overall Score' : '综合评分', value: String(agent.score), color: C.primary, sub: lang === 'en' ? 'Out of 100' : '满分100分' },
           ].map(k => (
             <div key={k.label} style={{ padding: '12px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.45)', border: `0.5px solid rgba(193,198,215,0.3)` }}>
               <div style={{ fontSize: 10.5, color: C.mutedLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{k.label}</div>
@@ -244,15 +249,15 @@ function PersonalDashboard() {
         {/* Goal progress */}
         <div style={{ marginTop: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-            <span style={{ fontWeight: 700, color: C.text }}>目标完成进度</span>
+            <span style={{ fontWeight: 700, color: C.text }}>{lang === 'en' ? 'Goal Progress' : '目标完成进度'}</span>
             <span style={{ ...mono, fontWeight: 800, color: progressPct >= 1 ? C.green : C.primary }}>{(progressPct * 100).toFixed(0)}%</span>
           </div>
           <div style={{ height: 8, background: 'rgba(193,198,215,0.3)', borderRadius: 4, overflow: 'hidden' }}>
             <div style={{ width: `${Math.min(100, progressPct * 100)}%`, height: '100%', background: progressPct >= 1 ? C.green : `linear-gradient(90deg, ${C.primary}, #60CDFF)`, borderRadius: 4, transition: 'width 0.5s ease' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.mutedLight, marginTop: 4 }}>
-            <span>已完成 {fmt(agent.ytdPremium)}</span>
-            <span>目标 {fmt(agent.goal)}</span>
+            <span>{lang === 'en' ? `Achieved ${fmt(agent.ytdPremium)}` : `已完成 ${fmt(agent.ytdPremium)}`}</span>
+            <span>{lang === 'en' ? `Goal ${fmt(agent.goal)}` : `目标 ${fmt(agent.goal)}`}</span>
           </div>
         </div>
       </GCard>
@@ -260,7 +265,7 @@ function PersonalDashboard() {
       {/* Trend chart (sparkline bars) + KPI score breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 14 }}>
         <GCard style={{ padding: '18px 20px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 16 }}>月度业绩趋势</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 16 }}>{lang === 'en' ? 'Monthly Performance Trend' : '月度业绩趋势'}</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 120 }}>
             {monthlyData.map((m) => {
               const h = Math.round((m.premium / 2000) * 100)
@@ -276,15 +281,15 @@ function PersonalDashboard() {
         </GCard>
 
         <GCard style={{ padding: '18px 20px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 14 }}>考核指标评分明细</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 14 }}>{lang === 'en' ? 'KPI Score Breakdown' : '考核指标评分明细'}</div>
           {kpiScheme.indicators.map(ind => {
             const isGood = ind.direction === 'higher' ? ind.current >= ind.target : ind.current <= ind.target
             const pct = ind.direction === 'higher' ? Math.min(1, ind.current / ind.target) : Math.min(1, ind.target / ind.current)
             return (
               <div key={ind.name} style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-                  <span style={{ fontWeight: 600, color: C.text }}>{ind.name}</span>
-                  <span style={{ color: C.muted }}>权重 {(ind.weight * 100).toFixed(0)}%</span>
+                  <span style={{ fontWeight: 600, color: C.text }}>{lang === 'en' ? ind.nameEn : ind.name}</span>
+                  <span style={{ color: C.muted }}>{lang === 'en' ? `Weight ${(ind.weight * 100).toFixed(0)}%` : `权重 ${(ind.weight * 100).toFixed(0)}%`}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ flex: 1, height: 5, background: 'rgba(193,198,215,0.25)', borderRadius: 3, overflow: 'hidden' }}>
@@ -306,6 +311,7 @@ function PersonalDashboard() {
 // ─── Risk Watch Tab ───────────────────────────────────────────────────────────
 
 function RiskWatchTab() {
+  const { lang } = useLang()
   const highRisk = agents.filter(a => a.changeRisk === 'high')
   const medRisk = agents.filter(a => a.changeRisk === 'medium')
 
@@ -313,9 +319,9 @@ function RiskWatchTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
         {[
-          { label: '高流失风险', v: highRisk.length, color: C.red, icon: <AlertTriangle size={15} color={C.red} /> },
-          { label: '中等风险', v: medRisk.length, color: C.amber, icon: <AlertTriangle size={15} color={C.amber} /> },
-          { label: '低风险', v: agents.filter(a => a.changeRisk === 'low').length, color: C.green, icon: <Trophy size={15} color={C.green} /> },
+          { label: lang === 'en' ? 'High Attrition Risk' : '高流失风险', v: highRisk.length, color: C.red, icon: <AlertTriangle size={15} color={C.red} /> },
+          { label: lang === 'en' ? 'Medium Risk' : '中等风险', v: medRisk.length, color: C.amber, icon: <AlertTriangle size={15} color={C.amber} /> },
+          { label: lang === 'en' ? 'Low Risk' : '低风险', v: agents.filter(a => a.changeRisk === 'low').length, color: C.green, icon: <Trophy size={15} color={C.green} /> },
         ].map(s => (
           <GCard key={s.label} style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: `${s.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</div>
@@ -328,17 +334,20 @@ function RiskWatchTab() {
       </div>
 
       <GCard style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>流失风险预警列表</div>
+        <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>{lang === 'en' ? 'Attrition Risk Watchlist' : '流失风险预警列表'}</div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>{['代理人', '机构', '风险评分', '风险等级', '主要风险因素', '业绩趋势', '操作'].map(h => <th key={h} style={TH}>{h}</th>)}</tr></thead>
+          <thead><tr>{(lang === 'en'
+            ? ['Agent', 'Organization', 'Risk Score', 'Risk Level', 'Key Risk Factors', 'Performance Trend', 'Actions']
+            : ['代理人', '机构', '风险评分', '风险等级', '主要风险因素', '业绩趋势', '操作']
+          ).map((h, i) => <th key={i} style={TH}>{h}</th>)}</tr></thead>
           <tbody>
             {agents.filter(a => a.changeRisk !== 'low').map(a => {
               const riskColor = a.changeRisk === 'high' ? C.red : C.amber
-              const factors: Record<string, string[]> = {
-                'Sarah Johnson': ['业绩连续3月下滑', '活跃度降低', '赔付率偏高'],
-                'Robert Kim': ['续保率持续下降', '牌照即将到期', '3个月无新保单'],
-                'Lisa Wong': ['业绩未达目标', '成交率下降'],
-                'David Martinez': ['投诉率上升', '赔付率偏高'],
+              const factors: Record<string, { zh: string; en: string }[]> = {
+                'Sarah Johnson': [{ zh: '业绩连续3月下滑', en: 'Performance down 3 months in a row' }, { zh: '活跃度降低', en: 'Decreasing activity' }, { zh: '赔付率偏高', en: 'Loss ratio above target' }],
+                'Robert Kim': [{ zh: '续保率持续下降', en: 'Renewal rate keeps declining' }, { zh: '牌照即将到期', en: 'License expiring soon' }, { zh: '3个月无新保单', en: 'No new policies for 3 months' }],
+                'Lisa Wong': [{ zh: '业绩未达目标', en: 'Performance below target' }, { zh: '成交率下降', en: 'Closing rate declining' }],
+                'David Martinez': [{ zh: '投诉率上升', en: 'Complaint rate rising' }, { zh: '赔付率偏高', en: 'Loss ratio above target' }],
               }
               return (
                 <tr key={a.id} style={{ background: a.changeRisk === 'high' ? 'rgba(255,59,48,0.03)' : 'transparent' }}>
@@ -354,25 +363,25 @@ function RiskWatchTab() {
                   </td>
                   <td style={TD}>
                     <span style={{ padding: '3px 10px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: `${riskColor}12`, color: riskColor }}>
-                      {a.changeRisk === 'high' ? '高风险' : '中等风险'}
+                      {a.changeRisk === 'high' ? (lang === 'en' ? 'High Risk' : '高风险') : (lang === 'en' ? 'Medium Risk' : '中等风险')}
                     </span>
                   </td>
                   <td style={TD}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {(factors[a.name] ?? ['业绩下滑']).map(f => (
-                        <span key={f} style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: `${riskColor}09`, color: riskColor, border: `0.5px solid ${riskColor}25` }}>{f}</span>
+                      {(factors[a.name] ?? [{ zh: '业绩下滑', en: 'Performance decline' }]).map(f => (
+                        <span key={f.zh} style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: `${riskColor}09`, color: riskColor, border: `0.5px solid ${riskColor}25` }}>{lang === 'en' ? f.en : f.zh}</span>
                       ))}
                     </div>
                   </td>
                   <td style={TD}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11.5, color: C.red }}>
-                      <TrendingDown size={12} />下降趋势
+                      <TrendingDown size={12} />{lang === 'en' ? 'Declining' : '下降趋势'}
                     </div>
                   </td>
                   <td style={TD}>
                     <div style={{ display: 'flex', gap: 5 }}>
-                      <button style={{ padding: '3px 9px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: C.primaryLight, color: C.primary, border: `0.5px solid ${C.primaryBorder}`, cursor: 'pointer' }}>干预</button>
-                      <button style={{ padding: '3px 9px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: 'transparent', color: C.muted, border: `0.5px solid ${C.border}`, cursor: 'pointer' }}>查看</button>
+                      <button style={{ padding: '3px 9px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: C.primaryLight, color: C.primary, border: `0.5px solid ${C.primaryBorder}`, cursor: 'pointer' }}>{lang === 'en' ? 'Intervene' : '干预'}</button>
+                      <button style={{ padding: '3px 9px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: 'transparent', color: C.muted, border: `0.5px solid ${C.border}`, cursor: 'pointer' }}>{lang === 'en' ? 'View' : '查看'}</button>
                     </div>
                   </td>
                 </tr>

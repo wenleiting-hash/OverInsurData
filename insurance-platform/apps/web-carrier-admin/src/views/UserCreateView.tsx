@@ -7,7 +7,8 @@ interface Props {
 }
 
 export default function UserCreateView({ navigateTo }: Props) {
-  const { t } = useTranslation('permission');
+  const { t, i18n } = useTranslation('permission');
+  const isEn = i18n.language?.startsWith?.('en') ?? false;
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -22,42 +23,42 @@ export default function UserCreateView({ navigateTo }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // 基础验证
     if (!formData.username.trim()) {
-      alert(t('pleaseEnter') || `请输入${t('userName')}`);
+      alert(t('pleaseEnterUserName'));
       return;
     }
-    
+
     if (!formData.password) {
-      alert(t('pleaseEnter') || `请输入${t('password')}`);
+      alert(t('pleaseEnterPassword'));
       return;
     }
-    
+
     if (formData.password.length < 8) {
-      alert(t('passwordMinLength') || '密码长度不能少于 8 位');
+      alert(t('passwordMinLength'));
       return;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
-      alert(t('passwordMismatch') || '两次输入的密码不一致');
+      alert(t('passwordMismatch'));
       return;
     }
-    
+
     if (!formData.email) {
-      alert(t('pleaseEnter') || `请输入${t('email')}`);
+      alert(t('pleaseEnterEmail'));
       return;
     }
-    
+
     if (!formData.roleId) {
-      alert(t('selectRole') || '请选择关联角色');
+      alert(t('selectRole'));
       return;
     }
 
     // 🔴 todo: 调用真实 API 创建用户
-    console.log('创建用户数据:', formData);
-    
-    alert(t('createSuccess') || '用户创建成功！');
+    console.log('Create user data:', formData);
+
+    alert(t('createSuccess'));
     navigateTo('user-list');
   };
 
@@ -90,7 +91,7 @@ export default function UserCreateView({ navigateTo }: Props) {
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('enterUsernamePlaceholder') || '请输入用户名'}
+                placeholder={t('enterUsernamePlaceholder')}
               />
             </div>
 
@@ -104,7 +105,7 @@ export default function UserCreateView({ navigateTo }: Props) {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('enterPasswordPlaceholder') || '至少 8 位，包含字母、数字和特殊字符'}
+                placeholder={t('enterPasswordPlaceholder')}
               />
               <p className="text-xs text-gray-500 mt-1">{t('passwordRequirement')}</p>
             </div>
@@ -119,7 +120,7 @@ export default function UserCreateView({ navigateTo }: Props) {
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('confirmPasswordPlaceholder') || '请再次输入密码'}
+                placeholder={t('confirmPasswordPlaceholder')}
               />
             </div>
 
@@ -133,7 +134,7 @@ export default function UserCreateView({ navigateTo }: Props) {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('enterEmailPlaceholder') || 'example@email.com'}
+                placeholder="example@email.com"
               />
             </div>
 
@@ -147,7 +148,7 @@ export default function UserCreateView({ navigateTo }: Props) {
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                placeholder={t('enterPhoneNumberPlaceholder') || '+86 138****1234'}
+                placeholder="+86 138****1234"
               />
             </div>
 
@@ -163,10 +164,10 @@ export default function UserCreateView({ navigateTo }: Props) {
                 onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
               >
-                <option value="">请选择角色</option>
-                <option value="r1">超级管理员</option>
-                <option value="r2">普通管理员</option>
-                <option value="r3">只读用户</option>
+                <option value="">{t('selectRolePlaceholder')}</option>
+                <option value="r1">{t('roleSuperAdmin')}</option>
+                <option value="r2">{t('roleGeneralAdmin')}</option>
+                <option value="r3">{t('roleReadonlyUser')}</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">{t('selectRoleHint')}</p>
             </div>

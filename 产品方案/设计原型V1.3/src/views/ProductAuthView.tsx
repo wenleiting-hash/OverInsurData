@@ -116,24 +116,29 @@ function PermToggle({ on, label, onChange }: { on: boolean; label: string; onCha
   )
 }
 
-const AUTH_STATUS: Record<AuthStatus, { label: string; color: string; bg: string; dot: string }> = {
-  active:   { label: '有效', color: C.green, bg: C.greenBg, dot: C.green },
-  expiring: { label: '即将到期', color: C.amber, bg: C.amberBg, dot: C.amber },
-  expired:  { label: '已过期', color: C.red, bg: C.redBg, dot: C.red },
-  revoked:  { label: '已撤回', color: C.muted, bg: 'rgba(193,198,215,0.18)', dot: C.mutedLight },
-  pending:  { label: '待审批', color: C.primary, bg: C.primaryLight, dot: C.primary },
+const AUTH_STATUS: Record<AuthStatus, { label: string; labelEn: string; color: string; bg: string; dot: string }> = {
+  active:   { label: '有效', labelEn: 'Active', color: C.green, bg: C.greenBg, dot: C.green },
+  expiring: { label: '即将到期', labelEn: 'Expiring Soon', color: C.amber, bg: C.amberBg, dot: C.amber },
+  expired:  { label: '已过期', labelEn: 'Expired', color: C.red, bg: C.redBg, dot: C.red },
+  revoked:  { label: '已撤回', labelEn: 'Revoked', color: C.muted, bg: 'rgba(193,198,215,0.18)', dot: C.mutedLight },
+  pending:  { label: '待审批', labelEn: 'Pending Approval', color: C.primary, bg: C.primaryLight, dot: C.primary },
 }
 
 function AuthStatusBadge({ s }: { s: AuthStatus }) {
+  const { lang } = useLang()
   const m = AUTH_STATUS[s]
   return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, color: m.color, background: m.bg }}>
-    <span style={{ width: 5, height: 5, borderRadius: '50%', background: m.dot }} />{m.label}
+    <span style={{ width: 5, height: 5, borderRadius: '50%', background: m.dot }} />{lang === 'en' ? m.labelEn : m.label}
   </span>
 }
 
 const TYPE_LABEL: Record<string, string> = { permanent: '永久授权', fixed: '固定期限', trial: '试用授权' }
+const TYPE_LABEL_EN: Record<string, string> = { permanent: 'Permanent Authorization', fixed: 'Fixed Term', trial: 'Trial Authorization' }
 const TYPE_COLOR: Record<string, string> = { permanent: C.green, fixed: C.primary, trial: C.amber }
 const CHANNEL_TYPE: Record<string, string> = { agency: '代理机构', mga: 'MGA', fmo: 'FMO', broker: '经纪公司' }
+const CHANNEL_TYPE_EN: Record<string, string> = { agency: 'Agency', mga: 'MGA', fmo: 'FMO', broker: 'Broker' }
+const PERM_OP_LABEL: Record<PermOp, string> = { quote: '报价', bind: '出单', endorse: '批改', renew: '续保', cancel: '退保' }
+const PERM_OP_LABEL_EN: Record<PermOp, string> = { quote: 'Quote', bind: 'Issue Policy', endorse: 'Endorsement', renew: 'Renewal', cancel: 'Cancellation' }
 
 const TH: React.CSSProperties = { padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', background: 'rgba(236,237,249,0.5)', borderBottom: `0.5px solid ${C.borderMid}`, whiteSpace: 'nowrap' }
 const TD: React.CSSProperties = { padding: '10px 12px', borderBottom: `0.5px solid ${C.border}`, verticalAlign: 'middle', fontSize: 12.5 }
@@ -143,6 +148,7 @@ function fmt(n: number) { return n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : `$${(n
 // ─── Auth List Tab ────────────────────────────────────────────────────────────
 
 function AuthListTab() {
+  const { lang } = useLang()
   const [search, setSearch] = useState('')
   const [statusF, setStatusF] = useState('all')
   const [lineF, setLineF] = useState('all')
@@ -167,10 +173,10 @@ function AuthListTab() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
         {[
-          { label: '有效授权', v: stats.active, color: C.green, icon: <CheckCircle2 size={16} color={C.green} /> },
-          { label: '即将到期', v: stats.expiring, color: C.amber, icon: <Clock size={16} color={C.amber} /> },
-          { label: '已过期', v: stats.expired, color: C.red, icon: <XCircle size={16} color={C.red} /> },
-          { label: '待审批', v: stats.pending, color: C.primary, icon: <AlertCircle size={16} color={C.primary} /> },
+          { label: lang === 'en' ? 'Active Authorizations' : '有效授权', v: stats.active, color: C.green, icon: <CheckCircle2 size={16} color={C.green} /> },
+          { label: lang === 'en' ? 'Expiring Soon' : '即将到期', v: stats.expiring, color: C.amber, icon: <Clock size={16} color={C.amber} /> },
+          { label: lang === 'en' ? 'Expired' : '已过期', v: stats.expired, color: C.red, icon: <XCircle size={16} color={C.red} /> },
+          { label: lang === 'en' ? 'Pending Approval' : '待审批', v: stats.pending, color: C.primary, icon: <AlertCircle size={16} color={C.primary} /> },
         ].map(s => (
           <GCard key={s.label} style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: `${s.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</div>
@@ -184,7 +190,9 @@ function AuthListTab() {
 
       {stats.expiring > 0 && (
         <div style={{ padding: '10px 14px', borderRadius: 10, background: C.amberBg, border: `0.5px solid ${C.amberBorder}`, fontSize: 12.5, color: C.amber, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-          <AlertTriangle size={13} />{stats.expiring} 条产品授权即将到期，请及时续期以避免渠道出单中断。
+          <AlertTriangle size={13} />{lang === 'en'
+            ? `${stats.expiring} product authorization${stats.expiring === 1 ? ' is' : 's are'} expiring soon. Please renew in time to avoid disruption to channel policy issuance.`
+            : `${stats.expiring} 条产品授权即将到期，请及时续期以避免渠道出单中断。`}
         </div>
       )}
 
@@ -193,25 +201,28 @@ function AuthListTab() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, background: C.bg, flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', flex: 1 }}>
               <Search size={13} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: C.muted, pointerEvents: 'none' }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索渠道名称、产品…" style={{ width: '100%', padding: '6px 10px 6px 27px', background: 'rgba(255,255,255,0.5)', border: `0.5px solid ${C.border}`, borderRadius: 8, fontSize: 12.5, color: C.text, outline: 'none', fontFamily: 'inherit' }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder={lang === 'en' ? 'Search channel name, product…' : '搜索渠道名称、产品…'} style={{ width: '100%', padding: '6px 10px 6px 27px', background: 'rgba(255,255,255,0.5)', border: `0.5px solid ${C.border}`, borderRadius: 8, fontSize: 12.5, color: C.text, outline: 'none', fontFamily: 'inherit' }} />
             </div>
             {[
-              { value: statusF, set: setStatusF, opts: [['all','全部状态'], ...Object.entries(AUTH_STATUS).map(([k,v]) => [k, v.label])] },
-              { value: lineF, set: setLineF, opts: [['all','全部业务线'], ...LINES.map(l => [l, l])] },
+              { value: statusF, set: setStatusF, opts: [['all', lang === 'en' ? 'All Statuses' : '全部状态'], ...Object.entries(AUTH_STATUS).map(([k,v]) => [k, lang === 'en' ? v.labelEn : v.label])] },
+              { value: lineF, set: setLineF, opts: [['all', lang === 'en' ? 'All Lines' : '全部业务线'], ...LINES.map(l => [l, l])] },
             ].map((s, i) => (
               <select key={i} value={s.value} onChange={e => s.set(e.target.value)} style={{ padding: '6px 10px', background: 'rgba(255,255,255,0.5)', border: `0.5px solid ${C.border}`, borderRadius: 8, fontSize: 12, color: C.textSoft, outline: 'none', fontFamily: 'inherit' }}>
                 {s.opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             ))}
-            <PrimaryBtn onClick={() => setShowModal(true)} sm><Plus size={13} />新增授权</PrimaryBtn>
-            <GhostBtn sm><Download size={12} />导出清单</GhostBtn>
+            <PrimaryBtn onClick={() => setShowModal(true)} sm><Plus size={13} />{lang === 'en' ? 'New Authorization' : '新增授权'}</PrimaryBtn>
+            <GhostBtn sm><Download size={12} />{lang === 'en' ? 'Export List' : '导出清单'}</GhostBtn>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['渠道', '产品 / 保险公司', '授权州', '类型', '状态', '月度限额', '限额使用率', '到期日', ''].map(h => <th key={h} style={TH}>{h}</th>)}
+                  {(lang === 'en'
+                    ? ['Channel', 'Product / Insurer', 'Authorized States', 'Type', 'Status', 'Monthly Cap', 'Cap Utilization', 'Expiry', '']
+                    : ['渠道', '产品 / 保险公司', '授权州', '类型', '状态', '月度限额', '限额使用率', '到期日', '']
+                  ).map(h => <th key={h} style={TH}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -223,7 +234,7 @@ function AuthListTab() {
                     <tr key={a.id} onClick={() => setSelected(isSel ? null : a)} style={{ background: isSel ? C.primaryLight : 'transparent', cursor: 'pointer' }}>
                       <td style={TD}>
                         <div style={{ fontWeight: 700, fontSize: 12.5, color: C.text }}>{a.channelName}</div>
-                        <div style={{ fontSize: 11, color: C.muted }}>{CHANNEL_TYPE[a.channelType]}</div>
+                        <div style={{ fontSize: 11, color: C.muted }}>{lang === 'en' ? CHANNEL_TYPE_EN[a.channelType] : CHANNEL_TYPE[a.channelType]}</div>
                       </td>
                       <td style={TD}>
                         <div style={{ fontWeight: 600, fontSize: 12.5, color: C.text }}>{a.product}</div>
@@ -234,9 +245,9 @@ function AuthListTab() {
                           {a.states.map(s => <span key={s} style={{ ...mono, fontSize: 10, background: C.primaryLight, color: C.primary, borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>{s}</span>)}
                         </div>
                       </td>
-                      <td style={TD}><Badge label={TYPE_LABEL[a.authType]} color={TYPE_COLOR[a.authType]} bg={`${TYPE_COLOR[a.authType]}12`} /></td>
+                      <td style={TD}><Badge label={lang === 'en' ? TYPE_LABEL_EN[a.authType] : TYPE_LABEL[a.authType]} color={TYPE_COLOR[a.authType]} bg={`${TYPE_COLOR[a.authType]}12`} /></td>
                       <td style={TD}><AuthStatusBadge s={a.status} /></td>
-                      <td style={{ ...TD, ...mono, fontSize: 12, color: a.quotaMonthly ? C.text : C.mutedLight }}>{a.quotaMonthly ? fmt(a.quotaMonthly) : '不限'}</td>
+                      <td style={{ ...TD, ...mono, fontSize: 12, color: a.quotaMonthly ? C.text : C.mutedLight }}>{a.quotaMonthly ? fmt(a.quotaMonthly) : (lang === 'en' ? 'No Limit' : '不限')}</td>
                       <td style={TD}>
                         {a.quotaMonthly ? (
                           <div style={{ minWidth: 80 }}>
@@ -250,7 +261,7 @@ function AuthListTab() {
                           </div>
                         ) : <span style={{ fontSize: 11.5, color: C.mutedLight }}>—</span>}
                       </td>
-                      <td style={{ ...TD, ...mono, fontSize: 12, color: a.status === 'expired' ? C.red : a.status === 'expiring' ? C.amber : C.textSoft }}>{a.expiryDate ?? '永久'}</td>
+                      <td style={{ ...TD, ...mono, fontSize: 12, color: a.status === 'expired' ? C.red : a.status === 'expiring' ? C.amber : C.textSoft }}>{a.expiryDate ?? (lang === 'en' ? 'Permanent' : '永久')}</td>
                       <td style={TD}>
                         <div style={{ display: 'flex', gap: 2 }}>
                           <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: '3px 4px' }} onClick={e => { e.stopPropagation(); setSelected(a) }}><Eye size={12} /></button>
@@ -265,7 +276,9 @@ function AuthListTab() {
             </table>
           </div>
           <div style={{ padding: '7px 14px', borderTop: `0.5px solid ${C.border}`, fontSize: 11.5, color: C.mutedLight }}>
-            共 {filtered.length} 条授权记录
+            {lang === 'en'
+              ? `${filtered.length} authorization record${filtered.length === 1 ? '' : 's'}`
+              : `共 ${filtered.length} 条授权记录`}
           </div>
         </GCard>
 
@@ -282,14 +295,14 @@ function AuthListTab() {
             <div style={{ padding: '12px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                 <AuthStatusBadge s={selected.status} />
-                <Badge label={TYPE_LABEL[selected.authType]} color={TYPE_COLOR[selected.authType]} bg={`${TYPE_COLOR[selected.authType]}12`} />
+                <Badge label={lang === 'en' ? TYPE_LABEL_EN[selected.authType] : TYPE_LABEL[selected.authType]} color={TYPE_COLOR[selected.authType]} bg={`${TYPE_COLOR[selected.authType]}12`} />
                 <Badge label={selected.line} color={C.purple} bg={C.purpleBg} />
               </div>
               {[
-                ['渠道名称', selected.channelName],
-                ['渠道类型', CHANNEL_TYPE[selected.channelType]],
-                ['生效日期', selected.effectDate],
-                ['到期日期', selected.expiryDate ?? '永久有效'],
+                [lang === 'en' ? 'Channel Name' : '渠道名称', selected.channelName],
+                [lang === 'en' ? 'Channel Type' : '渠道类型', lang === 'en' ? CHANNEL_TYPE_EN[selected.channelType] : CHANNEL_TYPE[selected.channelType]],
+                [lang === 'en' ? 'Effective Date' : '生效日期', selected.effectDate],
+                [lang === 'en' ? 'Expiry Date' : '到期日期', selected.expiryDate ?? (lang === 'en' ? 'Permanent' : '永久有效')],
               ].map(([k, v]) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `0.5px solid ${C.border}` }}>
                   <span style={{ fontSize: 12, color: C.muted }}>{k}</span>
@@ -297,24 +310,24 @@ function AuthListTab() {
                 </div>
               ))}
               <div>
-                <div style={{ fontSize: 11, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, fontWeight: 700 }}>授权州</div>
+                <div style={{ fontSize: 11, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, fontWeight: 700 }}>{lang === 'en' ? 'Authorized States' : '授权州'}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {selected.states.map(s => <span key={s} style={{ ...mono, fontSize: 11, background: C.primaryLight, color: C.primary, borderRadius: 5, padding: '2px 6px', fontWeight: 700 }}>{s}</span>)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, fontWeight: 700 }}>操作权限</div>
+                <div style={{ fontSize: 11, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, fontWeight: 700 }}>{lang === 'en' ? 'Permissions' : '操作权限'}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                   {(['quote','bind','endorse','renew','cancel'] as PermOp[]).map(op => {
                     const on = selected.permissions.includes(op)
-                    const labels: Record<PermOp, string> = { quote: '报价', bind: '出单', endorse: '批改', renew: '续保', cancel: '退保' }
+                    const labels = lang === 'en' ? PERM_OP_LABEL_EN : PERM_OP_LABEL
                     return <span key={op} style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: on ? C.greenBg : 'rgba(193,198,215,0.15)', color: on ? C.green : C.mutedLight, border: `0.5px solid ${on ? C.greenBorder : C.border}` }}>{on ? '✓' : '✗'} {labels[op]}</span>
                   })}
                 </div>
               </div>
               {selected.quotaMonthly && (
                 <div>
-                  <div style={{ fontSize: 11, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, fontWeight: 700 }}>月度限额使用</div>
+                  <div style={{ fontSize: 11, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, fontWeight: 700 }}>{lang === 'en' ? 'Monthly Cap Usage' : '月度限额使用'}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
                     <span style={{ ...mono, fontWeight: 700, color: C.text }}>{fmt(selected.quotaUsed)}</span>
                     <span style={{ color: C.muted }}>/ {fmt(selected.quotaMonthly)}</span>
@@ -325,8 +338,8 @@ function AuthListTab() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: 7, marginTop: 4 }}>
-                <PrimaryBtn sm><Edit2 size={12} />编辑</PrimaryBtn>
-                <GhostBtn sm><Unlock size={12} />续期</GhostBtn>
+                <PrimaryBtn sm><Edit2 size={12} />{lang === 'en' ? 'Edit' : '编辑'}</PrimaryBtn>
+                <GhostBtn sm><Unlock size={12} />{lang === 'en' ? 'Renew' : '续期'}</GhostBtn>
               </div>
             </div>
           </GCard>
@@ -341,6 +354,7 @@ function AuthListTab() {
 // ─── Auth Form Modal ──────────────────────────────────────────────────────────
 
 function AuthFormModal({ onClose }: { onClose: () => void }) {
+  const { lang } = useLang()
   const [step, setStep] = useState(1)
   const [selLine, setSelLine] = useState<string[]>([])
   const [selStates, setSelStates] = useState<string[]>([])
@@ -352,15 +366,15 @@ function AuthFormModal({ onClose }: { onClose: () => void }) {
       <GCard style={{ width: 580, maxHeight: '90vh', overflowY: 'auto', background: C.surfaceHigh, borderRadius: 18, padding: '28px 32px', boxShadow: '0 24px 60px rgba(0,0,0,0.18)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 800, color: C.text, margin: 0 }}>新增产品授权</h2>
-            <p style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>步骤 {step} / {totalSteps}</p>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: C.text, margin: 0 }}>{lang === 'en' ? 'New Product Authorization' : '新增产品授权'}</h2>
+            <p style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{lang === 'en' ? `Step ${step} / ${totalSteps}` : `步骤 ${step} / ${totalSteps}`}</p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted }}><X size={16} /></button>
         </div>
 
         {/* Progress */}
         <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
-          {['选择对象与产品', '授权范围', '权限与限额'].map((s, i) => (
+          {(lang === 'en' ? ['Target & Product', 'Authorization Scope', 'Permissions & Quotas'] : ['选择对象与产品', '授权范围', '权限与限额']).map((s, i) => (
             <div key={s} style={{ flex: 1 }}>
               <div style={{ height: 3, borderRadius: 2, background: i + 1 <= step ? C.primary : C.border, transition: 'background 0.2s', marginBottom: 4 }} />
               <div style={{ fontSize: 11, color: i + 1 <= step ? C.primary : C.mutedLight, fontWeight: i + 1 === step ? 700 : 400 }}>{s}</div>
@@ -371,23 +385,26 @@ function AuthFormModal({ onClose }: { onClose: () => void }) {
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>授权对象 *</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Authorization Target *' : '授权对象 *'}</label>
               <select style={{ width: '100%', padding: '8px 11px', borderRadius: 8, border: `0.5px solid ${C.border}`, fontSize: 13, background: 'rgba(255,255,255,0.65)', fontFamily: 'inherit', outline: 'none' }}>
-                <option value="">选择渠道组织…</option>
+                <option value="">{lang === 'en' ? 'Select channel organization…' : '选择渠道组织…'}</option>
                 {['Pacific Coast Insurance Agency','SunState MGA Partners','Mountain West FMO','Northeast Brokers Group','CalFirst Agents Network'].map(n => <option key={n}>{n}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>保险公司 *</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Insurer *' : '保险公司 *'}</label>
               <select style={{ width: '100%', padding: '8px 11px', borderRadius: 8, border: `0.5px solid ${C.border}`, fontSize: 13, background: 'rgba(255,255,255,0.65)', fontFamily: 'inherit', outline: 'none' }}>
-                <option value="">选择保险公司…</option>
+                <option value="">{lang === 'en' ? 'Select insurer…' : '选择保险公司…'}</option>
                 {INSURERS.map(i => <option key={i}>{i}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>授权范围</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>{lang === 'en' ? 'Authorization Scope' : '授权范围'}</label>
               <div style={{ display: 'flex', gap: 6 }}>
-                {[['all-lines', '全部业务线'], ['by-line', '指定业务线'], ['by-product', '指定产品']].map(([v, l]) => (
+                {(lang === 'en'
+                  ? [['all-lines', 'All Lines'], ['by-line', 'Specific Lines'], ['by-product', 'Specific Products']]
+                  : [['all-lines', '全部业务线'], ['by-line', '指定业务线'], ['by-product', '指定产品']]
+                ).map(([v, l]) => (
                   <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: C.primaryLight, color: C.primary, border: `0.5px solid ${C.primaryBorder}` }}>
                     <input type="radio" name="scope" value={v} style={{ accentColor: C.primary }} defaultChecked={v === 'all-lines'} />{l}
                   </label>
@@ -395,7 +412,7 @@ function AuthFormModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>业务线（可多选）</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>{lang === 'en' ? 'Lines (multi-select)' : '业务线（可多选）'}</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {LINES.map(l => {
                   const on = selLine.includes(l)
@@ -409,18 +426,18 @@ function AuthFormModal({ onClose }: { onClose: () => void }) {
         {step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>授权类型</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>{lang === 'en' ? 'Authorization Type' : '授权类型'}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {(['permanent','fixed','trial'] as const).map(t => (
                   <button key={t} onClick={() => setAuthType(t)} style={{ flex: 1, padding: '8px', borderRadius: 9, border: `1.5px solid ${authType === t ? C.primary : C.border}`, background: authType === t ? C.primaryLight : 'transparent', color: authType === t ? C.primary : C.textSoft, cursor: 'pointer', fontSize: 12.5, fontWeight: 700 }}>
-                    {TYPE_LABEL[t]}
+                    {lang === 'en' ? TYPE_LABEL_EN[t] : TYPE_LABEL[t]}
                   </button>
                 ))}
               </div>
             </div>
             {(authType === 'fixed' || authType === 'trial') && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {['生效日期 *', '到期日期 *'].map(l => (
+                {(lang === 'en' ? ['Effective Date *', 'Expiry Date *'] : ['生效日期 *', '到期日期 *']).map(l => (
                   <div key={l}>
                     <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>{l}</label>
                     <input type="date" style={{ width: '100%', padding: '8px 11px', borderRadius: 8, border: `0.5px solid ${C.border}`, fontSize: 13, background: 'rgba(255,255,255,0.65)', fontFamily: 'inherit', outline: 'none' }} />
@@ -429,7 +446,7 @@ function AuthFormModal({ onClose }: { onClose: () => void }) {
               </div>
             )}
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>授权州（可多选）</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>{lang === 'en' ? 'Authorized States (multi-select)' : '授权州（可多选）'}</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                 {STATES_US.map(s => {
                   const on = selStates.includes(s)
@@ -443,47 +460,53 @@ function AuthFormModal({ onClose }: { onClose: () => void }) {
         {step === 3 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>操作权限配置</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 8 }}>{lang === 'en' ? 'Permission Configuration' : '操作权限配置'}</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {([['quote', '报价权限'],['bind', '出单权限'],['endorse','批改权限'],['renew','续保权限'],['cancel','退保权限']] as [PermOp, string][]).map(([op, label]) => (
+                {((lang === 'en'
+                  ? [['quote', 'Quote'],['bind', 'Issue Policy'],['endorse','Endorsement'],['renew','Renewal'],['cancel','Cancellation']]
+                  : [['quote', '报价权限'],['bind', '出单权限'],['endorse','批改权限'],['renew','续保权限'],['cancel','退保权限']]
+                ) as [PermOp, string][]).map(([op, label]) => (
                   <PermToggle key={op} on={true} label={label} onChange={() => {}} />
                 ))}
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {[['单笔出单限额', '$'], ['月度累计限额', '$'], ['季度累计限额', '$']].map(([l, prefix]) => (
+              {(lang === 'en'
+                ? [['Per-Policy Limit', '$'], ['Monthly Cumulative Limit', '$'], ['Quarterly Cumulative Limit', '$']]
+                : [['单笔出单限额', '$'], ['月度累计限额', '$'], ['季度累计限额', '$']]
+              ).map(([l, prefix]) => (
                 <div key={l}>
-                  <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>{l}（可选）</label>
+                  <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>{l}{lang === 'en' ? ' (optional)' : '（可选）'}</label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', ...mono, fontSize: 13, color: C.muted }}>{prefix}</span>
-                    <input type="number" placeholder="不限" style={{ width: '100%', padding: '8px 11px 8px 20px', borderRadius: 8, border: `0.5px solid ${C.border}`, fontSize: 13, background: 'rgba(255,255,255,0.65)', fontFamily: 'JetBrains Mono, monospace', outline: 'none' }} />
+                    <input type="number" placeholder={lang === 'en' ? 'No limit' : '不限'} style={{ width: '100%', padding: '8px 11px 8px 20px', borderRadius: 8, border: `0.5px solid ${C.border}`, fontSize: 13, background: 'rgba(255,255,255,0.65)', fontFamily: 'JetBrains Mono, monospace', outline: 'none' }} />
                   </div>
                 </div>
               ))}
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>超限处理规则</label>
+                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Over-Limit Rule' : '超限处理规则'}</label>
                 <select style={{ width: '100%', padding: '8px 11px', borderRadius: 8, border: `0.5px solid ${C.border}`, fontSize: 13, background: 'rgba(255,255,255,0.65)', fontFamily: 'inherit', outline: 'none' }}>
-                  <option value="manual-uw">转人工核保</option>
-                  <option value="block">禁止出单</option>
-                  <option value="supervisor">需主管审批</option>
+                  <option value="manual-uw">{lang === 'en' ? 'Manual Underwriting' : '转人工核保'}</option>
+                  <option value="block">{lang === 'en' ? 'Block Issuance' : '禁止出单'}</option>
+                  <option value="supervisor">{lang === 'en' ? 'Supervisor Approval' : '需主管审批'}</option>
                 </select>
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>权限继承</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Permission Inheritance' : '权限继承'}</label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: C.textSoft }}>
                 <input type="checkbox" defaultChecked style={{ accentColor: C.primary }} />
-                子机构/代理人自动继承本授权配置的权限和限额
+                {lang === 'en' ? 'Sub-organizations/agents automatically inherit the permissions and quotas of this authorization' : '子机构/代理人自动继承本授权配置的权限和限额'}
               </label>
             </div>
           </div>
         )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-          {step > 1 ? <GhostBtn onClick={() => setStep(s => s - 1)}>← 上一步</GhostBtn> : <span />}
+          {step > 1 ? <GhostBtn onClick={() => setStep(s => s - 1)}>{lang === 'en' ? '← Back' : '← 上一步'}</GhostBtn> : <span />}
           {step < totalSteps
-            ? <PrimaryBtn onClick={() => setStep(s => s + 1)}>下一步 →</PrimaryBtn>
-            : <PrimaryBtn onClick={onClose}><Check size={13} />提交授权</PrimaryBtn>
+            ? <PrimaryBtn onClick={() => setStep(s => s + 1)}>{lang === 'en' ? 'Next →' : '下一步 →'}</PrimaryBtn>
+            : <PrimaryBtn onClick={onClose}><Check size={13} />{lang === 'en' ? 'Submit Authorization' : '提交授权'}</PrimaryBtn>
           }
         </div>
       </GCard>
@@ -494,10 +517,11 @@ function AuthFormModal({ onClose }: { onClose: () => void }) {
 // ─── Permission Config Tab ────────────────────────────────────────────────────
 
 function PermConfigTab() {
+  const { lang } = useLang()
   const [selected, setSelected] = useState<PermConfig | null>(permConfigs[0])
   const [perms, setPerms] = useState(selected?.ops ?? { quote: true, bind: true, endorse: false, renew: true, cancel: false })
 
-  const OP_LABELS: Record<PermOp, string> = { quote: '报价', bind: '出单', endorse: '批改', renew: '续保', cancel: '退保' }
+  const OP_LABELS = lang === 'en' ? PERM_OP_LABEL_EN : PERM_OP_LABEL
 
   const matrixData = [
     { channel: 'Pacific Coast', product: 'Personal Auto Preferred', insurer: 'Pacific Mutual', ca: '✓✓✓✓—', or: '✓✓✓✓—', wa: '✓✓✓✓—', tx: '—', fl: '—' },
@@ -512,14 +536,14 @@ function PermConfigTab() {
       <GCard style={{ overflow: 'hidden' }}>
         <div style={{ padding: '12px 14px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
           <Zap size={14} color={C.primary} />
-          <span style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>权限矩阵视图</span>
-          <span style={{ fontSize: 11.5, color: C.muted, marginLeft: 4 }}>渠道 × 产品 × 州 的权限分布</span>
+          <span style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>{lang === 'en' ? 'Permission Matrix View' : '权限矩阵视图'}</span>
+          <span style={{ fontSize: 11.5, color: C.muted, marginLeft: 4 }}>{lang === 'en' ? 'Permission distribution across Channel × Product × State' : '渠道 × 产品 × 州 的权限分布'}</span>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['渠道', '产品', '保险公司', 'CA', 'OR', 'WA', 'TX', 'FL'].map(h => <th key={h} style={TH}>{h}</th>)}
+                {(lang === 'en' ? ['Channel', 'Product', 'Insurer', 'CA', 'OR', 'WA', 'TX', 'FL'] : ['渠道', '产品', '保险公司', 'CA', 'OR', 'WA', 'TX', 'FL']).map(h => <th key={h} style={TH}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -539,14 +563,16 @@ function PermConfigTab() {
           </table>
         </div>
         <div style={{ padding: '8px 14px', borderTop: `0.5px solid ${C.border}`, fontSize: 11, color: C.mutedLight, display: 'flex', gap: 12 }}>
-          <span>图例：字母顺序 = 报价 出单 批改 续保 退保 · ✓ = 已授权 · — = 未授权 / 不适用</span>
+          <span>{lang === 'en'
+            ? 'Legend: order = Quote · Issue Policy · Endorsement · Renewal · Cancellation · ✓ = Granted · — = Not granted / N/A'
+            : '图例：字母顺序 = 报价 出单 批改 续保 退保 · ✓ = 已授权 · — = 未授权 / 不适用'}</span>
         </div>
       </GCard>
 
       {/* Config editor */}
       <div style={{ display: 'flex', gap: 14 }}>
         <GCard style={{ width: 260, flexShrink: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '10px 12px', borderBottom: `0.5px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.text }}>渠道 / 产品 选择</div>
+          <div style={{ padding: '10px 12px', borderBottom: `0.5px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.text }}>{lang === 'en' ? 'Channel / Product Selection' : '渠道 / 产品 选择'}</div>
           {permConfigs.map((pc, i) => {
             const isSel = selected === pc
             return (
@@ -566,7 +592,7 @@ function PermConfigTab() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>操作权限</div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{lang === 'en' ? 'Permissions' : '操作权限'}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {(Object.keys(perms) as PermOp[]).map(op => (
                   <PermToggle key={op} on={perms[op]} label={OP_LABELS[op]} onChange={v => setPerms(prev => ({ ...prev, [op]: v }))} />
@@ -575,19 +601,25 @@ function PermConfigTab() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 20 }}>
-              {[['单笔限额', selected.singleLimit], ['月度限额', selected.monthlyLimit], ['季度限额', selected.quarterlyLimit]].map(([l, v]) => (
+              {(lang === 'en'
+                ? [['Per-Policy Limit', selected.singleLimit], ['Monthly Limit', selected.monthlyLimit], ['Quarterly Limit', selected.quarterlyLimit]]
+                : [['单笔限额', selected.singleLimit], ['月度限额', selected.monthlyLimit], ['季度限额', selected.quarterlyLimit]]
+              ).map(([l, v]) => (
                 <div key={l as string}>
                   <div style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, marginBottom: 6 }}>{l as string}</div>
-                  <div style={{ ...mono, fontSize: 13, fontWeight: 700, color: v ? C.text : C.mutedLight }}>{v ? fmt(v as number) : '不限'}</div>
+                  <div style={{ ...mono, fontSize: 13, fontWeight: 700, color: v ? C.text : C.mutedLight }}>{v ? fmt(v as number) : (lang === 'en' ? 'No Limit' : '不限')}</div>
                   <div style={{ marginTop: 5, height: 3, background: 'rgba(193,198,215,0.25)', borderRadius: 2 }}><div style={{ width: '60%', height: '100%', background: C.primary, borderRadius: 2 }} /></div>
                 </div>
               ))}
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, marginBottom: 8 }}>超限处理规则</div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, marginBottom: 8 }}>{lang === 'en' ? 'Over-Limit Rule' : '超限处理规则'}</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                {[['manual-uw', '转人工核保'],['block','禁止出单'],['supervisor','需主管审批']].map(([v, l]) => {
+                {(lang === 'en'
+                  ? [['manual-uw', 'Manual Underwriting'],['block','Block Issuance'],['supervisor','Supervisor Approval']]
+                  : [['manual-uw', '转人工核保'],['block','禁止出单'],['supervisor','需主管审批']]
+                ).map(([v, l]) => {
                   const on = selected.overLimitRule === v
                   return <span key={v} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: on ? C.amberBg : 'rgba(255,255,255,0.4)', color: on ? C.amber : C.textSoft, border: `0.5px solid ${on ? C.amberBorder : C.border}` }}>{l}</span>
                 })}
@@ -595,8 +627,8 @@ function PermConfigTab() {
             </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <PrimaryBtn><Check size={13} />保存配置</PrimaryBtn>
-              <GhostBtn sm>提交审批</GhostBtn>
+              <PrimaryBtn><Check size={13} />{lang === 'en' ? 'Save Configuration' : '保存配置'}</PrimaryBtn>
+              <GhostBtn sm>{lang === 'en' ? 'Submit for Approval' : '提交审批'}</GhostBtn>
             </div>
           </GCard>
         )}
@@ -615,8 +647,8 @@ export default function ProductAuthView({ navigateTo: _nav }: Props) {
   const title = lang === 'en' ? 'Product Authorization & Binding Authority' : '渠道产品授权与出单权限管理'
   const sub = lang === 'en' ? 'Manage product sales authorizations and operational permissions for channels' : '管理渠道产品销售授权及出单操作权限与限额'
   const tabs = [
-    { id: 'auth' as const, label: lang === 'en' ? '10.1 Product Authorization' : '10.1 产品资源授权', icon: <Shield size={13} /> },
-    { id: 'perm' as const, label: lang === 'en' ? '10.2 Permissions & Quotas' : '10.2 出单权限与限额', icon: <Lock size={13} /> },
+    { id: 'auth' as const, label: lang === 'en' ? 'Product Authorization' : '产品资源授权', icon: <Shield size={13} /> },
+    { id: 'perm' as const, label: lang === 'en' ? 'Permissions & Quotas' : '出单权限与限额', icon: <Lock size={13} /> },
   ]
 
   return (
@@ -627,8 +659,8 @@ export default function ProductAuthView({ navigateTo: _nav }: Props) {
           <p style={{ fontSize: 12.5, color: C.muted, marginTop: 4 }}>{sub}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <GhostBtn><Upload size={12} />导入授权清单</GhostBtn>
-          <GhostBtn><Download size={12} />导出授权清单</GhostBtn>
+          <GhostBtn><Upload size={12} />{lang === 'en' ? 'Import Authorization List' : '导入授权清单'}</GhostBtn>
+          <GhostBtn><Download size={12} />{lang === 'en' ? 'Export Authorization List' : '导出授权清单'}</GhostBtn>
         </div>
       </div>
 

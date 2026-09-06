@@ -14,16 +14,16 @@ interface Props {
 }
 
 const STEPS = [
-  { id: 'basic', label: (t: any) => t('insurer-form.steps.basicInfo.label'), desc: (t: any) => t('insurer-form.steps.basicInfo.desc'), icon: Building2 },
-  { id: 'regulatory', label: (t: any) => t('insurer-form.steps.regulatory.label'), desc: (t: any) => t('insurer-form.steps.regulatory.desc'), icon: MapPin },
-  { id: 'ratings', label: (t: any) => t('insurer-form.steps.ratings.label'), desc: (t: any) => t('insurer-form.steps.ratings.desc'), icon: Star },
-  { id: 'settlement', label: (t: any) => t('insurer-form.steps.settlement.label'), desc: (t: any) => t('insurer-form.steps.settlement.desc'), icon: DollarSign },
-  { id: 'documents', label: (t: any) => t('insurer-form.steps.documents.label'), desc: (t: any) => t('insurer-form.steps.documents.desc'), icon: FileText },
+  { id: 'basic', label: (t: any) => t('steps.basicInfo.label'), desc: (t: any) => t('steps.basicInfo.desc'), icon: Building2 },
+  { id: 'regulatory', label: (t: any) => t('steps.regulatory.label'), desc: (t: any) => t('steps.regulatory.desc'), icon: MapPin },
+  { id: 'ratings', label: (t: any) => t('steps.ratings.label'), desc: (t: any) => t('steps.ratings.desc'), icon: Star },
+  { id: 'settlement', label: (t: any) => t('steps.settlement.label'), desc: (t: any) => t('steps.settlement.desc'), icon: DollarSign },
+  { id: 'documents', label: (t: any) => t('steps.documents.label'), desc: (t: any) => t('steps.documents.desc'), icon: FileText },
 ]
 
 const REGIONS = ['Northeast', 'Southeast', 'Midwest', 'West']
 const LINES_OF_BUSINESS = ['Auto', 'Home', 'Life', 'Health', 'Commercial', 'P&C', 'Cyber', 'Specialty', 'D&O', 'E&O', 'E&S', 'Marine', 'Workers Comp']
-const COOP_TYPES = ['直接代理', 'MGA（Managing General Agent）', '批发经纪', '推荐合作', '聚合平台合作']
+const COOP_TYPES = ['direct', 'mga', 'wholesale', 'independent', 'platform']
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
 const AM_BEST_RATINGS = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'B++', 'B+', 'B', 'C++', 'C', 'D', 'E', 'F', 'NR']
 const SP_RATINGS = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'BBB+', 'BBB', 'BBB-', 'BB+', 'BB', 'BB-', 'B+', 'B', 'B-', 'CCC+', 'CCC', 'CCC-', 'CC', 'C', 'D']
@@ -62,6 +62,13 @@ function Grid({ cols = 2, children }: { cols?: number; children: React.ReactNode
 
 export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
   const { t } = useTranslation('insurer-form')
+  const coopTypeLabel: Record<string, string> = {
+    direct: t('values.coopDirect'),
+    mga: t('values.coopMGA'),
+    wholesale: t('values.coopWholesale'),
+    independent: t('values.coopIndependent'),
+    platform: t('values.coopPlatform'),
+  }
   const existing = carrierId ? insurers.find(i => i.carrierId === carrierId) : undefined
   const [step, setStep] = useState(0)
   const [saved, setSaved] = useState(false)
@@ -243,7 +250,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
               </Section>
 
               <Section title={t('sections.businessLines')}>
-                <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 10 }}>选择主营业务线（可多选）</div>
+                <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 10 }}>{t('fields.linesHint')}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {LINES_OF_BUSINESS.map(line => (
                     <button
@@ -285,7 +292,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                   <div>
                     <FieldLabel label={t('fields.cooperationType')} required />
                     <select {...INPUT} value={form.coopType} onChange={e => set('coopType', e.target.value)}>
-                      {COOP_TYPES.map(t => <option key={t}>{t}</option>)}
+                      {COOP_TYPES.map(k => <option key={k} value={k}>{coopTypeLabel[k]}</option>)}
                     </select>
                   </div>
                 </Grid>
@@ -302,7 +309,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                   <div>
                     <FieldLabel label={t('fields.state')} required />
                     <select {...INPUT} value={form.state} onChange={e => set('state', e.target.value)}>
-                      <option value="">选择州</option>
+                      <option value="">{t('fields.selectState')}</option>
                       {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
@@ -450,7 +457,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                   transition: 'border-color 120ms, background 120ms',
                 }}
                 onClick={() => {
-                  const fake = { name: `合作协议_Draft_${Date.now()}.pdf`, type: '主合作协议', size: '2.1 MB' }
+                  const fake = { name: t('documents.fakeFileName', { ts: Date.now() }), type: t('documents.docs.mainAgreement'), size: '2.1 MB' }
                   set('uploadedFiles', [...form.uploadedFiles, fake])
                 }}
               >
@@ -489,7 +496,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                         : <button className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => {
                             const fake = { name: `${doc.type}_${Date.now()}.pdf`, type: doc.type, size: '1.2 MB' }
                             set('uploadedFiles', [...form.uploadedFiles, fake])
-                          }}>上传</button>
+                          }}>{t('documents.uploadBtn')}</button>
                       }
                     </div>
                   )

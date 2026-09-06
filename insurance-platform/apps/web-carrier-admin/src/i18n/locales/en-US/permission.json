@@ -1,13 +1,12 @@
 {
   "title": "Permission Management",
-  "description": "Manage system roles, users and access control policies",
+  "description": "Description",
   "roleList": "Role List",
   "createRole": "Create Role",
   "editRole": "Edit Role",
   "deleteRole": "Delete Role",
   "roleName": "Role Name",
   "roleCode": "Role Code",
-  "description": "Description",
   "permissions": "Permissions",
   "users": "User Management",
   "assignRole": "Assign Role",
@@ -33,5 +32,400 @@
   "operationLogs": "Operation Logs",
   "loginLogs": "Login Logs",
   "searchPlaceholder": "Search...",
-  "actions": "Actions"
+  "actions": "Actions",
+  "view": {
+    "title": "User Permission Management",
+    "subtitle": "{roles} roles · {users} users · Fine-grained control across function / data / operation permissions",
+    "copyRole": "Copy Role",
+    "createRole": "Create Role",
+    "saveChanges": "Save Changes",
+    "savedToast": "Permission configuration saved",
+    "roleList": "Role List",
+    "systemBadge": "System",
+    "systemBuiltIn": "Built-in",
+    "assignedUsers": "Assigned Users",
+    "tabs": {
+      "func": "Function Permissions",
+      "data": "Data Permissions",
+      "op": "Operation Permissions",
+      "compare": "Role Comparison"
+    },
+    "sections": {
+      "func": "Function Permissions",
+      "data": "Data Permissions",
+      "dataDesc": "Control the data scope this role can access and view",
+      "op": "Operation Permissions",
+      "opDescPrefix": "Controls whether sensitive operations can be performed. ",
+      "approvalTerm": "“Approval”",
+      "opDescSuffix": " means the operation must go through an approval workflow before execution.",
+      "highRiskWarning": "This role has high-risk operation permissions, please assign with caution"
+    },
+    "funcTree": {
+      "insurer": "Insurer Management",
+      "insurer_list": "Insurer List",
+      "insurer_detail": "Insurer Details",
+      "insurer_create": "Create Insurer",
+      "insurer_edit": "Edit Insurer",
+      "insurer_product": "Product Management",
+      "insurer_finance": "Finance & Settlement",
+      "insurer_analytics": "Data Analytics",
+      "channel": "Channel Management",
+      "channel_list": "Channel List",
+      "channel_create": "Create Channel",
+      "channel_hierarchy": "Channel Hierarchy",
+      "channel_onboarding": "Onboarding",
+      "channel_portal": "Channel Portal",
+      "channel_analytics": "Channel Analytics",
+      "commission": "Commission Management",
+      "commission_scheme": "Commission Schemes",
+      "commission_settlement": "Commission Settlement",
+      "commission_auth": "Product Authorization",
+      "report": "Reports & Analytics",
+      "report_dashboard": "Overview Dashboard",
+      "report_performance": "Performance Reports",
+      "report_export": "Data Export",
+      "system": "System Management",
+      "system_users": "User Management",
+      "system_roles": "Roles & Permissions",
+      "system_i18n": "Content Management",
+      "system_audit": "Audit Logs"
+    },
+    "dataScope": {
+      "insurer_data": {
+        "label": "Insurer Data",
+        "desc": "Range of insurers viewable"
+      },
+      "channel_data": {
+        "label": "Channel Data",
+        "desc": "Channels and sub-channels viewable"
+      },
+      "commission_data": {
+        "label": "Commission & Settlement Data",
+        "desc": "Commission schemes and settlement records"
+      },
+      "policy_data": {
+        "label": "Policy Data",
+        "desc": "Policy list and details"
+      },
+      "finance_data": {
+        "label": "Finance Data",
+        "desc": "Payment, reconciliation and invoice records"
+      },
+      "report_data": {
+        "label": "Analytics & Report Data",
+        "desc": "KPIs, trends and export data"
+      },
+      "user_data": {
+        "label": "User & Operation Logs",
+        "desc": "Operation records and login logs"
+      }
+    },
+    "dataLevel": {
+      "full": {
+        "label": "All",
+        "desc": "All records"
+      },
+      "region": {
+        "label": "Region",
+        "desc": "Own region only"
+      },
+      "team": {
+        "label": "Team",
+        "desc": "Own team only"
+      },
+      "own": {
+        "label": "Self",
+        "desc": "Created by or assigned to self"
+      },
+      "none": {
+        "label": "Hidden",
+        "desc": "No access"
+      }
+    },
+    "opModule": {
+      "insurer": "Insurer",
+      "channel": "Channel",
+      "commission": "Commission",
+      "product": "Product",
+      "report": "Report",
+      "system": "System"
+    },
+    "opPerm": {
+      "insurer_disable": {
+        "label": "Disable Insurer",
+        "desc": "Set insurer status to disabled"
+      },
+      "insurer_delete": {
+        "label": "Delete Insurer",
+        "desc": "Permanently delete insurer and related data"
+      },
+      "channel_delete": {
+        "label": "Delete Channel",
+        "desc": "Delete channel and all its sub-channels"
+      },
+      "channel_suspend": {
+        "label": "Suspend Channel",
+        "desc": "Suspend all business of the channel"
+      },
+      "channel_approve": {
+        "label": "Approve Channel Onboarding",
+        "desc": "Approve or reject channel onboarding applications"
+      },
+      "commission_approve": {
+        "label": "Approve Commission Scheme",
+        "desc": "Approve commission rate changes"
+      },
+      "commission_pay": {
+        "label": "Initiate Settlement Payout",
+        "desc": "Trigger commission settlement transfer"
+      },
+      "product_publish": {
+        "label": "Publish / Unpublish Product",
+        "desc": "Change product status"
+      },
+      "report_export": {
+        "label": "Batch Export Data",
+        "desc": "Export more than 10,000 records"
+      },
+      "user_resetpwd": {
+        "label": "Reset User Password",
+        "desc": "Force-reset other users' passwords"
+      },
+      "user_deactivate": {
+        "label": "Deactivate Account",
+        "desc": "Prevent the user from logging in"
+      },
+      "role_edit": {
+        "label": "Edit Role Permissions",
+        "desc": "Modify permission configuration of any role"
+      }
+    },
+    "permLevel": {
+      "full": "Full",
+      "view": "Read-only",
+      "own": "Self",
+      "team": "Team",
+      "region": "Region",
+      "none": "Denied"
+    },
+    "opResult": {
+      "allow": "Allow",
+      "deny": "Deny",
+      "conditional": "Approval"
+    },
+    "risk": {
+      "high": "High Risk",
+      "medium": "Medium Risk",
+      "low": "Low Risk"
+    },
+    "role": {
+      "superadmin": {
+        "name": "Super Admin",
+        "desc": "Has all permissions, can manage users and roles"
+      },
+      "ops_manager": {
+        "name": "Ops Manager",
+        "desc": "Manages insurers, channels and commissions with full data access"
+      },
+      "channel_manager": {
+        "name": "Channel Manager",
+        "desc": "Dedicated to channel management, sees own region data only"
+      },
+      "finance_analyst": {
+        "name": "Finance Analyst",
+        "desc": "Views finance and commission data, read-only access"
+      },
+      "readonly": {
+        "name": "Read-Only User",
+        "desc": "Views basic information only, no edit permissions"
+      }
+    },
+    "compare": {
+      "compare": "Compare",
+      "diffCount": "{count} differences",
+      "identical": "The two roles have identical permission configurations",
+      "permItem": "Permission Item",
+      "funcDiff": "Function Permission Differences",
+      "dataDiff": "Data Permission Differences",
+      "opDiff": "Operation Permission Differences"
+    }
+  },
+  "searchRolePlaceholder": "Search role name or code...",
+  "comingSoon": "This module is under development",
+  "userListDescription": "User list page under development",
+  "backToDashboard": "Back to Dashboard",
+  "loading": "Loading...",
+  "editUser": "Edit User",
+  "deleteUser": "Delete User",
+  "selectRolePlaceholder": "Please select a role",
+  "roleSuperAdmin": "Super Admin",
+  "roleGeneralAdmin": "General Admin",
+  "roleReadonlyUser": "Read-only User",
+  "enterRoleNamePlaceholder": "Enter role name",
+  "enterRoleCodePlaceholder": "Enter role code",
+  "enterDescriptionPlaceholder": "Enter description",
+  "saveAndContinue": "Save and continue",
+  "saveAndClose": "Save and close",
+  "pleaseEnterRoleName": "Please enter role name",
+  "pleaseEnterRoleCode": "Please enter role code",
+  "pleaseEnterUserName": "Please enter username",
+  "pleaseEnterPassword": "Please enter password",
+  "pleaseEnterEmail": "Please enter email",
+  "roleCreateSuccess": "Role created successfully!",
+  "userUpdateSuccess": "User information updated successfully!",
+  "userDeleteSuccess": "User deleted!",
+  "confirmDelete": "Are you sure you want to delete this role? This action cannot be undone.",
+  "confirmDeleteUser": "Are you sure you want to delete this user? This action cannot be undone.",
+  "confirmResetPassword": "Are you sure you want to reset this user's password? The user will receive an email notification.",
+  "passwordResetSuccess": "Password reset email has been sent!",
+  "usernameReadOnlyHint": "The username cannot be modified after creation.",
+  "changeRoleWarning": "Changing the role will affect the user's permissions. Please proceed with caution.",
+  "mfaStatus": "MFA Status",
+  "mfaEnabled": "Enabled",
+  "mfaDisabled": "Disabled",
+  "passwordManagement": "Password Management",
+  "resetPassword": "Reset Password",
+  "resetPasswordHint": "Send a password reset email to the user. The user must reset the password after receiving the email.",
+  "deleteUserWarning": "Deleting the user will permanently remove the account and cannot be undone.",
+  "cancel": "Cancel",
+  "updateSuccess": "Updated successfully!",
+  "deleteSuccess": "Deleted successfully!",
+  "userMgmt": {
+    "title": "User Management",
+    "description": "Manage system user accounts, role assignments and access permissions",
+    "export": "Export",
+    "newUser": "New User",
+    "stats": {
+      "total": "All Users",
+      "active": "Active",
+      "inactive": "Inactive",
+      "locked": "Locked",
+      "pending": "Pending"
+    },
+    "filters": {
+      "search": "Search name, username, email or phone...",
+      "allStatus": "All Statuses",
+      "allRoles": "All Roles",
+      "allDepts": "All Departments",
+      "reset": "Reset"
+    },
+    "table": {
+      "user": "User",
+      "emailPhone": "Email / Mobile",
+      "deptRoles": "Department / Roles",
+      "auth": "Authentication",
+      "status": "Status",
+      "lastLogin": "Recent Login",
+      "actions": "Actions",
+      "never": "Never logged in",
+      "empty": "No matching users found"
+    },
+    "footer": {
+      "filteredFrom": "Showing {n} of {total} users",
+      "userCount": "{n} users in total",
+      "manageRoles": "Manage Role Permissions"
+    },
+    "menu": {
+      "editUser": "Edit User",
+      "resetPassword": "Reset Password",
+      "disableAccount": "Disable Account",
+      "enableAccount": "Enable Account",
+      "deleteUser": "Delete User"
+    },
+    "auth": {
+      "local": "Local Account",
+      "sso": "SSO",
+      "ssoFull": "SSO (Integrated)",
+      "ldap": "LDAP"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "locked": "Locked",
+      "pending": "Pending"
+    },
+    "createModal": {
+      "title": "New User",
+      "description": "Create a new platform user account and assign roles",
+      "create": "Create User"
+    },
+    "editModal": {
+      "title": "Edit User",
+      "description": "Update account info and permissions for {name}",
+      "saveChanges": "Save Changes"
+    },
+    "resetModal": {
+      "title": "Reset Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "mismatch": "Passwords do not match",
+      "confirmReset": "Confirm Reset"
+    },
+    "deleteModal": {
+      "title": "Delete User",
+      "message": "Are you sure you want to delete {name}? This action cannot be undone and the user will no longer be able to sign in.",
+      "cancel": "Cancel"
+    },
+    "field": {
+      "fullName": "Full Name",
+      "username": "Username",
+      "email": "Email",
+      "phone": "Phone",
+      "department": "Department",
+      "authMethod": "Auth Method",
+      "initialPassword": "Initial Password",
+      "roleAssignment": "Role Assignment",
+      "remarks": "Remarks",
+      "accountStatus": "Account Status"
+    },
+    "ph": {
+      "fullName": "Enter full name",
+      "username": "Enter username",
+      "email": "Enter email",
+      "phone": "Enter phone (optional)",
+      "selectDepartment": "Select department",
+      "initialPassword": "At least 8 characters",
+      "confirmPassword": "Re-enter new password",
+      "remarks": "Enter remarks (optional)"
+    },
+    "roles": {
+      "superAdmin": "Super Admin",
+      "opsAdmin": "Ops Admin",
+      "carrierAdmin": "Carrier Admin",
+      "agent": "Agent",
+      "channelManager": "Channel Manager",
+      "financeSpecialist": "Finance Specialist",
+      "readonly": "Readonly"
+    },
+    "depts": {
+      "tech": "Technology",
+      "ops": "Operations",
+      "finance": "Finance",
+      "channel": "Channel",
+      "compliance": "Compliance",
+      "marketing": "Marketing"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "locked": "Locked",
+      "pending": "Pending"
+    },
+    "toast": {
+      "created": "User created successfully",
+      "updated": "User updated successfully",
+      "passwordReset": "Password has been reset",
+      "deleted": "User deleted",
+      "enabled": "Account enabled",
+      "disabled": "Account disabled",
+      "exported": "User data exported"
+    },
+    "error": {
+      "createFailed": "Failed to create user",
+      "updateFailed": "Failed to update user",
+      "deleteFailed": "Failed to delete user",
+      "passwordResetFailed": "Failed to reset password",
+      "toggleStatusFailed": "Failed to update account status"
+    }
+  }
 }

@@ -33,17 +33,21 @@ import ChannelPortalView from './views/ChannelPortalView'
 import ChannelAnalyticsView from './views/ChannelAnalyticsView'
 import I18nManagementView from './views/I18nManagementView'
 import PermissionView from './views/PermissionView'
+import Login from './views/Login'
 
 export default function App() {
+  const [authed, setAuthed] = useState(false)
   const [currentView, setCurrentView] = useState<ViewId>('dashboard')
   const [selectedInsurerId, setSelectedInsurerId] = useState<string>('1')
   const [selectedProductId, setSelectedProductId] = useState<string>('p1')
+  const [selectedChannelId, setSelectedChannelId] = useState<string>('c1')
   const [disableModalId, setDisableModalId] = useState<string | null>(null)
   const [productStatusModalId, setProductStatusModalId] = useState<string | null>(null)
 
-  const navigateTo = (view: ViewId, params?: { insurerId?: string; productId?: string }) => {
+  const navigateTo = (view: ViewId, params?: { insurerId?: string; productId?: string; channelId?: string }) => {
     if (params?.insurerId) setSelectedInsurerId(params.insurerId)
     if (params?.productId) setSelectedProductId(params.productId)
+    if (params?.channelId) setSelectedChannelId(params.channelId)
     setCurrentView(view)
     window.scrollTo(0, 0)
   }
@@ -83,7 +87,7 @@ export default function App() {
       case 'channel-new':
         return <ChannelForm mode="create" navigateTo={navigateTo} />
       case 'channel-edit':
-        return <ChannelForm mode="edit" channelId={selectedInsurerId} navigateTo={navigateTo} />
+        return <ChannelForm mode="edit" channelId={selectedChannelId} navigateTo={navigateTo} />
       case 'appointment':
         return <AppointmentView navigateTo={navigateTo} />
       case 'appointment-new':
@@ -117,6 +121,14 @@ export default function App() {
     }
   }
 
+  if (!authed) {
+    return (
+      <LangProvider>
+        <Login onSuccess={() => setAuthed(true)} />
+      </LangProvider>
+    )
+  }
+
   return (
     <LangProvider>
     <div
@@ -142,7 +154,7 @@ export default function App() {
       </div>
 
       <div className="flex flex-col flex-1 overflow-hidden" style={{ position: 'relative', zIndex: 10 }}>
-        <TopBar currentView={currentView} navigateTo={navigateTo} />
+        <TopBar currentView={currentView} navigateTo={navigateTo} onLogout={() => setAuthed(false)} />
         <main className="flex-1 overflow-y-auto" style={{ padding: '24px 28px 32px' }}>
           {renderView()}
         </main>

@@ -1,10 +1,12 @@
 // Product Form - Step-by-step wizard for creating/editing products (功能点 10-12)
-// 严格按照设计原型 V1.1 实现：垂直步骤导航 + 两列表单布局
+// Synced with 设计原型V1.3 ProductForm: vertical step nav with per-step completion
+// check + free jump, Field hint tooltips, rate-type cards, stable coverage/factor
+// keys resolved to i18n, submission success card, then redirect back to the list
 
 import { useState, useEffect } from 'react'
 import {
-  ChevronLeft, ChevronRight, Check, AlertCircle, Upload, FileText, X,
-  Save, FileCheck, Cloud, Shield, Calendar, Globe, FileCheck2, AlertTriangle
+  ChevronLeft, ChevronRight, Check, AlertCircle, CheckCircle, Info, X,
+  Upload, FileText, AlertTriangle, XCircle,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { InsuranceProduct } from './data/mockProductData'
@@ -15,27 +17,49 @@ interface Props {
   onBackToList: () => void
 }
 
-// 垂直步骤导航（左侧）
-const STEPS = [
-  { id: 0, label: '基本信息', icon: Cloud, desc: '' },
-  { id: 1, label: '费率配置', icon: FileCheck, desc: '' },
-  { id: 2, label: '核保规则', icon: Shield, desc: '' },
-  { id: 3, label: '可售州', icon: Globe, desc: '' },
-  { id: 4, label: '合规文件', icon: FileCheck2, desc: '' },
-]
+// 主要承保范围选项（稳定英文 key，标签经 i18n 解析）
+const COVERAGE_KEYS = ['liability', 'comprehensive', 'collision', 'medical', 'um', 'roadside', 'substitute', 'newCarValue', 'deductibleWaiver'] as const
+type CoverageKey = typeof COVERAGE_KEYS[number]
 
-// 主要承保范围选项
-const COVERAGE_OPTIONS = [
-  '责任险',
-  '综合险',
-  '碰撞险',
-  '医疗赔付',
-  '未保险驾驶员',
-  '道路救援',
-  '车辆替代',
-  '新车价值保障',
-  '自付额豁免',
-]
+const COVERAGE_LABEL_KEYS: Record<CoverageKey, string> = {
+  liability: 'detail.info.liability',
+  comprehensive: 'detail.info.comprehensive',
+  collision: 'detail.info.collision',
+  medical: 'detail.info.medical',
+  um: 'detail.info.um',
+  roadside: 'detail.info.roadside',
+  substitute: 'detail.info.substitute',
+  newCarValue: 'detail.info.newCarValue',
+  deductibleWaiver: 'detail.info.deductibleWaiver',
+}
+
+// 数据文件 coverages 值 → 表单稳定 key（编辑回填用）
+const COVERAGE_BACKFILL: Record<string, CoverageKey> = {
+  Liability: 'liability',
+  Comprehensive: 'comprehensive',
+  Collision: 'collision',
+  MedicalPayments: 'medical',
+  UninsuredMotorist: 'um',
+  RoadsideAssistance: 'roadside',
+  VehicleReplacement: 'substitute',
+}
+
+// 费率影响因子（稳定 key → detail.rates.fac* 标签）
+const FACTOR_KEYS = ['drivingRecord', 'vehicleType', 'drivingExperience', 'creditScore', 'territory', 'usage', 'ageBand', 'claimsHistory', 'vehicleValue', 'safetyEquip'] as const
+type FactorKey = typeof FACTOR_KEYS[number]
+
+const FACTOR_LABEL_KEYS: Record<FactorKey, string> = {
+  drivingRecord: 'detail.rates.facDrivingRecord',
+  vehicleType: 'detail.rates.facVehicleType',
+  drivingExperience: 'detail.rates.facDrivingExp',
+  creditScore: 'detail.rates.facCredit',
+  territory: 'detail.rates.facTerritory',
+  usage: 'detail.rates.facUsage',
+  ageBand: 'detail.rates.facAgeBand',
+  claimsHistory: 'detail.rates.facClaimsHistory',
+  vehicleValue: 'detail.rates.facVehicleValue',
+  safetyEquip: 'detail.rates.facSafetyEquip',
+}
 
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
 
@@ -68,9 +92,28 @@ interface FormData {
   uploadedFiles?: string[]
 }
 
+// 垂直步骤导航（左侧）：图标 + 每步完成判定（原型 STEPS_META）
+const STEP_ICONS = [' ▪ ', ' ▪ ', ' ▪ ', ' ▪ ', ' ▪ ']
+
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <label style={{ fontSize: 13, fontWeight: 600, color: '#414755', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 7 }}>
+        {label}
+        {required && <span style={{ color: '#BA1A1A' }}>*</span>}
+        {hint && <span title={hint} style={{ display: 'inline-flex', cursor: 'help' }}><Info size={11} style={{ color: '#C1C6D7' }} /></span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
 export default function ProductForm({ productId, onBackToList }: Props) {
   const { t } = useTranslation('product')
+  const existing = productId ? products.find((p: InsuranceProduct) => p.productId === productId) : undefined
+
   const [currentStep, setCurrentStep] = useState(0)
+  const [saved, setSaved] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     productName: '',
     productCode: '',
@@ -79,12 +122,12 @@ export default function ProductForm({ productId, onBackToList }: Props) {
     lineOfBusiness: '',
     subLine: '',
     description: '',
-    coverages: [],
-    rateType: 'Tiered',
+    coverages: ['liability', 'comprehensive', 'collision'],
+    rateType: 'tiered',
     baseRate: '',
     minPremium: '',
     maxPremium: '',
-    rateFactors: ['DrivingRecord', 'VehicleType', 'CreditScore'],
+    rateFactors: ['drivingRecord', 'vehicleType', 'creditScore'],
     effectiveDate: '',
     expirationDate: '',
   })
@@ -93,27 +136,32 @@ export default function ProductForm({ productId, onBackToList }: Props) {
 
   // Load edit data if exists
   useEffect(() => {
-    if (productId) {
-      const existing = products.find((p: InsuranceProduct) => p.productId === productId)
-      if (existing) {
-        setFormData({
-          productName: existing.productName,
-          productCode: existing.productCode,
-          insurerId: existing.insurerId,
-          type: existing.type,
-          lineOfBusiness: existing.lineOfBusiness,
-          subLine: existing.subLine || '',
-          description: existing.description || '',
-          coverages: existing.coverages || [],
-          rateType: existing.rateType || 'Tiered',
-          baseRate: existing.baseRate || '',
-          minPremium: existing.minPremium || '',
-          maxPremium: existing.maxPremium || '',
-          rateFactors: existing.rateFactors || ['DrivingRecord', 'VehicleType', 'CreditScore'],
-          effectiveDate: existing.effectiveDate.split('T')[0],
-          expirationDate: existing.expirationDate?.split('T')[0] || '',
-        })
-      }
+    if (productId && existing) {
+      setFormData(prev => ({
+        ...prev,
+        productName: existing.productName,
+        productCode: existing.productCode,
+        insurerId: existing.insurerId,
+        type: existing.type,
+        lineOfBusiness: existing.lineOfBusiness,
+        subLine: existing.subLine || '',
+        description: existing.description || '',
+        coverages: (existing.coverages ?? []).map(c => COVERAGE_BACKFILL[c]).filter(Boolean),
+        rateType: existing.rateType === 'Flat' ? 'flat' : existing.rateType === 'UsageBased' ? 'usage' : 'tiered',
+        baseRate: existing.baseRate ?? '',
+        minPremium: existing.minPremium ?? '',
+        maxPremium: existing.maxPremium ?? '',
+        rateFactors: (existing.rateFactors ?? []).map(f => f.toLowerCase()),
+        effectiveDate: existing.effectiveDate.split('T')[0],
+        expirationDate: existing.expirationDate?.split('T')[0] || '',
+        ageMin: existing.ageMin ?? '',
+        ageMax: existing.ageMax ?? '',
+        excludeDUI: existing.excludeDUI ?? false,
+        referHighValue: existing.referHighValue ?? false,
+        referThreshold: existing.referThreshold ?? '',
+        blacklistConditions: existing.blacklistConditions ?? [],
+        availableStates: existing.availableStates ?? [],
+      }))
     }
   }, [productId])
 
@@ -146,25 +194,66 @@ export default function ProductForm({ productId, onBackToList }: Props) {
   }
 
   const handleSaveDraft = () => {
-    setToastMessage('草稿已保存')
+    setToastMessage(t('header.saved'))
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
   }
 
-  const handleNext = () => {
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(s => s + 1)
-    }
+  // Per-step completion check (原型 stepDone)
+  const stepDone = (i: number) => {
+    if (i === 0) return !!formData.productName && !!formData.productCode && !!formData.insurerId && !!formData.lineOfBusiness
+    if (i === 1) return formData.baseRate !== '' && formData.minPremium !== '' && formData.maxPremium !== ''
+    if (i === 2) return formData.ageMin !== '' && formData.ageMin !== undefined && formData.ageMax !== '' && formData.ageMax !== undefined
+    if (i === 3) return (formData.availableStates?.length ?? 0) > 0
+    return true
   }
 
-  const handleCancel = () => {
-    onBackToList()
+  const handleSubmit = () => {
+    setSaved(true)
+    setTimeout(onBackToList, 1200)
   }
 
-  const completedSteps = new Set<number>()
-  if (formData.productName && formData.productCode && formData.insurerId) {
-    completedSteps.add(0)
-  }
+  const stepLabels = [
+    t('steps.basicInfo.label'),
+    t('steps.rates.label'),
+    t('steps.underwriting.label'),
+    t('steps.states.label'),
+    t('steps.documents.label'),
+  ]
+  const doneCount = [0, 1, 2, 3, 4].filter(stepDone).length
+
+  const coverageLabels: Record<CoverageKey, string> = Object.fromEntries(
+    COVERAGE_KEYS.map(k => [k, t(COVERAGE_LABEL_KEYS[k])])
+  ) as Record<CoverageKey, string>
+
+  const factorLabels: Record<FactorKey, string> = Object.fromEntries(
+    FACTOR_KEYS.map(k => [k, t(FACTOR_LABEL_KEYS[k])])
+  ) as Record<FactorKey, string>
+
+  const rateTypeOptions = [
+    { val: 'flat', label: t('form.rates.flat'), desc: t('form.rates.flatDesc') },
+    { val: 'tiered', label: t('form.rates.tiered'), desc: t('form.rates.tieredDesc') },
+    { val: 'usage', label: t('form.rates.usage'), desc: t('form.rates.usageDesc') },
+  ]
+
+  const blacklistOptions = [
+    { value: 'poorCredit', label: t('underwriting.poorCredit') },
+    { value: 'fraudHistory', label: t('underwriting.fraudHistory') },
+    { value: 'mispresentation', label: t('underwriting.mispresentation') },
+  ]
+
+  const statePresets = [
+    { label: t('form.states.presetNortheast'), states: ['NY', 'NJ', 'CT', 'MA', 'PA', 'VT', 'NH', 'ME', 'RI'] },
+    { label: t('form.states.presetCaTx'), states: ['CA', 'TX'] },
+  ]
+
+  const docList: { key: string; label: string; required: boolean; hint: string; accept: string }[] = [
+    { key: 'filing', label: t('form.documents.filing'), required: true, hint: t('form.documents.filingHint'), accept: '.pdf' },
+    { key: 'rates', label: t('form.documents.rates'), required: true, hint: t('form.documents.ratesHint'), accept: '.pdf,.xlsx' },
+    { key: 'guide', label: t('detail.training.guide'), required: true, hint: t('form.documents.guideHint'), accept: '.pdf' },
+    { key: 'uwManual', label: t('form.documents.uwManual'), required: false, hint: t('form.documents.uwHint'), accept: '.pdf' },
+    { key: 'training', label: t('detail.training.deck'), required: false, hint: t('form.documents.trainingHint'), accept: '.pdf,.pptx' },
+  ]
 
   const INPUT = {
     width: '100%',
@@ -179,6 +268,20 @@ export default function ProductForm({ productId, onBackToList }: Props) {
     transition: 'border 0.2s',
   } as const
 
+  if (saved) return (
+    <div className="flex-1 overflow-auto">
+      <div style={{ maxWidth: 680, margin: '80px auto', textAlign: 'center' }}>
+        <div className="card" style={{ padding: '60px 40px' }}>
+          <CheckCircle size={48} style={{ color: '#34C759', margin: '0 auto 16px' }} />
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>
+            {productId ? t('form.feedback.updated') : t('form.feedback.created')}
+          </div>
+          <p style={{ fontSize: 14, color: '#717786' }}>{t('form.feedback.redirecting')}</p>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="w-full h-full flex">
       {/* Main Content */}
@@ -187,19 +290,19 @@ export default function ProductForm({ productId, onBackToList }: Props) {
           {/* Header */}
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <button 
-                className="icon-btn" 
-                onClick={handleCancel}
+              <button
+                className="icon-btn"
+                onClick={onBackToList}
                 style={{ padding: '8px', background: 'transparent', border: 'none' }}
               >
                 <ChevronLeft size={20} />
               </button>
               <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#181C23', margin: 0 }}>
-                {productId ? t('header.titleEdit') : t('steps.basicInfo.label')}
+                {productId ? t('header.titleEdit', { productName: existing?.productName ?? '' }) : t('header.titleCreate')}
               </h1>
             </div>
             <p style={{ fontSize: '15px', color: '#717786' }}>
-              {productId ? t('header.subtitleEdit') : '填写产品信息，配置费率、核保规则与可售区域'}
+              {productId ? t('header.subtitleEdit') : t('header.subtitleCreate')}
             </p>
           </div>
 
@@ -208,26 +311,25 @@ export default function ProductForm({ productId, onBackToList }: Props) {
             {/* Left: Vertical Steps */}
             <div style={{ width: '240px', flexShrink: 0 }}>
               <div className="glass-card rounded-xl" style={{ padding: '20px' }}>
-                {STEPS.map((step, idx) => {
+                {stepLabels.map((label, idx) => {
                   const isActive = idx === currentStep
-                  const isCompleted = completedSteps.has(idx)
-                  const Icon = step.icon
+                  const isDone = stepDone(idx)
                   return (
                     <div
-                      key={step.id}
-                      onClick={() => idx < currentStep && setCurrentStep(idx)}
+                      key={idx}
+                      onClick={() => setCurrentStep(idx)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '12px',
                         padding: '14px 16px',
-                        marginBottom: idx < STEPS.length - 1 ? '8px' : 0,
+                        marginBottom: idx < stepLabels.length - 1 ? '8px' : 0,
                         borderRadius: '10px',
-                        background: isActive 
-                          ? 'rgba(0, 88, 188, 0.08)' 
+                        background: isActive
+                          ? 'rgba(0, 88, 188, 0.08)'
                           : 'transparent',
                         border: isActive ? '1px solid rgba(0, 88, 188, 0.2)' : '1px solid transparent',
-                        cursor: idx < currentStep ? 'pointer' : 'default',
+                        cursor: 'pointer',
                         transition: 'all 0.2s'
                       }}
                     >
@@ -235,48 +337,48 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                         width: '32px',
                         height: '32px',
                         borderRadius: '50%',
-                        background: isCompleted 
-                          ? '#34C759' 
-                          : isActive 
-                            ? 'rgba(0, 88, 188, 0.15)' 
+                        background: isDone && !isActive
+                          ? 'rgba(52,199,89,0.12)'
+                          : isActive
+                            ? 'rgba(0, 88, 188, 0.15)'
                             : 'rgba(247,248,250,0.8)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: isCompleted ? '#FFFFFF' : isActive ? '#0058BC' : '#9CA3AF'
+                        color: isDone && !isActive ? '#34C759' : isActive ? '#0058BC' : '#9CA3AF'
                       }}>
-                        {isCompleted ? <Check size={18} /> : <Icon size={16} />}
+                        {isDone && !isActive ? <CheckCircle size={16} /> : <span style={{ fontSize: 13 }}>{STEP_ICONS[idx].trim()}</span>}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ 
-                          fontSize: '14px', 
-                          fontWeight: isActive ? 600 : 500, 
-                          color: isActive ? '#0058BC' : isCompleted ? '#34C759' : '#404757'
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: isActive ? 600 : 500,
+                          color: isActive ? '#0058BC' : isDone && !isActive ? '#34C759' : '#404757'
                         }}>
-                          {step.label}
+                          {label}
                         </div>
-                        {isCompleted && (
+                        {isDone && !isActive && (
                           <div style={{ fontSize: '12px', color: '#34C759', marginTop: '2px' }}>
-                            已完成
+                            {t('form.feedback.stepDone')}
                           </div>
                         )}
                       </div>
                     </div>
                   )
                 })}
-                
+
                 {/* Progress */}
                 <div style={{ marginTop: '20px', padding: '0 16px' }}>
                   <div style={{ height: '4px', background: 'rgba(247,248,250,0.8)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      width: `${((currentStep + 1) / STEPS.length) * 100}%`, 
-                      height: '100%', 
-                      background: '#0058BC',
+                    <div style={{
+                      width: `${(doneCount / stepLabels.length) * 100}%`,
+                      height: '100%',
+                      background: '#34C759',
                       transition: 'width 0.3s'
                     }} />
                   </div>
                   <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '8px', textAlign: 'center' }}>
-                    {t('navigation.stepCount', { current: currentStep + 1, total: STEPS.length })} 步完成
+                    {t('form.feedback.stepsProgress', { done: doneCount, total: stepLabels.length })}
                   </div>
                 </div>
               </div>
@@ -288,57 +390,46 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                 {currentStep === 0 && (
                   <>
                     <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: '24px' }}>
-                      产品基本信息
+                      {t('detail.info.basicTitle')}
                     </h2>
-                    
+
                     {/* Row 1: 产品全称 + 产品代码 */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          产品全称
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
+                      <Field label={t('fields.productName')} required>
                         <input
                           {...INPUT}
-                          placeholder="e.g. Travelers Auto Insurance"
+                          className="input-glass"
+                          placeholder={t('fields.productNamePlaceholder')}
                           value={formData.productName}
                           onChange={e => updateField('productName', e.target.value)}
                           onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
                           onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                         />
-                      </div>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          产品代码
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
+                      </Field>
+                      <Field label={t('fields.productCode')} required hint={t('fields.productCodeHint')}>
                         <input
                           {...INPUT}
+                          className="input-glass"
                           placeholder="TRV-AUTO-001"
                           value={formData.productCode}
                           onChange={e => updateField('productCode', e.target.value)}
-                          style={{ ...INPUT, textTransform: 'uppercase' }}
+                          style={{ ...INPUT, textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace" }}
                           onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
                           onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                         />
-                      </div>
-                    </div>
+                      </Field>
 
-                    {/* Row 2: 承保保险公司 + 产品类型 */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          承保保险公司
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
+                      {/* Row 2: 承保保险公司 + 产品类型 */}
+                      <Field label={t('sections.carrierRelation')} required>
                         <select
                           {...INPUT}
+                          className="input-glass"
                           value={formData.insurerId}
                           onChange={e => updateField('insurerId', e.target.value)}
                           onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
                           onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                         >
-                          <option value="">选择保险公司</option>
+                          <option value="">{t('form.basic.selectInsurer')}</option>
                           <option value="c1001">Travelers</option>
                           <option value="c1002">Chubb</option>
                           <option value="c1005">State Farm</option>
@@ -346,17 +437,13 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                           <option value="c1007">Allstate</option>
                           <option value="c1008">Progressive</option>
                         </select>
-                      </div>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          产品类型
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
-                        <div style={{ display: 'flex', gap: '12px' }}>
+                      </Field>
+                      <Field label={t('fields.productType')} required>
+                        <div style={{ display: 'flex', gap: '8px' }}>
                           {[
-                            { value: 'Individual', label: '个人险' },
-                            { value: 'Group', label: '团体险' },
-                            { value: 'VoluntaryBenefits', label: '自愿福利险' },
+                            { value: 'Individual', label: t('values.typeIndividual') },
+                            { value: 'Group', label: t('values.typeGroup') },
+                            { value: 'VoluntaryBenefits', label: t('values.typeVoluntaryBenefits') },
                           ].map(opt => (
                             <label
                               key={opt.value}
@@ -365,12 +452,12 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
-                                padding: '10px 14px',
-                                borderRadius: '8px',
-                                border: `2px solid ${formData.type === opt.value ? '#0058BC' : 'rgba(24,28,35,0.1)'}`,
-                                background: formData.type === opt.value ? 'rgba(0, 88, 188, 0.08)' : '#FFFFFF',
+                                padding: '9px 12px',
+                                borderRadius: '9px',
+                                border: `0.5px solid ${formData.type === opt.value ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
+                                background: formData.type === opt.value ? 'rgba(0, 88, 188, 0.08)' : 'rgba(255,255,255,0.6)',
                                 cursor: 'pointer',
-                                fontSize: '14px',
+                                fontSize: '12.5px',
                                 color: '#181C23',
                                 transition: 'all 0.2s'
                               }}
@@ -387,360 +474,287 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                             </label>
                           ))}
                         </div>
-                      </div>
-                    </div>
+                      </Field>
 
-                    {/* Row 3: 业务线 + 业务子线 */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          业务线
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
+                      {/* Row 3: 业务线 + 业务子线 */}
+                      <Field label={t('fields.lineOfBusiness')} required>
                         <select
                           {...INPUT}
+                          className="input-glass"
                           value={formData.lineOfBusiness}
                           onChange={e => updateField('lineOfBusiness', e.target.value)}
                           onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
                           onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                         >
-                          <option value="">选择业务线</option>
-                          <option value="AUTO">AUTO（汽车保险）</option>
-                          <option value="HOME">HOME（家庭保险）</option>
-                          <option value="LIFE">LIFE（人寿保险）</option>
-                          <option value="HEALTH">HEALTH（健康保险）</option>
-                          <option value="COMMERCIAL">COMMERCIAL（商业保险）</option>
-                          <option value="P&C">P&C（财产与责任保险）</option>
+                          <option value="">{t('form.basic.selectLine')}</option>
+                          <option value="AUTO">{t('values.lobAUTO')}</option>
+                          <option value="HOME">{t('values.lobHOME')}</option>
+                          <option value="LIFE">{t('values.lobLIFE')}</option>
+                          <option value="HEALTH">{t('values.lobHEALTH')}</option>
+                          <option value="COMMERCIAL">{t('values.lobCOMMERCIAL')}</option>
+                          <option value="P&C">{t('values.lobP_C')}</option>
                         </select>
-                      </div>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          业务子线
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
+                      </Field>
+                      <Field label={t('fields.subLine')} required>
                         <select
                           {...INPUT}
+                          className="input-glass"
                           value={formData.subLine}
                           onChange={e => updateField('subLine', e.target.value)}
                           onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
                           onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                         >
-                          <option value="">选择业务子线</option>
-                          <option value="Liability">Liability（责任险）</option>
-                          <option value="Collision">Collision（碰撞险）</option>
-                          <option value="Comprehensive">Comprehensive（全面险）</option>
-                          <option value="Medical">Medical（医疗险）</option>
+                          <option value="">{t('fields.subLinePlaceholder')}</option>
+                          <option value="Liability">{t('values.Liability')}</option>
+                          <option value="Collision">{t('values.Collision')}</option>
+                          <option value="Comprehensive">{t('values.Comprehensive')}</option>
+                          <option value="Medical Payments">{t('values.Medical Payments')}</option>
                         </select>
-                      </div>
+                      </Field>
                     </div>
 
                     {/* Row 4: 产品描述 */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                        产品描述
-                      </label>
+                    <Field label={t('form.basic.description')}>
                       <textarea
-                        style={{
-                          ...INPUT,
-                          height: '100px',
-                          padding: '14px',
-                          resize: 'vertical',
-                          fontFamily: 'system-ui'
-                        }}
-                        placeholder="描述产品的核心价值、目标客群和主要特点..."
+                        className="input-glass"
+                        style={{ width: '100%', minHeight: 88, padding: '14px', resize: 'vertical', fontSize: 13.5, border: '1px solid rgba(24,28,35,0.1)', borderRadius: 8, outline: 'none', fontFamily: 'inherit' }}
+                        placeholder={t('form.basic.descPlaceholder')}
                         value={formData.description}
                         onChange={e => updateField('description', e.target.value)}
-                        onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                        onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                       />
-                    </div>
+                    </Field>
 
                     {/* Row 5: 主要承保范围 */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                        主要承保范围
-                        <AlertCircle size={14} style={{ color: '#9CA3AF', cursor: 'help' }} />
-                      </label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                        {COVERAGE_OPTIONS.map(coverage => {
+                    <Field label={t('detail.info.coverageTitle')} hint={t('form.basic.coverageHint')}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {COVERAGE_KEYS.map(coverage => {
                           const isSelected = formData.coverages.includes(coverage)
                           return (
-                            <button
+                            <label
                               key={coverage}
-                              type="button"
-                              onClick={() => toggleCoverage(coverage)}
                               style={{
-                                padding: '8px 16px',
-                                borderRadius: '20px',
-                                border: `1.5px solid ${isSelected ? '#0058BC' : 'rgba(24,28,35,0.15)'}`,
-                                background: isSelected ? 'rgba(0, 88, 188, 0.08)' : '#FFFFFF',
-                                color: isSelected ? '#0058BC' : '#404757',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
+                                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                                background: isSelected ? 'rgba(0,88,188,0.10)' : 'rgba(241,243,254,0.7)',
+                                border: `0.5px solid ${isSelected ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
+                                color: isSelected ? '#0058BC' : '#414755',
                               }}
                             >
-                              {isSelected && <Check size={14} />}
-                              {coverage}
-                            </button>
+                              <input type="checkbox" checked={isSelected} style={{ display: 'none' }}
+                                onChange={() => toggleCoverage(coverage)} />
+                              {isSelected && <CheckCircle size={11} />}
+                              {coverageLabels[coverage]}
+                            </label>
                           )
                         })}
                       </div>
-                    </div>
+                    </Field>
                   </>
                 )}
 
                 {currentStep === 1 && (
                   <>
                     <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: '24px' }}>
-                      费率结构配置
+                      {t('form.rates.configTitle')}
                     </h2>
 
                     {/* Row 1: 费率类型 */}
-                    <div style={{ marginBottom: '28px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '16px' }}>
-                        费率类型
-                        <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                      </label>
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        {
-                          [
-                            { value: 'Flat', label: '固定费率', desc: '统一基础费率' },
-                            { value: 'Tiered', label: '分级费率', desc: '按风险等级分层' },
-                            { value: 'UsageBased', label: '按用量计费', desc: 'Usage-Based / Telematics' },
-                          ].map(opt => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => updateField('rateType', opt.value)}
-                              style={{
-                                flex: 1,
-                                padding: '16px 20px',
-                                borderRadius: '10px',
-                                border: `2px solid ${formData.rateType === opt.value ? '#0058BC' : 'rgba(24,28,35,0.1)'}`,
-                                background: formData.rateType === opt.value ? 'rgba(0, 88, 188, 0.08)' : '#FFFFFF',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                textAlign: 'left'
-                              }}
-                            >
-                              <div style={{ fontSize: '14px', fontWeight: 600, color: '#181C23', marginBottom: '4px' }}>
-                                {opt.label}
-                              </div>
-                              <div style={{ fontSize: '12px', color: '#717786' }}>
-                                {opt.desc}
-                              </div>
-                            </button>
-                          ))
-                        }
+                    <Field label={t('form.rates.rateType')} required>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        {rateTypeOptions.map(opt => (
+                          <label
+                            key={opt.val}
+                            style={{
+                              flex: 1,
+                              padding: '12px 14px',
+                              borderRadius: '10px',
+                              border: `0.5px solid ${formData.rateType === opt.val ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
+                              background: formData.rateType === opt.val ? 'rgba(0, 88, 188, 0.08)' : 'rgba(255,255,255,0.6)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <input type="radio" name="rateType" checked={formData.rateType === opt.val} onChange={() => updateField('rateType', opt.val)} style={{ display: 'none' }} />
+                            <div style={{ fontSize: '13.5px', fontWeight: 600, color: formData.rateType === opt.val ? '#0058BC' : '#181C23' }}>
+                              {opt.label}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#717786', marginTop: 3 }}>
+                              {opt.desc}
+                            </div>
+                          </label>
+                        ))}
                       </div>
-                    </div>
+                    </Field>
 
                     {/* Row 2: 基础费率 + 最低保费 + 最高保费 */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '28px' }}>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          基础费率（年）
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
-                        <input
-                          {...INPUT}
-                          placeholder="$1,200"
-                          value={formData.baseRate}
-                          onChange={e => updateField('baseRate', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          最低保费
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
-                        <input
-                          {...INPUT}
-                          placeholder="$480"
-                          value={formData.minPremium}
-                          onChange={e => updateField('minPremium', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>
-                          最高保费
-                          <span style={{ color: '#BA1A1A', fontSize: '12px' }}>*</span>
-                        </label>
-                        <input
-                          {...INPUT}
-                          placeholder="$4,200"
-                          value={formData.maxPremium}
-                          onChange={e => updateField('maxPremium', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
-                        />
-                      </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 20px' }}>
+                      <Field label={t('form.rates.baseRateAnnual')} required>
+                        <div className="relative">
+                          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
+                          <input
+                            {...INPUT}
+                            className="input-glass"
+                            placeholder="1,200"
+                            value={formData.baseRate}
+                            onChange={e => updateField('baseRate', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace" }}
+                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
+                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                          />
+                        </div>
+                      </Field>
+                      <Field label={t('detail.rates.minPremium')} required>
+                        <div className="relative">
+                          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
+                          <input
+                            {...INPUT}
+                            className="input-glass"
+                            placeholder="480"
+                            value={formData.minPremium}
+                            onChange={e => updateField('minPremium', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace" }}
+                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
+                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                          />
+                        </div>
+                      </Field>
+                      <Field label={t('detail.rates.maxPremium')} required>
+                        <div className="relative">
+                          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
+                          <input
+                            {...INPUT}
+                            className="input-glass"
+                            placeholder="4,200"
+                            value={formData.maxPremium}
+                            onChange={e => updateField('maxPremium', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace" }}
+                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
+                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                          />
+                        </div>
+                      </Field>
                     </div>
 
                     {/* Row 3: 费率影响因子 */}
-                    <div style={{ marginBottom: '28px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '16px' }}>
-                        费率影响因子
-                        <AlertCircle size={14} style={{ color: '#9CA3AF', cursor: 'help' }} />
-                      </label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                        {
-                          ['DrivingRecord', 'VehicleType', 'Age', 'CreditScore', 'Region', 'Purpose', 'AgeBracket', 'AccidentHistory', 'VehicleValue', 'SafetyEquipment'].map(factor => {
-                            const isSelected = formData.rateFactors.includes(factor)
-                            const factorLabels = {
-                              DrivingRecord: '驾驶记录',
-                              VehicleType: '车型系数',
-                              Age: '驾龄',
-                              CreditScore: '信用评分',
-                              Region: '地区系数',
-                              Purpose: '用途系数',
-                              AgeBracket: '年龄段',
-                              AccidentHistory: '出险历史',
-                              VehicleValue: '车辆价值',
-                              SafetyEquipment: '安全设备'
-                            }
-                            return (
-                              <button
-                                key={factor}
-                                type="button"
-                                onClick={() => toggleFactor(factor)}
-                                style={{
-                                  padding: '8px 16px',
-                                  borderRadius: '20px',
-                                  border: `1.5px solid ${isSelected ? '#0058BC' : 'rgba(24,28,35,0.15)'}`,
-                                  background: isSelected ? 'rgba(0, 88, 188, 0.08)' : '#FFFFFF',
-                                  color: isSelected ? '#0058BC' : '#404757',
-                                  fontSize: '13px',
-                                  fontWeight: 500,
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '6px'
-                                }}
-                              >
-                                {isSelected && <Check size={14} />}
-                                {factorLabels[factor as keyof typeof factorLabels]}
-                              </button>
-                            )
-                          })
-                        }
+                    <Field label={t('detail.rates.ratingFactors')} hint={t('form.rates.factorsHint')}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {FACTOR_KEYS.map(factor => {
+                          const isSelected = formData.rateFactors.includes(factor)
+                          return (
+                            <label
+                              key={factor}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                                background: isSelected ? 'rgba(0,88,188,0.10)' : 'rgba(241,243,254,0.7)',
+                                border: `0.5px solid ${isSelected ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
+                                color: isSelected ? '#0058BC' : '#414755',
+                              }}
+                            >
+                              <input type="checkbox" checked={isSelected} style={{ display: 'none' }}
+                                onChange={() => toggleFactor(factor)} />
+                              {isSelected && <CheckCircle size={11} />}
+                              {factorLabels[factor]}
+                            </label>
+                          )
+                        })}
                       </div>
-                    </div>
+                    </Field>
                   </>
                 )}
 
                 {currentStep === 2 && (
                   <>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: '24px' }}>
-                      核保规则配置
+                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: 6 }}>
+                      {t('underwriting.title')}
                     </h2>
+                    <p style={{ fontSize: '13px', color: '#717786', marginBottom: '24px' }}>{t('form.underwriting.subtitle')}</p>
 
-                    {/* Section 1: 年龄范围 */}
-                    <div style={{ marginBottom: '32px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: '#181C23', marginBottom: '16px' }}>
-                        投保人年龄要求
-                      </label>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                        <div>
+                    {/* 说明框 */}
+                    <div style={{ background: 'rgba(255,149,0,0.06)', border: '0.5px solid rgba(255,149,0,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 22 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <AlertTriangle size={14} style={{ color: '#a05800' }} />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#7a5c00' }}>{t('form.underwriting.noteTitle')}</span>
+                      </div>
+                      <p style={{ fontSize: 12.5, color: '#7a5c00', margin: 0 }}>{t('form.underwriting.noteBody')}</p>
+                    </div>
+
+                    {/* 年龄范围 */}
+                    <Field label={t('underwriting.ageRange')}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ fontSize: 13, color: '#414755' }}>{t('underwriting.minAge')}</span>
                           <input
                             {...INPUT}
+                            className="input-glass"
                             type="number"
-                            min="0"
-                            max="120"
-                            placeholder="最小年龄"
+                            min={0}
+                            max={120}
                             value={formData.ageMin ?? ''}
                             onChange={e => updateField('ageMin', e.target.value === '' ? '' : parseInt(e.target.value))}
-                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                            style={{ ...INPUT, width: 80, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace" }}
                           />
-                          <div style={{ fontSize: '12px', color: '#717786', marginTop: '6px' }}>投保人最小年龄限制</div>
+                          <span style={{ fontSize: 13, color: '#717786' }}>{t('form.underwriting.years')}</span>
                         </div>
-                        <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ fontSize: 13, color: '#414755' }}>{t('underwriting.maxAge')}</span>
                           <input
                             {...INPUT}
+                            className="input-glass"
                             type="number"
-                            min="0"
-                            max="120"
-                            placeholder="最大年龄"
+                            min={0}
+                            max={120}
                             value={formData.ageMax ?? ''}
                             onChange={e => updateField('ageMax', e.target.value === '' ? '' : parseInt(e.target.value))}
-                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                            style={{ ...INPUT, width: 80, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace" }}
                           />
-                          <div style={{ fontSize: '12px', color: '#717786', marginTop: '6px' }}>投保人最大年龄限制</div>
+                          <span style={{ fontSize: 13, color: '#717786' }}>{t('form.underwriting.years')}</span>
                         </div>
                       </div>
-                    </div>
+                    </Field>
 
-                    {/* Section 2: DUI 记录拒保 */}
-                    <div style={{ marginBottom: '32px' }}>
-                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', fontSize: '14px', fontWeight: 500, color: '#181C23' }}>
-                        <input
-                          type="checkbox"
-                          checked={formData.excludeDUI || false}
-                          onChange={e => updateField('excludeDUI', e.target.checked)}
-                          style={{ accentColor: '#BA1A1A', marginTop: '2px' }}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, marginBottom: '4px' }}>DUI/DWI 记录拒保（自动排除）</div>
-                          <div style={{ fontSize: '12px', color: '#717786' }}>
-                            过去 5 年内有 DUI/DWI 交通记录的申请人将自动拒保，无需人工核保
+                    {/* 自动核保规则 */}
+                    <Field label={t('form.underwriting.autoRules')}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+                          background: formData.excludeDUI ? 'rgba(186,26,26,0.05)' : 'rgba(255,255,255,0.6)',
+                          border: `0.5px solid ${formData.excludeDUI ? 'rgba(186,26,26,0.2)' : 'rgba(193,198,215,0.5)'}` }}>
+                          <input type="checkbox" checked={formData.excludeDUI ?? false} onChange={e => updateField('excludeDUI', e.target.checked)} style={{ accentColor: '#BA1A1A', marginTop: 2 }} />
+                          <div>
+                            <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>{t('underwriting.excludeDUI')} <span style={{ color: '#BA1A1A', fontSize: 12 }}>{t('form.underwriting.tagExclusion')}</span></div>
+                            <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t('underwriting.excludeDUIHint')}</div>
                           </div>
-                        </div>
-                      </label>
-                    </div>
-
-                    {/* Section 3: 高价值标的转人工核保 */}
-                    <div style={{ marginBottom: '32px' }}>
-                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', fontSize: '14px', fontWeight: 500, color: '#181C23' }}>
-                        <input
-                          type="checkbox"
-                          checked={formData.referHighValue || false}
-                          onChange={e => updateField('referHighValue', e.target.checked)}
-                          style={{ accentColor: '#BF690B', marginTop: '2px' }}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, marginBottom: '4px' }}>高价值标的转人工核保（自动转介）</div>
-                          <div style={{ fontSize: '12px', color: '#717786' }}>
-                            当保单保额超过设定阈值时，自动转专业核保团队审核
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+                          background: formData.referHighValue ? 'rgba(255,149,0,0.05)' : 'rgba(255,255,255,0.6)',
+                          border: `0.5px solid ${formData.referHighValue ? 'rgba(255,149,0,0.2)' : 'rgba(193,198,215,0.5)'}` }}>
+                          <input type="checkbox" checked={formData.referHighValue ?? false} onChange={e => updateField('referHighValue', e.target.checked)} style={{ accentColor: '#FF9500', marginTop: 2 }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>{t('underwriting.referHighValue')} <span style={{ color: '#a05800', fontSize: 12 }}>{t('form.underwriting.tagReferral')}</span></div>
+                            <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t('underwriting.referHighValueHint')}</div>
+                            {formData.referHighValue && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                                <span style={{ fontSize: 13, color: '#414755' }}>{t('underwriting.thresholdAmount')}</span>
+                                <div className="relative">
+                                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
+                                  <input
+                                    {...INPUT}
+                                    className="input-glass"
+                                    type="number"
+                                    value={formData.referThreshold ?? ''}
+                                    onChange={e => updateField('referThreshold', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                    style={{ ...INPUT, paddingLeft: 22, width: 140, fontFamily: "'JetBrains Mono', monospace" }}
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {formData.referHighValue && (
-                            <div style={{ marginTop: '12px', paddingLeft: '32px' }}>
-                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#181C23', marginBottom: '8px' }}>
-                                转介阈值（美元）
-                              </label>
-                              <input
-                                {...INPUT}
-                                type="number"
-                                placeholder="例如：$1,000,000"
-                                value={formData.referThreshold ?? ''}
-                                onChange={e => updateField('referThreshold', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                                onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </label>
-                    </div>
+                        </label>
+                      </div>
+                    </Field>
 
-                    {/* Section 4: 其他核保条件 */}
-                    <div style={{ marginBottom: '28px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: '#181C23', marginBottom: '16px' }}>
-                        核保黑名单条件
-                      </label>
+                    {/* 核保黑名单条件 */}
+                    <Field label={t('underwriting.blacklistConditions')}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                        {[{ value: 'poorCredit', label: '信用不良' }, { value: 'fraudHistory', label: '欺诈历史' }, { value: 'mispresentation', label: '虚假陈述' }].map(condition => {
+                        {blacklistOptions.map(condition => {
                           const isSelected = formData.blacklistConditions?.includes(condition.value)
                           return (
                             <button
@@ -748,133 +762,96 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                               type="button"
                               onClick={() => {
                                 const current = formData.blacklistConditions || []
-                                updateField('blacklistConditions', isSelected 
+                                updateField('blacklistConditions', isSelected
                                   ? current.filter(c => c !== condition.value)
                                   : [...current, condition.value]
                                 )
                               }}
                               style={{
-                                padding: '8px 16px',
-                                borderRadius: '20px',
-                                border: `1.5px solid ${isSelected ? '#0058BC' : 'rgba(24,28,35,0.15)'}`,
-                                background: isSelected ? 'rgba(0, 88, 188, 0.08)' : '#FFFFFF',
-                                color: isSelected ? '#0058BC' : '#404757',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
+                                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                                background: isSelected ? 'rgba(0,88,188,0.10)' : 'rgba(241,243,254,0.7)',
+                                border: `0.5px solid ${isSelected ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
+                                color: isSelected ? '#0058BC' : '#414755',
                               }}
                             >
-                              {isSelected && <Check size={14} />}
+                              {isSelected && <CheckCircle size={11} />}
                               {condition.label}
                             </button>
                           )
                         })}
                       </div>
-                    </div>
+                    </Field>
                   </>
                 )}
 
                 {currentStep === 3 && (
                   <>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: '24px' }}>
-                      可售州配置
+                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: 8 }}>
+                      {t('form.states.configTitle')}
                     </h2>
 
                     {/* Toolbar */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                      <div style={{ fontSize: '14px', color: '#404757' }}>
-                        已选 {formData.availableStates?.length || 0} 个州
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          className="btn-ghost"
-                          onClick={() => updateField('availableStates', US_STATES)}
-                          style={{ padding: '8px 14px', fontSize: '12px' }}
-                        >
-                          全选 (50 州)
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+                      <p style={{ fontSize: 13, color: '#717786', margin: 0 }}>
+                        {t('form.states.selectedLead')}<strong style={{ color: '#0058BC' }}>{formData.availableStates?.length || 0}</strong>{t('form.states.selectedTail')}
+                      </p>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button className="btn-ghost" style={{ fontSize: 12.5 }}
+                          onClick={() => updateField('availableStates', US_STATES)}>
+                          {t('form.states.selectAll')}
                         </button>
-                        <button
-                          className="btn-ghost"
-                          onClick={() => updateField('availableStates', [])}
-                          style={{ padding: '8px 14px', fontSize: '12px', color: '#BA1A1A' }}
-                        >
-                          清空
+                        <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}
+                          onClick={() => updateField('availableStates', [])}>
+                          {t('form.states.clearAll')}
                         </button>
-                      </div>
-                    </div>
-
-                    {/* Quick Presets */}
-                    <div style={{ marginBottom: '20px', padding: '16px', background: 'rgba(0, 88, 188, 0.05)', borderRadius: '10px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 500, color: '#181C23', marginBottom: '10px' }}>常见区域预设：</div>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {[
-                          { name: '东北六州', states: ['NY', 'NJ', 'CT', 'MA', 'PA', 'NH'] }, 
-                          { name: '加州周边', states: ['CA', 'NV', 'AZ'] },
-                          { name: '德州周边', states: ['TX', 'OK', 'LA', 'NM'] }
-                        ].map(preset => (
-                          <button
-                            key={preset.name}
-                            className="btn-ghost"
-                            onClick={() => {
-                              const current = new Set(formData.availableStates || [])
-                              preset.states.forEach(s => current.add(s))
-                              updateField('availableStates', Array.from(current))
-                            }}
-                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                          >
-                            + {preset.name}
+                        {statePresets.map(p => (
+                          <button key={p.label} className="btn-ghost" style={{ fontSize: 12.5 }}
+                            onClick={() => updateField('availableStates', Array.from(new Set([...(formData.availableStates ?? []), ...p.states])))}>
+                            +{p.label}
                           </button>
                         ))}
                       </div>
                     </div>
 
                     {/* 50 States Grid */}
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', 
-                      gap: '8px' 
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))',
+                      gap: '7px'
                     }}>
                       {US_STATES.map(state => {
                         const isSelected = formData.availableStates?.includes(state)
                         return (
-                          <button
+                          <div
                             key={state}
-                            type="button"
                             onClick={() => {
-                              if (isSelected) {
-                                updateField('availableStates', formData.availableStates.filter(s => s !== state))
-                              } else {
-                                updateField('availableStates', [...(formData.availableStates || []), state])
-                              }
+                              const current = new Set(formData.availableStates || [])
+                              if (current.has(state)) current.delete(state)
+                              else current.add(state)
+                              updateField('availableStates', Array.from(current))
                             }}
                             style={{
-                              padding: '10px 8px',
-                              borderRadius: '8px',
-                              border: `2px solid ${isSelected ? '#0058BC' : 'rgba(24,28,35,0.1)'}`,
-                              background: isSelected ? 'rgba(0, 88, 188, 0.12)' : '#FFFFFF',
-                              color: isSelected ? '#0058BC' : '#181C23',
-                              fontSize: '13px',
-                              fontWeight: 600,
+                              padding: '8px 6px',
+                              borderRadius: 8,
                               cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
+                              textAlign: 'center',
+                              background: isSelected ? 'rgba(0,88,188,0.10)' : 'rgba(255,255,255,0.5)',
+                              border: `0.5px solid ${isSelected ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
+                              transition: 'all 100ms',
                             }}
                           >
-                            {state}
-                          </button>
+                            <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: isSelected ? '#0058BC' : '#717786' }}>{state}</div>
+                          </div>
                         )
                       })}
                     </div>
 
                     {/* Info Note */}
-                    <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0, 88, 188, 0.08)', borderRadius: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'start', gap: '10px' }}>
-                        <AlertTriangle size={18} style={{ color: '#0058BC', marginTop: '2px', flexShrink: 0 }} />
-                        <div style={{ fontSize: '13px', color: '#0058BC' }}>
-                          每个州均需单独获得监管批准才能销售。未获批的州将无法生成保单。
+                    <div style={{ marginTop: 24, padding: 16, background: 'rgba(0, 88, 188, 0.08)', borderRadius: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'start', gap: 10 }}>
+                        <AlertTriangle size={18} style={{ color: '#0058BC', marginTop: 2, flexShrink: 0 }} />
+                        <div style={{ fontSize: 13, color: '#0058BC' }}>
+                          {t('warnings.stateApprovalRequired')}
                         </div>
                       </div>
                     </div>
@@ -883,154 +860,84 @@ export default function ProductForm({ productId, onBackToList }: Props) {
 
                 {currentStep === 4 && (
                   <>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: '24px' }}>
-                      合规文件上传
+                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: 8 }}>
+                      {t('form.documents.title')}
                     </h2>
-
-                    <div style={{ fontSize: '14px', color: '#404757', marginBottom: '24px' }}>
-                      请上传产品备案所需的各类合规文件。标*为必需文件。
-                    </div>
-
-                    {/* Required Documents */}
-                    <div style={{ marginBottom: '32px' }}>
-                      <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#181C23', marginBottom: '16px' }}>
-                        📄 必需文件 *
-                      </h3>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        {[
-                          { key: 'termsOfInsurance', label: '产品条款' },
-                          { key: 'rateFiling', label: '费率备案表' },
-                          { key: 'complianceCertificate', label: 'NAIC 合规证书' }
-                        ].map(doc => {
-                          const uploaded = formData.uploadedFiles?.includes(doc.key)
-                          return (
-                            <div
-                              key={doc.key}
-                              style={{
-                                padding: '20px',
-                                borderRadius: '12px',
-                                background: 'rgba(255,255,255,0.7)',
-                                border: '1px solid rgba(24,28,35,0.08)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px'
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <FileText size={18} style={{ color: '#0058BC' }} />
-                                <span style={{ fontSize: '14px', fontWeight: 500, color: '#181C23' }}>{doc.label}</span>
-                                <span style={{ fontSize: '11px', color: '#BA1A1A' }}>*</span>
-                              </div>
-                              {uploaded ? (
-                                <button
-                                  className="btn-ghost"
-                                  onClick={() => updateField('uploadedFiles', formData.uploadedFiles.filter(f => f !== doc.key))}
-                                  style={{ fontSize: '12px', color: '#BA1A1A' }}
-                                >
-                                  ✕ 移除文件
-                                </button>
-                              ) : (
-                                <button
-                                  className="btn-secondary"
-                                  onClick={() => alert('触发文件上传对话框')}
-                                  style={{ fontSize: '12px' }}
-                                >
-                                  📤 上传文件
-                                </button>
-                              )}
-                              <div style={{ fontSize: '11px', color: '#9CA3AF' }}>
-                                支持 PDF/Word/Excel，最大 50MB
-                              </div>
+                    <p style={{ fontSize: '13px', color: '#717786', marginBottom: '24px' }}>{t('form.documents.subtitle')}</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {docList.map(doc => {
+                        const uploaded = formData.uploadedFiles?.includes(doc.key)
+                        return (
+                          <div key={doc.key} style={{
+                            display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12,
+                            background: uploaded ? 'rgba(52,199,89,0.06)' : 'rgba(255,255,255,0.6)',
+                            border: `0.5px solid ${uploaded ? 'rgba(52,199,89,0.25)' : 'rgba(193,198,215,0.4)'}`,
+                          }}>
+                            <div style={{ width: 36, height: 36, borderRadius: 9, background: uploaded ? 'rgba(52,199,89,0.12)' : 'rgba(241,243,254,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {uploaded ? <CheckCircle size={16} style={{ color: '#34C759' }} /> : <FileText size={16} style={{ color: '#717786' }} />}
                             </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Optional Documents */}
-                    <div>
-                      <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#181C23', marginBottom: '16px' }}>
-                        📋 可选文件
-                      </h3>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        {[
-                          { key: 'underwritingGuide', label: '核保指南' },
-                          { key: 'salesTrainingMaterials', label: '销售培训材料' }
-                        ].map(doc => {
-                          const uploaded = formData.uploadedFiles?.includes(doc.key)
-                          return (
-                            <div
-                              key={doc.key}
-                              style={{
-                                padding: '20px',
-                                borderRadius: '12px',
-                                background: 'rgba(255,255,255,0.7)',
-                                border: '1px solid rgba(24,28,35,0.08)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px'
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <FileText size={18} style={{ color: '#717786' }} />
-                                <span style={{ fontSize: '14px', fontWeight: 500, color: '#404757' }}>{doc.label}</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>
+                                {doc.label} {doc.required && <span style={{ color: '#BA1A1A' }}>*</span>}
                               </div>
-                              {uploaded ? (
-                                <button
-                                  className="btn-ghost"
-                                  onClick={() => updateField('uploadedFiles', formData.uploadedFiles.filter(f => f !== doc.key))}
-                                  style={{ fontSize: '12px', color: '#BA1A1A' }}
-                                >
-                                  ✕ 移除文件
-                                </button>
-                              ) : (
-                                <button
-                                  className="btn-secondary"
-                                  onClick={() => alert('触发文件上传对话框')}
-                                  style={{ fontSize: '12px' }}
-                                >
-                                  📤 上传文件
-                                </button>
-                              )}
+                              <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>{doc.hint} · {t('form.documents.supports', { accept: doc.accept })}</div>
+                              {uploaded && <div style={{ fontSize: 12, color: '#34C759', marginTop: 2 }}>{t('form.documents.justUploaded', { name: doc.label })}</div>}
                             </div>
-                          )
-                        })}
-                      </div>
+                            {uploaded
+                              ? <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => updateField('uploadedFiles', (formData.uploadedFiles ?? []).filter(f => f !== doc.key))}>
+                                  <X size={13} />{t('form.documents.remove')}
+                                </button>
+                              : <button className="btn-secondary" style={{ fontSize: 12.5 }} onClick={() => updateField('uploadedFiles', [...(formData.uploadedFiles ?? []), doc.key])}>
+                                  <Upload size={13} />{t('form.documents.upload')}
+                                </button>
+                            }
+                          </div>
+                        )
+                      })}
                     </div>
                   </>
                 )}
               </div>
 
               {/* Footer Actions */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
-                <button 
-                  className="icon-btn" 
-                  onClick={currentStep > 0 ? () => setCurrentStep(s => s - 1) : handleCancel}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.3)' }}>
+                <button
+                  className="icon-btn"
+                  onClick={currentStep > 0 ? () => setCurrentStep(s => s - 1) : onBackToList}
                   style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: 'none', color: '#404757' }}
                 >
                   <ChevronLeft size={16} />
-                  <span>{currentStep > 0 ? '上一步' : '取消'}</span>
+                  <span>{currentStep > 0 ? t('navigation.previousStep') : t('actions.cancel')}</span>
                 </button>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <button 
-                    className="action-btn" 
+                  <button
+                    className="action-btn"
                     onClick={handleSaveDraft}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   >
-                    <Save size={16} />
-                    <span>保存草稿</span>
+                    <Check size={16} />
+                    <span>{t('header.saveDraft')}</span>
                   </button>
-                  <button 
-                    className="action-btn-primary" 
-                    onClick={() => {
-                      if (currentStep < STEPS.length - 1) setCurrentStep(s => s + 1)
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <span>下一步</span>
-                    <ChevronRight size={16} />
-                  </button>
+                  {currentStep < stepLabels.length - 1
+                    ? <button
+                        className="action-btn-primary"
+                        onClick={() => setCurrentStep(s => s + 1)}
+                        disabled={!stepDone(currentStep)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: stepDone(currentStep) ? 1 : 0.5, cursor: stepDone(currentStep) ? 'pointer' : 'not-allowed' }}
+                      >
+                        <span>{t('navigation.nextStep')}</span>
+                        <ChevronRight size={16} />
+                      </button>
+                    : <button
+                        className="action-btn-primary"
+                        onClick={handleSubmit}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#1a7a2e' }}
+                      >
+                        <CheckCircle size={16} />
+                        <span>{productId ? t('header.saveChanges') : t('form.submitListing')}</span>
+                      </button>
+                  }
                 </div>
               </div>
             </div>
@@ -1051,10 +958,10 @@ export default function ProductForm({ productId, onBackToList }: Props) {
             display: 'flex', alignItems: 'center', gap: '12px',
             minWidth: '300px'
           }}>
-            <Check size={20} style={{ color: '#34C759' }} />
+            <CheckCircle size={20} style={{ color: '#34C759' }} />
             <div style={{ fontSize: '14px', color: '#181C23', fontWeight: 500 }}>{toastMessage}</div>
             <button onClick={() => setShowToast(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: '0' }}>
-              <X size={16} style={{ color: '#9CA3AF' }} />
+              <XCircle size={16} style={{ color: '#9CA3AF' }} />
             </button>
           </div>
         </div>
@@ -1093,6 +1000,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
           cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0, 88, 188, 0.25);
         }
         .action-btn-primary:hover { background: #00489B; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 88, 188, 0.35); }
+        .action-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>
   )

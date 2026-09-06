@@ -18,5 +18,639 @@
   "appointmentStatus.rejected": "已拒绝",
   "appointmentStatus.expired": "已过期",
   "appointmentStatus.terminated": "已终止",
-  "appointmentStatus.pendingSupplement": "待补充材料"
+  "appointmentStatus.pendingSupplement": "待补充材料",
+  "common": {
+    "status": {
+      "approved": "已批准",
+      "pending": "待审核",
+      "underReview": "审核中",
+      "rejected": "已拒绝",
+      "expired": "已过期",
+      "terminated": "已终止"
+    }
+  },
+  "stats": {
+    "totalApplications": "总 Appointment 数",
+    "approved": "已批准",
+    "pendingOrUnderReview": "待审核 / 审核中",
+    "nearExpiry30Days": "近 30 天到期"
+  },
+  "tab": {
+    "application": "Appointment 申请",
+    "tracking": "状态跟踪",
+    "renewal": "续期与终止",
+    "license-check": "NIPR 牌照管理",
+    "compliance-report": "合规报告",
+    "ofac-screening": "OFAC 筛查"
+  },
+  "app": {
+    "title": "合规管理",
+    "subtitle": "管理渠道商 Appointment 申请、牌照核验、出单合规拦截及 OFAC 制裁筛查",
+    "expiredLicensesCount": "{n} 个牌照已过期",
+    "expiringSoonCount": "{n} 个即将到期",
+    "status": {
+      "approved": "已批准",
+      "pending": "待审核",
+      "rejected": "已拒绝",
+      "expired": "已过期",
+      "terminated": "已终止",
+      "underReview": "审核中"
+    },
+    "licStatus": {
+      "active": "有效",
+      "inactive": "未激活",
+      "expired": "已过期",
+      "suspended": "已暂停",
+      "pending": "待处理",
+      "cancelled": "已注销"
+    },
+    "result": {
+      "blocked": "已拦截",
+      "warned": "已警告",
+      "passed": "已通过",
+      "manualReview": "人工审核"
+    },
+    "ofacResult": {
+      "clear": "清单无记录",
+      "watchlist": "疑似匹配",
+      "blocked": "已拦截",
+      "pending": "筛查中"
+    },
+    "tabs": {
+      "application": "Appointment 申请",
+      "tracking": "状态跟踪",
+      "renewal": "续期与终止",
+      "license": "NIPR 牌照管理",
+      "interception": "出单合规拦截",
+      "report": "合规报告",
+      "ofac": "OFAC 筛查"
+    },
+    "stats": {
+      "total": "总 Appointment 数",
+      "approved": "已批准",
+      "pendingOrReview": "待审核 / 审核中",
+      "expiring30": "近 30 天到期"
+    },
+    "filterAll": "全部 ({n})",
+    "searchPlaceholder": "搜索渠道、保险公司、州…",
+    "newApplication": "新建申请",
+    "table": {
+      "channel": "渠道商",
+      "insurer": "保险公司",
+      "stateLine": "州 / 业务线",
+      "status": "状态",
+      "submittedDate": "提交日期",
+      "approvedDate": "批准日期",
+      "expiryDate": "到期日",
+      "actions": "操作"
+    },
+    "expiredDays": "已过期 {d}d",
+    "expiresInDays": "{d}d 后到期",
+    "action": {
+      "viewDetail": "查看详情",
+      "renew": "申请续期",
+      "terminate": "申请终止",
+      "reapply": "重新申请"
+    },
+    "timeline": {
+      "event1": "QT-2026-088421 出单被拦截",
+      "detail1": "Northeast Professional — Hartford CT Commercial — Appointment 已过期",
+      "event2": "ap8 Southwest Insurance Network 提交 Zurich AZ Commercial Appointment",
+      "detail2": "申请已发至 NIPR，等待州保险局受理",
+      "event3": "ap8 申请提交",
+      "detail3": "渠道 Lisa Wang 提交，系统自动预填 NPN",
+      "event4": "ap5 AIG FL Professional 进入人工审核",
+      "detail4": "保险公司内部合规审查，预计 5 工作日",
+      "event5": "ap4 Liberty Mutual NY Auto 申请提交",
+      "detail5": "待 NIPR 受理确认",
+      "event6": "ap6 Hartford CT Commercial Appointment 到期",
+      "detail6": "渠道 Northeast Professional — 60 天前已发送到期提醒，未完成续期",
+      "event7": "ap10 Travelers CA Auto WA 申请被拒",
+      "detail7": "WA 州牌照未激活"
+    },
+    "processingAppointments": "处理中的 Appointment ({n})",
+    "submittedDateLabel": "提交日期：",
+    "submittedByLabel": "提交人：",
+    "niprIdLabel": "NIPR ID：",
+    "pendingAssignment": "待分配",
+    "recentEvents": "最近事件流",
+    "trackSteps": {
+      "niprSubmit": "NIPR 提交",
+      "stateAccept": "州保险局受理",
+      "insurerReview": "保险公司审核",
+      "done": "完成"
+    },
+    "subtabs": {
+      "renewal": "续期管理",
+      "termination": "终止管理"
+    },
+    "renewStats": {
+      "due60": "待续期（60天内）",
+      "due6090": "即将到期（60–90天）",
+      "inProgress": "续期中"
+    },
+    "expiryDateLabel": "到期日：",
+    "daysLeft": "还剩 {d} 天",
+    "renewalInProgress": "续期进行中",
+    "viewProgress": "查看进度",
+    "startRenewal": "发起续期",
+    "terminationNotice": "终止前须知",
+    "terminationWarning": "终止 Appointment 后，渠道将无法在对应州/业务线为该保险公司出单。终止操作将通过 NIPR 向监管机构报告，不可撤销。",
+    "applyTerminate": "申请终止",
+    "terminateModalTitle": "确认终止 Appointment",
+    "terminateModalDesc": "此操作不可逆。请选择终止原因：",
+    "terminateReasons": {
+      "channelInitiated": "渠道主动申请终止",
+      "regulatory": "监管要求终止",
+      "insurerRequired": "保险公司要求终止",
+      "violation": "渠道违规处理",
+      "other": "其他原因"
+    },
+    "cancel": "取消",
+    "confirmTerminate": "确认终止",
+    "renewModalTitle": "发起 Appointment 续期",
+    "renewModalDesc": "系统将通过 NIPR 自动提交续期申请，请确认续期周期：",
+    "renewPeriods": {
+      "1y": "续期 1 年",
+      "2y": "续期 2 年",
+      "untilLicenseExpiry": "续期至牌照到期日"
+    },
+    "submitRenewal": "提交续期申请",
+    "licStats": {
+      "total": "总牌照数",
+      "active": "有效牌照",
+      "expiring60": "60天内到期",
+      "expiredSuspended": "已过期 / 暂停"
+    },
+    "licSearchPlaceholder": "搜索渠道、NPN、州…",
+    "batchNiprVerify": "批量 NIPR 验证",
+    "expiredLicensesHint": "需立即续期，过期牌照将导致出单拦截",
+    "mismatchLicensesCount": "{n} 个牌照与 NIPR 数据存在差异",
+    "mismatchHint": "需核实并更新",
+    "licTable": {
+      "channelNpn": "渠道商 / NPN",
+      "state": "州",
+      "licenseNumber": "牌照号",
+      "typeLine": "类型 / 业务线",
+      "status": "状态",
+      "expiryDate": "到期日",
+      "niprVerification": "NIPR 验证",
+      "ceHours": "CE 学时",
+      "actions": "操作"
+    },
+    "verification": {
+      "verified": "已验证",
+      "mismatch": "数据差异",
+      "notFound": "未找到",
+      "pending": "待验证"
+    },
+    "daysRemaining": "还剩 {d}d",
+    "verifying": "验证中…",
+    "interceptStats": {
+      "total": "拦截检查总数"
+    },
+    "interceptTabs": {
+      "log": "拦截日志",
+      "rules": "规则配置"
+    },
+    "policyDraftLabel": "保单草稿：",
+    "customerLabel": "客户：",
+    "premiumLabel": "保费：",
+    "released": "已放行",
+    "priority": "优先级 {n}",
+    "triggerCountLabel": "触发次数：",
+    "lastTriggeredLabel": "最近触发：",
+    "ruleAction": {
+      "block": "拦截",
+      "warn": "警告"
+    },
+    "reportCenter": "合规报告中心",
+    "generateNewReport": "生成新报告",
+    "configureReport": "配置报告参数",
+    "reportTypeLabel": "报告类型",
+    "reportPeriodLabel": "报告周期",
+    "outputFormatLabel": "输出格式",
+    "reportTypes": {
+      "appointment-status": "Appointment 状态",
+      "license-compliance": "牌照合规",
+      "ofac-summary": "OFAC 筛查摘要",
+      "interception-log": "合规拦截日志",
+      "renewal-calendar": "续期日历",
+      "regulatory-filing": "监管申报"
+    },
+    "period": {
+      "aug2026": "2026年8月",
+      "jul2026": "2026年7月"
+    },
+    "generating": "生成中…",
+    "startGeneration": "开始生成",
+    "reportStatus": {
+      "ready": "可下载",
+      "generating": "生成中",
+      "scheduled": "已计划",
+      "failed": "生成失败"
+    },
+    "generatedAtLabel": "生成时间：",
+    "generatedByLabel": "生成人：",
+    "scheduledGeneration": "计划生成",
+    "operatorLabel": "操作人：",
+    "fileSizeLabel": "大小：",
+    "recordCountLabel": "记录数：",
+    "download": "下载",
+    "awaitingExecution": "等待执行",
+    "ofac": {
+      "title": "OFAC 制裁名单实时筛查",
+      "subtitle": "对客户、受益人、关联实体进行 SDN / SDGT / OFSI 等制裁名单检查",
+      "entityName": "实体名称 *",
+      "entityPlaceholder": "输入个人姓名或企业名称…",
+      "typeLabel": "类型",
+      "company": "企业",
+      "individual": "个人",
+      "screening": "筛查中…",
+      "startScreening": "开始筛查",
+      "passed": "筛查通过 — 无制裁记录",
+      "watchlistScore": "疑似匹配 — 相似度 {score}%",
+      "blocked": "筛查未通过 — 制裁名单命中",
+      "matchedEntryLabel": "匹配条目：",
+      "reviewHint": "建议进行人工复核后方可出单",
+      "blockedHint": "已自动拦截，禁止为该实体出单",
+      "pass": "通过",
+      "stats": {
+        "total": "历史筛查总数"
+      },
+      "table": {
+        "timestamp": "时间戳",
+        "entityName": "实体名称",
+        "type": "类型",
+        "result": "结果",
+        "matchedEntry": "匹配条目",
+        "operator": "操作人",
+        "disposition": "处置"
+      }
+    }
+  },
+  "new": {
+    "backToCompliance": "返回合规管理",
+    "title": "新建 Appointment 申请",
+    "subtitle": "通过 NIPR 为渠道商提交 Appointment 申请，处理周期通常为 2–6 周",
+    "progressLabel": "申请进度",
+    "selectedInfo": "已选信息",
+    "labels": {
+      "channel": "渠道商",
+      "insurer": "保险公司",
+      "stateLine": "申请州 / 业务线"
+    },
+    "steps": {
+      "channel": { "label": "选择渠道", "sub": "选择申请渠道商" },
+      "insurer": { "label": "选择保险公司", "sub": "选择目标保险公司" },
+      "details": { "label": "配置详情", "sub": "州 · 业务线 · 说明" },
+      "confirm": { "label": "确认提交", "sub": "核对信息并提交" }
+    },
+    "step0": {
+      "title": "选择渠道商",
+      "subtitle": "选择要申请 Appointment 的渠道商，已排除无效牌照渠道"
+    },
+    "agentsCount": "{n} 名代理人",
+    "step1": {
+      "title": "选择保险公司",
+      "subtitle": "选择要申请 Appointment 的保险公司"
+    },
+    "step2": {
+      "title": "配置申请详情",
+      "subtitle": "选择申请州、业务线，并填写补充说明"
+    },
+    "fields": {
+      "state": "申请州",
+      "line": "业务线",
+      "reason": "申请说明"
+    },
+    "reasonPlaceholder": "请输入申请原因、业务背景等补充说明…",
+    "urgent": {
+      "title": "标记为紧急申请",
+      "desc": "启用加急处理通道，预计 3 个工作日内完成审批"
+    },
+    "step3": {
+      "title": "确认申请信息",
+      "subtitle": "提交前请仔细核对以下信息，提交后将自动进入 NIPR 处理流程"
+    },
+    "summaryTitle": "申请摘要",
+    "summary": {
+      "channel": "渠道商",
+      "channelNpn": "渠道 NPN",
+      "insurer": "保险公司",
+      "state": "申请州",
+      "line": "业务线",
+      "priority": "优先级",
+      "reason": "申请说明"
+    },
+    "priority": {
+      "urgent": "紧急（加急通道）",
+      "normal": "普通"
+    },
+    "notesTitle": "提交前注意事项",
+    "notesBody": "提交后系统将自动通过 NIPR 提交 Appointment 申请，处理周期通常为 2–6 周，具体视州监管机构而定。请确保渠道牌照在申请州有效且未过期。",
+    "cancel": "取消",
+    "prevStep": "上一步",
+    "nextStep": "下一步",
+    "submitting": "提交中…",
+    "confirmSubmit": "确认提交"
+  },
+  "renewal": {
+    "backToDashboard": "返回首页",
+    "title": "Appointment 续期管理",
+    "subtitle": "跟踪并管理即将到期的 NIPR 任命授权",
+    "urgentAlert": "{count} 个 Appointment 将在 30 天内到期 — 需立即处理",
+    "urgentAlertDesc": "需立即提交续期申请，以避免承保中断和监管处罚",
+    "renewNow": "立即续期 →",
+    "stats": {
+      "expiring90D": "即将到期（90天）",
+      "critical30D": "紧急（≤30天）",
+      "inProgress": "续期中",
+      "renewed": "已续期",
+      "mildWarning": "轻度提醒（61-90天）"
+    },
+    "searchPlaceholder": "按渠道、保险公司或 ID 搜索...",
+    "filterAllStatuses": "全部状态",
+    "filterNotDue": "未到期",
+    "filterDueSoon": "即将到期",
+    "filterInProgress": "续期中",
+    "filterRenewed": "已续期",
+    "batchRenew": "批量续期",
+    "listTitle": "即将到期 Appointment 列表（{count} 条）",
+    "col": {
+      "channelNpn": "渠道 / NPN",
+      "insurerState": "保险公司 / 州",
+      "expiryDate": "到期日",
+      "daysRemaining": "剩余天数",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "npnPrefix": "NPN：",
+    "daysCount": "{count} 天",
+    "urgency": {
+      "critical": "紧急 — 请立即续期",
+      "urgent": "加急 — 30 天内",
+      "warning": "提醒 — 60 天内",
+      "dueSoon": "即将到期续期",
+      "upcoming": "未来续期"
+    },
+    "startRenewal": "发起续期",
+    "processing": "⟳ 处理中...",
+    "completed": "✓ 已完成",
+    "noExpiring": "90 天内无即将到期的 Appointment",
+    "noExpiringDesc": "当前所有 Appointment 均有效，剩余时间充足",
+    "guidelinesTitle": "续期流程指南",
+    "step1Title": "步骤 1：验证资格",
+    "step1": {
+      "item1": "确认 NIPR 牌照状态有效",
+      "item2": "检查 CE 学时要求是否完成",
+      "item3": "核实无未处理的违规记录"
+    },
+    "step2Title": "步骤 2：提交申请",
+    "step2": {
+      "item1": "登录 NIPR 门户",
+      "item2": "填写续期表单（AF-100）",
+      "item3": "缴纳州申报费用（$50-$200）",
+      "item4": "提交支持材料"
+    },
+    "step3Title": "步骤 3：跟踪进度",
+    "step3": {
+      "item1": "等待保险公司审批（7-14 天）",
+      "item2": "NIPR 处理（5-7 个工作日）",
+      "item3": "接收授权证书",
+      "item4": "更新内部系统记录"
+    },
+    "alert": {
+      "batchRenew": "正在为 {count} 个 Appointment 发起批量续期\n\n请审查：\n1. 渠道组织资格\n2. 未完成的合规要求\n3. 各州申报费用",
+      "startRenewal": "正在为以下对象发起续期流程：\n\nID：{id}\n渠道：{channelName}\nNPN：{channelNpn}\n保险公司：{insurerShort}\n州：{state}\n业务线：{line}\n\n将在 {daysUntilExp} 天后到期\n\n后续步骤：\n1. 验证当前 NIPR 牌照状态\n2. 通过 NIPR 门户提交续期申请\n3. 缴纳各州申报费用\n4. 等待保险公司审批确认"
+    }
+  },
+  "tracking": {
+    "backToDashboard": "返回首页",
+    "title": "Appointment 状态跟踪",
+    "subtitle": "实时跟踪所有 NIPR 任命授权",
+    "stats": {
+      "total": "Appointment 总数",
+      "underReview": "审核中",
+      "approved": "已批准",
+      "expiringSoon": "即将到期"
+    },
+    "searchPlaceholder": "按渠道、保险公司或 ID 搜索...",
+    "filterAllStatuses": "全部状态",
+    "filterApproved": "已批准",
+    "filterPending": "待审核",
+    "filterUnderReview": "审核中",
+    "filterRejected": "已拒绝",
+    "filterExpired": "已过期",
+    "filterTerminated": "已终止",
+    "filterAllStates": "全部州",
+    "listTitle": "授权跟踪列表（{count} 条）",
+    "col": {
+      "channelNpn": "渠道 / NPN",
+      "insurer": "保险公司",
+      "stateLine": "州 / 业务线",
+      "dates": "日期",
+      "status": "状态",
+      "niprId": "NIPR ID",
+      "actions": "操作"
+    },
+    "submittedPrefix": "提交：",
+    "expiresPrefix": "到期：",
+    "processedIn": "处理耗时 {days}d",
+    "statusLabels": {
+      "approved": "已批准",
+      "pending": "待审核",
+      "underReview": "审核中",
+      "rejected": "已拒绝",
+      "expired": "已过期",
+      "terminated": "已终止"
+    },
+    "view": "查看",
+    "edit": "编辑",
+    "expiringAlert": "{count} 个 Appointment 将在 90 天内到期",
+    "expiringAlertDesc": "需采取续期行动以维持持续授权",
+    "reviewRenewals": "查看续期 →"
+  },
+  "terminate": {
+    "backToList": "返回列表页",
+    "title": "续期与终止管理",
+    "subtitle": "管理 Appointment 的续期和终止流程",
+    "tab": "续期与终止",
+    "listTitle": "可终止的 Appointment",
+    "noticeTitle": "⚠️ 终止前须知",
+    "noticeItem1": "终止 Appointment 后，渠道将无法在对应州/业务线为该保险公司出单",
+    "noticeItem2": "终止操作将通过 NIPR 向监管机构报告，不可撤销",
+    "noticeItem3": "所有未完成的保单将受到严重影响，请谨慎操作",
+    "noticeItem4": "请务必填写真实的终止原因以便后续审计",
+    "col": {
+      "channel": "渠道商",
+      "insurer": "保险公司",
+      "stateLine": "州/业务线",
+      "approvedDate": "批准日期",
+      "expiryDate": "到期日",
+      "daysRemaining": "剩余天数",
+      "actions": "操作"
+    },
+    "days": "{{n}}天",
+    "applyTerminate": "申请终止",
+    "empty": "当前无可终止的 Appointment",
+    "summaryPrefix": "共",
+    "summarySuffix": "条可终止记录",
+    "status": {
+      "approved": "已批准",
+      "pending": "待审核",
+      "underReview": "审核中",
+      "rejected": "已拒绝",
+      "expired": "已过期",
+      "terminated": "已终止"
+    },
+    "modalTitle": "确认终止申请",
+    "modalSubtitle": "请填写终止原因并确认操作",
+    "selectedInfoTitle": "即将终止的信息:",
+    "reasonLabel": "终止原因 * (必填)",
+    "reasonPlaceholder": "请输入终止原因，例如：渠道主动申请终止、合作到期不再续约等...",
+    "reasonRequired": "终止原因不能为空",
+    "irreversibleWarning": "⚠️ 此操作将向 NIPR 提交终止申请，一旦提交将不可撤销。请确保已与合作方协商一致。",
+    "acknowledge": "我理解上述风险，确认要终止该 Appointment",
+    "submitSuccess": "已提交终止申请\n原因：{{reason}}",
+    "cancel": "取消",
+    "confirmSubmit": "确认提交"
+  },
+  "reportGen": {
+    "title": "合规报告生成器",
+    "description": "自动生成各类合规监管报表并支持导出",
+    "statAvailableTemplates": "可用模板",
+    "statActiveTemplates": "active templates",
+    "statGeneratedToday": "今日已生成",
+    "statAutomationRunning": "↑ 自动化运行",
+    "statMonthlyTotal": "本月累计",
+    "statTotalDownloads": "总下载次数 {n}",
+    "statSuccessRate": "生成成功率",
+    "statExceptionRate": "↓ 异常率 {n}%",
+    "filterAllCategories": "所有类别",
+    "categoryScreening": "合规筛查",
+    "categoryLicense": "牌照管理",
+    "categoryApplication": "申请管理",
+    "categoryAudit": "审计报表",
+    "rangeToday": "今日",
+    "rangeYesterday": "昨日",
+    "rangeThisWeek": "本周",
+    "rangeLastWeek": "上周",
+    "rangeLastMonth": "上月",
+    "refreshData": "刷新数据",
+    "newReport": "新建报告",
+    "historyTitle": "历史生成记录",
+    "colReportName": "报告名称",
+    "colPeriodRange": "周期范围",
+    "colGeneratedAt": "生成时间",
+    "colFileFormat": "文件格式",
+    "colFileSize": "文件大小",
+    "colStatus": "状态",
+    "colActions": "操作",
+    "download": "下载",
+    "templatesTitle": "预置报告模板库",
+    "templateActive": "启用中",
+    "templateArchived": "已归档",
+    "generationFrequency": "生成频率:",
+    "frequencyDaily": "每日",
+    "frequencyWeekly": "每周",
+    "frequencyMonthly": "每月",
+    "frequencyQuarterly": "每季度",
+    "lastGenerated": "上次生成:",
+    "viewDetails": "查看详情",
+    "manualGenerate": "手动生成",
+    "emptyTitle": "暂无生成记录",
+    "emptyDesc": "当前筛选条件下没有报告记录",
+    "statusCompleted": "已完成",
+    "statusGenerating": "生成中",
+    "statusFailed": "失败"
+  },
+  "licenseExpiry": {
+    "title": "许可证到期提醒",
+    "description": "监控渠道代理商各类许可证有效期并自动发送提醒",
+    "refreshLog": "刷新许可证状态数据",
+    "stats": {
+      "totalAlerts": "预警总数",
+      "totalAlertsSub": "当前监控中",
+      "criticalAlerts": "紧急预警",
+      "criticalAlertsSub": "⚠️ 需立即处理",
+      "expired": "已过期",
+      "expiredSub": "❌ 影响业务",
+      "inProgress": "续期中",
+      "inProgressSub": "▶️ 跟进处理",
+      "complianceRate": "合规率",
+      "complianceRateSub": "↑ 达标率高",
+      "avgCycle": "平均周期",
+      "avgCycleSub": "续费处理时长",
+      "avgProcessingDays": "{n}天"
+    },
+    "filter": {
+      "allSeverities": "所有严重程度",
+      "severityCritical": "严重",
+      "severityHigh": "高危",
+      "severityMedium": "中危",
+      "severityLow": "低危",
+      "allStatuses": "所有状态",
+      "statusNotified": "已通知",
+      "statusReminded": "再次提醒",
+      "statusExpired": "已过期",
+      "statusRenewed": "已续期"
+    },
+    "action": {
+      "refreshData": "刷新数据",
+      "exportList": "导出清单",
+      "viewDetail": "查看详情 →",
+      "startRenewal": "发起续期 →"
+    },
+    "table": {
+      "colChannel": "渠道信息",
+      "colLicenseType": "许可证类型",
+      "colCountdown": "有效期倒计时",
+      "colSeverity": "风险级别",
+      "colStatus": "状态",
+      "colRenewalProgress": "续期进度",
+      "colActions": "操作",
+      "licenseNumberLabel": "牌照号：",
+      "lastNotifiedLabel": "上次通知：",
+      "expiryLabel": "到期："
+    },
+    "daysRemaining": {
+      "expired": "⚠️ 已过期",
+      "within": "{days}天内",
+      "days": "{days}天"
+    },
+    "renewalStatus": {
+      "pending": "待处理",
+      "inProgress": "处理中",
+      "completed": "已完成"
+    },
+    "status": {
+      "notified": "已通知",
+      "reminded": "再次提醒",
+      "expired": "已过期",
+      "renewed": "已续期"
+    },
+    "severity": {
+      "critical": "⚡ 严重",
+      "high": "⚠️ 高危",
+      "medium": "🔶 中危",
+      "low": "🟢 低风险"
+    },
+    "empty": {
+      "title": "暂无预警记录",
+      "desc": "当前筛选条件下没有预警记录"
+    },
+    "quickAction": {
+      "title": "快速行动建议",
+      "immediateTitle": "需要立即处理",
+      "immediateCount": "{n}个",
+      "immediateDesc": "≤7 天到期的许可证",
+      "expiredTitle": "已过期需关注",
+      "expiredCount": "{n}个",
+      "expiredDesc": "可能影响业务开展",
+      "batchTitle": "批量续期窗口",
+      "batchRange": "30-90天",
+      "batchDesc": "提前规划续期计划"
+    }
+  }
 }

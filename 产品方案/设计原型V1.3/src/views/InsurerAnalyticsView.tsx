@@ -9,6 +9,7 @@ import {
   BarChart2, Map, Users, Shield, RefreshCw, Download,
   ArrowUpRight, ArrowDownRight, Info, XOctagon,
 } from 'lucide-react'
+import { useLang } from '../i18n'
 import type { ViewId } from '../components/Sidebar'
 import {
   insurerKPIs, premiumTrendData, performanceVsTarget,
@@ -59,9 +60,10 @@ const tooltipStyle = {
   labelStyle: { fontWeight: 700, color: '#181C23' },
 }
 
-// ── Tab 1 — 保险公司业绩总览 ──────────────────────────────────────────────────
+// ── Tab 1 — Performance Overview ──────────────────────────────────────────────
 
 function OverviewTab() {
+  const { t } = useLang()
   const [selectedInsurer, setSelectedInsurer] = useState<string | null>(null)
   const totalPremium = insurerKPIs.reduce((s, k) => s + k.totalPremium, 0)
   const totalCommission = insurerKPIs.reduce((s, k) => s + k.totalCommission, 0)
@@ -73,10 +75,10 @@ function OverviewTab() {
       {/* Platform KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '平台年化保费收入', value: fmt(totalPremium), sub: '较上年 +13.2%', color: '#0058BC', trend: true },
-          { label: '平台佣金收入', value: fmt(totalCommission), sub: '综合费率 12.0%', color: '#1E8033', trend: true },
-          { label: '综合赔付率', value: pct(avgLossRatio), sub: '较上月 -0.6pp', color: '#B06000', trend: false },
-          { label: '综合续保率', value: pct(avgRenewal), sub: '较上月 +0.3pp', color: '#7B3FCA', trend: true },
+          { label: t.anKpiPremium, value: fmt(totalPremium), sub: t.anKpiPremiumSub, color: '#0058BC', trend: true },
+          { label: t.anKpiCommission, value: fmt(totalCommission), sub: t.anKpiCommissionSub, color: '#1E8033', trend: true },
+          { label: t.anKpiLoss, value: pct(avgLossRatio), sub: t.anKpiLossSub, color: '#B06000', trend: false },
+          { label: t.anKpiRenewal, value: pct(avgRenewal), sub: t.anKpiRenewalSub, color: '#7B3FCA', trend: true },
         ].map(s => (
           <Card key={s.label} style={{ background: `linear-gradient(135deg, ${s.color}08 0%, transparent 60%)` }}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -100,15 +102,15 @@ function OverviewTab() {
                 <span style={{ fontSize: 14, fontWeight: 800, color: '#181C23' }}>{k.insurerShort}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                {k.premiumGrowth > 0.1 && <Badge bg={`${k.insurerColor}15`} color={k.insurerColor}>高增长</Badge>}
+                {k.premiumGrowth > 0.1 && <Badge bg={`${k.insurerColor}15`} color={k.insurerColor}>{t.anHighGrowth}</Badge>}
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {[
-                { label: '保费规模', value: fmt(k.totalPremium), mono: true },
-                { label: '保费增速', value: `+${pct(k.premiumGrowth)}`, color: '#1E8033' },
-                { label: '赔付率', value: pct(k.lossRatio), color: k.lossRatio > 0.65 ? '#C0392B' : k.lossRatio > 0.60 ? '#B06000' : '#1E8033' },
-                { label: '续保率', value: pct(k.renewalRate), color: k.renewalRate > 0.9 ? '#1E8033' : k.renewalRate > 0.87 ? '#B06000' : '#C0392B' },
+                { label: t.anMPremium, value: fmt(k.totalPremium), mono: true },
+                { label: t.anMGrowth, value: `+${pct(k.premiumGrowth)}`, color: '#1E8033' },
+                { label: t.anMLoss, value: pct(k.lossRatio), color: k.lossRatio > 0.65 ? '#C0392B' : k.lossRatio > 0.60 ? '#B06000' : '#1E8033' },
+                { label: t.anMRenewal, value: pct(k.renewalRate), color: k.renewalRate > 0.9 ? '#1E8033' : k.renewalRate > 0.87 ? '#B06000' : '#C0392B' },
               ].map(m => (
                 <div key={m.label}>
                   <div style={{ fontSize: 10.5, color: '#A0A5B1', marginBottom: 1 }}>{m.label}</div>
@@ -117,9 +119,9 @@ function OverviewTab() {
               ))}
             </div>
             <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(193,198,215,0.3)', display: 'flex', gap: 12, fontSize: 11.5, color: '#717786' }}>
-              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{k.activePolicies.toLocaleString()}</span> 张保单</span>
-              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{k.activeChannels}</span> 个渠道</span>
-              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{k.activeProducts}</span> 款产品</span>
+              <span>{t.anPolicies(k.activePolicies)}</span>
+              <span>{t.anChannels(k.activeChannels)}</span>
+              <span>{t.anProducts(k.activeProducts)}</span>
             </div>
           </div>
         ))}
@@ -128,7 +130,7 @@ function OverviewTab() {
       {/* Premium trend chart */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Card>
-          <SectionTitle>月度保费趋势（万美元）</SectionTitle>
+          <SectionTitle>{t.anChartPremiumTrend}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={premiumTrendData} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
@@ -144,7 +146,7 @@ function OverviewTab() {
         </Card>
 
         <Card>
-          <SectionTitle>YTD 保费达成率（百万美元）</SectionTitle>
+          <SectionTitle>{t.anChartTarget}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={performanceVsTarget} margin={{ top: 4, right: 8, bottom: 0, left: -10 }} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" horizontal={false} />
@@ -152,10 +154,10 @@ function OverviewTab() {
               <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#A0A5B1' }} width={80} />
               <Tooltip {...tooltipStyle} formatter={(v: any) => [`$${v}M`, '']} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="actual" name="实际" radius={[0, 4, 4, 0]}>
+              <Bar dataKey="actual" name={t.anLegendActual} radius={[0, 4, 4, 0]}>
                 {performanceVsTarget.map((e, i) => <Cell key={i} fill={e.color} fillOpacity={0.85} />)}
               </Bar>
-              <Bar dataKey="target" name="目标" fill="rgba(193,198,215,0.35)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="target" name={t.anLegendTarget} fill="rgba(193,198,215,0.35)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -164,9 +166,10 @@ function OverviewTab() {
   )
 }
 
-// ── Tab 2 — 产品业绩分析 ──────────────────────────────────────────────────────
+// ── Tab 2 — Product Performance ───────────────────────────────────────────────
 
 function ProductAnalyticsTab() {
+  const { t } = useLang()
   const [sortKey, setSortKey] = useState<'totalPremium' | 'lossRatio' | 'renewalRate' | 'premiumGrowth'>('totalPremium')
   const [filterInsurer, setFilterInsurer] = useState('all')
 
@@ -184,13 +187,13 @@ function ProductAnalyticsTab() {
           <Card key={p.productId} style={{ background: rank === 0 ? 'linear-gradient(135deg,rgba(175,82,222,0.06) 0%,transparent 60%)' : undefined }}>
             <div className="flex items-center gap-2 mb-2">
               <div style={{ width: 22, height: 22, borderRadius: '50%', background: rank === 0 ? '#AF52DE' : rank === 1 ? '#FF9F0A' : '#A0A5B1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff' }}>{rank + 1}</div>
-              <span style={{ fontSize: 11.5, fontWeight: 700, color: '#717786' }}>增速 TOP {rank + 1}</span>
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: '#717786' }}>{t.anTopGrowth(rank + 1)}</span>
             </div>
             <div style={{ fontSize: 13.5, fontWeight: 800, color: '#181C23', lineHeight: 1.3, marginBottom: 6 }}>{p.productName}</div>
             <div style={{ fontSize: 11.5, color: '#717786', marginBottom: 8 }}>{p.insurerShort} · {p.line}</div>
             <div style={{ display: 'flex', gap: 12 }}>
-              <div><div style={{ fontSize: 10.5, color: '#A0A5B1' }}>保费增速</div><div style={{ fontSize: 18, fontWeight: 800, color: '#1E8033', fontFamily: "'JetBrains Mono', monospace" }}>+{pct(p.premiumGrowth)}</div></div>
-              <div><div style={{ fontSize: 10.5, color: '#A0A5B1' }}>规模</div><div style={{ fontSize: 18, fontWeight: 800, color: '#0058BC', fontFamily: "'JetBrains Mono', monospace" }}>{fmt(p.totalPremium)}</div></div>
+              <div><div style={{ fontSize: 10.5, color: '#A0A5B1' }}>{t.anMGrowth}</div><div style={{ fontSize: 18, fontWeight: 800, color: '#1E8033', fontFamily: "'JetBrains Mono', monospace" }}>+{pct(p.premiumGrowth)}</div></div>
+              <div><div style={{ fontSize: 10.5, color: '#A0A5B1' }}>{t.anMSize}</div><div style={{ fontSize: 18, fontWeight: 800, color: '#0058BC', fontFamily: "'JetBrains Mono', monospace" }}>{fmt(p.totalPremium)}</div></div>
             </div>
           </Card>
         ))}
@@ -199,11 +202,11 @@ function ProductAnalyticsTab() {
       {/* Controls */}
       <div className="flex items-center gap-3 mb-4">
         <select value={filterInsurer} onChange={e => setFilterInsurer(e.target.value)} className="input-glass" style={{ fontSize: 12.5, minWidth: 160 }}>
-          <option value="all">全部保险公司</option>
+          <option value="all">{t.anAllInsurers}</option>
           {['Travelers', 'Liberty Mutual', 'Nationwide', 'Chubb', 'AIG', 'Zurich'].map(n => <option key={n} value={n}>{n}</option>)}
         </select>
         <div className="flex items-center gap-1">
-          {[['totalPremium','保费规模'],['premiumGrowth','增速'],['lossRatio','赔付率↑佳'],['renewalRate','续保率']].map(([k, l]) => (
+          {[['totalPremium', t.anMPremium], ['premiumGrowth', t.anSortGrowth], ['lossRatio', t.anSortLoss], ['renewalRate', t.anMRenewal]].map(([k, l]) => (
             <button key={k} onClick={() => setSortKey(k as any)} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: sortKey === k ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: sortKey === k ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: sortKey === k ? '#0058BC' : '#717786', cursor: 'pointer' }}>{l}</button>
           ))}
         </div>
@@ -214,7 +217,7 @@ function ProductAnalyticsTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['产品名称', '保险公司', '业务线', '保费规模', '增速', '保单数', '件均保费', '赔付率', '续保率', '主要州'].map(h => (
+              {[t.anThProduct, t.anThInsurers, t.anThLine, t.anMPremium, t.anSortGrowth, t.anThPolicies, t.anThAvgPremium, t.anMLoss, t.anMRenewal, t.anThTopState].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -264,7 +267,7 @@ function ProductAnalyticsTab() {
 
       {/* Product monthly trend chart */}
       <Card>
-        <SectionTitle>主要产品月度保费趋势（万美元）</SectionTitle>
+        <SectionTitle>{t.anChartProductTrend}</SectionTitle>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={productMonthlyData} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
             <defs>
@@ -290,9 +293,10 @@ function ProductAnalyticsTab() {
   )
 }
 
-// ── Tab 3 — 区域业绩分析 ──────────────────────────────────────────────────────
+// ── Tab 3 — Regional Performance ──────────────────────────────────────────────
 
 function RegionalAnalyticsTab() {
+  const { t } = useLang()
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
   const regionStates = selectedRegion ? statePerformance.filter(s => s.region === selectedRegion).sort((a, b) => b.totalPremium - a.totalPremium) : statePerformance.sort((a, b) => b.totalPremium - a.totalPremium).slice(0, 8)
 
@@ -310,11 +314,11 @@ function RegionalAnalyticsTab() {
               </div>
               <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'JetBrains Mono', monospace" }}>{fmt(r.totalPremium)}</div>
               <div style={{ display: 'flex', gap: 8, marginTop: 6, fontSize: 11 }}>
-                <span style={{ color: '#717786' }}>{r.stateCount} 州</span>
+                <span style={{ color: '#717786' }}>{t.anStatesCount(r.stateCount)}</span>
                 <span style={{ color: '#717786' }}>·</span>
                 <span style={{ color: '#1E8033' }}>+{pct(r.avgGrowth)}</span>
               </div>
-              <div style={{ marginTop: 6, fontSize: 11, color: '#717786' }}>赔付率：<span style={{ fontWeight: 700, color: r.avgLossRatio > 0.65 ? '#C0392B' : '#555' }}>{pct(r.avgLossRatio)}</span></div>
+              <div style={{ marginTop: 6, fontSize: 11, color: '#717786' }}>{t.anLossColon}<span style={{ fontWeight: 700, color: r.avgLossRatio > 0.65 ? '#C0392B' : '#555' }}>{pct(r.avgLossRatio)}</span></div>
             </div>
           )
         })}
@@ -323,7 +327,7 @@ function RegionalAnalyticsTab() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Regional trend chart */}
         <Card>
-          <SectionTitle>各区域月度保费趋势（万美元）</SectionTitle>
+          <SectionTitle>{t.anChartRegionalTrend}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={regionalMonthly} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <defs>
@@ -348,19 +352,19 @@ function RegionalAnalyticsTab() {
 
         {/* Region breakdown bar */}
         <Card>
-          <SectionTitle>区域保费 & 赔付率对比</SectionTitle>
+          <SectionTitle>{t.anChartRegionCompare}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={regionSummary} margin={{ top: 4, right: 16, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
               <XAxis dataKey="region" tick={{ fontSize: 11, fill: '#A0A5B1' }} />
               <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#A0A5B1' }} tickFormatter={v => `$${v / 1e6}M`} />
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#A0A5B1' }} tickFormatter={v => `${(v * 100).toFixed(0)}%`} domain={[0.4, 0.8]} />
-              <Tooltip {...tooltipStyle} formatter={(v: any, name: any) => [name === 'avgLossRatio' ? pct(v) : fmt(v), name === 'avgLossRatio' ? '赔付率' : '保费']} />
+              <Tooltip {...tooltipStyle} formatter={(v: any, name: any) => [name === 'avgLossRatio' ? pct(v) : fmt(v), name === 'avgLossRatio' ? t.anMLoss : t.anLegendPremium]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar yAxisId="left" dataKey="totalPremium" name="保费" radius={[4, 4, 0, 0]}>
+              <Bar yAxisId="left" dataKey="totalPremium" name={t.anLegendPremium} radius={[4, 4, 0, 0]}>
                 {regionSummary.map((e, i) => <Cell key={i} fill={REGION_COLORS[e.region]} fillOpacity={0.8} />)}
               </Bar>
-              <Line yAxisId="right" type="monotone" dataKey="avgLossRatio" name="赔付率" stroke="#FF3B30" strokeWidth={2} dot={{ r: 4 }} />
+              <Line yAxisId="right" type="monotone" dataKey="avgLossRatio" name={t.anMLoss} stroke="#FF3B30" strokeWidth={2} dot={{ r: 4 }} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -369,13 +373,13 @@ function RegionalAnalyticsTab() {
       {/* State detail table */}
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>{selectedRegion ? `${selectedRegion} 区域州级明细` : '保费前 8 州明细'}</span>
-          {selectedRegion && <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setSelectedRegion(null)}>查看全部</button>}
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#181C23' }}>{selectedRegion ? t.anRegionDetail(selectedRegion) : t.anTop8}</span>
+          {selectedRegion && <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setSelectedRegion(null)}>{t.anViewAll}</button>}
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['州', '区域', '保费规模', '增速', '保单数', '赔付率', '主要保险公司', '渠道数'].map(h => (
+              {[t.anThState, t.anThRegion, t.anMPremium, t.anSortGrowth, t.anThPolicies, t.anMLoss, t.anThTopInsurer, t.anThChannels].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -405,9 +409,10 @@ function RegionalAnalyticsTab() {
   )
 }
 
-// ── Tab 4 — 渠道贡献分析 ─────────────────────────────────────────────────────
+// ── Tab 4 — Channel Contribution ──────────────────────────────────────────────
 
 function ChannelAnalyticsTab() {
+  const { t } = useLang()
   const [selectedTier, setSelectedTier] = useState<string>('all')
   const tierColors: Record<string, { bg: string; color: string }> = {
     Platinum: { bg: 'rgba(175,82,222,0.12)', color: '#7B3FCA' },
@@ -429,13 +434,13 @@ function ChannelAnalyticsTab() {
             <div key={tier} onClick={() => setSelectedTier(selectedTier === tier ? 'all' : tier)} style={{ borderRadius: 14, padding: '14px 16px', border: selectedTier === tier ? `2px solid ${tc.color}` : '1px solid rgba(193,198,215,0.35)', background: selectedTier === tier ? `${tc.color}08` : 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Badge bg={tc.bg} color={tc.color}>{tier}</Badge>
-                <span style={{ fontSize: 11, color: '#A0A5B1' }}>{cs.length} 家</span>
+                <span style={{ fontSize: 11, color: '#A0A5B1' }}>{t.anChannelCount(cs.length)}</span>
               </div>
               <div style={{ fontSize: 20, fontWeight: 800, color: tc.color, fontFamily: "'JetBrains Mono', monospace" }}>
                 {fmt(cs.reduce((s, c) => s + c.totalPremium, 0))}
               </div>
               <div style={{ fontSize: 11, color: '#717786', marginTop: 3 }}>
-                占比 {pct(cs.reduce((s, c) => s + c.totalPremium, 0) / totalPremium)}
+                {t.anShare(pct(cs.reduce((s, c) => s + c.totalPremium, 0) / totalPremium))}
               </div>
             </div>
           )
@@ -445,13 +450,13 @@ function ChannelAnalyticsTab() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Channel premium bar */}
         <Card>
-          <SectionTitle>渠道保费规模排名（百万美元）</SectionTitle>
+          <SectionTitle>{t.anChartChannelRank}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={filtered.map(c => ({ name: c.channelShort, premium: Math.round(c.totalPremium / 1e5) / 10, tier: c.tier }))} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 10, fill: '#A0A5B1' }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#A0A5B1' }} width={72} />
-              <Tooltip {...tooltipStyle} formatter={(v: any) => [`$${v}M`, '保费']} />
+              <Tooltip {...tooltipStyle} formatter={(v: any) => [`$${v}M`, t.anLegendPremium]} />
               <Bar dataKey="premium" radius={[0, 4, 4, 0]}>
                 {filtered.map((c, i) => <Cell key={i} fill={tierColors[c.tier].color} fillOpacity={0.8} />)}
               </Bar>
@@ -461,7 +466,7 @@ function ChannelAnalyticsTab() {
 
         {/* Top channel monthly trend */}
         <Card>
-          <SectionTitle>主要渠道月度保费趋势（万美元）</SectionTitle>
+          <SectionTitle>{t.anChartChannelTrend}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={channelMonthly} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
@@ -482,7 +487,7 @@ function ChannelAnalyticsTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['渠道名称', '层级', '保费贡献', '占比', '增速', '佣金收入', '赔付率', '续保率', '保险公司', '产品'].map(h => (
+              {[t.anThChannel, t.anThTier, t.anThContribution, t.anThShare, t.anSortGrowth, t.anThCommission, t.anMLoss, t.anMRenewal, t.anThInsurers, t.anThProducts].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -521,9 +526,10 @@ function ChannelAnalyticsTab() {
   )
 }
 
-// ── Tab 5 — 赔付率监控 ───────────────────────────────────────────────────────
+// ── Tab 5 — Loss Ratio Monitoring ─────────────────────────────────────────────
 
 function LossRatioTab() {
+  const { lang, t } = useLang()
   const alertSev: Record<string, { bg: string; color: string; icon: React.ReactNode }> = {
     critical: { bg: 'rgba(255,59,48,0.1)',  color: '#C0392B', icon: <XOctagon size={14} /> },
     warning:  { bg: 'rgba(255,159,10,0.1)', color: '#B06000', icon: <AlertTriangle size={14} /> },
@@ -538,9 +544,9 @@ function LossRatioTab() {
       <div style={{ marginBottom: 20 }}>
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle size={16} color="#C0392B" />
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>预警事项</span>
-          <Badge bg="rgba(255,59,48,0.1)" color="#C0392B">{lossAlerts.filter(a => a.severity === 'critical').length} 严重</Badge>
-          <Badge bg="rgba(255,159,10,0.1)" color="#B06000">{lossAlerts.filter(a => a.severity === 'warning').length} 警告</Badge>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>{t.anAlertsTitle}</span>
+          <Badge bg="rgba(255,59,48,0.1)" color="#C0392B">{t.anCriticalCount(lossAlerts.filter(a => a.severity === 'critical').length)}</Badge>
+          <Badge bg="rgba(255,159,10,0.1)" color="#B06000">{t.anWarningCount(lossAlerts.filter(a => a.severity === 'warning').length)}</Badge>
         </div>
         <div className="flex flex-col gap-2">
           {lossAlerts.map(a => {
@@ -552,13 +558,13 @@ function LossRatioTab() {
                 <div style={{ flex: 1 }}>
                   <div className="flex items-center gap-3 mb-0.5">
                     <span style={{ fontWeight: 700, fontSize: 13, color: '#181C23' }}>{a.insurerShort} · {a.line} · {a.state}</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, fontWeight: 600, color: trendStyle.color }}>{trendStyle.icon}{a.trend === 'rising' ? '上升趋势' : a.trend === 'improving' ? '改善中' : '平稳'}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, fontWeight: 600, color: trendStyle.color }}>{trendStyle.icon}{a.trend === 'rising' ? t.anTrendRising : a.trend === 'improving' ? t.anTrendImproving : t.anTrendStable}</span>
                   </div>
-                  <span style={{ fontSize: 12, color: '#717786' }}>{a.note}</span>
+                  <span style={{ fontSize: 12, color: '#717786' }}>{lang === 'en' ? a.noteEn ?? a.note : a.note}</span>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontSize: 22, fontWeight: 800, color: sv.color, fontFamily: "'JetBrains Mono', monospace" }}>{pct(a.currentRatio)}</div>
-                  <div style={{ fontSize: 11, color: '#A0A5B1' }}>阈值 {pct(a.threshold)}</div>
+                  <div style={{ fontSize: 11, color: '#A0A5B1' }}>{t.anThreshold(pct(a.threshold))}</div>
                 </div>
               </div>
             )
@@ -569,7 +575,7 @@ function LossRatioTab() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Loss ratio trend */}
         <Card>
-          <SectionTitle>各保险公司赔付率趋势</SectionTitle>
+          <SectionTitle>{t.anChartLossTrend}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={lossRatioTrend} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
@@ -577,7 +583,7 @@ function LossRatioTab() {
               <YAxis tick={{ fontSize: 11, fill: '#A0A5B1' }} tickFormatter={v => `${(v * 100).toFixed(0)}%`} domain={[0.45, 0.75]} />
               <Tooltip {...tooltipStyle} formatter={(v: any) => [pct(v), '']} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <ReferenceLine y={THRESHOLD} stroke="#FF3B30" strokeDasharray="6 3" strokeWidth={1.5} label={{ value: '预警线 70%', position: 'right', fontSize: 10, fill: '#FF3B30' }} />
+              <ReferenceLine y={THRESHOLD} stroke="#FF3B30" strokeDasharray="6 3" strokeWidth={1.5} label={{ value: t.anRefLine70, position: 'right', fontSize: 10, fill: '#FF3B30' }} />
               {Object.entries(INSURER_COLORS).map(([name, color]) => (
                 <Line key={name} type="monotone" dataKey={name} stroke={color} strokeWidth={2} dot={false} />
               ))}
@@ -587,7 +593,7 @@ function LossRatioTab() {
 
         {/* Loss ratio by line */}
         <Card>
-          <SectionTitle>各业务线赔付率 vs 行业基准</SectionTitle>
+          <SectionTitle>{t.anChartLossByLine}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={lossRatioByLine} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
@@ -596,10 +602,10 @@ function LossRatioTab() {
               <Tooltip {...tooltipStyle} formatter={(v: any) => [pct(v), '']} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <ReferenceLine y={THRESHOLD} stroke="#FF3B30" strokeDasharray="5 3" strokeWidth={1} />
-              <Bar dataKey="ratio" name="实际赔付率" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="ratio" name={t.anLegendActualLoss} radius={[4, 4, 0, 0]}>
                 {lossRatioByLine.map((e, i) => <Cell key={i} fill={e.ratio > 0.65 ? '#FF3B30' : e.ratio > 0.60 ? '#FF9F0A' : '#34C759'} fillOpacity={0.85} />)}
               </Bar>
-              <Bar dataKey="benchmark" name="行业基准" fill="rgba(193,198,215,0.4)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="benchmark" name={t.anLegendBenchmark} fill="rgba(193,198,215,0.4)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -607,7 +613,7 @@ function LossRatioTab() {
 
       {/* Per-insurer loss ratio summary */}
       <Card>
-        <SectionTitle>保险公司赔付率汇总</SectionTitle>
+        <SectionTitle>{t.anLossSummary}</SectionTitle>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
           {insurerKPIs.map(k => {
             const pct_ = k.lossRatio * 100
@@ -637,18 +643,19 @@ function LossRatioTab() {
   )
 }
 
-// ── Tab 6 — 续保率分析 ───────────────────────────────────────────────────────
+// ── Tab 6 — Retention Analysis ────────────────────────────────────────────────
 
 function RenewalAnalyticsTab() {
+  const { t } = useLang()
   return (
     <div>
       {/* KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '平台综合续保率', value: pct(insurerKPIs.reduce((s, k) => s + k.renewalRate, 0) / insurerKPIs.length), color: '#0058BC', sub: '较上月 +0.3pp', up: true },
-          { label: '本月到期保单', value: renewalCohorts[renewalCohorts.length - 1].dueCount.toLocaleString(), color: '#181C23', sub: '待续保', up: null },
-          { label: '本月已续保', value: renewalCohorts[renewalCohorts.length - 1].renewedCount.toLocaleString(), color: '#1E8033', sub: pct(renewalCohorts[renewalCohorts.length - 1].renewalRate), up: true },
-          { label: '续保保费增长', value: '+' + pct(renewalCohorts[renewalCohorts.length - 1].avgPremiumChange), color: '#7B3FCA', sub: '件均保费同比增长', up: true },
+          { label: t.anKpiRetention, value: pct(insurerKPIs.reduce((s, k) => s + k.renewalRate, 0) / insurerKPIs.length), color: '#0058BC', sub: t.anKpiRenewalSub, up: true },
+          { label: t.anKpiDue, value: renewalCohorts[renewalCohorts.length - 1].dueCount.toLocaleString(), color: '#181C23', sub: t.anKpiDueSub, up: null },
+          { label: t.anKpiRenewed, value: renewalCohorts[renewalCohorts.length - 1].renewedCount.toLocaleString(), color: '#1E8033', sub: pct(renewalCohorts[renewalCohorts.length - 1].renewalRate), up: true },
+          { label: t.anKpiPremiumGrowth, value: '+' + pct(renewalCohorts[renewalCohorts.length - 1].avgPremiumChange), color: '#7B3FCA', sub: t.anKpiAvgPremiumSub, up: true },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -663,7 +670,7 @@ function RenewalAnalyticsTab() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Renewal trend */}
         <Card>
-          <SectionTitle>各保险公司续保率趋势</SectionTitle>
+          <SectionTitle>{t.anChartRenewalTrend}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={renewalTrend} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
@@ -681,7 +688,7 @@ function RenewalAnalyticsTab() {
 
         {/* Cohort stacked bar */}
         <Card>
-          <SectionTitle>续保队列分析 — 到期保单构成</SectionTitle>
+          <SectionTitle>{t.anChartCohort}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={renewalCohorts} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" />
@@ -689,9 +696,9 @@ function RenewalAnalyticsTab() {
               <YAxis tick={{ fontSize: 11, fill: '#A0A5B1' }} />
               <Tooltip {...tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="renewedCount" name="已续保" fill="#34C759" fillOpacity={0.85} stackId="a" />
-              <Bar dataKey="cancelledCount" name="主动取消" fill="#FF9F0A" fillOpacity={0.85} stackId="a" />
-              <Bar dataKey="lapsedCount" name="自动失效" fill="#FF3B30" fillOpacity={0.85} stackId="a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="renewedCount" name={t.anLegendRenewed} fill="#34C759" fillOpacity={0.85} stackId="a" />
+              <Bar dataKey="cancelledCount" name={t.anLegendCancelled} fill="#FF9F0A" fillOpacity={0.85} stackId="a" />
+              <Bar dataKey="lapsedCount" name={t.anLegendLapsed} fill="#FF3B30" fillOpacity={0.85} stackId="a" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -700,7 +707,7 @@ function RenewalAnalyticsTab() {
       {/* Insurer renewal comparison */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
-          <SectionTitle>各保险公司续保率排名</SectionTitle>
+          <SectionTitle>{t.anRenewalRanking}</SectionTitle>
           <div className="flex flex-col gap-3 mt-2">
             {[...insurerKPIs].sort((a, b) => b.renewalRate - a.renewalRate).map((k, rank) => (
               <div key={k.insurerId} className="flex items-center gap-3">
@@ -718,15 +725,15 @@ function RenewalAnalyticsTab() {
 
         {/* Product renewal rate */}
         <Card>
-          <SectionTitle>各产品续保率对比</SectionTitle>
+          <SectionTitle>{t.anChartProductRenewal}</SectionTitle>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={renewalByProduct} layout="vertical" margin={{ top: 4, right: 40, bottom: 0, left: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 10, fill: '#A0A5B1' }} tickFormatter={v => `${(v * 100).toFixed(0)}%`} domain={[0.75, 1.0]} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: '#A0A5B1' }} width={100} />
-              <Tooltip {...tooltipStyle} formatter={(v: any) => [pct(v), '续保率']} />
+              <Tooltip {...tooltipStyle} formatter={(v: any) => [pct(v), t.anMRenewal]} />
               <ReferenceLine x={0.85} stroke="#FF9F0A" strokeDasharray="4 3" strokeWidth={1} />
-              <Bar dataKey="rate" name="续保率" radius={[0, 4, 4, 0]}>
+              <Bar dataKey="rate" name={t.anMRenewal} radius={[0, 4, 4, 0]}>
                 {renewalByProduct.map((e, i) => <Cell key={i} fill={e.rate > 0.90 ? '#34C759' : e.rate > 0.87 ? '#FF9F0A' : '#FF3B30'} fillOpacity={0.85} />)}
               </Bar>
             </BarChart>
@@ -736,11 +743,11 @@ function RenewalAnalyticsTab() {
 
       {/* Cohort table */}
       <Card style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', fontSize: 13, fontWeight: 700, color: '#181C23' }}>月度续保队列明细</div>
+        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', fontSize: 13, fontWeight: 700, color: '#181C23' }}>{t.anCohortTitle}</div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['账期', '到期保单数', '已续保', '主动取消', '自动失效', '续保率', '件均保费变动'].map(h => (
+              {[t.anThPeriod, t.anThDueCount, t.anLegendRenewed, t.anLegendCancelled, t.anLegendLapsed, t.anMRenewal, t.anThAvgPremiumChange].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786' }}>{h}</th>
               ))}
             </tr>
@@ -774,12 +781,12 @@ function RenewalAnalyticsTab() {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'overview',  icon: <BarChart2 size={15} />,  label: '业绩总览' },
-  { id: 'product',   icon: <TrendingUp size={15} />,  label: '产品业绩' },
-  { id: 'regional',  icon: <Map size={15} />,         label: '区域业绩' },
-  { id: 'channel',   icon: <Users size={15} />,       label: '渠道贡献' },
-  { id: 'loss',      icon: <Shield size={15} />,      label: '赔付率监控' },
-  { id: 'renewal',   icon: <RefreshCw size={15} />,   label: '续保率分析' },
+  { id: 'overview',  icon: <BarChart2 size={15} /> },
+  { id: 'product',   icon: <TrendingUp size={15} /> },
+  { id: 'regional',  icon: <Map size={15} /> },
+  { id: 'channel',   icon: <Users size={15} /> },
+  { id: 'loss',      icon: <Shield size={15} /> },
+  { id: 'renewal',   icon: <RefreshCw size={15} /> },
 ] as const
 
 type TabId = typeof TABS[number]['id']
@@ -789,41 +796,51 @@ interface Props {
 }
 
 export default function InsurerAnalyticsView({ navigateTo: _navigateTo }: Props) {
+  const { t } = useLang()
   const [tab, setTab] = useState<TabId>('overview')
   const [period, setPeriod] = useState('2026-08')
 
   const criticalAlerts = lossAlerts.filter(a => a.severity === 'critical').length
+
+  const tabLabel: Record<TabId, string> = {
+    overview: t.anTabOverview,
+    product: t.anTabProduct,
+    regional: t.anTabRegional,
+    channel: t.anTabChannel,
+    loss: t.anTabLoss,
+    renewal: t.anTabRenewal,
+  }
 
   return (
     <div>
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>保险公司数据分析</h1>
-          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>业绩总览 · 产品分析 · 区域分析 · 渠道贡献 · 赔付率 · 续保率</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>{t.anTitle}</h1>
+          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>{t.anSubtitle}</p>
         </div>
         <div className="flex items-center gap-3">
           {criticalAlerts > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,59,48,0.1)', border: '1px solid rgba(255,59,48,0.25)', fontSize: 12.5, fontWeight: 600, color: '#C0392B' }}>
-              <AlertTriangle size={13} /> {criticalAlerts} 项赔付率预警
+              <AlertTriangle size={13} /> {t.anHeaderAlerts(criticalAlerts)}
             </div>
           )}
           <select value={period} onChange={e => setPeriod(e.target.value)} className="input-glass" style={{ fontSize: 12.5, minWidth: 120 }}>
             {['2026-08', '2026-07', '2026-Q3', '2026-Q2', '2026-H1'].map(p => <option key={p} value={p}>{p}</option>)}
           </select>
           <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, background: 'rgba(0,88,188,0.08)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>
-            <Download size={13} /> 导出报告
+            <Download size={13} /> {t.anExportReport}
           </button>
         </div>
       </div>
 
       {/* Tab bar */}
       <div className="flex items-center gap-1 mb-6" style={{ borderBottom: '0.5px solid rgba(193,198,215,0.4)' }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: '10px 10px 0 0', fontSize: 13, fontWeight: tab === t.id ? 700 : 500, background: tab === t.id ? 'rgba(0,88,188,0.08)' : 'transparent', color: tab === t.id ? '#0058BC' : '#717786', border: tab === t.id ? '0.5px solid rgba(0,88,188,0.2)' : '0.5px solid transparent', borderBottom: tab === t.id ? '2px solid #0058BC' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
-            {t.icon}
-            {t.label}
-            {t.id === 'loss' && criticalAlerts > 0 && (
+        {TABS.map(tb => (
+          <button key={tb.id} onClick={() => setTab(tb.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: '10px 10px 0 0', fontSize: 13, fontWeight: tab === tb.id ? 700 : 500, background: tab === tb.id ? 'rgba(0,88,188,0.08)' : 'transparent', color: tab === tb.id ? '#0058BC' : '#717786', border: tab === tb.id ? '0.5px solid rgba(0,88,188,0.2)' : '0.5px solid transparent', borderBottom: tab === tb.id ? '2px solid #0058BC' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
+            {tb.icon}
+            {tabLabel[tb.id]}
+            {tb.id === 'loss' && criticalAlerts > 0 && (
               <span style={{ background: '#FF3B30', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{criticalAlerts}</span>
             )}
           </button>

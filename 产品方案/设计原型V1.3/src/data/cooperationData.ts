@@ -19,6 +19,7 @@ export interface CooperationRelationship {
   approvedAt?: string
   submittedDate: string
   notes?: string
+  notesEn?: string
 }
 
 export const cooperations: CooperationRelationship[] = [
@@ -67,6 +68,7 @@ export const cooperations: CooperationRelationship[] = [
     commissionTier: 'Tier-2', accountManager: 'Carlos Martinez',
     approvedBy: 'VP Partnerships', approvedAt: '2021-12-20', submittedDate: '2021-11-01',
     notes: '合同即将到期，续约谈判进行中',
+    notesEn: 'Contract expiring soon; renewal negotiation in progress',
   },
   {
     id: 'cr6', insurerId: '7', insurerName: 'Berkshire Hathaway Specialty Insurance', insurerShort: 'BHSI',
@@ -77,6 +79,7 @@ export const cooperations: CooperationRelationship[] = [
     commissionTier: 'Tier-2', accountManager: 'Liu Yang',
     submittedDate: '2026-08-01',
     notes: '新合作申请，合规审核中',
+    notesEn: 'New partnership application under compliance review',
   },
   {
     id: 'cr7', insurerId: '9', insurerName: 'Markel Corporation', insurerShort: 'Markel',
@@ -87,12 +90,16 @@ export const cooperations: CooperationRelationship[] = [
     commissionTier: 'Tier-3', accountManager: 'Tom Anderson',
     submittedDate: '2020-10-01',
     notes: '因赔付率持续超标，双方协商终止合作',
+    notesEn: 'Partnership terminated by mutual agreement due to sustained loss ratio overruns',
   },
 ]
 
 // ── Contracts ─────────────────────────────────────────────────────────────────
 
 export type ContractStatus = 'draft' | 'negotiating' | 'pending-sign' | 'active' | 'expiring' | 'expired' | 'terminated'
+
+// Stable identifiers for display tags; localized labels live in the view via i18n.
+export type ContractTag = 'master' | 'P&C' | '3yr' | 'commission' | 'annual' | 'expiring' | 'high-net-worth' | '5yr' | 'commercial' | 'renewal-negotiating' | 'NDA' | 'pending-sign' | 'data-sharing' | 'CCPA' | 'GDPR'
 
 export interface CoopContract {
   id: string
@@ -113,7 +120,7 @@ export interface CoopContract {
   uploadedAt: string
   renewalAlert?: number  // days before expiry to alert
   autoRenew: boolean
-  tags: string[]
+  tags: ContractTag[]
 }
 
 export const contracts: CoopContract[] = [
@@ -124,7 +131,7 @@ export const contracts: CoopContract[] = [
     effectiveDate: '2024-01-01', expiryDate: '2027-12-31', signedDate: '2023-12-15',
     signatoryUs: 'CEO Wang Jun', signatoryThem: 'SVP Agency Relations Mike Torres',
     fileSize: '2.4 MB', uploadedBy: 'Legal Team', uploadedAt: '2023-12-16',
-    renewalAlert: 90, autoRenew: false, tags: ['主协议', 'P&C', '3年'],
+    renewalAlert: 90, autoRenew: false, tags: ['master', 'P&C', '3yr'],
   },
   {
     id: 'ct2', cooperationId: 'cr1', insurerId: '1', insurerShort: 'Travelers',
@@ -133,7 +140,7 @@ export const contracts: CoopContract[] = [
     effectiveDate: '2026-01-01', expiryDate: '2026-12-31', signedDate: '2025-12-20',
     signatoryUs: 'CFO Li Mei', signatoryThem: 'Finance Director Anna Smith',
     fileSize: '0.8 MB', uploadedBy: 'Finance', uploadedAt: '2025-12-21',
-    renewalAlert: 60, autoRenew: true, tags: ['佣金', '年度'],
+    renewalAlert: 60, autoRenew: true, tags: ['commission', 'annual'],
   },
   {
     id: 'ct3', cooperationId: 'cr2', insurerId: '2', insurerShort: 'Liberty Mutual',
@@ -142,7 +149,7 @@ export const contracts: CoopContract[] = [
     effectiveDate: '2022-06-01', expiryDate: '2026-05-31', signedDate: '2022-05-25',
     signatoryUs: 'CEO Wang Jun', signatoryThem: 'VP Agency Christine Davis',
     fileSize: '2.1 MB', uploadedBy: 'Legal Team', uploadedAt: '2022-05-26',
-    renewalAlert: 90, autoRenew: false, tags: ['主协议', '即将到期'],
+    renewalAlert: 90, autoRenew: false, tags: ['master', 'expiring'],
   },
   {
     id: 'ct4', cooperationId: 'cr4', insurerId: '4', insurerShort: 'Chubb',
@@ -151,7 +158,7 @@ export const contracts: CoopContract[] = [
     effectiveDate: '2024-03-01', expiryDate: '2028-02-28', signedDate: '2024-02-20',
     signatoryUs: 'CEO Wang Jun', signatoryThem: 'President Agency Distribution Peter Lau',
     fileSize: '3.2 MB', uploadedBy: 'Legal Team', uploadedAt: '2024-02-21',
-    renewalAlert: 120, autoRenew: false, tags: ['主协议', '高净值', '5年'],
+    renewalAlert: 120, autoRenew: false, tags: ['master', 'high-net-worth', '5yr'],
   },
   {
     id: 'ct5', cooperationId: 'cr5', insurerId: '5', insurerShort: 'AIG',
@@ -160,7 +167,7 @@ export const contracts: CoopContract[] = [
     effectiveDate: '2022-01-01', expiryDate: '2026-09-30', signedDate: '2021-12-28',
     signatoryUs: 'VP Partnerships Chen Hao', signatoryThem: 'SVP Commercial Lines Bob Murphy',
     fileSize: '1.9 MB', uploadedBy: 'Legal Team', uploadedAt: '2021-12-29',
-    renewalAlert: 90, autoRenew: false, tags: ['主协议', '商业险', '续约谈判中'],
+    renewalAlert: 90, autoRenew: false, tags: ['master', 'commercial', 'renewal-negotiating'],
   },
   {
     id: 'ct6', cooperationId: 'cr6', insurerId: '7', insurerShort: 'BHSI',
@@ -169,7 +176,7 @@ export const contracts: CoopContract[] = [
     effectiveDate: '', expiryDate: '2027-12-31', signedDate: undefined,
     signatoryUs: 'General Counsel Zhang Li', signatoryThem: 'Legal Counsel BHSI',
     fileSize: '0.6 MB', uploadedBy: 'Legal Team', uploadedAt: '2026-08-05',
-    renewalAlert: 60, autoRenew: false, tags: ['NDA', '待签署'],
+    renewalAlert: 60, autoRenew: false, tags: ['NDA', 'pending-sign'],
   },
   {
     id: 'ct7', cooperationId: 'cr1', insurerId: '1', insurerShort: 'Travelers',
@@ -178,7 +185,7 @@ export const contracts: CoopContract[] = [
     effectiveDate: '2024-01-01', expiryDate: '2027-12-31', signedDate: '2023-12-15',
     signatoryUs: 'CTO Liu Peng', signatoryThem: 'CIO Travelers David Park',
     fileSize: '1.2 MB', uploadedBy: 'IT Compliance', uploadedAt: '2023-12-16',
-    renewalAlert: 90, autoRenew: false, tags: ['数据共享', 'CCPA', 'GDPR'],
+    renewalAlert: 90, autoRenew: false, tags: ['data-sharing', 'CCPA', 'GDPR'],
   },
 ]
 
@@ -203,6 +210,7 @@ export interface SettlementConfig {
   updatedBy: string
   status: 'active' | 'pending-review' | 'suspended'
   notes?: string
+  notesEn?: string
 }
 
 export const settlementConfigs: SettlementConfig[] = [
@@ -214,6 +222,7 @@ export const settlementConfigs: SettlementConfig[] = [
     apiEnabled: true, reconciliationContact: 'billing@travelers.com',
     lastUpdated: '2026-01-15', updatedBy: 'Finance Team', status: 'active',
     notes: '月结 25 日截单，次月 30 日内付款',
+    notesEn: 'Monthly cycle, cutoff on the 25th, payment due within 30 days of the following month',
   },
   {
     id: 'sc2', insurerId: '2', insurerShort: 'Liberty Mutual',
@@ -239,6 +248,7 @@ export const settlementConfigs: SettlementConfig[] = [
     apiEnabled: true, reconciliationContact: 'agencybilling@chubb.com',
     lastUpdated: '2024-03-01', updatedBy: 'Finance Team', status: 'active',
     notes: '季结，API 实时对账，专用 SFTP 通道',
+    notesEn: 'Quarterly cycle with real-time API reconciliation over a dedicated SFTP channel',
   },
   {
     id: 'sc5', insurerId: '5', insurerShort: 'AIG',
@@ -248,6 +258,7 @@ export const settlementConfigs: SettlementConfig[] = [
     apiEnabled: false, reconciliationContact: 'commercialbilling@aig.com',
     lastUpdated: '2022-01-20', updatedBy: 'Finance Team', status: 'active',
     notes: '合同到期前需确认新周期结算参数',
+    notesEn: 'New cycle settlement parameters must be confirmed before contract expiry',
   },
 ]
 
@@ -270,6 +281,7 @@ export interface CoopContact {
   isEscalation: boolean
   status: 'active' | 'inactive'
   notes?: string
+  notesEn?: string
 }
 
 export const coopContacts: CoopContact[] = [
@@ -280,7 +292,7 @@ export const coopContacts: CoopContact[] = [
   { id: 'cc5', insurerId: '4', insurerShort: 'Chubb', role: 'Senior Management', name: 'Peter Lau', title: 'President Agency Distribution', department: 'Distribution', email: 'peter.lau@chubb.com', phone: '+1-908-903-3000', mobile: '+1-908-555-0202', timezone: 'ET', preferredContact: 'Phone', isPrimary: true, isEscalation: true, status: 'active' },
   { id: 'cc6', insurerId: '4', insurerShort: 'Chubb', role: 'Underwriting', name: 'Sophia Chen', title: 'Senior UW Specialist', department: 'High Net Worth UW', email: 's.chen@chubb.com', phone: '+1-908-903-3100', timezone: 'ET', preferredContact: 'Email', isPrimary: true, isEscalation: false, status: 'active' },
   { id: 'cc7', insurerId: '4', insurerShort: 'Chubb', role: 'IT/API', name: 'Kevin Zhang', title: 'API Integration Engineer', department: 'Digital Solutions', email: 'k.zhang@chubb.com', phone: '+1-908-903-3200', timezone: 'ET', preferredContact: 'Teams', isPrimary: false, isEscalation: false, status: 'active' },
-  { id: 'cc8', insurerId: '5', insurerShort: 'AIG', role: 'Senior Management', name: 'Bob Murphy', title: 'SVP Commercial Lines', department: 'Distribution', email: 'b.murphy@aig.com', phone: '+1-212-770-7000', timezone: 'ET', preferredContact: 'Email', isPrimary: true, isEscalation: true, status: 'active', notes: '合同续约谈判主要联系人' },
+  { id: 'cc8', insurerId: '5', insurerShort: 'AIG', role: 'Senior Management', name: 'Bob Murphy', title: 'SVP Commercial Lines', department: 'Distribution', email: 'b.murphy@aig.com', phone: '+1-212-770-7000', timezone: 'ET', preferredContact: 'Email', isPrimary: true, isEscalation: true, status: 'active', notes: '合同续约谈判主要联系人', notesEn: 'Primary contact for contract renewal negotiations' },
   { id: 'cc9', insurerId: '5', insurerShort: 'AIG', role: 'Billing', name: 'Rachel Green', title: 'Agency Settlement Coordinator', department: 'Finance', email: 'r.green@aig.com', phone: '+1-212-770-7100', timezone: 'ET', preferredContact: 'Email', isPrimary: true, isEscalation: false, status: 'active' },
   { id: 'cc10', insurerId: '2', insurerShort: 'Liberty Mutual', role: 'Underwriting', name: 'Christine Davis', title: 'VP Agency Partnerships', department: 'Distribution', email: 'c.davis@libertymutual.com', phone: '+1-617-357-9500', timezone: 'ET', preferredContact: 'Email', isPrimary: true, isEscalation: true, status: 'active' },
 ]
@@ -293,6 +305,7 @@ export interface RenewalItem {
   insurerShort: string
   type: 'contract' | 'cooperation'
   title: string
+  titleEn: string
   expiryDate: string
   autoRenew: boolean
   status: 'upcoming' | 'in-negotiation' | 'renewed' | 'at-risk' | 'lapsed'
@@ -300,42 +313,44 @@ export interface RenewalItem {
   accountManager: string
   renewalContact?: string
   lastAction?: string
+  lastActionEn?: string
   lastActionDate?: string
   priority: 'critical' | 'high' | 'normal' | 'low'
   notes?: string
+  notesEn?: string
 }
 
 export const renewalItems: RenewalItem[] = [
   {
     id: 'rn1', insurerId: '5', insurerShort: 'AIG', type: 'cooperation',
-    title: 'AIG 商业险合作合同续约', expiryDate: '2026-09-30', autoRenew: false,
+    title: 'AIG 商业险合作合同续约', titleEn: 'AIG Commercial Lines Agreement Renewal', expiryDate: '2026-09-30', autoRenew: false,
     status: 'in-negotiation', daysLeft: 39, accountManager: 'Carlos Martinez',
-    renewalContact: 'Bob Murphy', lastAction: '第二轮条款谈判', lastActionDate: '2026-08-15',
-    priority: 'critical', notes: '佣金率降低 1.5%，讨论中',
+    renewalContact: 'Bob Murphy', lastAction: '第二轮条款谈判', lastActionEn: 'Second round of terms negotiation', lastActionDate: '2026-08-15',
+    priority: 'critical', notes: '佣金率降低 1.5%，讨论中', notesEn: '1.5% commission rate reduction under discussion',
   },
   {
     id: 'rn2', insurerId: '2', insurerShort: 'Liberty Mutual', type: 'contract',
-    title: 'Liberty Mutual 主代理协议续签', expiryDate: '2026-05-31', autoRenew: false,
+    title: 'Liberty Mutual 主代理协议续签', titleEn: 'Liberty Mutual Master Agency Agreement Renewal', expiryDate: '2026-05-31', autoRenew: false,
     status: 'at-risk', daysLeft: -83, accountManager: 'James Rodriguez',
-    renewalContact: 'Christine Davis', lastAction: '收到终止通知，申请延期', lastActionDate: '2026-08-01',
-    priority: 'critical', notes: '已超期，临时延期协议有效至 2026-09-30',
+    renewalContact: 'Christine Davis', lastAction: '收到终止通知，申请延期', lastActionEn: 'Received termination notice; extension requested', lastActionDate: '2026-08-01',
+    priority: 'critical', notes: '已超期，临时延期协议有效至 2026-09-30', notesEn: 'Expired; interim extension agreement valid through 2026-09-30',
   },
   {
     id: 'rn3', insurerId: '3', insurerShort: 'Nationwide', type: 'cooperation',
-    title: 'Nationwide 合作协议续约', expiryDate: '2026-08-31', autoRenew: false,
+    title: 'Nationwide 合作协议续约', titleEn: 'Nationwide Partnership Agreement Renewal', expiryDate: '2026-08-31', autoRenew: false,
     status: 'upcoming', daysLeft: 9, accountManager: 'Michael Wu',
-    renewalContact: 'Agency Services', lastAction: '提交续约申请', lastActionDate: '2026-07-20',
+    renewalContact: 'Agency Services', lastAction: '提交续约申请', lastActionEn: 'Renewal application submitted', lastActionDate: '2026-07-20',
     priority: 'high',
   },
   {
     id: 'rn4', insurerId: '1', insurerShort: 'Travelers', type: 'contract',
-    title: 'Travelers 佣金表年度更新', expiryDate: '2026-12-31', autoRenew: true,
+    title: 'Travelers 佣金表年度更新', titleEn: 'Travelers Annual Commission Schedule Update', expiryDate: '2026-12-31', autoRenew: true,
     status: 'upcoming', daysLeft: 131, accountManager: 'Sarah Chen',
-    priority: 'normal', notes: '自动续约，确认新费率后更新',
+    priority: 'normal', notes: '自动续约，确认新费率后更新', notesEn: 'Auto-renews; update after confirming new rates',
   },
   {
     id: 'rn5', insurerId: '6', insurerShort: 'Zurich', type: 'cooperation',
-    title: 'Zurich 商业险合作协议', expiryDate: '2027-09-30', autoRenew: false,
+    title: 'Zurich 商业险合作协议', titleEn: 'Zurich Commercial Lines Partnership Agreement', expiryDate: '2027-09-30', autoRenew: false,
     status: 'upcoming', daysLeft: 404, accountManager: 'Liu Yang',
     priority: 'low',
   },
@@ -362,6 +377,7 @@ export interface ProductIntegration {
   targetStates: string[]
   technicalReqs: string[]
   notes?: string
+  notesEn?: string
   apiDoc?: boolean
   testCompleted?: boolean
 }
@@ -381,6 +397,7 @@ export const productIntegrations: ProductIntegration[] = [
     estimatedPremium: 240000000, targetStates: ['NY', 'CA', 'IL'],
     technicalReqs: ['Rate API', 'Quote API', 'Bind API', 'Claims API'], apiDoc: true, testCompleted: false,
     notes: '技术对接进行中，预计 9 月上线',
+    notesEn: 'Technical onboarding in progress; expected launch in September',
   },
   {
     id: 'pi3', insurerId: '4', insurerShort: 'Chubb', productName: 'Chubb Workers Compensation', productCode: 'CHB-WC-004', line: 'Commercial',
@@ -389,6 +406,7 @@ export const productIntegrations: ProductIntegration[] = [
     estimatedPremium: 120000000, targetStates: ['CA', 'TX', 'NY', 'FL', 'OH'],
     technicalReqs: ['Rate API', 'Quote API'], apiDoc: false, testCompleted: false,
     notes: '等待 Chubb 产品团队审批',
+    notesEn: 'Awaiting approval from the Chubb product team',
   },
   {
     id: 'pi4', insurerId: '7', insurerShort: 'BHSI', productName: 'BHSI E&O Professional Liability', productCode: 'BHSI-EO-002', line: 'Professional',
@@ -396,6 +414,7 @@ export const productIntegrations: ProductIntegration[] = [
     estimatedPremium: 95000000, targetStates: ['NY', 'CA', 'TX', 'IL'],
     technicalReqs: ['Quote API', 'Bind API'], apiDoc: true, testCompleted: false,
     notes: '待 BHSI 主合作申请审批后启动产品接入',
+    notesEn: 'Product integration to start once the BHSI master partnership application is approved',
   },
   {
     id: 'pi5', insurerId: '3', insurerShort: 'Nationwide', productName: 'Nationwide Pet Insurance', productCode: 'NW-PET-003', line: 'Pet',
@@ -417,5 +436,6 @@ export const productIntegrations: ProductIntegration[] = [
     estimatedPremium: 180000000, targetStates: ['NY', 'DE', 'CA'],
     technicalReqs: ['Rate API', 'Quote API', 'Bind API'], apiDoc: false, testCompleted: false,
     notes: '因合同即将到期，AIG 暂不批准新产品接入申请',
+    notesEn: 'AIG has declined new product integration requests due to the impending contract expiration',
   },
 ]

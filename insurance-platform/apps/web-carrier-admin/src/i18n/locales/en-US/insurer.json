@@ -38,7 +38,8 @@
     "selectedCount": "{count} selected",
     "batchEnable": "Batch Enable",
     "batchDisable": "Batch Disable",
-    "cancelSelection": "Deselect All"
+    "cancelSelection": "Deselect All",
+    "exportSelected": "Export Selected"
   },
   "table": {
     "selectHeader": "",
@@ -46,6 +47,7 @@
     "naicCode": "NAIC Code",
     "companyType": "Company Type",
     "amBestRating": "AM Best Rating",
+    "headquartersRegion": "Headquarters Region",
     "region": "Region",
     "totalPremium": "Total Premium",
     "policyCount": "Policies",
@@ -71,7 +73,7 @@
   },
   "emptyState": "No data available",
   "form": {
-    "title": "Add Insurance Carrier",
+    "title": "Job Title",
     "editTitle": "Edit Insurance Carrier",
     "sectionBasicInfo": "Basic Information",
     "sectionLicensing": "Licensing Information",
@@ -106,7 +108,6 @@
     "zipCode": "ZIP Code",
     "country": "Country",
     "contactPerson": "Contact Person",
-    "title": "Job Title",
     "email": "Email",
     "phone": "Phone Number",
     "financialDisclosure": "Financial Disclosure",
@@ -117,17 +118,590 @@
     "createdBy": "Created By",
     "updatedBy": "Updated By"
   },
-  "bulkActions": {
-    "selectedCount": "{count} selected",
-    "batchEnable": "Batch Enable",
-    "batchDisable": "Batch Disable",
-    "cancelSelection": "Cancel Selection"
-  },
   "validation": {
     "naicRequired": "NAIC code is required",
     "companyRequired": "Company name is required",
     "emailInvalid": "Please enter a valid email address",
     "naicLength": "NAIC code must be 5 digits",
     "yearInvalid": "Founded year must be 4 digits and not exceed current year"
+  },
+  "list": {
+    "csvHeaders": {
+      "naicCode": "NAIC Code",
+      "companyName": "Company Name",
+      "companyType": "Company Type",
+      "amBestRating": "AM Best Rating",
+      "status": "Status",
+      "region": "Region",
+      "totalPremium": "Total Premium",
+      "lossRatio": "Loss Ratio",
+      "renewalRate": "Renewal Rate",
+      "settlementCycle": "Settlement Cycle"
+    }
+  },
+  "detail": {
+    "tabs": {
+      "info": "Basic Info",
+      "ratings": "Financial Ratings",
+      "creditRating": "Credit Rating",
+      "products": "Linked Products",
+      "channels": "Partner Channels",
+      "performance": "Performance",
+      "documents": "Documents",
+      "history": "Change History"
+    },
+    "backToList": "Back to List",
+    "exportPdf": "Export PDF",
+    "edit": "Edit",
+    "saveDraft": "Save Draft",
+    "submitReview": "Submit for Review",
+    "comingSoon": "This module is under development...",
+    "basicInfo": "Basic Information",
+    "contactInfoTitle": "Contact",
+    "amBestPrefix": "AM Best",
+    "status": {
+      "active": "Active",
+      "pending": "Pending Review",
+      "inactive": "Inactive"
+    },
+    "kpi": {
+      "totalPremium": "Total Premium",
+      "thisYear": "This Year",
+      "policyCount": "Policies",
+      "activePolicies": "Active Policies",
+      "lossRatio": "Loss Ratio",
+      "overThreshold": "⚠ Over Threshold",
+      "normal": "Normal",
+      "renewalRate": "Renewal Rate",
+      "channelCount": "Partner Channels",
+      "channelUnit": " channels",
+      "productCount": "Products",
+      "productUnit": " products",
+      "productCountShort": "Products",
+      "title": "Core Business KPIs",
+      "premium": "Premium Income",
+      "avgPremium": "Avg. Premium per Policy",
+      "newBizShare": "New Biz Share",
+      "renewal": "Renewal Rate",
+      "commission": "Commission Income"
+    },
+    "coopStatus": "Cooperation Status",
+    "coop": {
+      "active": "Normal",
+      "expiring": "Expiring Soon",
+      "negotiating": "In Negotiation",
+      "terminated": "Terminated"
+    },
+    "contractExpiry": "Contract Expiry",
+    "foundedIn": "Founded in {{year}}",
+    "daysRemaining": "{{days}} days remaining",
+    "sections": {
+      "basicInfo": "Company Information",
+      "hq": "Headquarters",
+      "settlement": "Settlement Configuration",
+      "contact": "Contact Information"
+    },
+    "fields": {
+      "fullName": "Full Company Name",
+      "shortName": "Short Name",
+      "naicCode": "NAIC Code",
+      "companyType": "Company Type",
+      "foundedYear": "Founded Year",
+      "website": "Website",
+      "hqAddress": "HQ Address",
+      "state": "State",
+      "region": "Region",
+      "businessLines": "Business Lines",
+      "settlementCycle": "Settlement Cycle",
+      "billingFormat": "Billing Format",
+      "billingDueDate": "Billing Due Date",
+      "paymentCycle": "Payment Cycle",
+      "contactPerson": "Contact Person",
+      "jobTitle": "Job Title",
+      "phone": "Phone",
+      "email": "Email",
+      "currency": "Settlement Currency",
+      "premiumCollection": "Premium Collection"
+    },
+    "settlement": {
+      "monthly": "Monthly Settlement",
+      "quarterly": "Quarterly Settlement",
+      "apiPull": "Automatic API Pull",
+      "dueDay25": "25th of each month",
+      "paymentTerm": "15 business days after month end",
+      "premiumCollectionValue": "Channel collects → Platform aggregates",
+      "paymentTermDaysUnit": "days"
+    },
+    "contacts": {
+      "viewAll": "View all {{count}} contacts",
+      "roleAccountManager": "Account Manager",
+      "roleUnderwriting": "Underwriting Contact",
+      "roleFinance": "Settlement / Finance Contact",
+      "roleIt": "IT Integration Contact",
+      "roleCompliance": "Compliance Contact"
+    },
+    "ratings": {
+      "current": "Current Rating",
+      "notRated": "Not Rated",
+      "amBestDesc": "Industry-leading rating agency",
+      "spDesc": "S&P Rating",
+      "moodysDesc": "Moody's Rating",
+      "fitchDesc": "Fitch Rating",
+      "trend": "Rating Trend",
+      "updatedAt": "Updated {{date}}",
+      "lossTrendTitle": "Loss Ratio Trend (Last 6 Months)",
+      "lossTrendSub": "Monthly loss ratio · alert threshold 65%",
+      "lossCurrent": "Current Loss Ratio",
+      "lossIndustry": "Industry Average",
+      "lossTarget": "YTD Target",
+      "healthTitle": "Financial Health",
+      "healthSolvency": "Risk-Based Capital Ratio",
+      "healthCombined": "Combined Ratio",
+      "healthRoi": "Return on Investment",
+      "regThreshold": "Regulatory threshold: {{value}}"
+    },
+    "channelTable": {
+      "name": "Channel Name",
+      "type": "Type",
+      "tier": "Tier",
+      "contribPremium": "Premium Contribution",
+      "premiumShare": "Premium Share",
+      "state": "State",
+      "commissionRate": "Commission Rate",
+      "status": "Status",
+      "agreementDate": "Agreement Date",
+      "actions": "Actions"
+    },
+    "channels": {
+      "countPre": "Authorized partner channels: ",
+      "countPost": "",
+      "independent": "Independent Agency",
+      "tierPlatinum": "Platinum",
+      "tierGold": "Gold",
+      "tierSilver": "Silver"
+    },
+    "channelTypes": {
+      "direct": "Direct",
+      "mga": "MGA",
+      "broker": "Broker",
+      "aggregator": "Aggregator"
+    },
+    "channelStatus": {
+      "active": "Active",
+      "pending": "Under Review",
+      "inactive": "Inactive"
+    },
+    "documents": {
+      "count": "{n} files in total",
+      "upload": "Upload File",
+      "preview": "Preview",
+      "download": "Download",
+      "delete": "Delete",
+      "alert": "{{count}} document(s) expiring or already expired — please update promptly",
+      "uploadedInfo": "Uploaded {{date}} · {{by}}",
+      "validUntil": " · Valid until {{date}}",
+      "noDocs": "No documents",
+      "docTypes": {
+        "master": "Master Agreement",
+        "nda": "NDA",
+        "dpa": "DPA",
+        "ratingReport": "Rating Report",
+        "stateLicense": "State License",
+        "commission": "Commission Supplement",
+        "license": "Business License",
+        "amBestReport": "AM Best Rating Report"
+      }
+    },
+    "docTable": {
+      "name": "File Name",
+      "type": "Type",
+      "status": "Status",
+      "issueDate": "Issue Date",
+      "expiryDate": "Expiry Date",
+      "size": "File Size",
+      "actions": "Actions"
+    },
+    "docStatus": {
+      "valid": "Valid",
+      "expiring": "Expiring Soon",
+      "expired": "Expired"
+    },
+    "historyTable": {
+      "field": "Field",
+      "oldValue": "Old Value",
+      "newValue": "New Value",
+      "changedBy": "Changed By",
+      "changedAt": "Change Date"
+    },
+    "history": {
+      "count": "{{count}} change record(s)",
+      "allFields": "All Fields",
+      "allOperators": "All Operators",
+      "exportLog": "Export Log",
+      "changeBefore": "Before",
+      "changeAfter": "After",
+      "approvedByPrefix": "· Approved by: ",
+      "sections": {
+        "basic": "Basic Info",
+        "rating": "Financial Ratings",
+        "settlement": "Settlement",
+        "coop": "Partnership",
+        "contact": "Contacts"
+      }
+    },
+    "productTable": {
+      "name": "Product Name",
+      "code": "Product Code",
+      "lob": "Line of Business",
+      "type": "Type",
+      "premium": "Premium",
+      "status": "Status",
+      "effectiveDate": "Effective Date",
+      "actions": "Actions"
+    },
+    "products": {
+      "countPre": "This insurer offers a total of ",
+      "countPost": " products",
+      "addProduct": "Add Product",
+      "typeIndividual": "Personal",
+      "typeGroup": "Group",
+      "typeVoluntary": "Voluntary"
+    },
+    "productStatus": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "performance": {
+      "premiumTrend": "Premium Trend (This Year)",
+      "trendSub": "Last 6 months · in USD millions",
+      "premium": "Premium",
+      "newBiz": "New Business",
+      "renewal": "Renewal",
+      "total": "Total",
+      "channelContribution": "Channel Premium Contribution",
+      "lossRatio": "Loss Ratio",
+      "commission": "Commission Income",
+      "metricsTitle": "Key Performance Metrics",
+      "yoy": "YoY",
+      "lossRanking": "Product Loss Ratio Ranking",
+      "metrics": {
+        "ytdPremium": "YTD Premium",
+        "newPolicyGrowth": "New Policy Growth",
+        "avgPolicyValue": "Avg. Policy Value",
+        "retentionRate": "Retention Rate",
+        "cac": "Customer Acquisition Cost"
+      }
+    },
+    "lossTable": {
+      "name": "Product Name",
+      "totalPremium": "Total Premium",
+      "lossAmount": "Loss Amount",
+      "lossRatio": "Loss Ratio",
+      "riskLevel": "Risk Level",
+      "items": {
+        "auto": "Personal Auto",
+        "home": "Homeowners",
+        "health": "Group Health",
+        "liability": "Commercial Liability",
+        "accident": "Accident"
+      }
+    },
+    "risk": {
+      "high": "High Risk",
+      "medium": "Medium Risk",
+      "low": "Low Risk"
+    },
+    "form": {
+      "companyCode": "Company Code",
+      "companyCodePlaceholder": "Auto-generated or manual input",
+      "naicCodePlaceholder": "e.g., 12345",
+      "companyNamePlaceholder": "Insurance Company Name",
+      "shortNamePlaceholder": "Short Name",
+      "status": "Status",
+      "amBestRating": "AM Best Rating",
+      "selectPlaceholder": "Please select",
+      "statusNormal": "Normal",
+      "notRated": "Not Rated",
+      "hqAddress": "HQ Address",
+      "hqAddressPlaceholder": "Full address",
+      "phone": "Phone",
+      "phonePlaceholder": "+1 (xxx) xxx-xxxx",
+      "email": "Email",
+      "emailPlaceholder": "contact@company.com",
+      "address": "Address",
+      "currency": "Currency",
+      "paymentTermDays": "Payment Term (Days)"
+    },
+    "actions": {
+      "disable": "Disable",
+      "enable": "Enable",
+      "featurePending": "Feature pending"
+    }
+  },
+  "import": {
+    "title": "Batch Import Insurers",
+    "subtitle": "Import multiple insurance carriers at once via Excel template, with validation and error feedback",
+    "cancel": "Cancel",
+    "steps": {
+      "template": "Download Template",
+      "upload": "Upload File",
+      "preview": "Data Preview",
+      "validate": "Validation",
+      "confirm": "Confirm Import",
+      "result": "Import Result"
+    },
+    "mockFileName": "Insurer_Batch_Import_2026-08-22.xlsx",
+    "template": {
+      "heading": "Download Standard Import Template",
+      "desc": "Please use the standard Excel template provided by the system. It includes descriptions of all required fields, format requirements, and sample data. Non-standard formats may fail validation.",
+      "standardTitle": "Standard Template (Recommended)",
+      "standardDesc": "Includes field descriptions and 5 sample rows",
+      "standardBadge": "Recommended",
+      "blankTitle": "Blank Template",
+      "blankDesc": "Headers only, no sample data",
+      "blankBadge": "Lite",
+      "downloadExcel": "Download Excel",
+      "fieldsTitle": "Template Field Descriptions",
+      "continue": "Template downloaded, continue to upload"
+    },
+    "templateFields": {
+      "fullName": "Full Company Name *",
+      "naicCode": "NAIC Code *",
+      "shortName": "Short Name *",
+      "companyType": "Company Type *",
+      "state": "HQ State *",
+      "region": "Region *",
+      "amBestRating": "AM Best Rating",
+      "foundedYear": "Founded Year"
+    },
+    "upload": {
+      "heading": "Upload Excel File",
+      "desc": "Only .xlsx / .xls formats supported, max file size 10MB",
+      "dragHint": "Drag a file here, or click to select a file",
+      "formats": "Supports .xlsx · .xls"
+    },
+    "preview": {
+      "heading": "Data Preview",
+      "parsed": "{n} rows parsed. Please confirm the data before continuing",
+      "totalRows": "{n} rows in total",
+      "mappingTitle": "Field Mapping Confirmation",
+      "ignore": "— Ignore —",
+      "colRow": "Row",
+      "colName": "Full Company Name",
+      "colShortName": "Short Name",
+      "colNaic": "NAIC",
+      "colType": "Type",
+      "colState": "State",
+      "colRating": "Rating",
+      "colStatus": "Status",
+      "ok": "OK",
+      "toValidate": "Go to Validation"
+    },
+    "fieldMap": {
+      "fullName": "Full Company Name",
+      "shortName": "Short Name",
+      "naicCode": "NAIC Code",
+      "companyType": "Company Type",
+      "state": "HQ State",
+      "region": "Region",
+      "amBestRating": "AM Best Rating",
+      "foundedYear": "Founded Year"
+    },
+    "errors": {
+      "naicRequired": "NAIC code cannot be empty",
+      "ratingRequired": "AM Best rating cannot be empty"
+    },
+    "validate": {
+      "heading": "Validation Results",
+      "passed": "Validation Passed",
+      "failed": "Validation Failed",
+      "total": "Total Rows",
+      "errorDetails": "Error Details",
+      "row": "Row {n}",
+      "downloadReport": "Download Error Report",
+      "skipErrors": "Skip error rows, import valid rows only",
+      "continue": "Confirm and continue import"
+    },
+    "confirm": {
+      "heading": "Confirm Import",
+      "file": "Import File",
+      "successRows": "Successful Rows",
+      "rowsUnit": "{n} rows",
+      "skippedRows": "Skipped Rows",
+      "skippedValue": "{n} rows (validation failed)",
+      "mode": "Import Mode",
+      "modeValue": "Insert (do not overwrite existing data)",
+      "review": "Review Requirement",
+      "reviewValue": "Records enter Pending Review status after import and require admin approval",
+      "reupload": "Re-upload",
+      "submit": "Confirm import of {n} records"
+    },
+    "result": {
+      "heading": "Import Complete",
+      "desc": "Successfully imported {ok} insurers; {fail} rows were skipped due to validation failure",
+      "success": "Successfully Imported",
+      "skipped": "Skipped",
+      "pendingReview": "Pending Review",
+      "count": "{n}",
+      "viewRecords": "View Import Records",
+      "backToList": "Back to Insurer List"
+    }
+  },
+  "duplicate": {
+    "title": "Duplicate Detection",
+    "subtitle": "Automatically identify potential duplicate records by NAIC code and company name, with side-by-side comparison and one-click merge",
+    "detecting": "Detecting…",
+    "redetect": "Re-detect",
+    "empty": {
+      "heading": "Start Duplicate Detection",
+      "desc": "The system will identify potentially duplicate insurance carrier records based on exact NAIC code matching and fuzzy company name matching, supporting side-by-side comparison and one-click merge.",
+      "criteria": {
+        "naicExact": "Exact NAIC Code Match",
+        "naicExactDesc": "Identical 5-digit NAIC codes",
+        "nameFuzzy": "Fuzzy Company Name Match",
+        "nameFuzzyDesc": "Similarity > 80%",
+        "hqMatch": "Headquarters Match",
+        "hqMatchDesc": "Same state + city"
+      },
+      "start": "Start Detection"
+    },
+    "groups": {
+      "title": "Duplicate Record Groups",
+      "pendingCount": "{n} pending",
+      "resolvedCount": "{n} resolved"
+    },
+    "badge": {
+      "merged": "Merged",
+      "dismissed": "Dismissed",
+      "pending": "Pending"
+    },
+    "recordStatus": {
+      "active": "Active",
+      "pending": "Pending Review"
+    },
+    "field": {
+      "naicCode": "NAIC Code",
+      "name": "Company Name",
+      "state": "HQ State",
+      "type": "Company Type",
+      "region": "Region"
+    },
+    "fields": {
+      "shortName": "Short Name",
+      "naicCode": "NAIC Code",
+      "companyType": "Company Type",
+      "headquarters": "Headquarters",
+      "createdAt": "Created At",
+      "createdBy": "Created By"
+    },
+    "matchFactors": {
+      "nameFuzzy": "Company name (fuzzy match)",
+      "naicPartial": "Partial NAIC code match",
+      "hqState": "Same HQ state",
+      "nameSimilar": "Highly similar company names",
+      "hqCity": "Same HQ city",
+      "shortNameEqual": "Identical short names",
+      "naicFormat": "Matching NAIC code format"
+    },
+    "similarity": "Similarity",
+    "matchBasis": "Matched by: ",
+    "markNotDuplicate": "Mark as Not Duplicate",
+    "mergeRecords": "Merge Records",
+    "selectPrimary": "Select primary record (record to keep):",
+    "primaryRecord": "Primary",
+    "mergeWarning": "This record will be deleted after merge",
+    "mergeNote": "Related data will be migrated to the primary record",
+    "viewFullRecord": "View Full Record",
+    "mergeAsPrimary": "Merge with \"{name}\" as primary",
+    "allDone": {
+      "title": "All Duplicates Resolved",
+      "desc": "{n} groups processed, merged or marked as not duplicates"
+    }
+  },
+  "modals": {
+    "disable": {
+      "titleDisable": "Deactivate Insurer",
+      "titleEnable": "Reactivate Insurer",
+      "impactTitle": "Deactivation Impact",
+      "impactProducts": "Linked Products",
+      "impactChannels": "Partner Channels",
+      "impactPolicies": "Active Policies",
+      "impactQuotes": "Quotes in Flight",
+      "impactCommission": "Pending Commission",
+      "impactNote": "After deactivation: no new business will be assigned; in-force policies and commissions continue to be processed normally; channel product appointments will be revoked in bulk.",
+      "reasonDisable": "Deactivation Reason",
+      "reasonEnable": "Reactivation Reason",
+      "reason": {
+        "contractExpired": "Partnership agreement expired and will not be renewed",
+        "compliance": "Carrier compliance issue",
+        "lineExit": "Line-of-business adjustment — exiting this market",
+        "migration": "System migration or consolidation",
+        "mutual": "Terminated by mutual agreement",
+        "carrier": "Termination requested by the carrier",
+        "other": "Other (please explain in the notes)",
+        "resolved": "Compliance issue resolved",
+        "migrationDone": "System migration completed — cooperation restored",
+        "newContract": "New contract signed",
+        "mgmt": "Cooperation restored by management decision",
+        "otherShort": "Other reason"
+      },
+      "noteLabel": "Notes",
+      "notePlaceholder": "Optionally add details or background…",
+      "effectLabel": "Effective",
+      "effectImmediate": "Effective immediately",
+      "effectScheduled": "Scheduled",
+      "scheduledNote": "Scheduled deactivation: channels may continue processing in-flight business until this date (transition period); deactivation occurs automatically on that date",
+      "confirmDisablePre": "I understand the impact of this action and confirm deactivating",
+      "confirmEnablePre": "I understand the impact of this action and confirm reactivating",
+      "confirmPost": ", and the relevant team members have been informed. This action will be recorded in the audit log and requires supervisor approval to take effect.",
+      "btnDisable": "Submit Deactivation",
+      "btnEnable": "Confirm Reactivation"
+    },
+    "batchExport": {
+      "title": "Bulk Export",
+      "scopeTitle": "Export Scope",
+      "scopeFiltered": "Current filtered results",
+      "scopeSelected": "Selected records",
+      "scopeAll": "All data",
+      "count": "{{count}}",
+      "formatTitle": "Export Format",
+      "fmtXlsxDesc": "Recommended · preserves formatting",
+      "fmtCsvDesc": "Universal · plain text",
+      "fieldsTitle": "Export Fields",
+      "fieldsSelected": "({{count}} of {{total}} selected)",
+      "selectAll": "Select All",
+      "clearAll": "Clear",
+      "relatedTitle": "Related Data",
+      "fName": "Legal Name",
+      "fShortName": "Short Name",
+      "fNaic": "NAIC Code",
+      "fType": "Company Type",
+      "fAmBest": "AM Best Rating",
+      "fSp": "S&P Rating",
+      "fHq": "Headquarters",
+      "fRegion": "Region",
+      "fFounded": "Founded",
+      "fWebsite": "Website",
+      "fPremium": "Total Premium",
+      "fPolicies": "Policies",
+      "fLossRatio": "Loss Ratio",
+      "fRenewal": "Renewal Rate",
+      "fChannels": "Channel Count",
+      "fProducts": "Product Count",
+      "fSettlement": "Settlement Cycle",
+      "fCoop": "Partnership Status",
+      "fContractExpiry": "Contract Expiry",
+      "fCommission": "Commission Income",
+      "relProducts": "Product list",
+      "relChannels": "Channel list",
+      "relPerformance": "Performance summary",
+      "relContacts": "Contacts",
+      "footerPrefix": "Exporting ",
+      "footerRecords": "{{count}} record(s)",
+      "footerFields": "{{count}} field(s)",
+      "footerRelated": " + related data",
+      "exporting": "Exporting…",
+      "exportBtn": "Export {{format}}"
+    }
   }
 }

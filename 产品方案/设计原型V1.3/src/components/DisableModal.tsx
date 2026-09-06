@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, AlertTriangle, StopCircle, PlayCircle, AlertCircle } from 'lucide-react'
 import { insurers } from '../data/mockData'
+import { useLang } from '../i18n'
 
 interface Props {
   insurerId: string
@@ -8,25 +9,11 @@ interface Props {
   onConfirm: () => void
 }
 
-const DISABLE_REASONS = [
-  '合作协议到期，不再续约',
-  '保险公司合规问题',
-  '业务线调整，退出该市场',
-  '系统迁移或整合',
-  '双方协商终止',
-  '保险公司主动要求终止',
-  '其他原因（请在备注中说明）',
-]
-
-const ENABLE_REASONS = [
-  '合规问题已解决',
-  '完成系统迁移，恢复合作',
-  '新合同已签署',
-  '管理层决策恢复合作',
-  '其他原因',
-]
+const DISABLE_REASON_KEYS = ['contractExpired', 'compliance', 'lineExit', 'migration', 'mutual', 'carrier', 'other']
+const ENABLE_REASON_KEYS = ['resolved', 'migrationDone', 'newContract', 'mgmt', 'otherShort']
 
 export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
+  const { t } = useLang()
   const ins = insurers.find(i => i.id === insurerId) ?? insurers[0]
   const isDisabling = ins.status !== 'inactive'
   const [reason, setReason] = useState('')
@@ -36,7 +23,21 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
   const [confirmed, setConfirmed] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
-  const reasons = isDisabling ? DISABLE_REASONS : ENABLE_REASONS
+  const reasonKeys = isDisabling ? DISABLE_REASON_KEYS : ENABLE_REASON_KEYS
+  const reasonLabel: Record<string, string> = {
+    contractExpired: t.dmRsnContractExpired,
+    compliance: t.dmRsnCompliance,
+    lineExit: t.dmRsnLineExit,
+    migration: t.dmRsnMigration,
+    mutual: t.dmRsnMutual,
+    carrier: t.dmRsnCarrier,
+    other: t.dmRsnOther,
+    resolved: t.dmRsnResolved,
+    migrationDone: t.dmRsnMigrationDone,
+    newContract: t.dmRsnNewContract,
+    mgmt: t.dmRsnMgmt,
+    otherShort: t.dmRsnOtherShort,
+  }
 
   const impactData = {
     products: ins.productCount,
@@ -83,7 +84,7 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>
-                {isDisabling ? '停用保险公司' : '启用保险公司'}
+                {isDisabling ? t.dmTitleDisable : t.dmTitleEnable}
               </div>
               <div style={{ fontSize: 12.5, color: '#717786' }}>{ins.shortName} · NAIC {ins.naicCode}</div>
             </div>
@@ -100,15 +101,15 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
             <div style={{ background: 'rgba(255,149,0,0.07)', border: '0.5px solid rgba(255,149,0,0.25)', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
               <div className="flex items-center gap-2 mb-12" style={{ marginBottom: 12 }}>
                 <AlertTriangle size={14} style={{ color: '#a05800' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#7a5c00' }}>停用影响范围</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#7a5c00' }}>{t.dmImpactTitle}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
                 {[
-                  { label: '关联产品', value: impactData.products },
-                  { label: '合作渠道', value: impactData.channels },
-                  { label: '有效保单', value: impactData.activePolicies.toLocaleString() },
-                  { label: '在途报价', value: impactData.pendingQuotes },
-                  { label: '待结佣金', value: `$${(impactData.pendingCommission / 1000).toFixed(0)}K` },
+                  { label: t.dmImpactProducts, value: impactData.products },
+                  { label: t.dmImpactChannels, value: impactData.channels },
+                  { label: t.dmImpactPolicies, value: impactData.activePolicies.toLocaleString() },
+                  { label: t.dmImpactQuotes, value: impactData.pendingQuotes },
+                  { label: t.dmImpactCommission, value: `$${(impactData.pendingCommission / 1000).toFixed(0)}K` },
                 ].map(k => (
                   <div key={k.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.6)', borderRadius: 10, padding: '8px 10px' }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{k.value}</div>
@@ -117,7 +118,7 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
                 ))}
               </div>
               <div style={{ fontSize: 12, color: '#7a5c00', marginTop: 12 }}>
-                停用后：不再分配新业务，已有保单和佣金继续正常处理，渠道产品授权将被批量收回。
+                {t.dmImpactNote}
               </div>
             </div>
           )}
@@ -125,20 +126,20 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
           {/* Reason */}
           <div style={{ marginBottom: 18 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#414755', display: 'block', marginBottom: 8 }}>
-              {isDisabling ? '停用原因' : '启用原因'}<span style={{ color: '#BA1A1A' }}> *</span>
+              {isDisabling ? t.dmReasonDisable : t.dmReasonEnable}<span style={{ color: '#BA1A1A' }}> *</span>
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {reasons.map(r => (
+              {reasonKeys.map(key => (
                 <label
-                  key={r}
+                  key={key}
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 9, cursor: 'pointer',
-                    background: reason === r ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
-                    border: `0.5px solid ${reason === r ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
+                    background: reason === key ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
+                    border: `0.5px solid ${reason === key ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
                     transition: 'all 120ms',
                   }}
                 >
-                  <input type="radio" name="reason" value={r} checked={reason === r} onChange={() => setReason(r)} style={{ accentColor: '#0058BC' }} />
-                  <span style={{ fontSize: 13.5, color: '#181C23' }}>{r}</span>
+                  <input type="radio" name="reason" value={key} checked={reason === key} onChange={() => setReason(key)} style={{ accentColor: '#0058BC' }} />
+                  <span style={{ fontSize: 13.5, color: '#181C23' }}>{reasonLabel[key]}</span>
                 </label>
               ))}
             </div>
@@ -147,12 +148,12 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
           {/* Note */}
           <div style={{ marginBottom: 18 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#414755', display: 'block', marginBottom: 6 }}>
-              备注说明
+              {t.dmNoteLabel}
             </label>
             <textarea
               className="input-glass"
               style={{ width: '100%', minHeight: 80, resize: 'vertical', fontSize: 13.5 }}
-              placeholder="可选填写详细说明或背景信息…"
+              placeholder={t.dmNotePlaceholder}
               value={note}
               onChange={e => setNote(e.target.value)}
             />
@@ -161,12 +162,12 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
           {/* Effect date */}
           <div style={{ marginBottom: 20 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#414755', display: 'block', marginBottom: 8 }}>
-              生效时间<span style={{ color: '#BA1A1A' }}> *</span>
+              {t.dmEffectLabel}<span style={{ color: '#BA1A1A' }}> *</span>
             </label>
             <div style={{ display: 'flex', gap: 10 }}>
               {[
-                { val: 'immediate', label: '立即生效' },
-                { val: 'scheduled', label: '定时生效' },
+                { val: 'immediate', label: t.dmEffectImmediate },
+                { val: 'scheduled', label: t.dmEffectScheduled },
               ].map(opt => (
                 <label
                   key={opt.val}
@@ -185,7 +186,7 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
                 <input type="date" className="input-glass" style={{ fontSize: 13 }} min={today} value={futureDate} onChange={e => setFutureDate(e.target.value)} />
                 {isDisabling && (
                   <div style={{ fontSize: 12, color: '#717786', marginTop: 6 }}>
-                    定时停用：该日期前渠道可继续处理在途业务（过渡期），到期后自动停用
+                    {t.dmScheduledNote}
                   </div>
                 )}
               </div>
@@ -201,16 +202,16 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
               style={{ marginTop: 2, accentColor: '#0058BC', width: 15, height: 15, flexShrink: 0 }}
             />
             <span style={{ fontSize: 13, color: '#414755' }}>
-              我已了解此操作的影响范围，确认{isDisabling ? '停用' : '启用'}
-              <strong style={{ color: '#181C23' }}> {ins.name}</strong>，
-              并已告知相关团队成员。本操作将记录至审计日志并需主管审批后生效。
+              {isDisabling ? t.dmConfirmDisablePre : t.dmConfirmEnablePre}
+              <strong style={{ color: '#181C23' }}> {ins.name}</strong>
+              {t.dmConfirmPost}
             </span>
           </label>
         </div>
 
         {/* Actions */}
         <div style={{ padding: '16px 24px', borderTop: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', justifyContent: 'flex-end', gap: 10, background: 'rgba(241,243,254,0.5)' }}>
-          <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={onClose}>取消</button>
+          <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={onClose}>{t.insCancel}</button>
           <button
             onClick={onConfirm}
             disabled={!canConfirm}
@@ -226,7 +227,7 @@ export default function DisableModal({ insurerId, onClose, onConfirm }: Props) {
             }}
           >
             {isDisabling ? <StopCircle size={14} /> : <PlayCircle size={14} />}
-            {isDisabling ? '提交停用申请' : '确认启用'}
+            {isDisabling ? t.dmBtnDisable : t.dmBtnEnable}
           </button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import {
 import { insurers } from '../data/mockData'
 import { US_STATES, AM_BEST_RATINGS, SP_RATINGS } from '../data/insurerDetails'
 import type { ViewId } from '../components/Sidebar'
+import { useLang } from '../i18n'
 
 interface Props {
   mode: 'create' | 'edit'
@@ -14,16 +15,24 @@ interface Props {
 }
 
 const STEPS = [
-  { id: 'basic', label: '基本信息', icon: Building2, desc: '公司名称、简称、NAIC、官网' },
-  { id: 'regulatory', label: '监管信息', icon: MapPin, desc: '公司类型、总部、大区' },
-  { id: 'ratings', label: '财务评级', icon: Star, desc: 'AM Best、S&P、Moody\'s、Fitch' },
-  { id: 'settlement', label: '结算配置', icon: DollarSign, desc: '结算周期、账单格式、账户' },
-  { id: 'documents', label: '资质文件', icon: FileText, desc: '营业执照、合规文件、合同' },
+  { id: 'basic', icon: Building2 },
+  { id: 'regulatory', icon: MapPin },
+  { id: 'ratings', icon: Star },
+  { id: 'settlement', icon: DollarSign },
+  { id: 'documents', icon: FileText },
 ]
 
 const REGIONS = ['Northeast', 'Southeast', 'Midwest', 'West']
 const LINES_OF_BUSINESS = ['Auto', 'Home', 'Life', 'Health', 'Commercial', 'P&C', 'Cyber', 'Specialty', 'D&O', 'E&O', 'E&S', 'Marine', 'Workers Comp']
-const COOP_TYPES = ['直接代理', 'MGA（Managing General Agent）', '批发经纪', '推荐合作', '聚合平台合作']
+const COOP_TYPES = ['directAgency', 'mga', 'wholesaleBroker', 'referral', 'platform']
+
+const FORM_DOCS: { type: string; required: boolean }[] = [
+  { type: 'license', required: true },
+  { type: 'masterAgreement', required: true },
+  { type: 'nda', required: true },
+  { type: 'dpa', required: false },
+  { type: 'amBestReport', required: false },
+]
 
 const INPUT = { className: 'input-glass w-full', style: { fontSize: 13.5 } }
 
@@ -57,9 +66,34 @@ function Grid({ cols = 2, children }: { cols?: number; children: React.ReactNode
 }
 
 export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
+  const { t } = useLang()
   const existing = insurerId ? insurers.find(i => i.id === insurerId) : undefined
   const [step, setStep] = useState(0)
   const [saved, setSaved] = useState(false)
+
+  const stepMeta = [
+    { id: 'basic', icon: Building2, label: t.insStepBasic, desc: t.insStepBasicDesc },
+    { id: 'regulatory', icon: MapPin, label: t.insStepRegulatory, desc: t.insStepRegulatoryDesc },
+    { id: 'ratings', icon: Star, label: t.insStepRatings, desc: t.insStepRatingsDesc },
+    { id: 'settlement', icon: DollarSign, label: t.insStepSettlement, desc: t.insStepSettlementDesc },
+    { id: 'documents', icon: FileText, label: t.insStepDocuments, desc: t.insStepDocumentsDesc },
+  ]
+
+  const coopTypeLabel: Record<string, string> = {
+    directAgency: t.insCoopDirect,
+    mga: t.insCoopMga,
+    wholesaleBroker: t.insCoopWholesale,
+    referral: t.insCoopReferral,
+    platform: t.insCoopPlatform,
+  }
+
+  const formDocLabel: Record<string, string> = {
+    license: t.insDocTypeLicense,
+    masterAgreement: t.insDocTypeMaster,
+    nda: t.insDocTypeNda,
+    dpa: t.insDocTypeDpa,
+    amBestReport: t.insDocTypeAmBestReport,
+  }
 
   // Form state
   const [form, setForm] = useState({
@@ -69,7 +103,7 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
     website: existing?.website ?? '',
     founded: existing?.founded?.toString() ?? '',
     type: existing?.type ?? 'Admitted',
-    coopType: '直接代理',
+    coopType: 'directAgency',
     state: existing?.state ?? '',
     region: existing?.region ?? 'Northeast',
     lines: existing?.lines ?? [] as string[],
@@ -96,7 +130,7 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
     set('lines', form.lines.includes(line) ? form.lines.filter(l => l !== line) : [...form.lines, line])
   }
 
-  const completedSteps = STEPS.map((_, i) => {
+  const completedSteps = stepMeta.map((_, i) => {
     if (i === 0) return form.name && form.shortName && form.naicCode
     if (i === 1) return form.type && form.state && form.region
     if (i === 2) return form.amBest
@@ -118,20 +152,20 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
           </button>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>
-              {mode === 'create' ? '新增保险公司' : `编辑 · ${existing?.shortName ?? ''}`}
+              {mode === 'create' ? t.insFormNewTitle : t.insFormEditTitle(existing?.shortName ?? '')}
             </h1>
             <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>
-              {mode === 'create' ? '填写完整信息后提交审核，审核通过后完成入驻' : '修改字段后保存，变更将记录至审计日志'}
+              {mode === 'create' ? t.insFormNewSub : t.insFormEditSub}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button className="btn-secondary" style={{ fontSize: 13 }} onClick={handleSaveDraft}>
-            {saved ? <><Check size={14} />已保存</> : <><Save size={14} />保存草稿</>}
+            {saved ? <><Check size={14} />{t.insSaved}</> : <><Save size={14} />{t.insSaveDraft}</>}
           </button>
-          {step === STEPS.length - 1 && (
+          {step === stepMeta.length - 1 && (
             <button className="btn-primary" style={{ fontSize: 13 }} onClick={handleSubmit}>
-              <Send size={14} />{mode === 'create' ? '提交审核' : '保存修改'}
+              <Send size={14} />{mode === 'create' ? t.insSubmitReview : t.insSaveChanges}
             </button>
           )}
         </div>
@@ -141,9 +175,9 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
         {/* Step nav */}
         <div className="card" style={{ padding: '16px 12px', position: 'sticky', top: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#717786', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, paddingLeft: 8 }}>
-            填写步骤
+            {t.insStepsLabel}
           </div>
-          {STEPS.map((s, i) => {
+          {stepMeta.map((s, i) => {
             const Icon = s.icon
             const isActive = step === i
             const isDone = completedSteps[i]
@@ -187,11 +221,11 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
           {/* Progress */}
           <div style={{ margin: '16px 12px 0', padding: '12px 0 0', borderTop: '0.5px solid rgba(193,198,215,0.4)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#717786', marginBottom: 6 }}>
-              <span>完成度</span>
-              <span>{completedSteps.filter(Boolean).length} / {STEPS.length}</span>
+              <span>{t.insProgress}</span>
+              <span>{completedSteps.filter(Boolean).length} / {stepMeta.length}</span>
             </div>
             <div style={{ height: 4, background: 'rgba(193,198,215,0.4)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${completedSteps.filter(Boolean).length / STEPS.length * 100}%`, background: '#0058BC', borderRadius: 2, transition: 'width 200ms ease' }} />
+              <div style={{ height: '100%', width: `${completedSteps.filter(Boolean).length / stepMeta.length * 100}%`, background: '#0058BC', borderRadius: 2, transition: 'width 200ms ease' }} />
             </div>
           </div>
         </div>
@@ -202,39 +236,39 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
           {/* Step 0: Basic Info */}
           {step === 0 && (
             <>
-              <Section title="公司基本信息">
+              <Section title={t.insSecBasic}>
                 <Grid>
                   <div>
-                    <FieldLabel label="公司全称" required hint="英文官方全称" />
+                    <FieldLabel label={t.insFFullName} required hint={t.insHintLegalName} />
                     <input {...INPUT} placeholder="e.g. Travelers Insurance Company" value={form.name} onChange={e => set('name', e.target.value)} />
                   </div>
                   <div>
-                    <FieldLabel label="公司简称" required />
+                    <FieldLabel label={t.insFShortName} required />
                     <input {...INPUT} placeholder="e.g. Travelers" value={form.shortName} onChange={e => set('shortName', e.target.value)} />
                   </div>
                   <div>
-                    <FieldLabel label="NAIC 编码" required hint="National Association of Insurance Commissioners 编码" />
+                    <FieldLabel label={t.insFNaic} required hint={t.insHintNaic} />
                     <input {...INPUT} placeholder="e.g. 25658" value={form.naicCode} onChange={e => set('naicCode', e.target.value)}
                       style={{ ...INPUT.style, fontFamily: "'JetBrains Mono', monospace" }} />
                     {form.naicCode && !/^\d{5}$/.test(form.naicCode) && (
                       <div style={{ fontSize: 11.5, color: '#BA1A1A', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <AlertCircle size={11} />NAIC 编码应为 5 位数字
+                        <AlertCircle size={11} />{t.insErrNaic}
                       </div>
                     )}
                   </div>
                   <div>
-                    <FieldLabel label="成立年份" />
+                    <FieldLabel label={t.insFFounded} />
                     <input {...INPUT} type="number" placeholder="e.g. 1853" value={form.founded} onChange={e => set('founded', e.target.value)} min={1800} max={2026} />
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <FieldLabel label="官方网站" />
+                    <FieldLabel label={t.insFWebsite} />
                     <input {...INPUT} placeholder="e.g. www.travelers.com" value={form.website} onChange={e => set('website', e.target.value)} />
                   </div>
                 </Grid>
               </Section>
 
-              <Section title="业务线">
-                <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 10 }}>选择主营业务线（可多选）</div>
+              <Section title={t.insSecLines}>
+                <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 10 }}>{t.insLinesHint}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {LINES_OF_BUSINESS.map(line => (
                     <button
@@ -264,47 +298,47 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
           {/* Step 1: Regulatory */}
           {step === 1 && (
             <>
-              <Section title="监管信息">
+              <Section title={t.insSecRegulatory}>
                 <Grid>
                   <div>
-                    <FieldLabel label="公司类型" required />
+                    <FieldLabel label={t.insFType} required />
                     <select {...INPUT} value={form.type} onChange={e => set('type', e.target.value)}>
-                      <option value="Admitted">Admitted（已获批准入）</option>
-                      <option value="Non-Admitted">Non-Admitted（未获批准入）</option>
+                      <option value="Admitted">{t.insOptAdmitted}</option>
+                      <option value="Non-Admitted">{t.insOptNonAdmitted}</option>
                     </select>
                   </div>
                   <div>
-                    <FieldLabel label="合作类型" required />
+                    <FieldLabel label={t.insFCoopType} required />
                     <select {...INPUT} value={form.coopType} onChange={e => set('coopType', e.target.value)}>
-                      {COOP_TYPES.map(t => <option key={t}>{t}</option>)}
+                      {COOP_TYPES.map(k => <option key={k} value={k}>{coopTypeLabel[k]}</option>)}
                     </select>
                   </div>
                 </Grid>
                 {form.type === 'Non-Admitted' && (
                   <div style={{ marginTop: 12, background: 'rgba(0,102,135,0.07)', border: '0.5px solid rgba(0,102,135,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, color: '#006687' }}>
                     <Info size={13} style={{ display: 'inline', marginRight: 6 }} />
-                    Non-Admitted 公司需额外确认各州的 Surplus Lines 合规要求
+                    {t.insNonAdmittedNote}
                   </div>
                 )}
               </Section>
 
-              <Section title="总部信息">
+              <Section title={t.insSecHq}>
                 <Grid cols={3}>
                   <div>
-                    <FieldLabel label="总部所在州" required />
+                    <FieldLabel label={t.insFHqState} required />
                     <select {...INPUT} value={form.state} onChange={e => set('state', e.target.value)}>
-                      <option value="">选择州</option>
+                      <option value="">{t.insSelectState}</option>
                       {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div>
-                    <FieldLabel label="大区" required />
+                    <FieldLabel label={t.insFRegion} required />
                     <select {...INPUT} value={form.region} onChange={e => set('region', e.target.value)}>
                       {REGIONS.map(r => <option key={r}>{r}</option>)}
                     </select>
                   </div>
                   <div>
-                    <FieldLabel label="城市" />
+                    <FieldLabel label={t.insFCity} />
                     <input {...INPUT} placeholder="e.g. New York" />
                   </div>
                 </Grid>
@@ -314,9 +348,9 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
 
           {/* Step 2: Ratings */}
           {step === 2 && (
-            <Section title="财务评级信息">
+            <Section title={t.insSecFormRatings}>
               <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 18 }}>
-                请录入各评级机构的当前评级及评级日期。至少填写 AM Best 评级。
+                {t.insRatingsIntro}
               </div>
               {[
                 { agency: 'AM Best', key: 'amBest', dateKey: 'amBestDate', ratings: AM_BEST_RATINGS, required: true },
@@ -327,22 +361,22 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
                 <div key={r.agency} style={{ display: 'flex', gap: 16, padding: '16px 0', borderBottom: '0.5px solid rgba(193,198,215,0.3)', alignItems: 'center' }}>
                   <div style={{ width: 200, flexShrink: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: '#181C23' }}>{r.agency}</div>
-                    {r.required && <span style={{ fontSize: 11, color: '#BA1A1A' }}>必填</span>}
+                    {r.required && <span style={{ fontSize: 11, color: '#BA1A1A' }}>{t.insRequired}</span>}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <FieldLabel label="评级" />
+                    <FieldLabel label={t.insFRating} />
                     <select
                       className="input-glass"
                       style={{ fontSize: 13.5, width: '100%', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}
                       value={(form as any)[r.key]}
                       onChange={e => set(r.key, e.target.value)}
                     >
-                      <option value="">— 未评级 —</option>
+                      <option value="">{t.insNotRated}</option>
                       {r.ratings.map(v => <option key={v}>{v}</option>)}
                     </select>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <FieldLabel label="评级日期" />
+                    <FieldLabel label={t.insFRatingDate} />
                     <input type="date" className="input-glass" style={{ fontSize: 13, width: '100%' }}
                       value={(form as any)[r.dateKey]}
                       onChange={e => set(r.dateKey, e.target.value)} />
@@ -364,56 +398,56 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
           {/* Step 3: Settlement */}
           {step === 3 && (
             <>
-              <Section title="佣金结算配置">
+              <Section title={t.insSecFormSettlement}>
                 <Grid>
                   <div>
-                    <FieldLabel label="结算周期" required />
+                    <FieldLabel label={t.insFSettlementCycle} required />
                     <select {...INPUT} value={form.settlementCycle} onChange={e => set('settlementCycle', e.target.value)}>
-                      <option value="Monthly">月度结算（每月）</option>
-                      <option value="Quarterly">季度结算（每季）</option>
-                      <option value="SemiAnnual">半年度结算</option>
-                      <option value="Annual">年度结算</option>
+                      <option value="Monthly">{t.insOptMonthly}</option>
+                      <option value="Quarterly">{t.insOptQuarterly}</option>
+                      <option value="SemiAnnual">{t.insOptSemiAnnual}</option>
+                      <option value="Annual">{t.insOptAnnual}</option>
                     </select>
                   </div>
                   <div>
-                    <FieldLabel label="账单格式" required />
+                    <FieldLabel label={t.insFBillingFormat} required />
                     <select {...INPUT} value={form.billingFormat} onChange={e => set('billingFormat', e.target.value)}>
-                      <option value="API">API 自动拉取</option>
-                      <option value="CSV">CSV 文件</option>
-                      <option value="Excel">Excel 文件</option>
+                      <option value="API">{t.insBillingApiValue}</option>
+                      <option value="CSV">{t.insOptCsv}</option>
+                      <option value="Excel">{t.insOptExcel}</option>
                       <option value="EDI">EDI 835</option>
-                      <option value="Manual">人工录入</option>
+                      <option value="Manual">{t.insOptManual}</option>
                     </select>
                   </div>
                   <div>
-                    <FieldLabel label="账单截止日" hint="每月/季第几天为数据截止日" />
+                    <FieldLabel label={t.insFBillCutoff} hint={t.insBillCutoffHint} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13.5, color: '#717786' }}>每月第</span>
+                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t.insBillCutoffPrefix}</span>
                       <input {...INPUT} type="number" value={form.billCutoffDay} onChange={e => set('billCutoffDay', e.target.value)} style={{ ...INPUT.style, width: 70 }} min={1} max={28} />
-                      <span style={{ fontSize: 13.5, color: '#717786' }}>天</span>
+                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t.insDaySuffix}</span>
                     </div>
                   </div>
                   <div>
-                    <FieldLabel label="付款期限" hint="对账完成后多少天内支付" />
+                    <FieldLabel label={t.insFPaymentTerm} hint={t.insPaymentHint} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13.5, color: '#717786' }}>对账后</span>
+                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t.insPaymentPrefix}</span>
                       <input {...INPUT} type="number" value={form.paymentDays} onChange={e => set('paymentDays', e.target.value)} style={{ ...INPUT.style, width: 70 }} min={1} max={90} />
-                      <span style={{ fontSize: 13.5, color: '#717786' }}>天内</span>
+                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t.insDaysSuffix}</span>
                     </div>
                   </div>
                   <div>
-                    <FieldLabel label="结算货币" />
+                    <FieldLabel label={t.insFCurrency} />
                     <select {...INPUT} value={form.currency} onChange={e => set('currency', e.target.value)}>
-                      <option value="USD">USD（美元）</option>
-                      <option value="CAD">CAD（加拿大元）</option>
+                      <option value="USD">{t.insOptUsd}</option>
+                      <option value="CAD">{t.insOptCad}</option>
                     </select>
                   </div>
                   <div>
-                    <FieldLabel label="保费归集方式" />
+                    <FieldLabel label={t.insFPremiumCollectionMode} />
                     <select {...INPUT} value={form.premiumCollection} onChange={e => set('premiumCollection', e.target.value)}>
-                      <option value="aggregate">渠道代收 → 平台归集 → 转付保险公司</option>
-                      <option value="direct">渠道直接支付保险公司</option>
-                      <option value="platform">平台代收后统一结算</option>
+                      <option value="aggregate">{t.insOptCollectAggregate}</option>
+                      <option value="direct">{t.insOptCollectDirect}</option>
+                      <option value="platform">{t.insOptCollectPlatform}</option>
                     </select>
                   </div>
                 </Grid>
@@ -423,9 +457,9 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
 
           {/* Step 4: Documents */}
           {step === 4 && (
-            <Section title="资质文件上传">
+            <Section title={t.insSecFormDocs}>
               <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 16 }}>
-                请上传保险公司相关资质文件。合同类文件提交后将进入法务审核流程。
+                {t.insDocsIntro}
               </div>
 
               {/* Upload zone */}
@@ -441,24 +475,18 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
                   transition: 'border-color 120ms, background 120ms',
                 }}
                 onClick={() => {
-                  const fake = { name: `合作协议_Draft_${Date.now()}.pdf`, type: '主合作协议', size: '2.1 MB' }
+                  const fake = { name: t.insFakeFileName(Date.now()), type: 'masterAgreement', size: '2.1 MB' }
                   set('uploadedFiles', [...form.uploadedFiles, fake])
                 }}
               >
                 <Upload size={28} style={{ color: '#0058BC', marginBottom: 10 }} />
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', marginBottom: 4 }}>点击上传文件</div>
-                <div style={{ fontSize: 12.5, color: '#717786' }}>支持 PDF、Word、Excel；单文件不超过 50MB</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', marginBottom: 4 }}>{t.insClickUpload}</div>
+                <div style={{ fontSize: 12.5, color: '#717786' }}>{t.insUploadFormats}</div>
               </div>
 
               {/* Required doc list */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { type: '营业执照', required: true },
-                  { type: '主合作协议', required: true },
-                  { type: '保密协议 (NDA)', required: true },
-                  { type: '数据处理协议 (DPA)', required: false },
-                  { type: 'AM Best 评级报告', required: false },
-                ].map(doc => {
+                {FORM_DOCS.map(doc => {
                   const uploaded = form.uploadedFiles.find(f => f.type === doc.type)
                   return (
                     <div key={doc.type} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(193,198,215,0.4)', borderRadius: 10 }}>
@@ -467,20 +495,20 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>
-                          {doc.type}
-                          {doc.required && <span style={{ fontSize: 11, color: '#BA1A1A', marginLeft: 6 }}>必须</span>}
+                          {formDocLabel[doc.type]}
+                          {doc.required && <span style={{ fontSize: 11, color: '#BA1A1A', marginLeft: 6 }}>{t.insMust}</span>}
                         </div>
                         {uploaded
                           ? <div style={{ fontSize: 11.5, color: '#1a7a2e', marginTop: 2 }}>{uploaded.name} · {uploaded.size}</div>
-                          : <div style={{ fontSize: 11.5, color: '#717786', marginTop: 2 }}>未上传</div>
+                          : <div style={{ fontSize: 11.5, color: '#717786', marginTop: 2 }}>{t.insNotUploaded}</div>
                         }
                       </div>
                       {uploaded
                         ? <button className="btn-ghost" style={{ padding: 5, color: '#BA1A1A' }} onClick={() => set('uploadedFiles', form.uploadedFiles.filter(f => f.type !== doc.type))}><X size={14} /></button>
                         : <button className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => {
-                            const fake = { name: `${doc.type}_${Date.now()}.pdf`, type: doc.type, size: '1.2 MB' }
+                            const fake = { name: `${formDocLabel[doc.type]}_${Date.now()}.pdf`, type: doc.type, size: '1.2 MB' }
                             set('uploadedFiles', [...form.uploadedFiles, fake])
-                          }}>上传</button>
+                          }}>{t.insUploadBtn}</button>
                       }
                     </div>
                   )
@@ -497,15 +525,15 @@ export default function InsurerForm({ mode, insurerId, navigateTo }: Props) {
               onClick={() => setStep(s => s - 1)}
               style={{ fontSize: 13, opacity: step === 0 ? 0.4 : 1 }}
             >
-              <ArrowLeft size={14} />上一步
+              <ArrowLeft size={14} />{t.insPrev}
             </button>
-            <div style={{ fontSize: 12.5, color: '#717786' }}>步骤 {step + 1} / {STEPS.length}</div>
-            {step < STEPS.length - 1
+            <div style={{ fontSize: 12.5, color: '#717786' }}>{t.insStepOf(step + 1, stepMeta.length)}</div>
+            {step < stepMeta.length - 1
               ? <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => setStep(s => s + 1)}>
-                  下一步 <ArrowRight size={14} />
+                  {t.insNext} <ArrowRight size={14} />
                 </button>
               : <button className="btn-primary" style={{ fontSize: 13 }} onClick={handleSubmit}>
-                  <Send size={14} />{mode === 'create' ? '提交审核' : '保存修改'}
+                  <Send size={14} />{mode === 'create' ? t.insSubmitReview : t.insSaveChanges}
                 </button>
             }
           </div>

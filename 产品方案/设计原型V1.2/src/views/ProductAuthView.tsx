@@ -615,8 +615,8 @@ export default function ProductAuthView({ navigateTo: _nav }: Props) {
   const title = lang === 'en' ? 'Product Authorization & Binding Authority' : '渠道产品授权与出单权限管理'
   const sub = lang === 'en' ? 'Manage product sales authorizations and operational permissions for channels' : '管理渠道产品销售授权及出单操作权限与限额'
   const tabs = [
-    { id: 'auth' as const, label: lang === 'en' ? '10.1 Product Authorization' : '10.1 产品资源授权', icon: <Shield size={13} /> },
-    { id: 'perm' as const, label: lang === 'en' ? '10.2 Permissions & Quotas' : '10.2 出单权限与限额', icon: <Lock size={13} /> },
+    { id: 'auth' as const, label: lang === 'en' ? 'Product Authorization' : '产品资源授权', icon: <Shield size={13} /> },
+    { id: 'perm' as const, label: lang === 'en' ? 'Permissions & Quotas' : '出单权限与限额', icon: <Lock size={13} /> },
   ]
 
   return (

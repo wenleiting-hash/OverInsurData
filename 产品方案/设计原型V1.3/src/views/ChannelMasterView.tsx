@@ -45,6 +45,39 @@ function lossColor(r: number) { return r === 0 ? C.muted : r > 0.65 ? C.red : r 
 function renewColor(r: number) { return r === 0 ? C.muted : r >= 0.90 ? C.green : r >= 0.85 ? C.amber : C.red }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Inline EN labels for Chinese strings sourced from channelMasterData
+// (i18n dictionary intentionally not extended; zh text kept verbatim)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ZH_EN: Record<string, string> = {
+  // statuses
+  '正常': 'Active', '在职': 'Active', '未激活': 'Inactive', '已暂停': 'Suspended',
+  '待审批': 'Pending', '已离职': 'Terminated',
+  // org types
+  '代理机构': 'Agency', '分支机构': 'Branch', '子代理': 'Sub-agent',
+  // roles
+  '代理人': 'Agent', '高级代理人': 'Senior Agent', '业务经理': 'Agency Manager', '负责人': 'Principal',
+  // doc statuses
+  '有效': 'Valid', '已过期': 'Expired', '即将到期': 'Expiring Soon', '缺失': 'Missing', '待审核': 'Pending Review',
+  // doc categories
+  '保险执照': 'Insurance License', 'E&O证书': 'E&O Certificate', 'W-9税务': 'W-9 Tax Form',
+  '合同协议': 'Contract Agreement', '背景调查': 'Background Check', '培训证书': 'Training Certificate',
+  '公司注册': 'Articles of Incorporation', '其他': 'Other',
+  // change types
+  '新增': 'Created', '编辑': 'Edited', '状态变更': 'Status Change', '文件上传': 'Document Upload',
+  '批量导入': 'Bulk Import', '关系变更': 'Relationship Change',
+  // org tags
+  '白标合作': 'White-label Partner', 'API接入': 'API Integration', '高绩效': 'Top Performer',
+  '高出单量': 'High Volume', '白标Draft': 'White-label Draft', '稳健增长': 'Steady Growth',
+  '赔付率偏高': 'High Loss Ratio', '合规问题': 'Compliance Issue', '暂停出单': 'Writing Suspended',
+  '快速增长': 'Fast Growth', 'GA合作': 'GA Partner', '新晋高绩效': 'New Top Performer',
+}
+
+function enLabel(lang: string, zh: string): string {
+  return lang === 'en' ? (ZH_EN[zh] ?? zh) : zh
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Primitive components
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -158,15 +191,17 @@ function GhostBtn({ children, onClick, sm }: { children: React.ReactNode; onClic
 // ─────────────────────────────────────────────────────────────────────────────
 
 function OrgStatusBadge({ s }: { s: OrgStatus }) {
+  const { lang } = useLang()
   const m = ORG_STATUS_STYLE[s]
   const dot = s === 'active' ? C.green : s === 'suspended' ? C.red : s === 'pending' ? C.amber : C.muted
-  return <Badge label={m.label} color={m.color} bg={m.bg} dot={dot} />
+  return <Badge label={enLabel(lang, m.label)} color={m.color} bg={m.bg} dot={dot} />
 }
 
 function AgentStatusBadge({ s }: { s: AgentStatus }) {
+  const { lang } = useLang()
   const m = AGENT_STATUS_STYLE[s]
   const dot = s === 'active' ? C.green : s === 'suspended' || s === 'terminated' ? C.red : s === 'pending' ? C.amber : C.muted
-  return <Badge label={m.label} color={m.color} bg={m.bg} dot={dot} />
+  return <Badge label={enLabel(lang, m.label)} color={m.color} bg={m.bg} dot={dot} />
 }
 
 function DocStatusIcon({ s }: { s: string }) {
@@ -253,7 +288,7 @@ function FilterOption({ label, count, active, color, onClick }: {
 function StatusModal({ entity, entityType, onClose }: {
   entity: ChannelOrg | ChannelAgent; entityType: 'org' | 'agent'; onClose: () => void
 }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [newStatus, setNewStatus] = useState<string>('active')
   const [reason, setReason] = useState('')
   const [subAgentAction, setSubAgentAction] = useState<'suspend' | 'transfer'>('suspend')
@@ -292,7 +327,7 @@ function StatusModal({ entity, entityType, onClose }: {
                 background: newStatus === k ? C.primary : 'rgba(255,255,255,0.5)',
                 color: newStatus === k ? '#fff' : C.textSoft,
                 border: `0.5px solid ${newStatus === k ? C.primary : C.border}`,
-              }}>{(v as any).label}</button>
+              }}>{enLabel(lang, (v as any).label)}</button>
             ))}
           </div>
         </div>
@@ -302,36 +337,36 @@ function StatusModal({ entity, entityType, onClose }: {
           <div style={{ marginBottom: 14, borderRadius: 10, border: `0.5px solid ${C.redBorder}`, overflow: 'hidden' }}>
             <div style={{ padding: '8px 12px', background: C.redBg, borderBottom: `0.5px solid ${C.redBorder}`, display: 'flex', alignItems: 'center', gap: 5 }}>
               <AlertTriangle size={12} color={C.red} />
-              <span style={{ fontSize: 11.5, fontWeight: 700, color: C.red }}>影响范围预览</span>
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: C.red }}>{lang === 'en' ? 'Impact Preview' : '影响范围预览'}</span>
             </div>
             <div style={{ padding: '10px 12px', background: 'rgba(255,59,48,0.03)', display: 'grid', gridTemplateColumns: entityType === 'org' ? '1fr 1fr 1fr' : '1fr 1fr', gap: 10 }}>
               {entityType === 'org' && (
                 <div style={{ textAlign: 'center' as const }}>
                   <div style={{ ...mono, fontSize: 18, fontWeight: 800, color: C.red }}>{orgAgentCount}</div>
-                  <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>受影响代理人</div>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{lang === 'en' ? 'Affected Agents' : '受影响代理人'}</div>
                 </div>
               )}
               <div style={{ textAlign: 'center' as const }}>
                 <div style={{ ...mono, fontSize: 18, fontWeight: 800, color: C.amber }}>{impact.policies}</div>
-                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>在途保单</div>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{lang === 'en' ? 'Policies in Flight' : '在途保单'}</div>
               </div>
               <div style={{ textAlign: 'center' as const }}>
                 <div style={{ ...mono, fontSize: 18, fontWeight: 800, color: C.amber }}>${(impact.commission / 1000).toFixed(0)}K</div>
-                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>未结佣金</div>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{lang === 'en' ? 'Outstanding Commission' : '未结佣金'}</div>
               </div>
             </div>
             {entityType === 'org' && orgAgentCount > 0 && (
               <div style={{ padding: '10px 12px', borderTop: `0.5px solid ${C.redBorder}`, background: 'rgba(255,59,48,0.03)' }}>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: C.text, marginBottom: 8 }}>下属代理人处理方式</div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: C.text, marginBottom: 8 }}>{lang === 'en' ? 'Handling of affiliated agents' : '下属代理人处理方式'}</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {([['suspend','随组织停用'],['transfer','转移到其他组织']] as const).map(([v, l]) => (
-                    <button key={v} onClick={() => setSubAgentAction(v)} style={{ flex: 1, padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: subAgentAction === v ? C.primaryLight : 'rgba(255,255,255,0.5)', color: subAgentAction === v ? C.primary : C.textSoft, border: `0.5px solid ${subAgentAction === v ? C.primaryBorder : C.border}` }}>{l}</button>
+                  {([['suspend','随组织停用','Suspend with organization'],['transfer','转移到其他组织','Transfer to another organization']] as const).map(([v, zh, en]) => (
+                    <button key={v} onClick={() => setSubAgentAction(v)} style={{ flex: 1, padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: subAgentAction === v ? C.primaryLight : 'rgba(255,255,255,0.5)', color: subAgentAction === v ? C.primary : C.textSoft, border: `0.5px solid ${subAgentAction === v ? C.primaryBorder : C.border}` }}>{lang === 'en' ? en : zh}</button>
                   ))}
                 </div>
                 {subAgentAction === 'transfer' && (
                   <div style={{ marginTop: 8 }}>
                     <select style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: `0.5px solid ${C.border}`, fontSize: 12.5, background: 'rgba(255,255,255,0.7)', fontFamily: 'inherit', outline: 'none' }}>
-                      <option value="">选择目标机构…</option>
+                      <option value="">{lang === 'en' ? 'Select target organization…' : '选择目标机构…'}</option>
                       {channelOrgs.filter(o => o.id !== entity.id).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                     </select>
                   </div>
@@ -351,14 +386,14 @@ function StatusModal({ entity, entityType, onClose }: {
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, marginBottom: 6 }}>
             {t.statusReason} <span style={{ color: C.red }}>*</span>
-            <span style={{ fontWeight: 400, marginLeft: 8, fontSize: 11 }}>（必须填写原因，记入审计日志）</span>
+            <span style={{ fontWeight: 400, marginLeft: 8, fontSize: 11 }}>{lang === 'en' ? 'Reason required (logged to audit trail)' : '（必须填写原因，记入审计日志）'}</span>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 7 }}>
             {(isDestructive
-              ? ['业务终止', '合规问题', '牌照过期', '主动退出', '违规处理']
-              : ['信息补充完整', '审核通过', '牌照已更新', '休假结束']
-            ).map(r => (
-              <button key={r} onClick={() => setReason(r)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11.5, cursor: 'pointer', fontWeight: reason === r ? 700 : 500, background: reason === r ? C.primaryLight : 'rgba(255,255,255,0.5)', color: reason === r ? C.primary : C.textSoft, border: `0.5px solid ${reason === r ? C.primaryBorder : C.border}` }}>{r}</button>
+              ? [['业务终止', 'Business Termination'], ['合规问题', 'Compliance Issue'], ['牌照过期', 'License Expired'], ['主动退出', 'Voluntary Exit'], ['违规处理', 'Violation Action']]
+              : [['信息补充完整', 'Information Completed'], ['审核通过', 'Review Approved'], ['牌照已更新', 'License Renewed'], ['休假结束', 'Return from Leave']]
+            ).map(([r, en]) => (
+              <button key={r} onClick={() => setReason(r)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11.5, cursor: 'pointer', fontWeight: reason === r ? 700 : 500, background: reason === r ? C.primaryLight : 'rgba(255,255,255,0.5)', color: reason === r ? C.primary : C.textSoft, border: `0.5px solid ${reason === r ? C.primaryBorder : C.border}` }}>{lang === 'en' ? en : r}</button>
             ))}
           </div>
           <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
@@ -370,11 +405,11 @@ function StatusModal({ entity, entityType, onClose }: {
           <GhostBtn onClick={onClose}>{t.formCancel}</GhostBtn>
           <PrimaryBtn onClick={onClose} danger={isDestructive}>
             <Check size={13} />
-            {isDestructive ? '提交审批' : t.formConfirm}
+            {isDestructive ? (lang === 'en' ? 'Submit for Approval' : '提交审批') : t.formConfirm}
           </PrimaryBtn>
         </div>
         {isDestructive && (
-          <div style={{ textAlign: 'center' as const, fontSize: 11, color: C.mutedLight, marginTop: 8 }}>停用/终止操作需要主管审批后生效</div>
+          <div style={{ textAlign: 'center' as const, fontSize: 11, color: C.mutedLight, marginTop: 8 }}>{lang === 'en' ? 'Suspension/termination takes effect after supervisor approval' : '停用/终止操作需要主管审批后生效'}</div>
         )}
       </GlassCard>
     </div>
@@ -386,7 +421,7 @@ function StatusModal({ entity, entityType, onClose }: {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: ChannelOrg; onClose: () => void }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [whiteLabelOn, setWhiteLabelOn] = useState(false)
@@ -395,10 +430,10 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
   const doSave = (draft?: boolean) => { setSaving(true); setTimeout(() => { setSaving(false); onClose() }, 1100) }
 
   const steps = [
-    { label: '基本信息', sub: '类型 · 名称 · NPN' },
-    { label: '总部 & 联系', sub: '地址 · 联系人' },
-    { label: '业务配置', sub: '险种 · 持牌州' },
-    { label: '资质 & 提交', sub: '文件 · 审核' },
+    { label: lang === 'en' ? 'Basic Information' : '基本信息', sub: lang === 'en' ? 'Type · Name · NPN' : '类型 · 名称 · NPN' },
+    { label: lang === 'en' ? 'HQ & Contact' : '总部 & 联系', sub: lang === 'en' ? 'Address · Contact' : '地址 · 联系人' },
+    { label: lang === 'en' ? 'Business Setup' : '业务配置', sub: lang === 'en' ? 'Lines · Licensed States' : '险种 · 持牌州' },
+    { label: lang === 'en' ? 'Qualifications & Submit' : '资质 & 提交', sub: lang === 'en' ? 'Documents · Review' : '文件 · 审核' },
   ]
   const STATES = ['CA','TX','NY','FL','IL','WA','OR','NV','CO','GA','OH','PA','NJ','CT','MA','AZ','NC','VA','TN','MO']
 
@@ -462,7 +497,7 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
                   {mode === 'create' ? t.formNewOrg : t.formEditOrg(org?.shortName ?? '')}
                 </h2>
                 <p style={{ fontSize: 12, color: C.muted, marginTop: 3, fontWeight: 400 }}>
-                  步骤 {step} / {totalSteps} · {steps[step - 1].sub}
+                  {lang === 'en' ? 'Step' : '步骤'} {step} / {totalSteps} · {steps[step - 1].sub}
                 </p>
               </div>
             </div>
@@ -514,7 +549,7 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
               {/* Org type selector */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
-                  组织类型 <span style={{ color: C.red }}>*</span>
+                  {lang === 'en' ? 'Organization Type' : '组织类型'} <span style={{ color: C.red }}>*</span>
                 </label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {Object.entries(ORG_TYPE_LABEL).map(([k, v]) => {
@@ -537,7 +572,7 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
                         }}
                       >
                         {selected && <span style={{ width: 6, height: 6, borderRadius: '50%', background: tc, flexShrink: 0 }} />}
-                        {v}
+                        {enLabel(lang, v)}
                       </button>
                     )
                   })}
@@ -545,20 +580,20 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <Fld label="组织全称" defaultValue={org?.name ?? ''} span={2} required />
-                <Fld label="简称" defaultValue={org?.shortName ?? ''} required />
-                <Fld label="品牌名称" defaultValue="" hint="（对外展示用）" />
-                <Fld label="成立年份" defaultValue="" isMono />
+                <Fld label={lang === 'en' ? 'Full Organization Name' : '组织全称'} defaultValue={org?.name ?? ''} span={2} required />
+                <Fld label={lang === 'en' ? 'Short Name' : '简称'} defaultValue={org?.shortName ?? ''} required />
+                <Fld label={lang === 'en' ? 'Brand Name' : '品牌名称'} defaultValue="" hint={lang === 'en' ? '(customer-facing)' : '（对外展示用）'} />
+                <Fld label={lang === 'en' ? 'Year Founded' : '成立年份'} defaultValue="" isMono />
                 <Fld label={t.formFieldNpn} defaultValue={org?.npn ?? ''} isMono required />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>法律实体类型</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Legal Entity Type' : '法律实体类型'}</label>
                   <select defaultValue="LLC" className="input-glass w-full">
                     {['LLC','Corporation (C-Corp)','Corporation (S-Corp)','Partnership','Sole Proprietorship','Non-Profit'].map(e => <option key={e}>{e}</option>)}
                   </select>
                 </div>
-                <Fld label="EIN 税号" defaultValue={org?.taxId ?? ''} isMono />
+                <Fld label={lang === 'en' ? 'EIN Tax ID' : 'EIN 税号'} defaultValue={org?.taxId ?? ''} isMono />
               </div>
             </div>
           )}
@@ -566,27 +601,27 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
           {/* Step 2: 总部 & 联系 */}
           {step === 2 && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <Fld label="主要联系人" defaultValue={org?.managerName ?? ''} span={2} />
-              <Fld label="邮箱地址" defaultValue={org?.email ?? ''} required />
-              <Fld label="电话号码" defaultValue={org?.phone ?? ''} />
-              <Fld label="官网" defaultValue={org?.website ?? ''} />
+              <Fld label={lang === 'en' ? 'Primary Contact' : '主要联系人'} defaultValue={org?.managerName ?? ''} span={2} />
+              <Fld label={lang === 'en' ? 'Email Address' : '邮箱地址'} defaultValue={org?.email ?? ''} required />
+              <Fld label={lang === 'en' ? 'Phone Number' : '电话号码'} defaultValue={org?.phone ?? ''} />
+              <Fld label={lang === 'en' ? 'Website' : '官网'} defaultValue={org?.website ?? ''} />
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>所在州 <span style={{ color: C.red }}>*</span></label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Home State' : '所在州'} <span style={{ color: C.red }}>*</span></label>
                 <select defaultValue={org?.state ?? 'CA'} className="input-glass w-full">
                   {STATES.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
-              <Fld label="详细地址" defaultValue={org?.address ?? ''} span={2} />
-              <Fld label="城市" defaultValue={org?.city ?? ''} />
-              <Fld label="邮编" defaultValue={org?.zip ?? ''} isMono />
+              <Fld label={lang === 'en' ? 'Street Address' : '详细地址'} defaultValue={org?.address ?? ''} span={2} />
+              <Fld label={lang === 'en' ? 'City' : '城市'} defaultValue={org?.city ?? ''} />
+              <Fld label={lang === 'en' ? 'ZIP Code' : '邮编'} defaultValue={org?.zip ?? ''} isMono />
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>上级机构（FMO / 总代）</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Parent Organization (FMO / GA)' : '上级机构（FMO / 总代）'}</label>
                 <select defaultValue={org?.parentOrgId ?? ''} className="input-glass w-full">
                   <option value="">{t.formParentNone}</option>
                   {channelOrgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                 </select>
               </div>
-              <Fld label="合同编号" defaultValue={org?.contractId ?? ''} isMono />
+              <Fld label={lang === 'en' ? 'Contract No.' : '合同编号'} defaultValue={org?.contractId ?? ''} isMono />
             </div>
           )}
 
@@ -595,18 +630,21 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>主营业务线</label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Primary Lines of Business' : '主营业务线'}</label>
                   <select className="input-glass w-full">
-                    {['P&C（财产险）','Life（人寿险）','Health（健康险）','Commercial（商业险）','Multi-line'].map(l => <option key={l}>{l}</option>)}
+                    {(lang === 'en'
+                      ? ['P&C (Property & Casualty)','Life','Health','Commercial','Multi-line']
+                      : ['P&C（财产险）','Life（人寿险）','Health（健康险）','Commercial（商业险）','Multi-line']
+                    ).map(l => <option key={l}>{l}</option>)}
                   </select>
                 </div>
-                <Fld label="员工人数" defaultValue="" />
-                <Fld label="代理人数（预估）" defaultValue="" />
-                <Fld label="年保费规模预估 ($)" defaultValue="" isMono />
+                <Fld label={lang === 'en' ? 'Number of Employees' : '员工人数'} defaultValue="" />
+                <Fld label={lang === 'en' ? 'Number of Agents (est.)' : '代理人数（预估）'} defaultValue="" />
+                <Fld label={lang === 'en' ? 'Est. Annual Premium ($)' : '年保费规模预估 ($)'} defaultValue="" isMono />
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 9 }}>授权经营州</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 9 }}>{lang === 'en' ? 'Licensed States' : '授权经营州'}</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {STATES.map(s => {
                     const on = (org?.licenseStates ?? ['CA']).includes(s)
@@ -630,8 +668,8 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
               <div style={{ borderRadius: 12, border: `0.5px solid ${C.border}`, overflow: 'hidden' }}>
                 <div style={{ padding: '12px 16px', background: 'rgba(236,237,249,0.35)', borderBottom: whiteLabelOn ? `0.5px solid ${C.border}` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>White-label 独立品牌门户</div>
-                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>为该渠道启用独立品牌的代理人门户</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{lang === 'en' ? 'White-label Branded Portal' : 'White-label 独立品牌门户'}</div>
+                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{lang === 'en' ? 'Enable a branded agent portal for this channel' : '为该渠道启用独立品牌的代理人门户'}</div>
                   </div>
                   <button onClick={() => setWhiteLabelOn(v => !v)} style={{ width: 40, height: 22, borderRadius: 11, background: whiteLabelOn ? C.primary : 'rgba(193,198,215,0.4)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                     <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: whiteLabelOn ? 21 : 3, transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
@@ -639,16 +677,16 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
                 </div>
                 {whiteLabelOn && (
                   <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <Fld label="门户品牌名称" defaultValue="" />
+                    <Fld label={lang === 'en' ? 'Portal Brand Name' : '门户品牌名称'} defaultValue="" />
                     <Fld label="Logo URL" defaultValue="" />
-                    <Fld label="主色调 (Hex)" defaultValue="#0058BC" />
-                    <Fld label="辅助色 (Hex)" defaultValue="#60CDFF" />
+                    <Fld label={lang === 'en' ? 'Primary Color (Hex)' : '主色调 (Hex)'} defaultValue="#0058BC" />
+                    <Fld label={lang === 'en' ? 'Secondary Color (Hex)' : '辅助色 (Hex)'} defaultValue="#60CDFF" />
                   </div>
                 )}
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>备注</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.textSoft, display: 'block', marginBottom: 6 }}>{lang === 'en' ? 'Notes' : '备注'}</label>
                 <textarea
                   defaultValue={org?.notes ?? ''}
                   rows={2}
@@ -664,13 +702,15 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ padding: '10px 14px', borderRadius: 9, background: C.primaryLight, border: `0.5px solid ${C.primaryBorder}`, fontSize: 12.5, color: C.primary, lineHeight: 1.6, display: 'flex', gap: 8 }}>
                 <FileText size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                上传以下资质文件，确保合规审核通过。所有必须文件审核通过后才可激活渠道。
+                {lang === 'en'
+                  ? 'Upload the qualification documents below for compliance review. The channel can only be activated after all required documents are approved.'
+                  : '上传以下资质文件，确保合规审核通过。所有必须文件审核通过后才可激活渠道。'}
               </div>
               {[
-                { label: '营业执照', hint: 'Business License', required: true },
-                { label: '机构保险牌照', hint: 'Insurance License Certificate', required: true },
-                { label: 'E&O 保险证明', hint: 'Errors & Omissions Insurance', required: true },
-                { label: 'W-9 表格', hint: 'IRS Form W-9', required: false },
+                { label: lang === 'en' ? 'Business License' : '营业执照', hint: 'Business License', required: true },
+                { label: lang === 'en' ? 'Agency Insurance License' : '机构保险牌照', hint: 'Insurance License Certificate', required: true },
+                { label: lang === 'en' ? 'E&O Insurance Certificate' : 'E&O 保险证明', hint: 'Errors & Omissions Insurance', required: true },
+                { label: lang === 'en' ? 'W-9 Form' : 'W-9 表格', hint: 'IRS Form W-9', required: false },
               ].map(doc => (
                 <div key={doc.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.55)', border: `0.5px solid ${C.border}` }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: C.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -680,20 +720,22 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{doc.label}</span>
                       {doc.required
-                        ? <span style={{ fontSize: 10.5, color: C.red, fontWeight: 700, padding: '1px 5px', background: 'rgba(186,26,26,0.08)', borderRadius: 4 }}>必须</span>
-                        : <span style={{ fontSize: 10.5, color: C.mutedLight, fontWeight: 600 }}>可选</span>
+                        ? <span style={{ fontSize: 10.5, color: C.red, fontWeight: 700, padding: '1px 5px', background: 'rgba(186,26,26,0.08)', borderRadius: 4 }}>{lang === 'en' ? 'Required' : '必须'}</span>
+                        : <span style={{ fontSize: 10.5, color: C.mutedLight, fontWeight: 600 }}>{lang === 'en' ? 'Optional' : '可选'}</span>
                       }
                     </div>
                     <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{doc.hint}</div>
                   </div>
                   <button className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }}>
-                    <Upload size={12} />上传
+                    <Upload size={12} />{lang === 'en' ? 'Upload' : '上传'}
                   </button>
                 </div>
               ))}
               <div style={{ padding: '10px 14px', borderRadius: 9, background: C.amberBg, border: `0.5px solid ${C.amberBorder}`, fontSize: 12.5, color: C.amber, display: 'flex', alignItems: 'flex-start', gap: 7, lineHeight: 1.5 }}>
                 <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                提交后进入运营审核流程，通常 1–3 个工作日完成。审核期间渠道处于「待审核」状态。
+                {lang === 'en'
+                  ? 'After submission, the application enters operations review, typically completed within 1–3 business days. The channel remains in “Pending Review” status during review.'
+                  : '提交后进入运营审核流程，通常 1–3 个工作日完成。审核期间渠道处于「待审核」状态。'}
               </div>
             </div>
           )}
@@ -709,13 +751,13 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
             )}
             {step === 4 && (
               <button className="btn-ghost" style={{ fontSize: 13 }} onClick={() => doSave(true)}>
-                <FileText size={13} />保存草稿
+                <FileText size={13} />{lang === 'en' ? 'Save Draft' : '保存草稿'}
               </button>
             )}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {step === 1 && (
-              <button className="btn-ghost" style={{ fontSize: 13 }} onClick={onClose}>取消</button>
+              <button className="btn-ghost" style={{ fontSize: 13 }} onClick={onClose}>{lang === 'en' ? 'Cancel' : '取消'}</button>
             )}
             {step < totalSteps
               ? (
@@ -727,7 +769,7 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
                 <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => doSave(false)} disabled={saving}>
                   {saving
                     ? <><Loader2 size={13} className="animate-spin" />{t.formSaving}</>
-                    : <><Check size={13} strokeWidth={2.5} />提交审核</>
+                    : <><Check size={13} strokeWidth={2.5} />{lang === 'en' ? 'Submit for Review' : '提交审核'}</>
                   }
                 </button>
               )
@@ -744,12 +786,16 @@ function OrgFormModal({ mode, org, onClose }: { mode: 'create' | 'edit'; org?: C
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; agent?: ChannelAgent; onClose: () => void }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [niprState, setNiprState] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle')
   const totalSteps = 3
-  const steps = ['个人信息', '联系 & 执照', '组织配置']
+  const steps = [
+    lang === 'en' ? 'Personal Information' : '个人信息',
+    lang === 'en' ? 'Contact & License' : '联系 & 执照',
+    lang === 'en' ? 'Organization Setup' : '组织配置',
+  ]
   const doSave = () => { setSaving(true); setTimeout(() => { setSaving(false); onClose() }, 1100) }
   const doNipr = () => { setNiprState('checking'); setTimeout(() => setNiprState('valid'), 1500) }
   const STATES = ['CA','TX','NY','FL','IL','WA','OR','NV','CO','GA','OH','PA','NJ','CT','MA','AZ','NC','VA','TN','MO']
@@ -796,14 +842,14 @@ function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; age
             {fld(t.formFieldFirstName, agent?.firstName ?? '', true)}
             {fld(t.formFieldLastName, agent?.lastName ?? '', true)}
             <div>
-              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>性别</label>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>{lang === 'en' ? 'Gender' : '性别'}</label>
               <select style={{ ...inputCss }}>
-                {['Male（男）','Female（女）','Not Specified'].map(g => <option key={g}>{g}</option>)}
+                {(lang === 'en' ? ['Male','Female','Not Specified'] : ['Male（男）','Female（女）','Not Specified']).map(g => <option key={g}>{g}</option>)}
               </select>
             </div>
-            {fld('出生日期', '', false, true)}
-            {fld('SSN 后4位', '', false, true)}
-            {fld('入职日期 / 签约日期', agent?.joinDate ?? '', true, true)}
+            {fld(lang === 'en' ? 'Date of Birth' : '出生日期', '', false, true)}
+            {fld(lang === 'en' ? 'SSN (last 4 digits)' : 'SSN 后4位', '', false, true)}
+            {fld(lang === 'en' ? 'Join Date / Contract Date' : '入职日期 / 签约日期', agent?.joinDate ?? '', true, true)}
           </div>
         )}
 
@@ -813,9 +859,9 @@ function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; age
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               {fld(t.formFieldEmailReq2, agent?.email ?? '', true)}
               {fld(t.formFieldPhoneOpt2, agent?.phone ?? '' )}
-              {fld('通讯地址', '' )}
+              {fld(lang === 'en' ? 'Mailing Address' : '通讯地址', '' )}
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>主营州 <span style={{ color: C.red }}>*</span></label>
+                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>{lang === 'en' ? 'Primary State' : '主营州'} <span style={{ color: C.red }}>*</span></label>
                 <select defaultValue={agent?.primaryState ?? 'CA'} style={inputCss}>
                   {STATES.map(s => <option key={s}>{s}</option>)}
                 </select>
@@ -831,17 +877,17 @@ function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; age
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input type="text" defaultValue={agent?.npn ?? ''} style={{ ...inputCss, ...mono, flex: 1 }} />
                 <button onClick={doNipr} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, background: niprState === 'valid' ? C.greenBg : C.primaryLight, color: niprState === 'valid' ? C.green : C.primary, border: `0.5px solid ${niprState === 'valid' ? C.greenBorder : C.primaryBorder}`, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {niprState === 'checking' ? <><Loader2 size={12} className="animate-spin" />校验中…</> : niprState === 'valid' ? <><Check size={12} />NIPR 已验证</> : niprState === 'invalid' ? <>✗ 无效 NPN</> : <>NIPR 预校验</>}
+                  {niprState === 'checking' ? <><Loader2 size={12} className="animate-spin" />{lang === 'en' ? 'Verifying…' : '校验中…'}</> : niprState === 'valid' ? <><Check size={12} />{lang === 'en' ? 'NIPR Verified' : 'NIPR 已验证'}</> : niprState === 'invalid' ? <>{lang === 'en' ? '✗ Invalid NPN' : '✗ 无效 NPN'}</> : <>{lang === 'en' ? 'NIPR Pre-check' : 'NIPR 预校验'}</>}
                 </button>
               </div>
               {niprState === 'valid' && (
                 <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 7, background: C.greenBg, border: `0.5px solid ${C.greenBorder}`, fontSize: 12, color: C.green, display: 'flex', gap: 8 }}>
-                  <Check size={12} /><span>NPN 验证通过 · 持牌州: CA, TX, FL · 业务线: P&C, Life</span>
+                  <Check size={12} /><span>{lang === 'en' ? 'NPN verified · Licensed states: CA, TX, FL · Lines: P&C, Life' : 'NPN 验证通过 · 持牌州: CA, TX, FL · 业务线: P&C, Life'}</span>
                 </div>
               )}
               {niprState === 'invalid' && (
                 <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 7, background: C.redBg, border: `0.5px solid ${C.redBorder}`, fontSize: 12, color: C.red }}>
-                  该 NPN 在 NIPR 数据库中未找到，请核实后重新输入。
+                  {lang === 'en' ? 'This NPN was not found in the NIPR database. Please verify and re-enter.' : '该 NPN 在 NIPR 数据库中未找到，请核实后重新输入。'}
                 </div>
               )}
             </div>
@@ -875,22 +921,25 @@ function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; age
               <div>
                 <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>{t.formFieldRole}</label>
                 <select defaultValue={agent?.role ?? 'agent'} style={inputCss}>
-                  {Object.entries(ROLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  {Object.entries(ROLE_LABEL).map(([k, v]) => <option key={k} value={k}>{enLabel(lang, v)}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>直接上级（推荐人）</label>
+                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>{lang === 'en' ? 'Direct Manager (Referrer)' : '直接上级（推荐人）'}</label>
                 <select style={inputCss}>
-                  <option value="">无（直属机构）</option>
-                  {channelAgents.filter(a => a.role === 'manager' || a.role === 'principal').map(a => <option key={a.id} value={a.id}>{a.displayName} · {ROLE_LABEL[a.role]}</option>)}
+                  <option value="">{lang === 'en' ? 'None (reports to org)' : '无（直属机构）'}</option>
+                  {channelAgents.filter(a => a.role === 'manager' || a.role === 'principal').map(a => <option key={a.id} value={a.id}>{a.displayName} · {enLabel(lang, ROLE_LABEL[a.role])}</option>)}
                 </select>
               </div>
-              {fld('保险公司内部代理人编号', '', false, true)}
+              {fld(lang === 'en' ? 'Internal Carrier Agent ID' : '保险公司内部代理人编号', '', false, true)}
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>佣金方案</label>
+                <label style={{ fontSize: 11.5, fontWeight: 700, color: C.muted, display: 'block', marginBottom: 5 }}>{lang === 'en' ? 'Commission Plan' : '佣金方案'}</label>
                 <select style={inputCss}>
-                  <option value="">使用机构默认方案</option>
-                  {['2026年度标准个人方案','高端代理人加速方案','新人培育方案'].map(s => <option key={s}>{s}</option>)}
+                  <option value="">{lang === 'en' ? 'Use organization default plan' : '使用机构默认方案'}</option>
+                  {(lang === 'en'
+                    ? ['2026 Standard Personal Plan','Premier Agent Accelerator Plan','New Agent Development Plan']
+                    : ['2026年度标准个人方案','高端代理人加速方案','新人培育方案']
+                  ).map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
             </div>
@@ -899,7 +948,7 @@ function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; age
               <textarea defaultValue={agent?.notes ?? ''} rows={2} style={{ ...inputCss, resize: 'vertical' }} />
             </div>
             <div style={{ padding: '10px 14px', borderRadius: 9, background: C.amberBg, border: `0.5px solid ${C.amberBorder}`, fontSize: 12, color: C.amber, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <AlertTriangle size={12} />提交后自动触发 NIPR 校验，校验通过后代理人档案进入审核流程。
+              <AlertTriangle size={12} />{lang === 'en' ? 'Submission automatically triggers NIPR verification; once verified, the agent profile enters the review workflow.' : '提交后自动触发 NIPR 校验，校验通过后代理人档案进入审核流程。'}
             </div>
           </div>
         )}
@@ -907,7 +956,7 @@ function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; age
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 22, paddingTop: 16, borderTop: `0.5px solid ${C.border}` }}>
           <div style={{ display: 'flex', gap: 8 }}>
             {step > 1 && <GhostBtn onClick={() => setStep(s => s - 1)}>{t.formPrev}</GhostBtn>}
-            {step === 3 && <GhostBtn><FileText size={12} />保存草稿</GhostBtn>}
+            {step === 3 && <GhostBtn><FileText size={12} />{lang === 'en' ? 'Save Draft' : '保存草稿'}</GhostBtn>}
           </div>
           {step < totalSteps
             ? <PrimaryBtn onClick={() => setStep(s => s + 1)}>{t.formNext}</PrimaryBtn>
@@ -928,7 +977,7 @@ function AgentFormModal({ mode, agent, onClose }: { mode: 'create' | 'edit'; age
 function OrgDetail({ org, onClose, onEdit, onStatus }: {
   org: ChannelOrg; onClose: () => void; onEdit: () => void; onStatus: () => void
 }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [sub, setSub] = useState<'info' | 'agents' | 'perf' | 'appt' | 'docs'>('info')
   const agents = channelAgents.filter(a => a.orgId === org.id)
   const docs = qualDocs.filter(d => d.ownerId === org.id)
@@ -952,8 +1001,8 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
           <OrgStatusBadge s={org.status} />
-          <Badge label={ORG_TYPE_LABEL[org.type]} color={tc} bg={`${tc}12`} />
-          {org.tags.map(g => <Badge key={g} label={g} xs />)}
+          <Badge label={enLabel(lang, ORG_TYPE_LABEL[org.type])} color={tc} bg={`${tc}12`} />
+          {org.tags.map(g => <Badge key={g} label={enLabel(lang, g)} xs />)}
         </div>
         {org.status === 'suspended' && org.notes && (
           <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 8, background: C.redBg, border: `0.5px solid ${C.redBorder}`, fontSize: 11.5, color: '#8B1A1A', lineHeight: 1.5 }}>
@@ -964,16 +1013,25 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
 
       {/* ── KPI strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px 14px', padding: '12px 20px', borderBottom: `0.5px solid ${C.border}`, background: 'rgba(249,249,255,0.2)' }}>
-        <KpiTile label="YTD保费" value={fmt(org.ytdPremium)} color={C.primary} bar={org.ytdPremium} maxBar={30000000} />
-        <KpiTile label="YTD佣金" value={fmt(org.ytdCommission)} color={C.green} bar={org.ytdCommission} maxBar={4000000} />
-        <KpiTile label="赔付率" value={pct(org.lossRatio)} color={lossColor(org.lossRatio)} bar={org.lossRatio} />
-        <KpiTile label="续保率" value={pct(org.renewalRate)} color={renewColor(org.renewalRate)} bar={org.renewalRate} />
+        <KpiTile label={lang === 'en' ? 'YTD Premium' : 'YTD保费'} value={fmt(org.ytdPremium)} color={C.primary} bar={org.ytdPremium} maxBar={30000000} />
+        <KpiTile label={lang === 'en' ? 'YTD Commission' : 'YTD佣金'} value={fmt(org.ytdCommission)} color={C.green} bar={org.ytdCommission} maxBar={4000000} />
+        <KpiTile label={lang === 'en' ? 'Loss Ratio' : '赔付率'} value={pct(org.lossRatio)} color={lossColor(org.lossRatio)} bar={org.lossRatio} />
+        <KpiTile label={lang === 'en' ? 'Renewal Rate' : '续保率'} value={pct(org.renewalRate)} color={renewColor(org.renewalRate)} bar={org.renewalRate} />
       </div>
 
       {/* ── Sub-tabs ── */}
       <div style={{ display: 'flex', borderBottom: `0.5px solid ${C.border}`, overflowX: 'auto' }}>
         {(['info', 'agents', 'perf', 'appt', 'docs'] as const).map(s => {
-          const labels: Record<string, string> = { info: '基本信息', agents: `代理人(${agents.length})`, perf: '业绩', appt: 'Appointment', docs: `文件${docs.filter(d => d.status !== 'valid').length ? ` ⚠${docs.filter(d => d.status !== 'valid').length}` : ''}` }
+          const docWarn = docs.filter(d => d.status !== 'valid').length
+          const labels: Record<string, string> = {
+            info: lang === 'en' ? 'Basic Information' : '基本信息',
+            agents: lang === 'en' ? `Agents(${agents.length})` : `代理人(${agents.length})`,
+            perf: lang === 'en' ? 'Performance' : '业绩',
+            appt: 'Appointment',
+            docs: lang === 'en'
+              ? `Documents${docWarn ? ` ⚠${docWarn}` : ''}`
+              : `文件${docWarn ? ` ⚠${docWarn}` : ''}`,
+          }
           return (
             <button key={s} onClick={() => setSub(s as any)} style={{
               padding: '8px 10px', fontSize: 11.5, fontWeight: sub === s ? 700 : 500, flexShrink: 0,
@@ -1023,11 +1081,11 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
               </div>
             </div>
             <div>
-              <SectionHead label="合作保险公司" icon={<Building2 size={11} />} />
+              <SectionHead label={lang === 'en' ? 'Partner Carriers' : '合作保险公司'} icon={<Building2 size={11} />} />
               {['Farmers Insurance','State Farm','Progressive','Allstate'].map(ins => (
                 <div key={ins} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: `0.5px solid ${C.border}`, fontSize: 12 }}>
                   <span style={{ color: C.text, fontWeight: 600 }}>{ins}</span>
-                  <Badge label="合作中" color={C.green} bg={C.greenBg} xs />
+                  <Badge label={lang === 'en' ? 'Appointed' : '合作中'} color={C.green} bg={C.greenBg} xs />
                 </div>
               ))}
             </div>
@@ -1050,7 +1108,7 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12.5, fontWeight: 700, color: C.text }}>{a.displayName}</div>
-                  <div style={{ fontSize: 11, color: C.muted }}>{ROLE_LABEL[a.role]}</div>
+                  <div style={{ fontSize: 11, color: C.muted }}>{enLabel(lang, ROLE_LABEL[a.role])}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <AgentStatusBadge s={a.status} />
@@ -1063,7 +1121,7 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
 
         {(sub as string) === 'perf' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <SectionHead label="季度业绩趋势" />
+            <SectionHead label={lang === 'en' ? 'Quarterly Performance Trend' : '季度业绩趋势'} />
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 100 }}>
               {[
                 { q: 'Q1', v: 45 }, { q: 'Q2', v: 62 }, { q: 'Q3', v: 78 }, { q: 'Q4 (YTD)', v: 100 },
@@ -1076,19 +1134,22 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
               ))}
             </div>
             <Divider />
-            <SectionHead label="关键绩效指标" />
+            <SectionHead label={lang === 'en' ? 'Key Performance Indicators' : '关键绩效指标'} />
             {[
-              { label: 'YTD保费', v: fmt(org.ytdPremium), color: C.primary },
-              { label: 'YTD佣金', v: fmt(org.ytdCommission), color: C.green },
-              { label: '件均保费', v: fmt(Math.round(org.ytdPremium / Math.max(1, org.agentCount * 12))), color: C.textSoft },
-              { label: '赔付率', v: pct(org.lossRatio), color: lossColor(org.lossRatio) },
-              { label: '续保率', v: pct(org.renewalRate), color: renewColor(org.renewalRate) },
+              { label: lang === 'en' ? 'YTD Premium' : 'YTD保费', v: fmt(org.ytdPremium), color: C.primary },
+              { label: lang === 'en' ? 'YTD Commission' : 'YTD佣金', v: fmt(org.ytdCommission), color: C.green },
+              { label: lang === 'en' ? 'Avg Premium per Case' : '件均保费', v: fmt(Math.round(org.ytdPremium / Math.max(1, org.agentCount * 12))), color: C.textSoft },
+              { label: lang === 'en' ? 'Loss Ratio' : '赔付率', v: pct(org.lossRatio), color: lossColor(org.lossRatio) },
+              { label: lang === 'en' ? 'Renewal Rate' : '续保率', v: pct(org.renewalRate), color: renewColor(org.renewalRate) },
             ].map(k => (
               <FieldRow key={k.label} label={k.label} value={k.v} mono />
             ))}
             <Divider />
-            <SectionHead label="绑定佣金方案" />
-            {['2026年度标准机构方案 (Active)', '高产奖励附加方案 (Active)'].map(s => (
+            <SectionHead label={lang === 'en' ? 'Linked Commission Plans' : '绑定佣金方案'} />
+            {(lang === 'en'
+              ? ['2026 Standard Agency Plan (Active)', 'High-Production Bonus Add-on (Active)']
+              : ['2026年度标准机构方案 (Active)', '高产奖励附加方案 (Active)']
+            ).map(s => (
               <div key={s} style={{ fontSize: 12.5, color: C.text, padding: '5px 0', borderBottom: `0.5px solid ${C.border}` }}>{s}</div>
             ))}
           </div>
@@ -1096,7 +1157,7 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
 
         {(sub as string) === 'appt' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <SectionHead label="Appointment 状态" />
+            <SectionHead label={lang === 'en' ? 'Appointment Status' : 'Appointment 状态'} />
             {[
               { ins: 'Farmers Insurance', states: ['CA','TX','FL'], status: 'appointed' },
               { ins: 'State Farm', states: ['CA','TX'], status: 'appointed' },
@@ -1106,7 +1167,7 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
               <div key={r.ins} style={{ padding: '8px 10px', borderRadius: 9, background: C.surface, border: `0.5px solid ${C.border}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                   <span style={{ fontSize: 12.5, fontWeight: 700, color: C.text }}>{r.ins}</span>
-                  <Badge label={r.status === 'appointed' ? '已Appt' : r.status === 'pending' ? '待审批' : '已终止'} color={r.status === 'appointed' ? C.green : r.status === 'pending' ? C.amber : C.red} bg={r.status === 'appointed' ? C.greenBg : r.status === 'pending' ? C.amberBg : C.redBg} xs />
+                  <Badge label={r.status === 'appointed' ? (lang === 'en' ? 'Appointed' : '已Appt') : r.status === 'pending' ? (lang === 'en' ? 'Pending' : '待审批') : (lang === 'en' ? 'Terminated' : '已终止')} color={r.status === 'appointed' ? C.green : r.status === 'pending' ? C.amber : C.red} bg={r.status === 'appointed' ? C.greenBg : r.status === 'pending' ? C.amberBg : C.redBg} xs />
                 </div>
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {r.states.map(s => <span key={s} style={{ ...mono, fontSize: 10.5, padding: '2px 6px', borderRadius: 5, background: C.primaryLight, color: C.primary, fontWeight: 700 }}>{s}</span>)}
@@ -1126,10 +1187,10 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
                   <DocStatusIcon s={d.status} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</div>
-                    <div style={{ fontSize: 11, color: C.muted }}>{DOC_CATEGORY_LABEL[d.category]}</div>
+                    <div style={{ fontSize: 11, color: C.muted }}>{enLabel(lang, DOC_CATEGORY_LABEL[d.category])}</div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <Badge label={ds.label} color={ds.color} bg={ds.bg} xs />
+                    <Badge label={enLabel(lang, ds.label)} color={ds.color} bg={ds.bg} xs />
                     {d.expiryDate && <div style={{ ...mono, fontSize: 10, color: d.status === 'expired' ? C.red : C.mutedLight, marginTop: 2 }}>{d.expiryDate}</div>}
                   </div>
                 </div>
@@ -1156,7 +1217,7 @@ function OrgDetail({ org, onClose, onEdit, onStatus }: {
 function AgentDetail({ agent, onClose, onEdit, onStatus }: {
   agent: ChannelAgent; onClose: () => void; onEdit: () => void; onStatus: () => void
 }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const docs = qualDocs.filter(d => d.ownerId === agent.id)
   const [sub, setSub] = useState<'info' | 'perf' | 'creds'>('info')
 
@@ -1171,15 +1232,15 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
             </div>
             <div>
               <div style={{ fontSize: 14.5, fontWeight: 800, color: C.text }}>{agent.displayName}</div>
-              <div style={{ fontSize: 11.5, color: C.muted, marginTop: 3 }}>{ROLE_LABEL[agent.role]} · {agent.orgName.split(' ').slice(0, 3).join(' ')}</div>
+              <div style={{ fontSize: 11.5, color: C.muted, marginTop: 3 }}>{enLabel(lang, ROLE_LABEL[agent.role])} · {agent.orgName.split(' ').slice(0, 3).join(' ')}</div>
             </div>
           </div>
           <IconBtn icon={<X size={14} />} onClick={onClose} />
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
           <AgentStatusBadge s={agent.status} />
-          <Badge label={ROLE_LABEL[agent.role]} color={C.primary} bg={C.primaryLight} xs />
-          {docs.filter(d => d.status !== 'valid').length > 0 && <Badge label={`文件预警 ${docs.filter(d => d.status !== 'valid').length}`} color={C.amber} bg={C.amberBg} xs />}
+          <Badge label={enLabel(lang, ROLE_LABEL[agent.role])} color={C.primary} bg={C.primaryLight} xs />
+          {docs.filter(d => d.status !== 'valid').length > 0 && <Badge label={lang === 'en' ? `Doc Alerts ${docs.filter(d => d.status !== 'valid').length}` : `文件预警 ${docs.filter(d => d.status !== 'valid').length}`} color={C.amber} bg={C.amberBg} xs />}
         </div>
         {agent.notes && (
           <div style={{ marginTop: 8, padding: '7px 10px', borderRadius: 8, background: C.amberBg, border: `0.5px solid ${C.amberBorder}`, fontSize: 11.5, color: '#7A4800', lineHeight: 1.5 }}>{agent.notes}</div>
@@ -1188,18 +1249,18 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
 
       {/* KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px 10px', padding: '10px 20px', borderBottom: `0.5px solid ${C.border}`, background: 'rgba(249,249,255,0.2)' }}>
-        <KpiTile label="YTD保费" value={fmt(agent.ytdPremium)} color={C.primary} />
-        <KpiTile label="保单数" value={agent.policyCount > 0 ? String(agent.policyCount) : '—'} color={C.textSoft} />
-        <KpiTile label="续保率" value={pct(agent.renewalRate)} color={renewColor(agent.renewalRate)} />
-        <KpiTile label="YTD佣金" value={fmt(agent.ytdCommission)} color={C.green} />
-        <KpiTile label="客户数" value={agent.clientCount > 0 ? String(agent.clientCount) : '—'} color={C.textSoft} />
-        <KpiTile label="赔付率" value={pct(agent.lossRatio)} color={lossColor(agent.lossRatio)} />
+        <KpiTile label={lang === 'en' ? 'YTD Premium' : 'YTD保费'} value={fmt(agent.ytdPremium)} color={C.primary} />
+        <KpiTile label={lang === 'en' ? 'Policies' : '保单数'} value={agent.policyCount > 0 ? String(agent.policyCount) : '—'} color={C.textSoft} />
+        <KpiTile label={lang === 'en' ? 'Renewal Rate' : '续保率'} value={pct(agent.renewalRate)} color={renewColor(agent.renewalRate)} />
+        <KpiTile label={lang === 'en' ? 'YTD Commission' : 'YTD佣金'} value={fmt(agent.ytdCommission)} color={C.green} />
+        <KpiTile label={lang === 'en' ? 'Clients' : '客户数'} value={agent.clientCount > 0 ? String(agent.clientCount) : '—'} color={C.textSoft} />
+        <KpiTile label={lang === 'en' ? 'Loss Ratio' : '赔付率'} value={pct(agent.lossRatio)} color={lossColor(agent.lossRatio)} />
       </div>
 
       {/* Sub-tabs */}
       <div style={{ display: 'flex', borderBottom: `0.5px solid ${C.border}` }}>
-        {([['info','基本信息'],['perf','业绩趋势'],['creds','资质认证']] as const).map(([id, label]) => (
-          <button key={id} onClick={() => setSub(id)} style={{ flex: 1, padding: '8px 4px', fontSize: 11.5, fontWeight: sub === id ? 700 : 500, color: sub === id ? C.primary : C.muted, background: 'none', border: 'none', borderBottom: sub === id ? `2px solid ${C.primary}` : '2px solid transparent', cursor: 'pointer' }}>{label}</button>
+        {([['info','基本信息','Basic Information'],['perf','业绩趋势','Performance Trend'],['creds','资质认证','Qualifications']] as const).map(([id, zh, en]) => (
+          <button key={id} onClick={() => setSub(id)} style={{ flex: 1, padding: '8px 4px', fontSize: 11.5, fontWeight: sub === id ? 700 : 500, color: sub === id ? C.primary : C.muted, background: 'none', border: 'none', borderBottom: sub === id ? `2px solid ${C.primary}` : '2px solid transparent', cursor: 'pointer' }}>{lang === 'en' ? en : zh}</button>
         ))}
       </div>
 
@@ -1222,11 +1283,14 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
               </div>
             </div>
             <div>
-              <SectionHead label="产品授权" />
-              {['Auto险 (P&C)','Homeowner险','Renter险','Umbrella险'].map(p => (
+              <SectionHead label={lang === 'en' ? 'Product Authorizations' : '产品授权'} />
+              {(lang === 'en'
+                ? ['Auto (P&C)','Homeowner','Renter','Umbrella']
+                : ['Auto险 (P&C)','Homeowner险','Renter险','Umbrella险']
+              ).map(p => (
                 <div key={p} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: `0.5px solid ${C.border}`, fontSize: 12 }}>
                   <span style={{ color: C.text }}>{p}</span>
-                  <Badge label="已授权" color={C.green} bg={C.greenBg} xs />
+                  <Badge label={lang === 'en' ? 'Authorized' : '已授权'} color={C.green} bg={C.greenBg} xs />
                 </div>
               ))}
             </div>
@@ -1235,7 +1299,7 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
 
         {sub === 'perf' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <SectionHead label="月度保费趋势" />
+            <SectionHead label={lang === 'en' ? 'Monthly Premium Trend' : '月度保费趋势'} />
             <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 90 }}>
               {[68,72,81,76,88,91,84,100].map((v, i) => (
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
@@ -1245,16 +1309,16 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
               ))}
             </div>
             <Divider />
-            <SectionHead label="佣金信息" />
+            <SectionHead label={lang === 'en' ? 'Commission Information' : '佣金信息'} />
             {[
-              { label: '绑定方案', v: '2026年度标准个人方案' },
-              { label: 'YTD累计佣金', v: fmt(agent.ytdCommission) },
-              { label: '待结算佣金', v: fmt(Math.round(agent.ytdCommission * 0.12)) },
-              { label: '上期结算金额', v: fmt(Math.round(agent.ytdCommission * 0.28)) },
-              { label: '上期结算日期', v: '2026-07-25' },
+              { label: lang === 'en' ? 'Linked Plan' : '绑定方案', v: lang === 'en' ? '2026 Standard Personal Plan' : '2026年度标准个人方案' },
+              { label: lang === 'en' ? 'YTD Total Commission' : 'YTD累计佣金', v: fmt(agent.ytdCommission) },
+              { label: lang === 'en' ? 'Pending Settlement' : '待结算佣金', v: fmt(Math.round(agent.ytdCommission * 0.12)) },
+              { label: lang === 'en' ? 'Last Settlement Amount' : '上期结算金额', v: fmt(Math.round(agent.ytdCommission * 0.28)) },
+              { label: lang === 'en' ? 'Last Settlement Date' : '上期结算日期', v: '2026-07-25' },
             ].map(k => <FieldRow key={k.label} label={k.label} value={k.v} mono />)}
             <Divider />
-            <SectionHead label="Appointment 状态" />
+            <SectionHead label={lang === 'en' ? 'Appointment Status' : 'Appointment 状态'} />
             {[
               { ins: 'Farmers Insurance', states: 'CA, TX, FL', status: '已Appt' },
               { ins: 'State Farm', states: 'CA', status: '待审批' },
@@ -1264,7 +1328,7 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
                   <div style={{ fontWeight: 600, color: C.text }}>{r.ins}</div>
                   <div style={{ fontSize: 11, color: C.muted }}>{r.states}</div>
                 </div>
-                <Badge label={r.status} color={r.status === '已Appt' ? C.green : C.amber} bg={r.status === '已Appt' ? C.greenBg : C.amberBg} xs />
+                <Badge label={r.status === '已Appt' ? (lang === 'en' ? 'Appointed' : '已Appt') : (lang === 'en' ? 'Pending' : '待审批')} color={r.status === '已Appt' ? C.green : C.amber} bg={r.status === '已Appt' ? C.greenBg : C.amberBg} xs />
               </div>
             ))}
           </div>
@@ -1272,10 +1336,10 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
 
         {sub === 'creds' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <SectionHead label="培训与认证" icon={<Star size={11} />} />
+            <SectionHead label={lang === 'en' ? 'Training & Certifications' : '培训与认证'} icon={<Star size={11} />} />
             {[
-              { name: '财产险基础认证 P-1', date: '2025-03-14', exp: '2027-03-13', status: 'valid' },
-              { name: 'AML 合规培训 2025', date: '2025-06-01', exp: '2026-05-31', status: 'expiring-soon' },
+              { name: lang === 'en' ? 'P&C Fundamentals Certification P-1' : '财产险基础认证 P-1', date: '2025-03-14', exp: '2027-03-13', status: 'valid' },
+              { name: lang === 'en' ? 'AML Compliance Training 2025' : 'AML 合规培训 2025', date: '2025-06-01', exp: '2026-05-31', status: 'expiring-soon' },
             ].map(c => (
               <div key={c.name} style={{ padding: '8px 10px', borderRadius: 9, background: c.status !== 'valid' ? C.amberBg : C.surface, border: `0.5px solid ${c.status !== 'valid' ? C.amberBorder : C.border}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1296,10 +1360,10 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
                       <DocStatusIcon s={d.status} />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{d.name}</div>
-                        <div style={{ fontSize: 11, color: C.muted }}>{DOC_CATEGORY_LABEL[d.category]}</div>
+                        <div style={{ fontSize: 11, color: C.muted }}>{enLabel(lang, DOC_CATEGORY_LABEL[d.category])}</div>
                       </div>
                       <div style={{ textAlign: 'right' as const }}>
-                        <Badge label={ds.label} color={ds.color} bg={ds.bg} xs />
+                        <Badge label={enLabel(lang, ds.label)} color={ds.color} bg={ds.bg} xs />
                         {d.expiryDate && <div style={{ ...mono, fontSize: 10, color: d.status === 'expired' ? C.red : C.mutedLight, marginTop: 2 }}>{d.expiryDate}</div>}
                       </div>
                     </div>
@@ -1315,7 +1379,7 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
         <PrimaryBtn onClick={onEdit} sm><Edit2 size={12} />{t.btnEdit}</PrimaryBtn>
         <GhostBtn onClick={onStatus} sm>{t.btnStatus}</GhostBtn>
         <GhostBtn sm><Upload size={12} />{t.btnUploadFile}</GhostBtn>
-        <GhostBtn sm><Download size={12} />报告</GhostBtn>
+        <GhostBtn sm><Download size={12} />{lang === 'en' ? 'Report' : '报告'}</GhostBtn>
       </div>
     </div>
   )
@@ -1326,7 +1390,7 @@ function AgentDetail({ agent, onClose, onEdit, onStatus }: {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function OrgListTab() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [search, setSearch] = useState('')
   const [statusF, setStatusF] = useState('all')
   const [typeF, setTypeF] = useState('all')
@@ -1364,16 +1428,16 @@ function OrgListTab() {
     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
       {/* ── Filter rail ── */}
       <FilterRail>
-        <FilterGroup label="状态">
-          <FilterOption label="全部" count={channelOrgs.length} active={statusF === 'all'} onClick={() => setStatusF('all')} />
+        <FilterGroup label={lang === 'en' ? 'Status' : '状态'}>
+          <FilterOption label={lang === 'en' ? 'All' : '全部'} count={channelOrgs.length} active={statusF === 'all'} onClick={() => setStatusF('all')} />
           {Object.entries(ORG_STATUS_STYLE).map(([k, v]) => (
-            <FilterOption key={k} label={v.label} count={statusCounts[k] ?? 0} active={statusF === k} color={v.color} onClick={() => setStatusF(k)} />
+            <FilterOption key={k} label={enLabel(lang, v.label)} count={statusCounts[k] ?? 0} active={statusF === k} color={v.color} onClick={() => setStatusF(k)} />
           ))}
         </FilterGroup>
-        <FilterGroup label="类型">
-          <FilterOption label="全部" count={channelOrgs.length} active={typeF === 'all'} onClick={() => setTypeF('all')} />
+        <FilterGroup label={lang === 'en' ? 'Type' : '类型'}>
+          <FilterOption label={lang === 'en' ? 'All' : '全部'} count={channelOrgs.length} active={typeF === 'all'} onClick={() => setTypeF('all')} />
           {Object.entries(ORG_TYPE_LABEL).map(([k, v]) => (
-            <FilterOption key={k} label={v} count={typeCounts[k] ?? 0} active={typeF === k} color={ORG_TYPE_COLOR[k as keyof typeof ORG_TYPE_COLOR]} onClick={() => setTypeF(k)} />
+            <FilterOption key={k} label={enLabel(lang, v)} count={typeCounts[k] ?? 0} active={typeF === k} color={ORG_TYPE_COLOR[k as keyof typeof ORG_TYPE_COLOR]} onClick={() => setTypeF(k)} />
           ))}
         </FilterGroup>
       </FilterRail>
@@ -1393,10 +1457,10 @@ function OrgListTab() {
           {/* Batch toolbar */}
           {checkedIds.size > 0 && (
             <div style={{ padding: '8px 14px', background: C.primaryLight, borderBottom: `0.5px solid ${C.primaryBorder}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: C.primary }}>已选 {checkedIds.size} 个机构</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: C.primary }}>{lang === 'en' ? `${checkedIds.size} organizations selected` : `已选 ${checkedIds.size} 个机构`}</span>
               <div style={{ flex: 1 }} />
-              {[['停用选中', true], ['批量导出', false], ['清空选择', false]].map(([l, danger]) => (
-                <button key={l as string} onClick={() => { if (l === '清空选择') setCheckedIds(new Set()) }} style={{ padding: '4px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: danger ? C.redBg : 'rgba(255,255,255,0.6)', color: danger ? C.red : C.textSoft, border: `0.5px solid ${danger ? C.redBorder : C.border}` }}>{l as string}</button>
+              {([['停用选中','Suspend Selected', true], ['批量导出','Bulk Export', false], ['清空选择','Clear Selection', false]] as const).map(([zh, en, danger]) => (
+                <button key={zh} onClick={() => { if (zh === '清空选择') setCheckedIds(new Set()) }} style={{ padding: '4px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: danger ? C.redBg : 'rgba(255,255,255,0.6)', color: danger ? C.red : C.textSoft, border: `0.5px solid ${danger ? C.redBorder : C.border}` }}>{lang === 'en' ? en : zh}</button>
               ))}
             </div>
           )}
@@ -1442,7 +1506,7 @@ function OrgListTab() {
                       </td>
                       <td style={TD}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <Badge label={ORG_TYPE_LABEL[org.type]} color={tc2} bg={`${tc2}12`} xs />
+                          <Badge label={enLabel(lang, ORG_TYPE_LABEL[org.type])} color={tc2} bg={`${tc2}12`} xs />
                           <OrgStatusBadge s={org.status} />
                         </div>
                       </td>
@@ -1460,9 +1524,9 @@ function OrgListTab() {
                       <td style={{ ...TD, ...mono, fontWeight: 700, color: renewColor(org.renewalRate) }}>{pct(org.renewalRate)}</td>
                       <td style={TD} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex' }}>
-                          <IconBtn icon={<Eye size={13} />} onClick={() => setSelected(org)} title="详情" />
-                          <IconBtn icon={<Edit2 size={13} />} onClick={() => { setEditOrg(org); setShowForm(true) }} title="编辑" />
-                          <IconBtn icon={<MoreHorizontal size={13} />} onClick={() => setStatusTarget(org)} title="状态" />
+                          <IconBtn icon={<Eye size={13} />} onClick={() => setSelected(org)} title={lang === 'en' ? 'Details' : '详情'} />
+                          <IconBtn icon={<Edit2 size={13} />} onClick={() => { setEditOrg(org); setShowForm(true) }} title={lang === 'en' ? 'Edit' : '编辑'} />
+                          <IconBtn icon={<MoreHorizontal size={13} />} onClick={() => setStatusTarget(org)} title={lang === 'en' ? 'Status' : '状态'} />
                         </div>
                       </td>
                     </tr>
@@ -1495,7 +1559,7 @@ function OrgListTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AgentListTab() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [search, setSearch] = useState('')
   const [statusF, setStatusF] = useState('all')
   const [orgF, setOrgF] = useState('all')
@@ -1525,14 +1589,14 @@ function AgentListTab() {
   return (
     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
       <FilterRail>
-        <FilterGroup label="状态">
-          <FilterOption label="全部" count={channelAgents.length} active={statusF === 'all'} onClick={() => setStatusF('all')} />
+        <FilterGroup label={lang === 'en' ? 'Status' : '状态'}>
+          <FilterOption label={lang === 'en' ? 'All' : '全部'} count={channelAgents.length} active={statusF === 'all'} onClick={() => setStatusF('all')} />
           {Object.entries(AGENT_STATUS_STYLE).map(([k, v]) => (
-            <FilterOption key={k} label={v.label} count={statusCounts[k] ?? 0} active={statusF === k} color={v.color} onClick={() => setStatusF(k)} />
+            <FilterOption key={k} label={enLabel(lang, v.label)} count={statusCounts[k] ?? 0} active={statusF === k} color={v.color} onClick={() => setStatusF(k)} />
           ))}
         </FilterGroup>
-        <FilterGroup label="机构">
-          <FilterOption label="全部" count={channelAgents.length} active={orgF === 'all'} onClick={() => setOrgF('all')} />
+        <FilterGroup label={lang === 'en' ? 'Organization' : '机构'}>
+          <FilterOption label={lang === 'en' ? 'All' : '全部'} count={channelAgents.length} active={orgF === 'all'} onClick={() => setOrgF('all')} />
           {channelOrgs.map(o => (
             <FilterOption key={o.id} label={o.shortName} count={channelAgents.filter(a => a.orgId === o.id).length} active={orgF === o.id} onClick={() => setOrgF(o.id)} />
           ))}
@@ -1551,10 +1615,10 @@ function AgentListTab() {
 
           {checkedAgentIds.size > 0 && (
             <div style={{ padding: '8px 14px', background: C.primaryLight, borderBottom: `0.5px solid ${C.primaryBorder}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: C.primary }}>已选 {checkedAgentIds.size} 名代理人</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: C.primary }}>{lang === 'en' ? `${checkedAgentIds.size} agents selected` : `已选 ${checkedAgentIds.size} 名代理人`}</span>
               <div style={{ flex: 1 }} />
-              {[['批量暂停', true], ['批量导出', false], ['批量分配机构', false], ['清空选择', false]].map(([l, danger]) => (
-                <button key={l as string} onClick={() => { if (l === '清空选择') setCheckedAgentIds(new Set()) }} style={{ padding: '4px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: danger ? C.redBg : 'rgba(255,255,255,0.6)', color: danger ? C.red : C.textSoft, border: `0.5px solid ${danger ? C.redBorder : C.border}` }}>{l as string}</button>
+              {([['批量暂停','Bulk Suspend', true], ['批量导出','Bulk Export', false], ['批量分配机构','Bulk Assign Organization', false], ['清空选择','Clear Selection', false]] as const).map(([zh, en, danger]) => (
+                <button key={zh} onClick={() => { if (zh === '清空选择') setCheckedAgentIds(new Set()) }} style={{ padding: '4px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: danger ? C.redBg : 'rgba(255,255,255,0.6)', color: danger ? C.red : C.textSoft, border: `0.5px solid ${danger ? C.redBorder : C.border}` }}>{lang === 'en' ? en : zh}</button>
               ))}
             </div>
           )}
@@ -1598,7 +1662,7 @@ function AgentListTab() {
                       <td style={TD}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                           <AgentStatusBadge s={agent.status} />
-                          <span style={{ fontSize: 11, color: C.mutedLight }}>{ROLE_LABEL[agent.role]}</span>
+                          <span style={{ fontSize: 11, color: C.mutedLight }}>{enLabel(lang, ROLE_LABEL[agent.role])}</span>
                         </div>
                       </td>
                       <td style={TD}>
@@ -1645,7 +1709,7 @@ function AgentListTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function BulkImportTab() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [step, setStep] = useState<'idle' | 'parsing' | 'done'>('idle')
   const [dragging, setDragging] = useState(false)
   const [filename, setFilename] = useState('')
@@ -1655,11 +1719,11 @@ function BulkImportTab() {
   const handleFile = (name: string) => { setFilename(name); setStep('parsing'); setTimeout(() => setStep('done'), 1800) }
 
   const FIELDS: [string, string, boolean][] = [
-    ['first_name', '代理人名（英文）', true], ['last_name', '代理人姓（英文）', true],
-    ['email', '邮箱地址', true], ['npn', 'NPN（8-10位数字）', true],
-    ['primary_state', '主营州（两字母代码）', true], ['license_states', '授权州列表（逗号分隔）', false],
-    ['org_npn', '所属机构NPN（须已录入）', true], ['role', 'agent/manager/principal', false],
-    ['phone', '电话（可选）', false],
+    ['first_name', lang === 'en' ? 'Agent first name (English)' : '代理人名（英文）', true], ['last_name', lang === 'en' ? 'Agent last name (English)' : '代理人姓（英文）', true],
+    ['email', lang === 'en' ? 'Email address' : '邮箱地址', true], ['npn', lang === 'en' ? 'NPN (8–10 digits)' : 'NPN（8-10位数字）', true],
+    ['primary_state', lang === 'en' ? 'Primary state (2-letter code)' : '主营州（两字母代码）', true], ['license_states', lang === 'en' ? 'Licensed states (comma-separated)' : '授权州列表（逗号分隔）', false],
+    ['org_npn', lang === 'en' ? 'Organization NPN (must already exist)' : '所属机构NPN（须已录入）', true], ['role', 'agent/manager/principal', false],
+    ['phone', lang === 'en' ? 'Phone (optional)' : '电话（可选）', false],
   ]
 
   return (
@@ -1761,7 +1825,7 @@ function BulkImportTab() {
                   <tbody>
                     {r.errors.map(e => (
                       <tr key={e.row}>
-                        <td style={{ ...TD, ...mono, fontWeight: 700, color: C.red }}>第 {e.row} 行</td>
+                        <td style={{ ...TD, ...mono, fontWeight: 700, color: C.red }}>{lang === 'en' ? `Row ${e.row}` : `第 ${e.row} 行`}</td>
                         <td style={{ ...TD, ...mono, color: C.textSoft }}>{e.field}</td>
                         <td style={{ ...TD, fontSize: 12.5, color: C.textSoft }}>{e.message}</td>
                       </tr>
@@ -1811,7 +1875,7 @@ function BulkImportTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function DocManagementTab() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [catF, setCatF] = useState('all')
   const [ownerF, setOwnerF] = useState('all')
   const [statusF, setStatusF] = useState('all')
@@ -1864,7 +1928,7 @@ function DocManagementTab() {
               return (
                 <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <Badge label={ds.label} color={ds.color} bg={ds.bg} xs />
+                    <Badge label={enLabel(lang, ds.label)} color={ds.color} bg={ds.bg} xs />
                     <span style={{ fontWeight: 600, color: C.text }}>{d.ownerName.split(' ').slice(0, 3).join(' ')}</span>
                     <span style={{ color: C.muted }}>·</span>
                     <span style={{ color: C.textSoft }}>{d.name}</span>
@@ -1885,9 +1949,9 @@ function DocManagementTab() {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.searchDocs} style={{ width: '100%', padding: '6px 10px 6px 27px', background: 'rgba(255,255,255,0.5)', border: `0.5px solid ${C.border}`, borderRadius: 8, fontSize: 12.5, color: C.text, outline: 'none', fontFamily: 'inherit' }} />
           </div>
           {[
-            { value: catF, set: setCatF, opts: [{ value: 'all', label: t.allTypes }, ...Object.entries(DOC_CATEGORY_LABEL).map(([k, v]) => ({ value: k, label: v }))] },
+            { value: catF, set: setCatF, opts: [{ value: 'all', label: t.allTypes }, ...Object.entries(DOC_CATEGORY_LABEL).map(([k, v]) => ({ value: k, label: enLabel(lang, v) }))] },
             { value: ownerF, set: setOwnerF, opts: [{ value: 'all', label: t.orgAndAgent }, { value: 'org', label: t.orgDocs }, { value: 'agent', label: t.agentDocs }] },
-            { value: statusF, set: setStatusF, opts: [{ value: 'all', label: t.allStatuses }, ...Object.entries(DOC_STATUS_STYLE).map(([k, v]) => ({ value: k, label: v.label }))] },
+            { value: statusF, set: setStatusF, opts: [{ value: 'all', label: t.allStatuses }, ...Object.entries(DOC_STATUS_STYLE).map(([k, v]) => ({ value: k, label: enLabel(lang, v.label) }))] },
           ].map((s, i) => (
             <select key={i} value={s.value} onChange={e => s.set(e.target.value)} style={{ padding: '6px 24px 6px 9px', background: 'rgba(255,255,255,0.5)', border: `0.5px solid ${C.border}`, borderRadius: 8, fontSize: 12, color: C.textSoft, outline: 'none', cursor: 'pointer', fontFamily: 'inherit', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23717786'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}>
               {s.opts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -1913,19 +1977,19 @@ function DocManagementTab() {
                     </div>
                   </td>
                   <td style={{ ...TD, fontSize: 12.5, fontWeight: 600, color: C.text, maxWidth: 200 }}>{doc.name}</td>
-                  <td style={TD}><Badge label={DOC_CATEGORY_LABEL[doc.category]} color={C.primary} bg={C.primaryLight} xs /></td>
+                  <td style={TD}><Badge label={enLabel(lang, DOC_CATEGORY_LABEL[doc.category])} color={C.primary} bg={C.primaryLight} xs /></td>
                   <td style={{ ...TD, ...mono, fontSize: 11.5, color: C.muted }}>v{doc.version}</td>
                   <td style={{ ...TD, ...mono, fontSize: 11.5, color: C.mutedLight }}>{doc.uploadedDate}</td>
                   <td style={{ ...TD, ...mono, fontSize: 12, color: doc.status === 'expired' ? C.red : doc.status === 'expiring-soon' ? C.amber : C.textSoft, fontWeight: doc.status !== 'valid' ? 700 : 400 }}>{doc.expiryDate ?? '—'}</td>
                   <td style={TD}>
-                    <Badge label={ds.label} color={ds.color} bg={ds.bg} xs />
+                    <Badge label={enLabel(lang, ds.label)} color={ds.color} bg={ds.bg} xs />
                     {doc.reviewNote && <div style={{ fontSize: 10, color: C.red, maxWidth: 120, marginTop: 2 }}>{doc.reviewNote.slice(0, 26)}…</div>}
                   </td>
                   <td style={TD}>
                     <div style={{ display: 'flex' }}>
-                      <IconBtn icon={<Eye size={12} />} title="预览" />
-                      <IconBtn icon={<Download size={12} />} title="下载" />
-                      <IconBtn icon={<Upload size={12} />} title="更新" />
+                      <IconBtn icon={<Eye size={12} />} title={lang === 'en' ? 'Preview' : '预览'} />
+                      <IconBtn icon={<Download size={12} />} title={lang === 'en' ? 'Download' : '下载'} />
+                      <IconBtn icon={<Upload size={12} />} title={lang === 'en' ? 'Update' : '更新'} />
                     </div>
                   </td>
                 </tr>
@@ -1946,7 +2010,7 @@ function DocManagementTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ChangeHistoryTab() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [entityF, setEntityF] = useState('all')
   const [typeF, setTypeF] = useState('all')
   const [operatorF, setOperatorF] = useState('all')
@@ -1978,13 +2042,13 @@ function ChangeHistoryTab() {
           {[{ value: 'all', label: t.orgAndAgent }, { value: 'org', label: t.orgChanges }, { value: 'agent', label: t.agentChanges }].map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <select value={typeF} onChange={e => setTypeF(e.target.value)} style={selStyle}>
-          {[{ value: 'all', label: t.allOps }, ...Object.entries(CHANGE_TYPE_STYLE).map(([k, v]) => ({ value: k, label: v.label }))].map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {[{ value: 'all', label: t.allOps }, ...Object.entries(CHANGE_TYPE_STYLE).map(([k, v]) => ({ value: k, label: enLabel(lang, v.label) }))].map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <select value={operatorF} onChange={e => setOperatorF(e.target.value)} style={selStyle}>
-          <option value="all">全部操作人</option>
+          <option value="all">{lang === 'en' ? 'All Operators' : '全部操作人'}</option>
           {operators.map(op => <option key={op} value={op}>{op}</option>)}
         </select>
-        <GhostBtn sm><Download size={12} />导出日志</GhostBtn>
+        <GhostBtn sm><Download size={12} />{lang === 'en' ? 'Export Log' : '导出日志'}</GhostBtn>
       </div>
 
       {/* Timeline */}
@@ -2004,15 +2068,15 @@ function ChangeHistoryTab() {
               <div style={{ flex: 1, padding: '10px 14px', borderRadius: 11, background: C.surface, border: `0.5px solid ${C.border}` }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <Badge label={cts.label} color={cts.color} bg={cts.bg} xs />
+                    <Badge label={enLabel(lang, cts.label)} color={cts.color} bg={cts.bg} xs />
                     <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{c.entityName}</span>
-                    <Badge label={c.entityType === 'org' ? '机构' : '代理人'} color={c.entityType === 'org' ? C.primary : C.purple} bg={c.entityType === 'org' ? C.primaryLight : C.purpleBg} xs />
+                    <Badge label={c.entityType === 'org' ? (lang === 'en' ? 'Organization' : '机构') : (lang === 'en' ? 'Agent' : '代理人')} color={c.entityType === 'org' ? C.primary : C.purple} bg={c.entityType === 'org' ? C.primaryLight : C.purpleBg} xs />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                     <span style={{ ...mono, fontSize: 11, color: C.mutedLight, whiteSpace: 'nowrap' }}>{c.timestamp}</span>
                     {c.field && (
                       <button onClick={() => setExpanded(isExp ? null : c.id)} style={{ padding: '2px 7px', borderRadius: 5, fontSize: 10.5, fontWeight: 700, background: isExp ? C.primaryLight : 'transparent', color: isExp ? C.primary : C.mutedLight, border: `0.5px solid ${isExp ? C.primaryBorder : C.border}`, cursor: 'pointer' }}>
-                        {isExp ? '收起' : '字段对比'}
+                        {isExp ? (lang === 'en' ? 'Collapse' : '收起') : (lang === 'en' ? 'Field Diff' : '字段对比')}
                       </button>
                     )}
                   </div>
@@ -2027,16 +2091,16 @@ function ChangeHistoryTab() {
                   <div style={{ marginBottom: 8, borderRadius: 8, overflow: 'hidden', border: `0.5px solid ${C.border}` }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
                       <div style={{ padding: '8px 12px', background: C.redBg, borderRight: `0.5px solid ${C.border}` }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>修改前</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{lang === 'en' ? 'Before' : '修改前'}</div>
                         <div style={{ ...mono, fontSize: 12.5, color: C.red, fontWeight: 700 }}>{c.oldValue ?? '—'}</div>
                       </div>
                       <div style={{ padding: '8px 12px', background: C.greenBg }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>修改后</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.green, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{lang === 'en' ? 'After' : '修改后'}</div>
                         <div style={{ ...mono, fontSize: 12.5, color: C.green, fontWeight: 700 }}>{c.newValue ?? '—'}</div>
                       </div>
                     </div>
                     <div style={{ padding: '4px 12px', background: 'rgba(236,237,249,0.4)', borderTop: `0.5px solid ${C.border}`, fontSize: 11, color: C.muted }}>
-                      字段：<strong style={{ color: C.text }}>{c.field}</strong>
+                      {lang === 'en' ? 'Field: ' : '字段：'}<strong style={{ color: C.text }}>{c.field}</strong>
                     </div>
                   </div>
                 )}

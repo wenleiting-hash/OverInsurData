@@ -1,391 +1,434 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ViewId } from '@/App';
-import { TrendingUp, TrendingDown, DollarSign, Users, Activity, Calendar, BarChart3, PieChart, Download } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LabelList,
+} from 'recharts';
+import {
+  BarChart3,
+  Layers,
+  Map,
+  ArrowUp,
+  ArrowDown,
+  Download,
+  ChevronRight,
+} from 'lucide-react';
 
-interface TimeRange {
-  label: string;
-  value: string;
-  days: number;
+type AnalyticsTab = 'overview' | 'compare' | 'region';
+type SortKey = 'premium' | 'growth' | 'lossRatio';
+
+interface MonthlyDatum {
+  month: string;
+  premium: number;
+  commission: number;
 }
 
-interface AnalyticsData {
-  totalPremium: number;
-  totalCommission: number;
-  avgGrowthRate: number;
-  activeChannels: number;
-  topPerformer: string;
-  growthTrend: { month: string; premium: number; commission: number }[];
-  channelPerformance: { name: string; premium: number; growth: number }[];
-  productMix: { category: string; percentage: number; value: number }[];
+interface BusinessLine {
+  line: string;
+  premium: number;
+  share: number;
+  color: string;
+}
+
+interface ChannelRow {
+  channel: string;
+  line: string;
+  premium: number;
+  growth: number;
+  policyCount: number;
+  lossRatio: number;
+  agents: number;
+  share: number;
+}
+
+interface StateRow {
+  state: string;
+  premium: number;
+  agents: number;
+  growth: number;
 }
 
 interface Props {
   navigateTo: (view: ViewId) => void;
 }
 
-// Mock data - Full year analytics
-const mockAnalytics: AnalyticsData = {
-  totalPremium: 45000000,
-  totalCommission: 7200000,
-  avgGrowthRate: 18.5,
-  activeChannels: 12,
-  topPerformer: '深圳 MGA 总部',
-  growthTrend: [
-    { month: '1 月', premium: 3200000, commission: 520000 },
-    { month: '2 月', premium: 3800000, commission: 615000 },
-    { month: '3 月', premium: 4100000, commission: 660000 },
-    { month: '4 月', premium: 4500000, commission: 725000 },
-    { month: '5 月', premium: 5200000, commission: 840000 },
-    { month: '6 月', premium: 5800000, commission: 935000 },
-    { month: '7 月', premium: 6500000, commission: 1050000 },
-    { month: '8 月', premium: 6100000, commission: 985000 },
-  ],
-  channelPerformance: [
-    { name: '深圳 MGA 总部', premium: 12500000, growth: 35.8 },
-    { name: '广州 MG 公司', premium: 8900000, growth: -5.2 },
-    { name: '北京经纪门店', premium: 7200000, growth: 22.7 },
-    { name: '上海代理点', premium: 5800000, growth: 15.3 },
-    { name: '其他渠道', premium: 10600000, growth: 8.5 },
-  ],
-  productMix: [
-    { category: '健康险', percentage: 45, value: 20250000 },
-    { category: '意外险', percentage: 25, value: 11250000 },
-    { category: '寿险', percentage: 20, value: 9000000 },
-    { category: '车险', percentage: 10, value: 4500000 },
-  ],
+// Mock data — aligned with V1.3 prototype
+const byChannel: ChannelRow[] = [
+  { channel: 'Pacific Coast Agency', line: 'AUTO', premium: 3200000, growth: 0.18, policyCount: 182, lossRatio: 0.59, agents: 12, share: 0.24 },
+  { channel: 'SunState MGA Partners', line: 'HOME', premium: 2840000, growth: 0.12, policyCount: 94, lossRatio: 0.64, agents: 8, share: 0.21 },
+  { channel: 'CalFirst Agents Network', line: 'LIFE', premium: 2160000, growth: -0.04, policyCount: 143, lossRatio: 0.61, agents: 15, share: 0.16 },
+  { channel: 'Mountain West FMO', line: 'HEALTH', premium: 1880000, growth: 0.22, policyCount: 1240, lossRatio: 0.72, agents: 6, share: 0.14 },
+  { channel: 'Northeast Brokers', line: 'COMMERCIAL', premium: 1540000, growth: 0.07, policyCount: 88, lossRatio: 0.66, agents: 9, share: 0.11 },
+  { channel: 'Midwest Alliance', line: 'AUTO', premium: 1240000, growth: -0.08, policyCount: 76, lossRatio: 0.68, agents: 7, share: 0.09 },
+  { channel: 'Southeast Partners', line: 'HOME', premium: 660000, growth: 0.31, policyCount: 52, lossRatio: 0.55, agents: 4, share: 0.05 },
+];
+
+const monthly: MonthlyDatum[] = [
+  { month: 'Jan', premium: 8.2, commission: 0.98 },
+  { month: 'Feb', premium: 9.1, commission: 1.09 },
+  { month: 'Mar', premium: 10.8, commission: 1.3 },
+  { month: 'Apr', premium: 9.6, commission: 1.15 },
+  { month: 'May', premium: 11.4, commission: 1.37 },
+  { month: 'Jun', premium: 12.2, commission: 1.46 },
+  { month: 'Jul', premium: 11.8, commission: 1.42 },
+  { month: 'Aug', premium: 13.5, commission: 1.62 },
+];
+
+const lineBreakdown: BusinessLine[] = [
+  { line: 'AUTO', premium: 5180000, share: 39, color: '#0058BC' },
+  { line: 'HOME', premium: 3940000, share: 30, color: '#1A7A2E' },
+  { line: 'LIFE', premium: 2160000, share: 16, color: '#6B35C2' },
+  { line: 'HEALTH', premium: 1880000, share: 14, color: '#A05C00' },
+  { line: 'COMMERCIAL', premium: 1540000, share: 12, color: '#0B7C6B' },
+];
+
+const stateData: StateRow[] = [
+  { state: 'CA', premium: 5800000, agents: 24, growth: 0.14 },
+  { state: 'TX', premium: 3200000, agents: 18, growth: 0.08 },
+  { state: 'FL', premium: 2100000, agents: 12, growth: 0.22 },
+  { state: 'NY', premium: 1800000, agents: 10, growth: -0.03 },
+  { state: 'CO', premium: 920000, agents: 6, growth: 0.31 },
+  { state: 'WA', premium: 760000, agents: 5, growth: 0.18 },
+];
+
+function fmt(n: number) {
+  return n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(0)}K` : `$${n}`;
+}
+
+const tooltipStyle = {
+  contentStyle: {
+    background: 'rgba(255,255,255,0.96)',
+    border: '1px solid rgba(193,198,215,0.6)',
+    borderRadius: 8,
+    fontSize: 12,
+  },
 };
 
-export default function ChannelAnalyticsView({ navigateTo }: Props) {
-  const { t } = useTranslation('channel');
-  const [selectedTimeRange, setSelectedTimeRange] = useState<string>('last-6-months');
+// ─── Overview Tab ─────────────────────────────────────────────────────────────
 
-  const timeRanges: TimeRange[] = [
-    { label: '最近 3 个月', value: 'last-3-months', days: 90 },
-    { label: '最近 6 个月', value: 'last-6-months', days: 180 },
-    { label: '最近 12 个月', value: 'last-12-months', days: 365 },
-    { label: '本年至今', value: 'ytd', days: 245 },
+function OverviewTab() {
+  const { t } = useTranslation('channel');
+  const totalPremium = byChannel.reduce((s, c) => s + c.premium, 0);
+
+  const kpiCards = [
+    { labelKey: 'analytics2.kpi.ytdPremium', v: fmt(totalPremium), delta: '+14.2%', up: true, color: '#0058BC' },
+    { labelKey: 'analytics2.kpi.activeChannels', v: String(byChannel.length), delta: '+2 YoY', up: true, color: '#1A7A2E' },
+    { labelKey: 'analytics2.kpi.lossRatio', v: '62.4%', delta: '-1.8pp', up: true, color: '#1A7A2E' },
+    { labelKey: 'analytics2.kpi.totalCommission', v: '$1.73M', delta: '+11.6%', up: true, color: '#414755' },
   ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('zh-CN', {
-      style: 'currency',
-      currency: 'CNY',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  return (
+    <div className="space-y-4">
+      {/* Top KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {kpiCards.map((k) => (
+          <div key={k.labelKey} className="glass rounded-xl px-4 py-3.5">
+            <p className="text-[10.5px] font-bold uppercase tracking-wider text-[#A0A5B4] whitespace-nowrap">{t(k.labelKey)}</p>
+            <p className="font-mono text-[22px] font-extrabold mt-1.5 leading-none" style={{ color: k.color }}>{k.v}</p>
+            <p className="flex items-center gap-1 mt-1.5 text-[11.5px]">
+              {k.up ? <ArrowUp size={11} className="text-[#1A7A2E]" /> : <ArrowDown size={11} className="text-[#C0392B]" />}
+              <span className="font-bold" style={{ color: k.up ? '#1A7A2E' : '#C0392B' }}>{k.delta}</span>
+              <span className="text-[#A0A5B4]">YTD</span>
+            </p>
+          </div>
+        ))}
+      </div>
 
-  const getMaxValue = () => Math.max(...mockAnalytics.growthTrend.map(d => d.premium));
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-4">
+        {/* Monthly trend */}
+        <div className="glass rounded-xl p-4 sm:p-5 min-w-0 overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 className="text-[13px] font-bold text-[#181C23]">{t('analytics2.chart.monthlyTrend')}</h2>
+            <div className="flex gap-3 text-[11px]">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-[#0058BC]" />
+                <span className="text-[#717786]">{t('analytics2.legend.premium')}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-[#1A7A2E]/55" />
+                <span className="text-[#717786]">{t('analytics2.legend.commission')}</span>
+              </span>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={monthly} margin={{ top: 14, right: 8, bottom: 0, left: -18 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.25)" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#A0A5B4' }} interval={0} />
+              <YAxis tick={{ fontSize: 10, fill: '#A0A5B4' }} width={40} />
+              <Tooltip {...tooltipStyle} formatter={(v: number) => [`$${v}M`, '']} />
+              <Bar dataKey="premium" name={t('analytics2.legend.premium')} fill="#0058BC" radius={[3, 3, 0, 0]} barSize={12}>
+                <LabelList dataKey="premium" position="top" formatter={(v: number) => `${v}M`} style={{ fontSize: 9, fill: '#0058BC', fontWeight: 700 }} />
+              </Bar>
+              <Bar dataKey="commission" name={t('analytics2.legend.commission')} fill="rgba(26,122,46,0.55)" radius={[3, 3, 0, 0]} barSize={12} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-  // Calculate YTD stats
-  const ytdStats = {
-    months: selectedTimeRange === 'last-3-months' ? 3 : selectedTimeRange === 'last-6-months' ? 6 : selectedTimeRange === 'last-12-months' ? 12 : 8,
-    premium: mockAnalytics.totalPremium * (mockAnalytics.growthTrend.length / 8),
-    commission: mockAnalytics.totalCommission * (mockAnalytics.growthTrend.length / 8),
-  };
+        {/* Business mix */}
+        <div className="glass rounded-xl p-4 sm:p-5 min-w-0">
+          <h2 className="text-[13px] font-bold text-[#181C23] mb-3.5">{t('analytics2.chart.businessMix')}</h2>
+          <div className="space-y-2.5">
+            {lineBreakdown.map((l) => (
+              <div key={l.line}>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1 text-xs">
+                  <span className="flex items-center gap-1.5 font-bold text-[#181C23] whitespace-nowrap">
+                    <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: l.color }} />
+                    {l.line}
+                  </span>
+                  <span className="flex gap-2.5 whitespace-nowrap">
+                    <span className="font-extrabold" style={{ color: l.color }}>{l.share}%</span>
+                    <span className="text-[#717786]">{fmt(l.premium)}</span>
+                  </span>
+                </div>
+                <div className="h-[5px] bg-[rgba(193,198,215,0.2)] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${l.share}%`, background: l.color }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Channel Analysis Tab ─────────────────────────────────────────────────────
+
+function ChannelAnalysisTab() {
+  const { t } = useTranslation('channel');
+  const [sort, setSort] = useState<SortKey>('premium');
+  const sorted = [...byChannel].sort((a, b) => {
+    if (sort === 'premium') return b.premium - a.premium;
+    if (sort === 'growth') return b.growth - a.growth;
+    return a.lossRatio - b.lossRatio;
+  });
+  const maxPremium = Math.max(...byChannel.map((c) => c.premium));
+
+  const sortOptions: { key: SortKey; labelKey: string }[] = [
+    { key: 'premium', labelKey: 'analytics2.sort.premium' },
+    { key: 'growth', labelKey: 'analytics2.sort.growth' },
+    { key: 'lossRatio', labelKey: 'analytics2.sort.lossRatio' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('channelAnalytics') || '渠道分析驾驶舱'}</h1>
-            <p className="text-gray-600">{t('analyticsDescription') || '全面掌握渠道业务表现和增长趋势'} </p>
-          </div>
-          <button className="btn-secondary">
-            <Download size={16} className="mr-2" />
-            导出报告
-          </button>
+    <div className="space-y-3.5">
+      {/* Sort selector + export */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[12.5px] text-[#717786]">{t('analytics2.sort.label')}</span>
+        <div className="flex rounded-lg border-[0.5px] border-[rgba(193,198,215,0.38)] bg-white/40 overflow-hidden">
+          {sortOptions.map((o) => (
+            <button
+              key={o.key}
+              onClick={() => setSort(o.key)}
+              className={`px-3 py-[5px] text-xs transition-colors ${
+                sort === o.key ? 'bg-[#0058BC] text-white font-bold' : 'text-[#414755] font-medium hover:bg-white/60'
+              }`}
+            >
+              {t(o.labelKey)}
+            </button>
+          ))}
+        </div>
+        <button className="ml-auto inline-flex items-center gap-1 px-3 py-[5px] rounded-lg text-xs font-bold bg-white/45 border-[0.5px] border-[rgba(193,198,215,0.38)] text-[#414755] hover:bg-white/70 transition-colors">
+          <Download size={12} />
+          {t('export')}
+        </button>
+      </div>
+
+      {/* Comparison table */}
+      <div className="glass rounded-xl overflow-hidden">
+        <div className="px-4 py-2.5 border-b-[0.5px] border-[rgba(193,198,215,0.38)] font-bold text-[13px] text-[#181C23]">
+          {t('analytics2.compare.title')}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-[rgba(236,237,249,0.5)]">
+                {[
+                  'analytics2.compare.col.channel',
+                  'analytics2.compare.col.lob',
+                  'analytics2.compare.col.ytdPremium',
+                  'analytics2.compare.col.share',
+                  'analytics2.compare.col.yoy',
+                  'analytics2.compare.col.lossRatio',
+                  'analytics2.compare.col.agents',
+                ].map((h) => (
+                  <th key={h} className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide text-[#A0A5B4] whitespace-nowrap">
+                    {t(h)}
+                  </th>
+                ))}
+                <th className="px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[rgba(193,198,215,0.38)]">
+              {sorted.map((c) => (
+                <tr key={c.channel} className="hover:bg-[rgba(0,88,188,0.03)] transition-colors">
+                  <td className="px-3 py-2.5">
+                    <span className="font-bold text-[12.5px] text-[#181C23]">{c.channel}</span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-[rgba(0,88,188,0.09)] text-[#0058BC]">
+                      {c.line}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <span className="flex items-center gap-2">
+                      <span className="w-[60px] h-[5px] bg-[rgba(193,198,215,0.2)] rounded-full overflow-hidden shrink-0">
+                        <span className="block h-full bg-[#0058BC] rounded-full" style={{ width: `${(c.premium / maxPremium) * 100}%` }} />
+                      </span>
+                      <span className="font-mono text-[13px] font-extrabold text-[#0058BC]">{fmt(c.premium)}</span>
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-xs font-bold text-[#414755] whitespace-nowrap">
+                    {(c.share * 100).toFixed(0)}%
+                  </td>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <span className="flex items-center gap-1">
+                      {c.growth >= 0 ? <ArrowUp size={11} className="text-[#1A7A2E]" /> : <ArrowDown size={11} className="text-[#C0392B]" />}
+                      <span
+                        className={`font-mono text-[13px] font-extrabold ${
+                          c.growth >= 0.1 ? 'text-[#1A7A2E]' : c.growth < 0 ? 'text-[#C0392B]' : 'text-[#A05C00]'
+                        }`}
+                      >
+                        {c.growth >= 0 ? '+' : ''}
+                        {(c.growth * 100).toFixed(0)}%
+                      </span>
+                    </span>
+                  </td>
+                  <td
+                    className={`px-3 py-2.5 font-mono text-[13px] font-extrabold whitespace-nowrap ${
+                      c.lossRatio > 0.7 ? 'text-[#C0392B]' : c.lossRatio > 0.65 ? 'text-[#A05C00]' : 'text-[#1A7A2E]'
+                    }`}
+                  >
+                    {(c.lossRatio * 100).toFixed(0)}%
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-[13px] font-bold text-[#414755]">{c.agents}</td>
+                  <td className="px-3 py-2.5">
+                    <button className="inline-flex items-center gap-0.5 px-2 py-1 rounded-md text-[11px] font-bold bg-[rgba(0,88,188,0.09)] text-[#0058BC] border-[0.5px] border-[rgba(0,88,188,0.2)] hover:bg-[rgba(0,88,188,0.15)] transition-colors whitespace-nowrap">
+                      {t('analytics2.compare.details')} <ChevronRight size={11} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Geographic Tab ───────────────────────────────────────────────────────────
+
+function GeoTab() {
+  const { t } = useTranslation('channel');
+  const maxPremium = Math.max(...stateData.map((s) => s.premium));
+
+  const statCards = [
+    { labelKey: 'analytics2.geo.statesCovered', v: String(stateData.length), subKey: 'analytics2.geo.nationwide' },
+    { labelKey: 'analytics2.geo.largestMarket', v: 'CA', subKey: 'analytics2.geo.largestMarketSub' },
+    { labelKey: 'analytics2.geo.fastestGrowing', v: 'CO', sub: '+31% YoY' },
+  ];
+
+  return (
+    <div className="space-y-3.5">
+      <div className="glass rounded-xl px-5 py-4">
+        <div className="flex items-center gap-1.5 mb-4">
+          <Map size={14} className="text-[#0058BC]" />
+          <span className="font-bold text-[13.5px] text-[#181C23]">{t('analytics2.geo.title')}</span>
+          <span className="text-[11.5px] text-[#717786] ml-1">{t('analytics2.geo.subtitle')}</span>
+        </div>
+
+        {/* Heat bars */}
+        <div className="space-y-3">
+          {stateData.map((s) => (
+            <div key={s.state} className="flex items-center gap-3">
+              <span className="font-mono text-[13px] font-extrabold text-[#181C23] w-8 text-center shrink-0">{s.state}</span>
+              <div className="flex-1 h-7 bg-[rgba(193,198,215,0.12)] rounded-lg overflow-hidden">
+                <div
+                  className="h-full rounded-lg flex items-center pl-2.5 transition-[width] duration-400"
+                  style={{ width: `${(s.premium / maxPremium) * 100}%`, background: 'linear-gradient(90deg, rgba(0,88,188,0.8), rgba(0,88,188,0.53))' }}
+                >
+                  <span className="font-mono text-xs font-extrabold text-white">{fmt(s.premium)}</span>
+                </div>
+              </div>
+              <span className="flex gap-3 min-w-[120px] justify-end whitespace-nowrap">
+                <span className="text-xs text-[#717786]">{t('analytics2.geo.agentsCount', { n: s.agents })}</span>
+                <span
+                  className={`font-mono text-xs font-extrabold ${
+                    s.growth >= 0.15 ? 'text-[#1A7A2E]' : s.growth < 0 ? 'text-[#C0392B]' : 'text-[#A05C00]'
+                  }`}
+                >
+                  {s.growth >= 0 ? '+' : ''}
+                  {(s.growth * 100).toFixed(0)}%
+                </span>
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Time Range Selector */}
-      <div className="max-w-7xl mx-auto glass p-4 rounded-lg mb-6">
-        <div className="flex flex-wrap gap-2">
-          {timeRanges.map((range) => (
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {statCards.map((k) => (
+          <div key={k.labelKey} className="glass rounded-xl px-4 py-3.5 text-center">
+            <p className="text-[10.5px] font-bold uppercase tracking-wider text-[#A0A5B4]">{t(k.labelKey)}</p>
+            <p className="font-mono text-[22px] font-extrabold text-[#0058BC] mt-1.5">{k.v}</p>
+            <p className="text-[11.5px] text-[#717786] mt-1">{'sub' in k && k.sub ? k.sub : t(k.subKey!)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+
+export default function ChannelAnalyticsView({ navigateTo }: Props) {
+  void navigateTo;
+  const { t } = useTranslation('channel');
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
+
+  const tabs: { key: AnalyticsTab; labelKey: string; icon: React.ReactNode }[] = [
+    { key: 'overview', labelKey: 'analytics2.tab.overview', icon: <BarChart3 size={13} /> },
+    { key: 'compare', labelKey: 'analytics2.tab.compare', icon: <Layers size={13} /> },
+    { key: 'region', labelKey: 'analytics2.tab.region', icon: <Map size={13} /> },
+  ];
+
+  return (
+    <div className="min-h-screen p-4 sm:p-6">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-5">
+        <h1 className="mb-1" style={{ fontSize: 21, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>{t('analytics2.title')}</h1>
+        <p style={{ fontSize: 12.5, color: '#717786' }}>{t('analytics2.subtitle')}</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="max-w-7xl mx-auto mb-4">
+        <div className="tab-bar">
+          {tabs.map((tab) => (
             <button
-              key={range.value}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                selectedTimeRange === range.value
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-              }`}
-              onClick={() => setSelectedTimeRange(range.value)}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`tab-item inline-flex items-center gap-1.5 ${activeTab === tab.key ? 'active' : ''}`}
             >
-              {range.label}
+              {tab.icon}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">总保费收入</h3>
-            <DollarSign className="text-green-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(ytdStats.premium)}</p>
-          <p className="text-xs text-green-600 flex items-center gap-1">
-            <TrendingUp size={12} /> ↑ {mockAnalytics.avgGrowthRate}% 同比
-          </p>
-        </div>
-
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">佣金总额</h3>
-            <Activity className="text-blue-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(ytdStats.commission)}</p>
-          <p className="text-xs text-green-600 flex items-center gap-1">
-            <TrendingUp size={12} /> ↑ 15.2% 环比
-          </p>
-        </div>
-
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">活跃渠道</h3>
-            <Users className="text-purple-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{mockAnalytics.activeChannels}</p>
-          <p className="text-xs text-gray-500">+3 本月新增</p>
-        </div>
-
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">平均增长率</h3>
-            <BarChart3 className="text-orange-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{mockAnalytics.avgGrowthRate}%</p>
-          <p className="text-xs text-green-600">超出行业 12%</p>
-        </div>
-
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">头部渠道</h3>
-            <PieChart className="text-yellow-600" size={20} />
-          </div>
-          <p className="text-xl font-bold text-gray-900 mb-1 truncate" title={mockAnalytics.topPerformer}>
-            {mockAnalytics.topPerformer}
-          </p>
-          <p className="text-xs text-green-600">贡献 28% 业绩</p>
-        </div>
-      </div>
-
-      {/* Charts Row 1 - Growth Trend */}
-      <div className="max-w-7xl mx-auto glass p-6 rounded-lg mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <TrendingUp size={20} className="text-blue-600" />
-            保费增长趋势
-          </h2>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
-              <span className="text-gray-600">保费收入</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
-              <span className="text-gray-600">佣金收入</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Simple Bar Chart Visualization */}
-        <div className="space-y-4">
-          {mockAnalytics.growthTrend.map((data, index) => (
-            <div key={data.month} className="relative">
-              <div className="flex items-center gap-4 mb-2">
-                <div className="w-16 text-sm text-gray-600">{data.month}月</div>
-                <div className="flex-1 grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-40 bg-blue-100 rounded-full h-8 relative overflow-hidden">
-                      <div 
-                        className="bg-blue-500 h-full rounded-full transition-all"
-                        style={{ width: `${(data.premium / getMaxValue()) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-semibold w-24 text-right">{formatCurrency(data.premium)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-40 bg-green-100 rounded-full h-8 relative overflow-hidden">
-                      <div 
-                        className="bg-green-500 h-full rounded-full transition-all"
-                        style={{ width: `${(data.commission / getMaxValue()) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-semibold w-24 text-right">{formatCurrency(data.commission)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Summary Stats */}
-        <div className="mt-8 grid grid-cols-3 gap-4 pt-4 border-t">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <div className="text-xs text-gray-600 mb-1">最高单月保费</div>
-            <div className="text-lg font-bold text-blue-600">{formatCurrency(6500000)}</div>
-            <div className="text-xs text-gray-500">7 月份</div>
-          </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-xs text-gray-600 mb-1">最高单月佣金</div>
-            <div className="text-lg font-bold text-green-600">{formatCurrency(1050000)}</div>
-            <div className="text-xs text-gray-500">7 月份</div>
-          </div>
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <div className="text-xs text-gray-600 mb-1">季度总增长</div>
-            <div className="text-lg font-bold text-purple-600">↑ 42.5%</div>
-            <div className="text-xs text-gray-500">Q3 vs Q2</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Row 2 - Channel Performance & Product Mix */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Channel Performance */}
-        <div className="glass p-6 rounded-lg">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <BarChart3 size={20} className="text-blue-600" />
-            渠道表现排名
-          </h2>
-          <div className="space-y-4">
-            {mockAnalytics.channelPerformance.slice(0, 5).map((channel, index) => (
-              <div key={channel.name} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                      index === 1 ? 'bg-gray-100 text-gray-700' :
-                      index === 2 ? 'bg-orange-100 text-orange-700' :
-                      'bg-blue-50 text-blue-700'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <span className="font-semibold text-gray-900">{channel.name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-blue-600">{formatCurrency(channel.premium)}</div>
-                    <div className={`text-xs ${channel.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {channel.growth >= 0 ? '↑' : '↓'} {Math.abs(channel.growth)}%
-                    </div>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${
-                      index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                      index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-500' :
-                      index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                      'bg-gradient-to-r from-blue-400 to-blue-600'
-                    }`}
-                    style={{ width: `${(channel.premium / mockAnalytics.channelPerformance[0].premium) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Product Mix */}
-        <div className="glass p-6 rounded-lg">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <PieChart size={20} className="text-purple-600" />
-            产品类型分布
-          </h2>
-          <div className="space-y-4">
-            {mockAnalytics.productMix.map((product) => (
-              <div key={product.category}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-gray-900">{product.category}</span>
-                  <div className="text-right">
-                    <div className="font-bold text-purple-600">{formatCurrency(product.value)}</div>
-                    <div className="text-xs text-gray-500">{product.percentage}%</div>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
-                    className="h-3 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 transition-all"
-                    style={{ width: `${product.percentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Mini Donut Chart Placeholder */}
-          <div className="mt-6 flex items-center justify-center">
-            <div className="relative w-40 h-40">
-              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                <circle cx="50" cy="50" r="40" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="20" />
-                <circle 
-                  cx="50" 
-                  cy="50" 
-                  r="40" 
-                  fill="none" 
-                  stroke="url(#gradient)" 
-                  strokeWidth="20" 
-                  strokeDasharray={`${45 * 2.51} 251`}
-                  className="transition-all duration-500"
-                />
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#a855f7" />
-                    <stop offset="100%" stopColor="#ec4899" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">45%</div>
-                  <div className="text-xs text-gray-500">主类别占比</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Insights */}
-      <div className="max-w-7xl mx-auto glass p-6 rounded-lg">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Activity size={20} className="text-green-600" />
-          洞察与建议
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="text-green-600" size={18} />
-              <h3 className="font-bold text-gray-900">增长机会</h3>
-            </div>
-            <p className="text-sm text-gray-700">
-              MGA 渠道在健康险品类增长率达 35.8%，建议增加相关产品线投入
-            </p>
-          </div>
-
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="text-yellow-600" size={18} />
-              <h3 className="font-bold text-gray-900">风险提示</h3>
-            </div>
-            <p className="text-sm text-gray-700">
-              部分 MG 渠道出现负增长 (-5.2%)，需关注并制定挽回策略
-            </p>
-          </div>
-
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="text-blue-600" size={18} />
-              <h3 className="font-bold text-gray-900">优化方向</h3>
-            </div>
-            <p className="text-sm text-gray-700">
-              意外险类别市场份额仅占 25%，存在较大的增长潜力空间
-            </p>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto">
+        {activeTab === 'overview' && <OverviewTab />}
+        {activeTab === 'compare' && <ChannelAnalysisTab />}
+        {activeTab === 'region' && <GeoTab />}
       </div>
     </div>
   );

@@ -1,413 +1,372 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ViewId } from '@/App';
-import { Building2, FileText, CheckCircle, Clock, DollarSign, Shield, Download, RefreshCw, TrendingUp } from 'lucide-react';
+import {
+  LayoutGrid, BookOpen, MessageSquare, AlertTriangle, Clock, FileSignature,
+  FileEdit, Download, Plus, Eye, Bell, DollarSign, ChevronRight,
+} from 'lucide-react';
 
-interface PortalDashboard {
-  channelId: string;
-  channelName: string;
-  channelType: string;
-  licenseNumber: string;
-  status: 'active' | 'pending' | 'suspended';
-}
-
-interface RecentTransactions {
-  id: string;
-  date: string;
-  type: string;
-  description: string;
-  amount?: number;
-  status: 'completed' | 'pending' | 'failed';
-}
-
-interface CommissionStatement {
-  id: string;
-  period: string;
-  premium: number;
-  commission: number;
-  bonus: number;
-  total: number;
-  status: 'draft' | 'approved' | 'paid';
-  generatedAt: string;
-}
-
-interface Props {
-  navigateTo: (view: ViewId) => void;
-}
-
-// Mock data - Channel dashboard
-const mockDashboard: PortalDashboard = {
-  channelId: 'c4',
-  channelName: '深圳 MGA 总部',
-  channelType: 'MGA',
-  licenseNumber: 'MGA-GD-2024-001',
-  status: 'active',
+// ─────────────────────────────────────────────────────────────────────────────
+// Design tokens (aligned to Figma V1.3 design system)
+// ─────────────────────────────────────────────────────────────────────────────
+const C = {
+  text: '#181C23',
+  muted: '#717786',
+  mutedLight: '#A0A5B4',
+  soft: '#414755',
+  primary: '#0058BC',
+  primaryLight: 'rgba(0,88,188,0.09)',
+  primaryBorder: 'rgba(0,88,188,0.2)',
+  border: 'rgba(193,198,215,0.38)',
+  borderMid: 'rgba(193,198,215,0.55)',
+  green: '#1a7a2e',
+  greenBg: 'rgba(52,199,89,0.12)',
+  red: '#BA1A1A',
+  redBg: 'rgba(186,26,26,0.08)',
+  amber: '#B06000',
+  amberBg: 'rgba(255,159,10,0.12)',
+  blue2: '#0058BC',
+  blue2Bg: 'rgba(0,88,188,0.08)',
 };
 
-// Mock data - Recent transactions
-const mockTransactions: RecentTransactions[] = [
-  {
-    id: 'txn1',
-    date: '2026-08-30',
-    type: 'Premium Payment',
-    description: 'Policy #POL-2024-001 Premium Collection',
-    amount: 125000,
-    status: 'completed',
-  },
-  {
-    id: 'txn2',
-    date: '2026-08-29',
-    type: 'Commission Payout',
-    description: 'July 2026 Commission Statement',
-    amount: 89000,
-    status: 'completed',
-  },
-  {
-    id: 'txn3',
-    date: '2026-08-28',
-    type: 'Claim Settlement',
-    description: 'Claim #CLM-2024-045 Paid Out',
-    amount: 45000,
-    status: 'completed',
-  },
-  {
-    id: 'txn4',
-    date: '2026-08-27',
-    type: 'New Policy',
-    description: 'Policy #POL-2024-002 Issued',
-    amount: 78000,
-    status: 'completed',
-  },
+const TH = {
+  padding: '8px 12px', textAlign: 'left' as const, fontSize: 11, fontWeight: 700,
+  color: C.mutedLight, textTransform: 'uppercase' as const, letterSpacing: '0.05em',
+  background: 'rgba(236,237,249,0.5)', borderBottom: `0.5px solid ${C.borderMid}`,
+  whiteSpace: 'nowrap' as const,
+};
+const TD = {
+  padding: '10px 12px', borderBottom: `0.5px solid ${C.border}`,
+  verticalAlign: 'middle' as const, fontSize: 12.5,
+};
+
+const mono = { fontFamily: "'JetBrains Mono', monospace" };
+
+function Badge({ bg, color, children }: { bg: string; color: string; children: React.ReactNode }) {
+  return (
+    <span style={{ padding: '2px 9px', borderRadius: 7, fontSize: 11, fontWeight: 700, background: bg, color, whiteSpace: 'nowrap' }}>
+      {children}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mock data — aligned with Figma prototype V1.3
+// ─────────────────────────────────────────────────────────────────────────────
+const FILES = [
+  { id: 'f1', nameKey: 'portal2.files.f1', categoryKey: 'portal2.files.catProduct', format: 'PDF', size: '4.2 MB', updated: '2026-08-01' },
+  { id: 'f2', nameKey: 'portal2.files.f2', categoryKey: 'portal2.files.catRate', format: 'XLSX', size: '1.8 MB', updated: '2026-08-15' },
+  { id: 'f3', nameKey: 'portal2.files.f3', categoryKey: 'portal2.files.catForm', format: 'DOCX', size: '320 KB', updated: '2026-07-22' },
+  { id: 'f4', nameKey: 'portal2.files.f4', categoryKey: 'portal2.files.catCompliance', format: 'PDF', size: '6.5 MB', updated: '2026-06-30' },
+  { id: 'f5', nameKey: 'portal2.files.f5', categoryKey: 'portal2.files.catGuide', format: 'PDF', size: '2.1 MB', updated: '2026-06-12' },
 ];
 
-// Mock data - Commission statements
-const mockStatements: CommissionStatement[] = [
-  {
-    id: 'stmt1',
-    period: '2026-07',
-    premium: 8900000,
-    commission: 1644500,
-    bonus: 280000,
-    total: 1924500,
-    status: 'paid',
-    generatedAt: '2026-08-01',
-  },
-  {
-    id: 'stmt2',
-    period: '2026-06',
-    premium: 7500000,
-    commission: 1387500,
-    bonus: 225000,
-    total: 1612500,
-    status: 'paid',
-    generatedAt: '2026-07-01',
-  },
-  {
-    id: 'stmt3',
-    period: '2026-05',
-    premium: 6800000,
-    commission: 1258000,
-    bonus: 180000,
-    total: 1438000,
-    status: 'approved',
-    generatedAt: '2026-06-01',
-  },
+const TICKETS = [
+  { id: 'TK-2026-0881', subjectKey: 'portal2.tickets.t1', priority: 'high', status: 'processing', created: '2026-08-29', reply: '2026-08-30' },
+  { id: 'TK-2026-0867', subjectKey: 'portal2.tickets.t2', priority: 'medium', status: 'replied', created: '2026-08-26', reply: '2026-08-27' },
+  { id: 'TK-2026-0852', subjectKey: 'portal2.tickets.t3', priority: 'low', status: 'resolved', created: '2026-08-20', reply: '2026-08-21' },
 ];
 
-export default function ChannelPortalView({ navigateTo }: Props) {
-  const { t } = useTranslation('channel');
-  const [refreshKey, setRefreshKey] = useState(0);
+// Free-text portal content: zh byte-identical to prototype, parallel en values
+const ANNOUNCEMENTS = [
+  { id: 1, typeKey: 'portal2.annc.typeImportant', zh: '2026 Q3 佣金方案已更新', en: '2026 Q3 Commission Plan Updated', date: '2026-08-28', type: 'important', color: C.red, read: false },
+  { id: 2, typeKey: 'portal2.annc.typeNotice', zh: '汽车险费率调整通知 — 加州地区', en: 'Auto Rate Adjustment Notice — California', date: '2026-08-25', type: 'notice', color: C.amber, read: false },
+  { id: 3, typeKey: 'portal2.annc.typeTraining', zh: '9月在线培训课程安排', en: 'September Online Training Schedule', date: '2026-08-20', type: 'training', color: '#6B35C2', read: true },
+  { id: 4, typeKey: 'portal2.annc.typeSystem', zh: '系统维护公告 — 2026-09-01 00:00-06:00', en: 'System Maintenance Notice — 2026-09-01 00:00–06:00', date: '2026-08-18', type: 'system', color: C.muted, read: true },
+  { id: 5, typeKey: 'portal2.annc.typeProduct', zh: '新产品上线 — 商业财产险 E&O 附加条款', en: 'New Product Launch — Commercial Property E&O Endorsement', date: '2026-08-10', type: 'product', color: C.primary, read: true },
+];
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+const COMM_HISTORY = [
+  { id: 1, period: '2026 Q2', base: 42600, bonus: 8400, total: 51000, paidDate: '2026-07-28' },
+  { id: 2, period: '2026 Q1', base: 38900, bonus: 5200, total: 44100, paidDate: '2026-04-25' },
+  { id: 3, period: '2025 Q4', base: 35400, bonus: 9800, total: 45200, paidDate: '2026-01-20' },
+  { id: 4, period: '2025 Q3', base: 31200, bonus: 4600, total: 35800, paidDate: '2025-10-22' },
+];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('zh-CN', {
-      style: 'currency',
-      currency: 'CNY',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+const PRIORITY_STYLE: Record<string, { bg: string; color: string }> = {
+  high: { bg: C.redBg, color: C.red },
+  medium: { bg: C.amberBg, color: C.amber },
+  low: { bg: 'rgba(193,198,215,0.25)', color: C.soft },
+};
+const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  processing: { bg: C.blue2Bg, color: C.blue2 },
+  replied: { bg: C.greenBg, color: C.green },
+  resolved: { bg: 'rgba(193,198,215,0.25)', color: C.soft },
+};
 
-  const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      active: 'bg-green-100 text-green-700 border-green-300',
-      pending: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-      suspended: 'bg-red-100 text-red-700 border-red-300',
-    };
-    const labels: Record<string, string> = {
-      active: '正常',
-      pending: '待审核',
-      suspended: '已暂停',
-    };
-    return (
-      <span className={`px-2 py-1 border rounded-md text-xs font-medium ${colors[status]}`}>
-        {labels[status]}
-      </span>
-    );
-  };
+type TabId = 'workbench' | 'files' | 'tickets';
 
-  const getTransactionStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      completed: 'bg-green-100 text-green-700 border-green-300',
-      pending: 'bg-blue-100 text-blue-700 border-blue-300',
-      failed: 'bg-red-100 text-red-700 border-red-300',
-    };
-    const labels: Record<string, string> = {
-      completed: '已完成',
-      pending: '处理中',
-      failed: '失败',
-    };
-    return (
-      <span className={`px-2 py-1 border rounded-md text-xs font-medium ${colors[status]}`}>
-        {labels[status]}
-      </span>
-    );
-  };
+export default function ChannelPortalView() {
+  const { t, i18n } = useTranslation('channel');
+  const isEn = i18n.language.startsWith('en');
+  const [tab, setTab] = useState<TabId>('workbench');
 
-  // Statistics
-  const stats = {
-    totalPremium: mockTransactions.filter(t => t.type === 'Premium Payment').reduce((sum, t) => sum + (t.amount || 0), 0),
-    totalCommission: mockStatements.reduce((sum, s) => sum + s.total, 0),
-    totalClaims: mockTransactions.filter(t => t.type === 'Claim Settlement').length,
-    recentPolicies: mockTransactions.filter(t => t.type === 'New Policy').length,
+  const TABS: { id: TabId; icon: React.ReactNode; label: string; badge?: number }[] = [
+    { id: 'workbench', icon: <LayoutGrid size={13} />, label: t('portal2.tab.workbench'), badge: 2 },
+    { id: 'files', icon: <BookOpen size={13} />, label: t('portal2.tab.files') },
+    { id: 'tickets', icon: <MessageSquare size={13} />, label: t('portal2.tab.tickets'), badge: 2 },
+  ];
+
+  const todos = [
+    { icon: <AlertTriangle size={15} />, bg: C.redBg, color: C.red, title: t('portal2.todos.certTitle'), desc: t('portal2.todos.certDesc'), action: t('portal2.todos.certAction') },
+    { icon: <AlertTriangle size={15} />, bg: C.redBg, color: C.red, title: t('portal2.todos.trainingTitle'), desc: t('portal2.todos.trainingDesc'), action: t('portal2.todos.trainingAction') },
+    { icon: <FileSignature size={15} />, bg: C.amberBg, color: C.amber, title: t('portal2.todos.contractTitle'), desc: t('portal2.todos.contractDesc'), action: t('portal2.todos.contractAction') },
+    { icon: <Clock size={15} />, bg: C.blue2Bg, color: C.blue2, title: t('portal2.todos.profileTitle'), desc: t('portal2.todos.profileDesc'), action: t('portal2.todos.profileAction') },
+  ];
+
+  const quickEntries = [
+    { icon: <FileEdit size={16} />, title: t('portal2.quick.quoteTitle'), desc: t('portal2.quick.quoteDesc') },
+    { icon: <BookOpen size={16} />, title: t('portal2.quick.courseTitle'), desc: t('portal2.quick.courseDesc') },
+    { icon: <MessageSquare size={16} />, title: t('portal2.quick.ticketTitle'), desc: t('portal2.quick.ticketDesc') },
+    { icon: <Download size={16} />, title: t('portal2.quick.filesTitle'), desc: t('portal2.quick.filesDesc') },
+  ];
+
+  const card: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.72)', border: `0.5px solid ${C.border}`,
+    borderRadius: 16, padding: '18px 20px',
+    boxShadow: 'rgba(0,58,152,0.07) 0px 2px 20px 0px',
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {mockDashboard.channelName} 自助门户
-            </h1>
-            <p className="text-gray-600">{t('portalDescription') || '管理您的保单、佣金和理赔信息'} </p>
-          </div>
-          <button 
-            className="btn-secondary"
-            onClick={handleRefresh}
-          >
-            <RefreshCw size={16} className="mr-2" />
-            刷新数据
-          </button>
-        </div>
+    <div>
+      {/* ── Page header ── */}
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: '-0.3px', margin: 0 }}>{t('portal2.title')}</h1>
+        <p style={{ fontSize: 12.5, color: C.muted, marginTop: 4 }}>{t('portal2.subtitle')}</p>
       </div>
 
-      {/* Channel Status Card */}
-      <div className="max-w-7xl mx-auto glass p-6 rounded-lg mb-6">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-            {mockDashboard.channelName.charAt(0)}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-4 mb-2">
-              <h2 className="text-xl font-bold text-gray-900">{mockDashboard.channelName}</h2>
-              {getStatusBadge(mockDashboard.status)}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-gray-500">渠道类型：</span>
-                <span className="font-semibold text-gray-900">{mockDashboard.channelType}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">牌照编号：</span>
-                <span className="font-semibold text-gray-900">{mockDashboard.licenseNumber}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">活跃天数：</span>
-                <span className="font-semibold text-gray-900">365 天</span>
-              </div>
-              <div>
-                <span className="text-gray-500">账户状态：</span>
-                <span className="text-green-600 font-semibold">正常运行</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Stats Cards */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">本月保费</h3>
-            <DollarSign className="text-green-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(stats.totalPremium)}</p>
-          <p className="text-xs text-green-600">↑ 12.5% 环比增长</p>
-        </div>
-
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">累计佣金</h3>
-            <TrendingUp className="text-blue-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(stats.totalCommission)}</p>
-          <p className="text-xs text-gray-500">截至 2026-08-31</p>
-        </div>
-
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">处理理赔</h3>
-            <Shield className="text-orange-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{stats.totalClaims}</p>
-          <p className="text-xs text-gray-500">本季度总量</p>
-        </div>
-
-        <div className="glass p-6 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">新单数量</h3>
-            <FileText className="text-purple-600" size={20} />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{stats.recentPolicies}</p>
-          <p className="text-xs text-green-600">↑ 8 单 本周</p>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Commission Statements */}
-        <div className="glass rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <DollarSign size={20} className="text-blue-600" />
-              佣金对账单
-            </h2>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-              查看全部 →
+      {/* ── Tab bar ── */}
+      <div style={{ display: 'flex', gap: 2, borderBottom: `1px solid ${C.border}`, marginBottom: 18 }}>
+        {TABS.map(tb => {
+          const isActive = tab === tb.id;
+          return (
+            <button key={tb.id} onClick={() => setTab(tb.id)} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px',
+              borderRadius: '10px 10px 0 0', fontSize: 13, fontWeight: isActive ? 700 : 500,
+              background: isActive ? C.primaryLight : 'transparent',
+              color: isActive ? C.primary : C.muted,
+              border: isActive ? `0.5px solid ${C.border}` : '0.5px solid transparent',
+              borderBottom: isActive ? `2.5px solid ${C.primary}` : '2.5px solid transparent',
+              cursor: 'pointer', transition: 'all 0.12s', whiteSpace: 'nowrap',
+            }}>
+              {tb.icon}{tb.label}
+              {tb.badge !== undefined && (
+                <span style={{ background: C.red, color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{tb.badge}</span>
+              )}
             </button>
+          );
+        })}
+      </div>
+
+      {/* ── Workbench ── */}
+      {tab === 'workbench' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Welcome card */}
+          <div style={{ ...card, background: 'linear-gradient(135deg, rgba(0,88,188,0.06), rgba(255,255,255,0.8))', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>{t('portal2.wb.agentPortal')}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 6 }}>{t('portal2.wb.greeting')}</div>
+              <div style={{ fontSize: 12.5, color: C.muted }}>
+                {t('portal2.wb.agency')} · {t('portal2.wb.license')} <span style={{ ...mono, fontWeight: 600 }}>CA-INS-2023-7721</span> · 2027-03-13 {t('portal2.wb.expires')}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, color: C.mutedLight, marginBottom: 3 }}>{t('portal2.wb.today')}</div>
+              <div style={{ ...mono, fontSize: 14, fontWeight: 700, color: C.text }}>2026-08-31</div>
+            </div>
           </div>
-          <div className="divide-y divide-gray-200">
-            {mockStatements.map((stmt) => (
-              <div key={stmt.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-900">{stmt.period}月</span>
-                    {stmt.status === 'paid' && <CheckCircle size={16} className="text-green-600" />}
-                    {stmt.status === 'approved' && <Clock size={16} className="text-blue-600" />}
+
+          {/* KPI row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            {[
+              { label: t('portal2.wb.ytdPremium'), value: '$1.82M', color: C.green, sub: `${t('portal2.wb.targetAchieve')} 114%` },
+              { label: t('portal2.wb.ytdCommission'), value: '$218.4K', color: C.primary, sub: t('portal2.wb.q3Received') },
+              { label: t('portal2.wb.renewalRate'), value: '91%', color: C.green, sub: t('portal2.wb.aboveTarget', { n: 3 }) },
+              { label: t('portal2.wb.rating'), value: 'A', color: C.primary, sub: `${t('portal2.wb.topRank')} #1` },
+            ].map(k => (
+              <div key={k.label} style={{ ...card, padding: '14px 16px' }}>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>{k.label}</div>
+                <div style={{ ...mono, fontSize: 24, fontWeight: 800, color: k.color, lineHeight: 1 }}>{k.value}</div>
+                {k.sub && <div style={{ fontSize: 11.5, color: C.mutedLight, marginTop: 5 }}>{k.sub}</div>}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'start' }}>
+          <div style={{ flex: '1 1 340px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Todos */}
+            <div style={card}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.text, display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <AlertTriangle size={15} color={C.amber} /> {t('portal2.todos.title')}
+                </div>
+                <span style={{ background: C.red, color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 8, padding: '1px 6px' }}>2</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {todos.map((td, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '11px 0', borderTop: i > 0 ? `0.5px solid ${C.border}` : 'none' }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: td.bg, color: td.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {td.icon}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{td.title}</div>
+                      <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{td.desc}</div>
+                    </div>
+                    <button className="btn-ghost shrink-0" style={{ fontSize: 12 }}>{td.action}</button>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg text-blue-600">{formatCurrency(stmt.total)}</div>
-                    <div className="text-xs text-gray-500">发放日期：{stmt.generatedAt}</div>
+                ))}
+              </div>
+            </div>
+
+            {/* Announcements */}
+            <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Bell size={14} color={C.primary} />
+                <span style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{t('portal2.annc.title')}</span>
+              </div>
+              {ANNOUNCEMENTS.map(a => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, background: !a.read ? 'rgba(0,88,188,0.03)' : 'transparent' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: !a.read ? C.primary : 'transparent', flexShrink: 0 }} />
+                  <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 5, fontWeight: 700, background: `${a.color}12`, color: a.color, flexShrink: 0 }}>{t(a.typeKey)}</span>
+                  <span style={{ flex: 1, fontSize: 12.5, fontWeight: a.read ? 500 : 700, color: C.text, minWidth: 0 }}>{isEn ? a.en : a.zh}</span>
+                  <span style={{ ...mono, fontSize: 11, color: C.mutedLight, flexShrink: 0 }}>{a.date}</span>
+                  <ChevronRight size={12} color={C.border} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right column: commission + quick links */}
+          <div style={{ flex: '1 1 300px', minWidth: 290, maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Latest commission received */}
+            <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <DollarSign size={14} color={C.green} />
+                <span style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{t('portal2.comm.title')}</span>
+              </div>
+              {COMM_HISTORY.slice(0, 3).map(c => (
+                <div key={c.id} style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: C.text }}>{c.period}</span>
+                    <span style={{ ...mono, fontSize: 14, fontWeight: 800, color: C.green }}>${c.total.toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3, fontSize: 11.5, color: C.muted, flexWrap: 'wrap', gap: 4 }}>
+                    <span>{t('portal2.comm.received', { d: c.paidDate })}</span>
+                    <span>{t('portal2.comm.baseBonus', { b: `$${c.base.toLocaleString()}`, x: `$${c.bonus.toLocaleString()}` })}</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-xs text-gray-600 pt-3 border-t">
-                  <div>
-                    <span>保费总额：</span>
-                    <span className="font-semibold">{formatCurrency(stmt.premium)}</span>
-                  </div>
-                  <div>
-                    <span>基础佣金：</span>
-                    <span className="font-semibold text-blue-600">{formatCurrency(stmt.commission)}</span>
-                  </div>
-                  <div>
-                    <span>额外奖励：</span>
-                    <span className="font-semibold text-orange-600">+{formatCurrency(stmt.bonus)}</span>
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-end gap-2">
-                  <button className="btn-secondary text-sm">
-                    <Download size={14} className="mr-1" />
-                    下载 PDF
+              ))}
+              <div style={{ padding: '10px 14px', textAlign: 'center' }}>
+                <button style={{ fontSize: 12, color: C.primary, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
+                  {t('portal2.comm.viewAll')}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick entries */}
+            <div style={card}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>{t('portal2.quick.title')}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+                {quickEntries.map((q, i) => (
+                  <button key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.6)', border: `0.5px solid ${C.border}`, cursor: 'pointer', textAlign: 'left',
+                  }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: C.primaryLight, color: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {q.icon}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: C.text, whiteSpace: 'nowrap' }}>{q.title}</div>
+                      <div style={{ fontSize: 11, color: C.mutedLight, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.desc}</div>
+                    </div>
                   </button>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
+          </div>
           </div>
         </div>
+      )}
 
-        {/* Recent Transactions */}
-        <div className="glass rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <FileText size={20} className="text-purple-600" />
-              最近交易记录
-            </h2>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-              查看全部 →
+      {/* ── Files & tools ── */}
+      {tab === 'files' && (
+        <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={TH}>{t('portal2.files.colName')}</th>
+                <th style={TH}>{t('portal2.files.colCategory')}</th>
+                <th style={TH}>{t('portal2.files.colFormat')}</th>
+                <th style={TH}>{t('portal2.files.colSize')}</th>
+                <th style={TH}>{t('portal2.files.colUpdated')}</th>
+                <th style={{ ...TH, textAlign: 'right' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {FILES.map(f => (
+                <tr key={f.id}>
+                  <td style={{ ...TD, fontWeight: 600, color: C.text }}>{t(f.nameKey)}</td>
+                  <td style={{ ...TD, color: C.muted }}>{t(f.categoryKey)}</td>
+                  <td style={{ ...TD }}>
+                    <Badge bg="rgba(193,198,215,0.25)" color={C.soft}>{f.format}</Badge>
+                  </td>
+                  <td style={{ ...TD, ...mono, color: C.muted }}>{f.size}</td>
+                  <td style={{ ...TD, ...mono, color: C.muted }}>{f.updated}</td>
+                  <td style={{ ...TD, textAlign: 'right' }}>
+                    <button className="btn-ghost" style={{ fontSize: 12 }}>
+                      <Download size={12} /> {t('portal2.files.download')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Support tickets ── */}
+      {tab === 'tickets' && (
+        <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 14px', borderBottom: `0.5px solid ${C.border}` }}>
+            <button className="btn-primary" style={{ fontSize: 12.5 }}>
+              <Plus size={13} /> {t('portal2.tickets.new')}
             </button>
           </div>
-          <div className="divide-y divide-gray-200">
-            {mockTransactions.map((txn) => (
-              <div key={txn.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      txn.type.includes('Premium') ? 'bg-green-100' :
-                      txn.type.includes('Commission') ? 'bg-blue-100' :
-                      txn.type.includes('Claim') ? 'bg-orange-100' : 'bg-purple-100'
-                    }`}>
-                      {txn.type.includes('Premium') ? <DollarSign size={18} className="text-green-600" /> :
-                       txn.type.includes('Commission') ? <TrendingUp size={18} className="text-blue-600" /> :
-                       txn.type.includes('Claim') ? <Shield size={18} className="text-orange-600" /> :
-                       <FileText size={18} className="text-purple-600" />}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{txn.description}</div>
-                      <div className="text-xs text-gray-500">{txn.type} · {txn.date}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {txn.amount && (
-                      <div className={`font-bold ${txn.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {txn.amount > 0 ? '+' : '-'}{formatCurrency(txn.amount)}
-                      </div>
-                    )}
-                    <div className="mt-1">{getTransactionStatusBadge(txn.status)}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={TH}>{t('portal2.tickets.colNo')}</th>
+                <th style={TH}>{t('portal2.tickets.colSubject')}</th>
+                <th style={TH}>{t('portal2.tickets.colPriority')}</th>
+                <th style={TH}>{t('portal2.tickets.colStatus')}</th>
+                <th style={TH}>{t('portal2.tickets.colCreated')}</th>
+                <th style={TH}>{t('portal2.tickets.colReply')}</th>
+                <th style={{ ...TH, textAlign: 'right' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {TICKETS.map(tk => {
+                const p = PRIORITY_STYLE[tk.priority];
+                const s = STATUS_STYLE[tk.status];
+                return (
+                  <tr key={tk.id}>
+                    <td style={{ ...TD, ...mono, fontWeight: 700, color: C.primary }}>{tk.id}</td>
+                    <td style={{ ...TD, fontWeight: 600, color: C.text }}>{t(tk.subjectKey)}</td>
+                    <td style={TD}><Badge bg={p.bg} color={p.color}>{t(`portal2.tickets.p${tk.priority}`)}</Badge></td>
+                    <td style={TD}><Badge bg={s.bg} color={s.color}>{t(`portal2.tickets.s${tk.status}`)}</Badge></td>
+                    <td style={{ ...TD, ...mono, color: C.muted }}>{tk.created}</td>
+                    <td style={{ ...TD, ...mono, color: C.muted }}>{tk.reply}</td>
+                    <td style={{ ...TD, textAlign: 'right' }}>
+                      <button className="btn-ghost" style={{ fontSize: 12 }}>
+                        <Eye size={12} /> {t('portal2.tickets.view')}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      </div>
-
-      {/* Action Cards */}
-      <div className="max-w-7xl mx-auto mt-6 glass p-6 rounded-lg">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">快捷操作</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <button className="glass p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-200">
-            <Building2 size={32} className="text-blue-600 mb-3" />
-            <h3 className="font-bold text-gray-900 mb-2">提交新保单</h3>
-            <p className="text-sm text-gray-600">快速录入新保险申请</p>
-          </button>
-
-          <button className="glass p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-200">
-            <FileText size={32} className="text-green-600 mb-3" />
-            <h3 className="font-bold text-gray-900 mb-2">查询保单状态</h3>
-            <p className="text-sm text-gray-600">搜索并查看历史保单信息</p>
-          </button>
-
-          <button className="glass p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-200">
-            <Shield size={32} className="text-orange-600 mb-3" />
-            <h3 className="font-bold text-gray-900 mb-2">索赔申请</h3>
-            <p className="text-sm text-gray-600">提交和管理理赔请求</p>
-          </button>
-
-          <button className="glass p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-200">
-            <TrendingUp size={32} className="text-purple-600 mb-3" />
-            <h3 className="font-bold text-gray-900 mb-2">佣金报表</h3>
-            <p className="text-sm text-gray-600">导出月度佣金汇总数据</p>
-          </button>
-        </div>
-      </div>
-
-      {/* Help & Support */}
-      <div className="max-w-7xl mx-auto mt-6 glass p-6 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">需要帮助？</h3>
-            <p className="text-gray-600">联系平台支持团队获取 assistance</p>
-          </div>
-          <button className="btn-primary">
-            联系客服 →
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

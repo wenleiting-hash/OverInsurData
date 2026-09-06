@@ -799,7 +799,7 @@ export default function InsurerAnalyticsView({ navigateTo: _navigateTo }: Props)
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>保险公司数据分析</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>数据分析</h1>
           <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>业绩总览 · 产品分析 · 区域分析 · 渠道贡献 · 赔付率 · 续保率</p>
         </div>
         <div className="flex items-center gap-3">

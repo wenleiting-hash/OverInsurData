@@ -66,6 +66,7 @@ const stateData = [
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
 function OverviewTab() {
+  const { lang } = useLang()
   const totalPremium = byChannel.reduce((s, c) => s + c.premium, 0)
   const maxPremium = Math.max(...byChannel.map(c => c.premium))
   const maxBar = Math.max(...monthly.map(m => m.premium))
@@ -75,10 +76,10 @@ function OverviewTab() {
       {/* Top KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
         {[
-          { label: 'YTD总保费', v: fmt(totalPremium), delta: '+14.2%', up: true, color: C.primary },
-          { label: '活跃渠道数', v: String(byChannel.length), delta: '+2 YoY', up: true, color: C.green },
-          { label: '整体赔付率', v: '62.4%', delta: '-1.8pp', up: true, color: C.green },
-          { label: '渠道总佣金', v: '$1.73M', delta: '+11.6%', up: true, color: C.textSoft },
+          { label: lang === 'en' ? 'YTD Total Premium' : 'YTD总保费', v: fmt(totalPremium), delta: '+14.2%', up: true, color: C.primary },
+          { label: lang === 'en' ? 'Active Channels' : '活跃渠道数', v: String(byChannel.length), delta: '+2 YoY', up: true, color: C.green },
+          { label: lang === 'en' ? 'Overall Loss Ratio' : '整体赔付率', v: '62.4%', delta: '-1.8pp', up: true, color: C.green },
+          { label: lang === 'en' ? 'Total Channel Commission' : '渠道总佣金', v: '$1.73M', delta: '+11.6%', up: true, color: C.textSoft },
         ].map(k => (
           <GCard key={k.label} style={{ padding: '14px 16px' }}>
             <div style={{ fontSize: 10.5, color: C.mutedLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k.label}</div>
@@ -96,10 +97,10 @@ function OverviewTab() {
         {/* Monthly trend */}
         <GCard style={{ padding: '18px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>月度保费趋势 (单位: $M)</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{lang === 'en' ? 'Monthly Premium Trend (Unit: $M)' : '月度保费趋势 (单位: $M)'}</div>
             <div style={{ display: 'flex', gap: 12, fontSize: 11 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: C.primary }} /><span style={{ color: C.muted }}>保费</span></div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: `${C.green}88` }} /><span style={{ color: C.muted }}>佣金</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: C.primary }} /><span style={{ color: C.muted }}>{lang === 'en' ? 'Premium' : '保费'}</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: `${C.green}88` }} /><span style={{ color: C.muted }}>{lang === 'en' ? 'Commission' : '佣金'}</span></div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', height: 130 }}>
@@ -122,7 +123,7 @@ function OverviewTab() {
 
         {/* Line breakdown donut */}
         <GCard style={{ padding: '18px 18px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 14 }}>业务线分布</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 14 }}>{lang === 'en' ? 'Business Mix' : '业务线分布'}</div>
           {lineBreakdown.map((l, i) => (
             <div key={l.line} style={{ marginBottom: i < lineBreakdown.length - 1 ? 10 : 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
@@ -149,6 +150,7 @@ function OverviewTab() {
 // ─── Channel Analysis Tab ─────────────────────────────────────────────────────
 
 function ChannelAnalysisTab() {
+  const { lang } = useLang()
   const [sort, setSort] = useState<'premium' | 'growth' | 'lossRatio'>('premium')
   const sorted = [...byChannel].sort((a, b) => {
     if (sort === 'premium') return b.premium - a.premium
@@ -160,23 +162,26 @@ function ChannelAnalysisTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <span style={{ fontSize: 12.5, color: C.muted }}>排序方式</span>
+        <span style={{ fontSize: 12.5, color: C.muted }}>{lang === 'en' ? 'Sort by' : '排序方式'}</span>
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.4)', border: `0.5px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-          {([['premium','保费规模'],['growth','增速'],['lossRatio','赔付率']] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setSort(v)} style={{ padding: '5px 12px', fontSize: 12, fontWeight: sort === v ? 700 : 500, background: sort === v ? C.primary : 'transparent', color: sort === v ? '#fff' : C.textSoft, border: 'none', cursor: 'pointer' }}>{l}</button>
+          {([['premium','保费规模','Premium Volume'],['growth','增速','Growth Rate'],['lossRatio','赔付率','Loss Ratio']] as const).map(([v, zh, en]) => (
+            <button key={v} onClick={() => setSort(v)} style={{ padding: '5px 12px', fontSize: 12, fontWeight: sort === v ? 700 : 500, background: sort === v ? C.primary : 'transparent', color: sort === v ? '#fff' : C.textSoft, border: 'none', cursor: 'pointer' }}>{lang === 'en' ? en : zh}</button>
           ))}
         </div>
         <button style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.45)', border: `0.5px solid ${C.border}`, cursor: 'pointer', color: C.textSoft }}>
-          <Download size={12} />导出
+          <Download size={12} />{lang === 'en' ? 'Export' : '导出'}
         </button>
       </div>
 
       <GCard style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>渠道绩效对比分析</div>
+        <div style={{ padding: '10px 14px', borderBottom: `0.5px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>{lang === 'en' ? 'Channel Performance Comparison' : '渠道绩效对比分析'}</div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>{['渠道名称', '主业务线', 'YTD保费', '保费占比', '同比增长', '赔付率', '代理人数', ''].map(h => (
-              <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', background: 'rgba(236,237,249,0.5)', borderBottom: `0.5px solid ${C.borderMid}`, whiteSpace: 'nowrap' }}>{h}</th>
+            <tr>{(lang === 'en'
+              ? ['Channel', 'Primary LOB', 'YTD Premium', 'Premium Share', 'YoY Growth', 'Loss Ratio', 'Agents', '']
+              : ['渠道名称', '主业务线', 'YTD保费', '保费占比', '同比增长', '赔付率', '代理人数', '']
+            ).map((h, i) => (
+              <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', background: 'rgba(236,237,249,0.5)', borderBottom: `0.5px solid ${C.borderMid}`, whiteSpace: 'nowrap' }}>{h}</th>
             ))}</tr>
           </thead>
           <tbody>
@@ -211,7 +216,7 @@ function ChannelAnalysisTab() {
                 <td style={{ padding: '11px 12px', borderBottom: `0.5px solid ${C.border}`, ...mono, fontSize: 13, fontWeight: 700, color: C.textSoft }}>{c.agents}</td>
                 <td style={{ padding: '11px 12px', borderBottom: `0.5px solid ${C.border}` }}>
                   <button style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '4px 9px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: C.primaryLight, color: C.primary, border: `0.5px solid ${C.primaryBorder}`, cursor: 'pointer' }}>
-                    详情 <ChevronRight size={11} />
+                    {lang === 'en' ? 'Details' : '详情'} <ChevronRight size={11} />
                   </button>
                 </td>
               </tr>
@@ -226,6 +231,7 @@ function ChannelAnalysisTab() {
 // ─── Geographic Tab ───────────────────────────────────────────────────────────
 
 function GeoTab() {
+  const { lang } = useLang()
   const maxPremium = Math.max(...stateData.map(s => s.premium))
 
   return (
@@ -233,8 +239,8 @@ function GeoTab() {
       <GCard style={{ padding: '16px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
           <Map size={14} color={C.primary} />
-          <span style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>地域分布热力图</span>
-          <span style={{ fontSize: 11.5, color: C.muted, marginLeft: 4 }}>— 按州/地区</span>
+          <span style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>{lang === 'en' ? 'Geographic Heatmap' : '地域分布热力图'}</span>
+          <span style={{ fontSize: 11.5, color: C.muted, marginLeft: 4 }}>{lang === 'en' ? '— By State / Region' : '— 按州/地区'}</span>
         </div>
 
         {/* Heat bars */}
@@ -248,7 +254,7 @@ function GeoTab() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12, minWidth: 120, justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: 12, color: C.muted }}>{s.agents} 代理人</span>
+                <span style={{ fontSize: 12, color: C.muted }}>{s.agents} {lang === 'en' ? (s.agents === 1 ? 'agent' : 'agents') : '代理人'}</span>
                 <span style={{ ...mono, fontSize: 12, fontWeight: 800, color: s.growth >= 0.15 ? C.green : s.growth < 0 ? C.red : C.amber }}>
                   {s.growth >= 0 ? '+' : ''}{(s.growth * 100).toFixed(0)}%
                 </span>
@@ -260,9 +266,9 @@ function GeoTab() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
         {[
-          { label: '覆盖州数', v: stateData.length, sub: '全国布局' },
-          { label: '最大市场', v: 'CA', sub: '$5.80M · 最高保费' },
-          { label: '增长最快', v: 'CO', sub: '+31% YoY' },
+          { label: lang === 'en' ? 'States Covered' : '覆盖州数', v: stateData.length, sub: lang === 'en' ? 'Nationwide' : '全国布局' },
+          { label: lang === 'en' ? 'Largest Market' : '最大市场', v: 'CA', sub: lang === 'en' ? '$5.80M · Highest Premium' : '$5.80M · 最高保费' },
+          { label: lang === 'en' ? 'Fastest Growing' : '增长最快', v: 'CO', sub: '+31% YoY' },
         ].map(k => (
           <GCard key={k.label} style={{ padding: '14px 16px', textAlign: 'center' as const }}>
             <div style={{ fontSize: 10.5, color: C.mutedLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k.label}</div>

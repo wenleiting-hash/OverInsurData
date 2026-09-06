@@ -6,8 +6,10 @@ import type { ViewId } from '@/App';
 export type Role = {
   id: string;
   name: string;
+  nameEn?: string;
   code: string;
   description?: string;
+  descriptionEn?: string;
   permissions: Record<string, boolean>; // 🔴 todo: complex permission structure later
   createdAt: string;
 };
@@ -18,40 +20,50 @@ interface Props {
 
 // Mock data (临时数据源)
 const mockRoles: Role[] = [
-  { 
-    id: 'r1', 
-    name: '超级管理员', 
-    code: 'super_admin', 
+  {
+    id: 'r1',
+    name: '超级管理员',
+    nameEn: 'Super Admin',
+    code: 'super_admin',
     description: '拥有所有权限',
+    descriptionEn: 'Has all permissions',
     permissions: { all: true },
     createdAt: '2026-01-01T00:00:00Z'
   },
-  { 
-    id: 'r2', 
-    name: '普通管理员', 
-    code: 'admin', 
+  {
+    id: 'r2',
+    name: '普通管理员',
+    nameEn: 'General Admin',
+    code: 'admin',
     description: '常规管理权限',
+    descriptionEn: 'Standard management permissions',
     permissions: { users: false, roles: false }, // 🔴 todo: complex permission structure later
     createdAt: '2026-01-02T00:00:00Z'
   },
-  { 
-    id: 'r3', 
-    name: '只读用户', 
-    code: 'viewer', 
+  {
+    id: 'r3',
+    name: '只读用户',
+    nameEn: 'Read-only User',
+    code: 'viewer',
     description: '仅查看权限',
+    descriptionEn: 'View-only permissions',
     permissions: { all: false },
     createdAt: '2026-01-03T00:00:00Z'
   },
 ];
 
 export default function RoleListView({ navigateTo }: Props) {
-  const { t } = useTranslation('permission');
+  const { t, i18n } = useTranslation('permission');
   const [searchTerm, setSearchTerm] = useState('');
+  const isEn = i18n.language?.startsWith?.('en') ?? false;
 
   const filteredRoles = mockRoles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (role.nameEn ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     role.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const roleName = (role: Role) => (isEn ? role.nameEn ?? role.name : role.name);
+  const roleDesc = (role: Role) => (isEn ? role.descriptionEn ?? role.description : role.description);
 
   return (
     <div className="p-6">
@@ -73,7 +85,7 @@ export default function RoleListView({ navigateTo }: Props) {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="搜索角色名称或编码..."
+            placeholder={t('searchRolePlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -97,16 +109,16 @@ export default function RoleListView({ navigateTo }: Props) {
             {filteredRoles.map(role => (
               <tr key={role.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="font-medium text-gray-900">{role.name}</div>
+                  <div className="font-medium text-gray-900">{roleName(role)}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                   {role.code}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {role.description || '-'}
+                  {roleDesc(role) || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {new Date(role.createdAt).toLocaleDateString('zh-CN')}
+                  {new Date(role.createdAt).toLocaleDateString(i18n.language === 'zh-CN' ? 'zh-CN' : 'en-US')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   <div className="flex justify-end gap-2">
@@ -118,7 +130,7 @@ export default function RoleListView({ navigateTo }: Props) {
                     </button>
                     <button 
                       className="text-red-600 hover:text-red-800"
-                      onClick={() => alert(`Delete role: ${role.name}`)}
+                      onClick={() => alert(`Delete role: ${roleName(role)}`)}
                     >
                       <Trash2 size={18} />
                     </button>

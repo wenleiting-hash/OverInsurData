@@ -1,0 +1,67 @@
+{
+  "page": {
+    "title": "NIPR 牌照查询",
+    "subtitle": "查询渠道商/代理人 NIPR 牌照状态与有效性",
+    "back": "返回合规模块主页"
+  },
+  "ceReminder": {
+    "title": "CE 学时提醒",
+    "message": "部分州要求保险代理人完成继续教育（Continuing Education）学时才能维持牌照有效性。请密切关注渠道的 CE 完成情况。"
+  },
+  "search": {
+    "label": "查询关键词",
+    "placeholder": "输入渠道名称、NPN 号或牌照号码...",
+    "hint": "提示：同时搜索渠道名称、NPN 号码和州牌照号",
+    "empty": "请输入渠道名称、NPN 或牌照号码进行查询"
+  },
+  "verify": {
+    "connecting": "正在连接 NIPR API...",
+    "success": "成功! NPN {npn} 在 {state} 州已验证为有效状态",
+    "button": "NIPR 验证",
+    "verifying": "验证中...",
+    "toastSuccess": "NIPR 验证 成功",
+    "toastFailure": "NIPR 验证 失败"
+  },
+  "residency": "Residency",
+  "columns": {
+    "channel": "渠道商",
+    "npn": "NPN 号码",
+    "license": "牌照信息",
+    "lines": "业务线",
+    "status": "状态 & 到期",
+    "verification": "验证状态",
+    "ce": "CE 学时",
+    "actions": "操作"
+  },
+  "status": {
+    "active": "有效",
+    "inactive": "非活动",
+    "expired": "已过期",
+    "suspended": "已暂停",
+    "pending": "审核中",
+    "cancelled": "已取消"
+  },
+  "verificationStatus": {
+    "verified": "已验证 ✓",
+    "mismatch": "数据不匹配 ✗",
+    "notFound": "未找到",
+    "pending": "待验证"
+  },
+  "expiry": {
+    "label": "到期:",
+    "days": "天",
+    "expiringSoon": "即将到期"
+  },
+  "lastVerified": "最后验证:",
+  "ce": {
+    "completed": "✓ 已完成",
+    "notCompleted": "× 未完成"
+  },
+  "summary": {
+    "total": "总计牌照",
+    "active": "有效期数",
+    "expiredOrSuspended": "已过期/暂停",
+    "ceIncomplete": "CE 未完成"
+  },
+  "emptyState": "没有找到匹配的牌照记录"
+}

@@ -7,6 +7,7 @@ import {
   ToggleLeft, ToggleRight, Info,
 } from 'lucide-react'
 import type { ViewId } from '../components/Sidebar'
+import { useLang, type T } from '../i18n'
 import {
   appointmentRecords,
   niprLicenses,
@@ -14,43 +15,103 @@ import {
   complianceRules,
   ofacScreenings,
   complianceReports,
-  REPORT_TYPE_LABEL,
   type OFACResult,
 } from '../data/appointmentComplianceData'
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
-const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  approved:       { bg: 'rgba(52,199,89,0.12)',  color: '#1E8033', label: '已批准' },
-  pending:        { bg: 'rgba(255,159,10,0.12)', color: '#B06000', label: '待审核' },
-  rejected:       { bg: 'rgba(255,59,48,0.12)',  color: '#C0392B', label: '已拒绝' },
-  expired:        { bg: 'rgba(180,180,180,0.15)', color: '#666',  label: '已过期' },
-  terminated:     { bg: 'rgba(130,80,255,0.12)', color: '#7B3FCA', label: '已终止' },
-  'under-review': { bg: 'rgba(0,122,255,0.12)',  color: '#005DC7', label: '审核中' },
+const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  approved:       { bg: 'rgba(52,199,89,0.12)',  color: '#1E8033' },
+  pending:        { bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
+  rejected:       { bg: 'rgba(255,59,48,0.12)',  color: '#C0392B' },
+  expired:        { bg: 'rgba(180,180,180,0.15)', color: '#666' },
+  terminated:     { bg: 'rgba(130,80,255,0.12)', color: '#7B3FCA' },
+  'under-review': { bg: 'rgba(0,122,255,0.12)',  color: '#005DC7' },
 }
 
-const LIC_STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  active:    { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033', label: '有效' },
-  inactive:  { bg: 'rgba(180,180,180,0.15)', color: '#666',   label: '未激活' },
-  expired:   { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', label: '已过期' },
-  suspended: { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', label: '已暂停' },
-  pending:   { bg: 'rgba(255,159,10,0.12)',  color: '#B06000', label: '待处理' },
-  cancelled: { bg: 'rgba(180,180,180,0.15)', color: '#666',   label: '已注销' },
+const LIC_STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  active:    { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033' },
+  inactive:  { bg: 'rgba(180,180,180,0.15)', color: '#666' },
+  expired:   { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B' },
+  suspended: { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B' },
+  pending:   { bg: 'rgba(255,159,10,0.12)',  color: '#B06000' },
+  cancelled: { bg: 'rgba(180,180,180,0.15)', color: '#666' },
 }
 
-const RESULT_STYLE: Record<string, { bg: string; color: string; label: string; icon: React.ReactNode }> = {
-  blocked:         { bg: 'rgba(255,59,48,0.12)',  color: '#C0392B', label: '已拦截',  icon: <XOctagon size={13} /> },
-  warned:          { bg: 'rgba(255,159,10,0.12)', color: '#B06000', label: '已警告',  icon: <AlertTriangle size={13} /> },
-  passed:          { bg: 'rgba(52,199,89,0.12)',  color: '#1E8033', label: '已通过',  icon: <CheckCircle2 size={13} /> },
-  'manual-review': { bg: 'rgba(0,122,255,0.12)', color: '#005DC7', label: '人工审核', icon: <Eye size={13} /> },
+const RESULT_STYLE: Record<string, { bg: string; color: string; icon: React.ReactNode }> = {
+  blocked:         { bg: 'rgba(255,59,48,0.12)',  color: '#C0392B', icon: <XOctagon size={13} /> },
+  warned:          { bg: 'rgba(255,159,10,0.12)', color: '#B06000', icon: <AlertTriangle size={13} /> },
+  passed:          { bg: 'rgba(52,199,89,0.12)',  color: '#1E8033', icon: <CheckCircle2 size={13} /> },
+  'manual-review': { bg: 'rgba(0,122,255,0.12)', color: '#005DC7', icon: <Eye size={13} /> },
 }
 
-const OFAC_STYLE: Record<OFACResult, { bg: string; color: string; label: string }> = {
-  clear:     { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033', label: '清单无记录' },
-  watchlist: { bg: 'rgba(255,159,10,0.12)',  color: '#B06000', label: '疑似匹配'   },
-  blocked:   { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', label: '已拦截'     },
-  pending:   { bg: 'rgba(180,180,180,0.15)', color: '#666',    label: '筛查中'     },
+const OFAC_STYLE: Record<OFACResult, { bg: string; color: string }> = {
+  clear:     { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033' },
+  watchlist: { bg: 'rgba(255,159,10,0.12)',  color: '#B06000' },
+  blocked:   { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B' },
+  pending:   { bg: 'rgba(180,180,180,0.15)', color: '#666' },
 }
+
+const statusLabel = (t: T, s: string): string => ({
+  approved: t.aptStatusApproved,
+  pending: t.aptStatusPending,
+  rejected: t.aptStatusRejected,
+  expired: t.aptStatusExpired,
+  terminated: t.aptStatusTerminated,
+  'under-review': t.aptStatusUnderReview,
+} as Record<string, string>)[s]
+
+const licStatusLabel = (t: T, s: string): string => ({
+  active: t.aptLicActive,
+  inactive: t.aptLicInactive,
+  expired: t.aptLicExpired,
+  suspended: t.aptLicSuspended,
+  pending: t.aptLicPending,
+  cancelled: t.aptLicCancelled,
+} as Record<string, string>)[s]
+
+const resultLabel = (t: T, s: string): string => ({
+  blocked: t.aptResultBlocked,
+  warned: t.aptResultWarned,
+  passed: t.aptResultPassed,
+  'manual-review': t.aptResultManualReview,
+} as Record<string, string>)[s]
+
+const ofacLabel = (t: T, s: OFACResult): string => ({
+  clear: t.aptOfacClear,
+  watchlist: t.aptOfacWatchlist,
+  blocked: t.aptResultBlocked,
+  pending: t.aptOfacPending,
+} as Record<OFACResult, string>)[s]
+
+const licVerifyLabel = (t: T, vs: string): string => ({
+  verified: t.aptVerVerified,
+  mismatch: t.aptVerMismatch,
+  'not-found': t.aptVerNotFound,
+  pending: t.aptVerPending,
+} as Record<string, string>)[vs]
+
+const REPORT_TYPES = ['appointment-status', 'license-compliance', 'ofac-summary', 'interception-log', 'renewal-calendar', 'regulatory-filing'] as const
+
+const reportTypeLabel = (t: T, type: string): string => ({
+  'appointment-status': t.aptRptTypeAppointment,
+  'license-compliance': t.aptRptTypeLicense,
+  'ofac-summary': t.aptRptTypeOfac,
+  'interception-log': t.aptRptTypeIntercept,
+  'renewal-calendar': t.aptRptTypeRenewal,
+  'regulatory-filing': t.aptRptTypeRegulatory,
+} as Record<string, string>)[type]
+
+// Date + type metadata for the event feed; text lives in the dictionary (aptTimeline).
+const TIMELINE_META: { date: string; type: string }[] = [
+  { date: '2026-08-22', type: 'block' },
+  { date: '2026-08-22', type: 'submit' },
+  { date: '2026-08-10', type: 'submit' },
+  { date: '2026-08-01', type: 'review' },
+  { date: '2026-07-20', type: 'submit' },
+  { date: '2026-07-14', type: 'expire' },
+  { date: '2026-06-01', type: 'reject' },
+]
 
 function Badge({ bg, color, children }: { bg: string; color: string; children: React.ReactNode }) {
   return (
@@ -68,10 +129,11 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
   )
 }
 
-// ── Tab 1 — Appointment 申请 ───────────────────────────────────────────────────
+// ── Tab 1 — Applications ───────────────────────────────────────────────────────
 
 
 function AppointmentApplicationTab({ navigateTo }: { navigateTo: (view: ViewId) => void }) {
+  const { t } = useLang()
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
 
@@ -92,10 +154,10 @@ function AppointmentApplicationTab({ navigateTo }: { navigateTo: (view: ViewId) 
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: '总 Appointment 数', value: counts.all, color: '#0058BC', bg: 'rgba(0,88,188,0.08)' },
-          { label: '已批准', value: counts.approved, color: '#1E8033', bg: 'rgba(52,199,89,0.08)' },
-          { label: '待审核 / 审核中', value: counts.pending + counts['under-review'], color: '#B06000', bg: 'rgba(255,159,10,0.08)' },
-          { label: '近 30 天到期', value: appointmentRecords.filter(r => r.daysToExpiry >= 0 && r.daysToExpiry <= 30).length, color: '#C0392B', bg: 'rgba(255,59,48,0.08)' },
+          { label: t.aptKpiTotal, value: counts.all, color: '#0058BC', bg: 'rgba(0,88,188,0.08)' },
+          { label: t.aptStatusApproved, value: counts.approved, color: '#1E8033', bg: 'rgba(52,199,89,0.08)' },
+          { label: t.aptKpiPendingReview, value: counts.pending + counts['under-review'], color: '#B06000', bg: 'rgba(255,159,10,0.08)' },
+          { label: t.aptKpiExpiring30, value: appointmentRecords.filter(r => r.daysToExpiry >= 0 && r.daysToExpiry <= 30).length, color: '#C0392B', bg: 'rgba(255,59,48,0.08)' },
         ].map(s => (
           <Card key={s.label} style={{ background: s.bg, border: `1px solid ${s.color}22` }}>
             <div style={{ fontSize: 11, color: '#717786', fontWeight: 500, marginBottom: 6 }}>{s.label}</div>
@@ -108,17 +170,17 @@ function AppointmentApplicationTab({ navigateTo }: { navigateTo: (view: ViewId) 
         <div className="flex items-center gap-2">
           {(['all', 'approved', 'pending', 'under-review', 'expired', 'rejected', 'terminated'] as const).map(s => (
             <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: statusFilter === s ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: statusFilter === s ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: statusFilter === s ? '#0058BC' : '#717786', cursor: 'pointer' }}>
-              {s === 'all' ? `全部 (${counts.all})` : (STATUS_STYLE[s]?.label ?? s)}
+              {s === 'all' ? t.aptFilterAll(counts.all) : (statusLabel(t, s) || s)}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索渠道、保险公司、州…" className="input-glass" style={{ paddingLeft: 30, width: 220, fontSize: 12.5 }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.aptSearchAppointments} className="input-glass" style={{ paddingLeft: 30, width: 220, fontSize: 12.5 }} />
           </div>
           <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => navigateTo('appointment-new')}>
-            <Plus size={14} /> 新建申请
+            <Plus size={14} /> {t.aptBtnNew}
           </button>
         </div>
       </div>
@@ -127,7 +189,7 @@ function AppointmentApplicationTab({ navigateTo }: { navigateTo: (view: ViewId) 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['渠道商', '保险公司', '州 / 业务线', '状态', '提交日期', '批准日期', '到期日', '操作'].map(h => (
+              {[t.aptColChannel, t.aptColInsurer, t.aptColStateLine, t.aptColStatus, t.aptColSubmitted, t.aptColApproved, t.aptColExpiry, t.aptColActions].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -136,9 +198,9 @@ function AppointmentApplicationTab({ navigateTo }: { navigateTo: (view: ViewId) 
             {filtered.map((r, i) => {
               const st = STATUS_STYLE[r.status]
               const daysLabel = r.daysToExpiry < 0
-                ? <span style={{ color: '#C0392B', fontSize: 11, fontWeight: 600 }}>已过期 {Math.abs(r.daysToExpiry)}d</span>
+                ? <span style={{ color: '#C0392B', fontSize: 11, fontWeight: 600 }}>{t.aptExpiredDays(Math.abs(r.daysToExpiry))}</span>
                 : r.daysToExpiry <= 30
-                ? <span style={{ color: '#B06000', fontSize: 11, fontWeight: 600 }}>{r.daysToExpiry}d 后到期</span>
+                ? <span style={{ color: '#B06000', fontSize: 11, fontWeight: 600 }}>{t.aptExpiresInDays(r.daysToExpiry)}</span>
                 : <span style={{ fontSize: 11, color: '#717786' }}>{r.expiryDate}</span>
               return (
                 <tr key={r.id} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
@@ -153,17 +215,17 @@ function AppointmentApplicationTab({ navigateTo }: { navigateTo: (view: ViewId) 
                     <span style={{ fontSize: 12, color: '#555' }}>{r.line}</span>
                   </td>
                   <td style={{ padding: '10px 14px' }}>
-                    <Badge bg={st.bg} color={st.color}>{st.label}</Badge>
+                    <Badge bg={st.bg} color={st.color}>{statusLabel(t, r.status)}</Badge>
                   </td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#555', fontFamily: "'JetBrains Mono', monospace" }}>{r.submittedDate}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: r.approvedDate ? '#555' : '#C1C6D7', fontFamily: "'JetBrains Mono', monospace" }}>{r.approvedDate || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>{r.expiryDate ? daysLabel : <span style={{ color: '#C1C6D7' }}>—</span>}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <div className="flex items-center gap-1">
-                      <button className="btn-ghost" style={{ padding: 5 }} title="查看详情"><Eye size={13} /></button>
-                      {r.status === 'approved' && <button className="btn-ghost" style={{ padding: 5 }} title="申请续期"><RefreshCw size={13} /></button>}
-                      {r.status === 'approved' && <button className="btn-ghost" style={{ padding: 5, color: '#C0392B' }} title="申请终止"><XCircle size={13} /></button>}
-                      {r.status === 'rejected' && <button className="btn-ghost" style={{ padding: 5 }} title="重新申请"><Send size={13} /></button>}
+                      <button className="btn-ghost" style={{ padding: 5 }} title={t.aptActView}><Eye size={13} /></button>
+                      {r.status === 'approved' && <button className="btn-ghost" style={{ padding: 5 }} title={t.aptActRenew}><RefreshCw size={13} /></button>}
+                      {r.status === 'approved' && <button className="btn-ghost" style={{ padding: 5, color: '#C0392B' }} title={t.aptActTerminate}><XCircle size={13} /></button>}
+                      {r.status === 'rejected' && <button className="btn-ghost" style={{ padding: 5 }} title={t.aptActReapply}><Send size={13} /></button>}
                     </div>
                   </td>
                 </tr>
@@ -176,19 +238,12 @@ function AppointmentApplicationTab({ navigateTo }: { navigateTo: (view: ViewId) 
   )
 }
 
-// ── Tab 2 — 状态跟踪 ──────────────────────────────────────────────────────────
+// ── Tab 2 — Status Tracking ────────────────────────────────────────────────────
 
 function StatusTrackingTab() {
+  const { t } = useLang()
   const pending = appointmentRecords.filter(r => r.status === 'pending' || r.status === 'under-review')
-  const timeline = [
-    { date: '2026-08-22', event: 'QT-2026-088421 出单被拦截', type: 'block', detail: 'Northeast Professional — Hartford CT Commercial — Appointment 已过期' },
-    { date: '2026-08-22', event: 'ap8 Southwest Insurance Network 提交 Zurich AZ Commercial Appointment', type: 'submit', detail: '申请已发至 NIPR，等待州保险局受理' },
-    { date: '2026-08-10', event: 'ap8 申请提交', type: 'submit', detail: '渠道 Lisa Wang 提交，系统自动预填 NPN' },
-    { date: '2026-08-01', event: 'ap5 AIG FL Professional 进入人工审核', type: 'review', detail: '保险公司内部合规审查，预计 5 工作日' },
-    { date: '2026-07-20', event: 'ap4 Liberty Mutual NY Auto 申请提交', type: 'submit', detail: '待 NIPR 受理确认' },
-    { date: '2026-07-14', event: 'ap6 Hartford CT Commercial Appointment 到期', type: 'expire', detail: '渠道 Northeast Professional — 60 天前已发送到期提醒，未完成续期' },
-    { date: '2026-06-01', event: 'ap10 Travelers CA Auto WA 申请被拒', type: 'reject', detail: 'WA 州牌照未激活' },
-  ]
+  const timeline = TIMELINE_META.map((m, i) => ({ date: m.date, type: m.type, event: t.aptTimeline[i].event, detail: t.aptTimeline[i].detail }))
   const typeStyle: Record<string, { color: string }> = {
     submit: { color: '#0058BC' }, review: { color: '#B06000' }, block: { color: '#C0392B' }, expire: { color: '#666' }, reject: { color: '#C0392B' }, approve: { color: '#1E8033' },
   }
@@ -196,7 +251,7 @@ function StatusTrackingTab() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20 }}>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>处理中的 Appointment ({pending.length})</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{t.aptInFlight(pending.length)}</div>
         <div className="flex flex-col gap-3">
           {pending.map(r => (
             <Card key={r.id} style={{ padding: '14px 16px' }}>
@@ -205,16 +260,16 @@ function StatusTrackingTab() {
                   <div style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{r.channelName}</div>
                   <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>{r.insurerShort} · {r.state} · {r.line}</div>
                 </div>
-                <Badge bg={STATUS_STYLE[r.status].bg} color={STATUS_STYLE[r.status].color}>{STATUS_STYLE[r.status].label}</Badge>
+                <Badge bg={STATUS_STYLE[r.status].bg} color={STATUS_STYLE[r.status].color}>{statusLabel(t, r.status)}</Badge>
               </div>
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(193,198,215,0.3)', display: 'flex', gap: 16, fontSize: 12 }}>
-                <div><span style={{ color: '#717786' }}>提交日期：</span><span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{r.submittedDate}</span></div>
-                <div><span style={{ color: '#717786' }}>提交人：</span>{r.submittedBy}</div>
-                <div><span style={{ color: '#717786' }}>NIPR ID：</span><span style={{ fontFamily: "'JetBrains Mono', monospace", color: r.niprTransactionId ? '#0058BC' : '#C1C6D7' }}>{r.niprTransactionId || '待分配'}</span></div>
+                <div><span style={{ color: '#717786' }}>{t.aptSubmittedLabel}</span><span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{r.submittedDate}</span></div>
+                <div><span style={{ color: '#717786' }}>{t.aptSubmitterLabel}</span>{r.submittedBy}</div>
+                <div><span style={{ color: '#717786' }}>{t.aptNiprIdLabel}</span><span style={{ fontFamily: "'JetBrains Mono', monospace", color: r.niprTransactionId ? '#0058BC' : '#C1C6D7' }}>{r.niprTransactionId || t.aptNiprUnassigned}</span></div>
               </div>
               <div style={{ marginTop: 10 }}>
                 <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                  {['NIPR 提交', '州保险局受理', '保险公司审核', '完成'].map((s, idx) => (
+                  {[t.aptStageNiprSubmitted, t.aptStageStateAccepted, t.aptStageCarrierReview, t.aptStageComplete].map((s, idx) => (
                     <div key={idx} style={{ display: 'flex', alignItems: 'center', flex: idx < 3 ? 1 : undefined }}>
                       <div style={{ width: 18, height: 18, borderRadius: '50%', background: idx < 1 ? '#0058BC' : 'rgba(193,198,215,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {idx < 1 ? <CheckCircle2 size={11} color="#fff" /> : <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(193,198,215,0.8)' }} />}
@@ -231,7 +286,7 @@ function StatusTrackingTab() {
       </div>
 
       <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>最近事件流</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 12 }}>{t.aptRecentEvents}</div>
         <Card style={{ padding: '16px' }}>
           <div className="flex flex-col">
             {timeline.map((ev, i) => {
@@ -257,9 +312,10 @@ function StatusTrackingTab() {
   )
 }
 
-// ── Tab 3 — 续期与终止 ───────────────────────────────────────────────────────
+// ── Tab 3 — Renewals & Termination ────────────────────────────────────────────
 
 function RenewalTerminationTab() {
+  const { t } = useLang()
   const [subTab, setSubTab] = useState<'renewal' | 'termination'>('renewal')
   const [terminateId, setTerminateId] = useState<string | null>(null)
   const [renewStep, setRenewStep] = useState(false)
@@ -270,7 +326,7 @@ function RenewalTerminationTab() {
   return (
     <div>
       <div className="tab-bar mb-5">
-        {([['renewal', '续期管理'], ['termination', '终止管理']] as const).map(([v, l]) => (
+        {([['renewal', t.aptSubTabRenewal], ['termination', t.aptSubTabTermination]] as const).map(([v, l]) => (
           <div key={v} className={`tab-item${subTab === v ? ' active' : ''}`} onClick={() => setSubTab(v)}>{l}</div>
         ))}
       </div>
@@ -279,9 +335,9 @@ function RenewalTerminationTab() {
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 18 }}>
             {[
-              { label: '待续期（60天内）', value: renewalDue.filter(r => r.daysToExpiry <= 60).length, color: '#C0392B' },
-              { label: '即将到期（60–90天）', value: renewalDue.filter(r => r.daysToExpiry > 60 && r.daysToExpiry <= 90).length, color: '#B06000' },
-              { label: '续期中', value: appointmentRecords.filter(r => r.renewalStatus === 'in-progress').length, color: '#0058BC' },
+              { label: t.aptRenewDue60, value: renewalDue.filter(r => r.daysToExpiry <= 60).length, color: '#C0392B' },
+              { label: t.aptRenewDue90, value: renewalDue.filter(r => r.daysToExpiry > 60 && r.daysToExpiry <= 90).length, color: '#B06000' },
+              { label: t.aptRenewInProgressKpi, value: appointmentRecords.filter(r => r.renewalStatus === 'in-progress').length, color: '#0058BC' },
             ].map(s => (
               <Card key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 28, fontWeight: 700, color: s.color, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
@@ -301,12 +357,12 @@ function RenewalTerminationTab() {
                         <span style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{r.channelName}</span>
                         <span style={{ fontSize: 12, color: '#717786' }}>· {r.insurerShort} · {r.state} · {r.line}</span>
                       </div>
-                      <div style={{ fontSize: 12, color: '#717786', marginTop: 4, paddingLeft: 20 }}>到期日：<span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#181C23' }}>{r.expiryDate}</span> · 还剩 <span style={{ fontWeight: 700, color: urgency.dot }}>{r.daysToExpiry} 天</span></div>
+                      <div style={{ fontSize: 12, color: '#717786', marginTop: 4, paddingLeft: 20 }}>{t.aptExpiryLabel}<span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#181C23' }}>{r.expiryDate}</span> · {t.aptDaysRemainingPrefix} <span style={{ fontWeight: 700, color: urgency.dot }}>{r.daysToExpiry} {t.aptDaysUnit}</span></div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {r.renewalStatus === 'in-progress' && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">续期进行中</Badge>}
+                      {r.renewalStatus === 'in-progress' && <Badge bg="rgba(0,88,188,0.1)" color="#0058BC">{t.aptRenewalInProgress}</Badge>}
                       <button onClick={() => setRenewStep(true)} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>
-                        {r.renewalStatus === 'in-progress' ? '查看进度' : '发起续期'}
+                        {r.renewalStatus === 'in-progress' ? t.aptBtnViewProgress : t.aptBtnStartRenewal}
                       </button>
                     </div>
                   </div>
@@ -320,14 +376,14 @@ function RenewalTerminationTab() {
       {subTab === 'termination' && (
         <div>
           <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.2)', fontSize: 12.5, color: '#7A2020', marginBottom: 16 }}>
-            <div className="flex items-center gap-1.5" style={{ fontWeight: 600, marginBottom: 2 }}><AlertTriangle size={13} /> 终止前须知</div>
-            终止 Appointment 后，渠道将无法在对应州/业务线为该保险公司出单。终止操作将通过 NIPR 向监管机构报告，不可撤销。
+            <div className="flex items-center gap-1.5" style={{ fontWeight: 600, marginBottom: 2 }}><AlertTriangle size={13} /> {t.aptTermNoticeTitle}</div>
+            {t.aptTermNoticeBody}
           </div>
           <Card style={{ padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-                  {['渠道商', '保险公司', '州 / 业务线', '批准日期', '到期日', '操作'].map(h => (
+                  {[t.aptColChannel, t.aptColInsurer, t.aptColStateLine, t.aptColApproved, t.aptColExpiry, t.aptColActions].map(h => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786' }}>{h}</th>
                   ))}
                 </tr>
@@ -348,7 +404,7 @@ function RenewalTerminationTab() {
                     <td style={{ padding: '10px 14px', fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{r.approvedDate}</td>
                     <td style={{ padding: '10px 14px', fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{r.expiryDate}</td>
                     <td style={{ padding: '10px 14px' }}>
-                      <button onClick={() => setTerminateId(r.id)} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(255,59,48,0.1)', color: '#C0392B', border: '1px solid rgba(255,59,48,0.25)', cursor: 'pointer' }}>申请终止</button>
+                      <button onClick={() => setTerminateId(r.id)} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(255,59,48,0.1)', color: '#C0392B', border: '1px solid rgba(255,59,48,0.25)', cursor: 'pointer' }}>{t.aptActTerminate}</button>
                     </td>
                   </tr>
                 ))}
@@ -361,16 +417,16 @@ function RenewalTerminationTab() {
       {terminateId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(24,28,35,0.55)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="glass-strong" style={{ borderRadius: 18, width: 480, padding: '28px 30px' }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>确认终止 Appointment</h3>
-            <p style={{ fontSize: 13, color: '#717786', marginBottom: 20 }}>此操作不可逆。请选择终止原因：</p>
-            {['渠道主动申请终止', '监管要求终止', '保险公司要求终止', '渠道违规处理', '其他原因'].map(reason => (
+            <h3 style={{ fontSize: 17, fontWeight: 700, color: '#181C23', marginBottom: 8 }}>{t.aptTermModalTitle}</h3>
+            <p style={{ fontSize: 13, color: '#717786', marginBottom: 20 }}>{t.aptTermModalDesc}</p>
+            {[t.aptTermReasonChannel, t.aptTermReasonRegulator, t.aptTermReasonCarrier, t.aptTermReasonViolation, t.aptTermReasonOther].map(reason => (
               <label key={reason} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', cursor: 'pointer', fontSize: 13, color: '#181C23' }}>
                 <input type="radio" name="term-reason" />{reason}
               </label>
             ))}
             <div className="flex justify-end gap-2 mt-6">
-              <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => setTerminateId(null)}>取消</button>
-              <button onClick={() => setTerminateId(null)} style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#C0392B', color: '#fff', border: 'none', cursor: 'pointer' }}>确认终止</button>
+              <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => setTerminateId(null)}>{t.aptCancel}</button>
+              <button onClick={() => setTerminateId(null)} style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#C0392B', color: '#fff', border: 'none', cursor: 'pointer' }}>{t.aptTermConfirm}</button>
             </div>
           </div>
         </div>
@@ -379,16 +435,16 @@ function RenewalTerminationTab() {
       {renewStep && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(24,28,35,0.55)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="glass-strong" style={{ borderRadius: 18, width: 480, padding: '28px 30px' }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>发起 Appointment 续期</h3>
-            <div style={{ fontSize: 13, color: '#717786', marginBottom: 16 }}>系统将通过 NIPR 自动提交续期申请，请确认续期周期：</div>
-            {['续期 1 年', '续期 2 年', '续期至牌照到期日'].map(period => (
+            <h3 style={{ fontSize: 17, fontWeight: 700, color: '#181C23', marginBottom: 16 }}>{t.aptRenewModalTitle}</h3>
+            <div style={{ fontSize: 13, color: '#717786', marginBottom: 16 }}>{t.aptRenewModalDesc}</div>
+            {[t.aptRenew1yr, t.aptRenew2yr, t.aptRenewUntilLicense].map(period => (
               <label key={period} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', cursor: 'pointer', fontSize: 13, color: '#181C23' }}>
                 <input type="radio" name="renew-period" />{period}
               </label>
             ))}
             <div className="flex justify-end gap-2 mt-6">
-              <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => setRenewStep(false)}>取消</button>
-              <button onClick={() => setRenewStep(false)} style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>提交续期申请</button>
+              <button className="btn-ghost" style={{ padding: '8px 18px' }} onClick={() => setRenewStep(false)}>{t.aptCancel}</button>
+              <button onClick={() => setRenewStep(false)} style={{ padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>{t.aptRenewSubmit}</button>
             </div>
           </div>
         </div>
@@ -397,9 +453,10 @@ function RenewalTerminationTab() {
   )
 }
 
-// ── Tab 4 — NIPR 牌照管理 ─────────────────────────────────────────────────────
+// ── Tab 4 — NIPR Licenses ──────────────────────────────────────────────────────
 
 function NIRPLicenseTab() {
+  const { t } = useLang()
   const [search, setSearch] = useState('')
   const [verifying, setVerifying] = useState<string | null>(null)
   const [verified, setVerified] = useState<string[]>([])
@@ -424,17 +481,17 @@ function NIRPLicenseTab() {
           {expired.length > 0 && (
             <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.25)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
               <AlertTriangle size={15} color="#C0392B" />
-              <span style={{ color: '#7A2020', fontWeight: 600 }}>{expired.length} 个牌照已过期</span>
+              <span style={{ color: '#7A2020', fontWeight: 600 }}>{t.aptExpiredLicenses(expired.length)}</span>
               <span style={{ color: '#A0A5B1' }}>—</span>
-              <span style={{ color: '#717786' }}>需立即续期，过期牌照将导致出单拦截</span>
+              <span style={{ color: '#717786' }}>{t.aptLicenseExpiredHint}</span>
             </div>
           )}
           {mismatch.length > 0 && (
             <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(255,159,10,0.08)', border: '1px solid rgba(255,159,10,0.25)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
               <AlertCircle size={15} color="#B06000" />
-              <span style={{ color: '#7A5000', fontWeight: 600 }}>{mismatch.length} 个牌照与 NIPR 数据存在差异</span>
+              <span style={{ color: '#7A5000', fontWeight: 600 }}>{t.aptLicenseMismatchCount(mismatch.length)}</span>
               <span style={{ color: '#A0A5B1' }}>—</span>
-              <span style={{ color: '#717786' }}>需核实并更新</span>
+              <span style={{ color: '#717786' }}>{t.aptLicenseMismatchHint}</span>
             </div>
           )}
         </div>
@@ -442,10 +499,10 @@ function NIRPLicenseTab() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 18 }}>
         {[
-          { label: '总牌照数', value: niprLicenses.length, color: '#0058BC' },
-          { label: '有效牌照', value: niprLicenses.filter(l => l.status === 'active').length, color: '#1E8033' },
-          { label: '60天内到期', value: expiringSoon.length, color: '#B06000' },
-          { label: '已过期 / 暂停', value: expired.length + niprLicenses.filter(l => l.status === 'suspended').length, color: '#C0392B' },
+          { label: t.aptKpiLicTotal, value: niprLicenses.length, color: '#0058BC' },
+          { label: t.aptKpiLicActive, value: niprLicenses.filter(l => l.status === 'active').length, color: '#1E8033' },
+          { label: t.aptKpiLicExpiring60, value: expiringSoon.length, color: '#B06000' },
+          { label: t.aptKpiLicExpiredSuspended, value: expired.length + niprLicenses.filter(l => l.status === 'suspended').length, color: '#C0392B' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -457,10 +514,10 @@ function NIRPLicenseTab() {
       <div className="flex items-center justify-between mb-3">
         <div className="relative">
           <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索渠道、NPN、州…" className="input-glass" style={{ paddingLeft: 30, width: 240, fontSize: 12.5 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.aptSearchLicenses} className="input-glass" style={{ paddingLeft: 30, width: 240, fontSize: 12.5 }} />
         </div>
         <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>
-          <ShieldCheck size={13} /> 批量 NIPR 验证
+          <ShieldCheck size={13} /> {t.aptBtnBulkVerify}
         </button>
       </div>
 
@@ -468,7 +525,7 @@ function NIRPLicenseTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['渠道商 / NPN', '州', '牌照号', '类型 / 业务线', '状态', '到期日', 'NIPR 验证', 'CE 学时', '操作'].map(h => (
+              {[t.aptColChannelNpn, t.aptColState, t.aptColLicenseNo, t.aptColTypeLines, t.aptColStatus, t.aptColExpiry, t.aptColNiprVerify, t.aptColCeHours, t.aptColActions].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -478,7 +535,7 @@ function NIRPLicenseTab() {
               const st = LIC_STATUS_STYLE[l.status]
               const vs = l.verificationStatus
               const vsColor = vs === 'verified' ? '#1E8033' : vs === 'mismatch' ? '#B06000' : vs === 'not-found' ? '#C0392B' : '#A0A5B1'
-              const vsLabel = vs === 'verified' ? '已验证' : vs === 'mismatch' ? '数据差异' : vs === 'not-found' ? '未找到' : '待验证'
+              const vsLabel = licVerifyLabel(t, vs)
               const isVerifying = verifying === l.id
               const wasVerified = verified.includes(l.id)
               const ceOk = (l.ceHoursCompleted ?? 0) >= (l.ceHoursRequired ?? 0)
@@ -495,16 +552,16 @@ function NIRPLicenseTab() {
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: '#181C23' }}>{l.licenseType}</div>
                     <div style={{ fontSize: 11, color: '#717786' }}>{l.lines.join(', ')}</div>
                   </td>
-                  <td style={{ padding: '10px 14px' }}><Badge bg={st.bg} color={st.color}>{st.label}</Badge></td>
+                  <td style={{ padding: '10px 14px' }}><Badge bg={st.bg} color={st.color}>{licStatusLabel(t, l.status)}</Badge></td>
                   <td style={{ padding: '10px 14px' }}>
                     <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: l.daysToExpiry < 0 ? '#C0392B' : l.daysToExpiry <= 60 ? '#B06000' : '#555' }}>{l.expiryDate}</div>
-                    {l.daysToExpiry >= 0 && l.daysToExpiry <= 60 && <div style={{ fontSize: 10.5, color: '#B06000', fontWeight: 600 }}>还剩 {l.daysToExpiry}d</div>}
-                    {l.daysToExpiry < 0 && <div style={{ fontSize: 10.5, color: '#C0392B', fontWeight: 600 }}>已过期</div>}
+                    {l.daysToExpiry >= 0 && l.daysToExpiry <= 60 && <div style={{ fontSize: 10.5, color: '#B06000', fontWeight: 600 }}>{t.aptDaysLeftShort(l.daysToExpiry)}</div>}
+                    {l.daysToExpiry < 0 && <div style={{ fontSize: 10.5, color: '#C0392B', fontWeight: 600 }}>{t.aptStatusExpired}</div>}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
                     {isVerifying
-                      ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#0058BC' }}><Loader2 size={12} className="animate-spin" />验证中…</span>
-                      : <span style={{ color: wasVerified ? '#1E8033' : vsColor, fontSize: 12, fontWeight: 600 }}>{wasVerified ? '已验证' : vsLabel}</span>
+                      ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#0058BC' }}><Loader2 size={12} className="animate-spin" />{t.aptVerifying}</span>
+                      : <span style={{ color: wasVerified ? '#1E8033' : vsColor, fontSize: 12, fontWeight: 600 }}>{wasVerified ? t.aptVerVerified : vsLabel}</span>
                     }
                   </td>
                   <td style={{ padding: '10px 14px' }}>
@@ -535,9 +592,10 @@ function NIRPLicenseTab() {
   )
 }
 
-// ── Tab 5 — 出单合规拦截 ──────────────────────────────────────────────────────
+// ── Tab 5 — Binding Interception ───────────────────────────────────────────────
 
 function ComplianceInterceptionTab() {
+  const { lang, t } = useLang()
   const [activeTab, setActiveTab] = useState<'log' | 'rules'>('log')
 
   const blockCount = interceptLogs.filter(l => l.result === 'blocked').length
@@ -549,11 +607,11 @@ function ComplianceInterceptionTab() {
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 18 }}>
         {[
-          { label: '拦截检查总数', value: interceptLogs.length, color: '#181C23' },
-          { label: '已拦截', value: blockCount, color: '#C0392B' },
-          { label: '已警告', value: warnCount, color: '#B06000' },
-          { label: '人工审核', value: reviewCount, color: '#0058BC' },
-          { label: '已通过', value: passCount, color: '#1E8033' },
+          { label: t.aptKpiChecksTotal, value: interceptLogs.length, color: '#181C23' },
+          { label: t.aptResultBlocked, value: blockCount, color: '#C0392B' },
+          { label: t.aptResultWarned, value: warnCount, color: '#B06000' },
+          { label: t.aptResultManualReview, value: reviewCount, color: '#0058BC' },
+          { label: t.aptResultPassed, value: passCount, color: '#1E8033' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -563,7 +621,7 @@ function ComplianceInterceptionTab() {
       </div>
 
       <div className="tab-bar mb-4">
-        {([['log', '拦截日志'], ['rules', '规则配置']] as const).map(([v, l]) => (
+        {([['log', t.aptTabLog], ['rules', t.aptTabRules]] as const).map(([v, l]) => (
           <div key={v} className={`tab-item${activeTab === v ? ' active' : ''}`} onClick={() => setActiveTab(v)}>{l}</div>
         ))}
       </div>
@@ -572,25 +630,26 @@ function ComplianceInterceptionTab() {
         <div className="flex flex-col gap-3">
           {interceptLogs.map(log => {
             const rs = RESULT_STYLE[log.result]
+            const descriptions = lang === 'en' ? log.reasonDescriptionsEn : log.reasonDescriptions
             return (
               <Card key={log.id} style={{ padding: '14px 16px' }}>
                 <div className="flex items-start justify-between">
                   <div style={{ flex: 1 }}>
                     <div className="flex items-center gap-3 mb-2">
-                      <Badge bg={rs.bg} color={rs.color}>{rs.icon} {rs.label}</Badge>
+                      <Badge bg={rs.bg} color={rs.color}>{rs.icon} {resultLabel(t, log.result)}</Badge>
                       <span style={{ fontSize: 11.5, color: '#A0A5B1', fontFamily: "'JetBrains Mono', monospace" }}>{log.timestamp}</span>
                       <span style={{ fontSize: 12, color: '#717786' }}>{log.channelName} · {log.insurerShort} · {log.state} {log.line}</span>
                     </div>
                     <div className="flex items-center gap-4 mb-2" style={{ fontSize: 12.5 }}>
-                      <span style={{ color: '#717786' }}>保单草稿：</span>
+                      <span style={{ color: '#717786' }}>{t.aptPolicyDraftLabel}</span>
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#0058BC' }}>{log.policyDraftId}</span>
-                      <span style={{ color: '#717786' }}>客户：</span>
+                      <span style={{ color: '#717786' }}>{t.aptCustomerLabel}</span>
                       <span style={{ fontWeight: 600, color: '#181C23' }}>{log.customerName}</span>
-                      <span style={{ color: '#717786' }}>保费：</span>
+                      <span style={{ color: '#717786' }}>{t.aptPremiumLabel}</span>
                       <span style={{ fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>${log.premiumAmount.toLocaleString()}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      {log.reasonDescriptions.map((d, idx) => (
+                      {descriptions.map((d, idx) => (
                         <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12.5, color: '#C0392B' }}>
                           <XOctagon size={11} style={{ flexShrink: 0, marginTop: 1 }} />
                           <span>{d}</span>
@@ -601,8 +660,8 @@ function ComplianceInterceptionTab() {
                   {log.result === 'manual-review' && (
                     <div style={{ marginLeft: 16, flexShrink: 0 }}>
                       {log.overrideApproved
-                        ? <Badge bg="rgba(52,199,89,0.12)" color="#1E8033">已放行</Badge>
-                        : <button style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>人工审核</button>
+                        ? <Badge bg="rgba(52,199,89,0.12)" color="#1E8033">{t.aptReleased}</Badge>
+                        : <button style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>{t.aptResultManualReview}</button>
                       }
                     </div>
                   )}
@@ -616,7 +675,7 @@ function ComplianceInterceptionTab() {
       {activeTab === 'rules' && (
         <div className="flex flex-col gap-3">
           {complianceRules.map(rule => {
-            const actionStyle = rule.action === 'block' ? { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: '拦截' } : rule.action === 'warn' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: '警告' } : { bg: 'rgba(0,88,188,0.1)', color: '#0058BC', label: '人工审核' }
+            const actionStyle = rule.action === 'block' ? { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: t.aptRuleActionBlock } : rule.action === 'warn' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: t.aptRuleActionWarn } : { bg: 'rgba(0,88,188,0.1)', color: '#0058BC', label: t.aptResultManualReview }
             const catColors: Record<string, string> = { appointment: '#7B3FCA', license: '#0058BC', ofac: '#C0392B', channel: '#1E8033', product: '#B06000' }
             const catBg: Record<string, string> = { appointment: 'rgba(123,63,202,0.1)', license: 'rgba(0,88,188,0.1)', ofac: 'rgba(192,57,43,0.1)', channel: 'rgba(30,128,51,0.1)', product: 'rgba(176,96,0,0.1)' }
             return (
@@ -625,12 +684,12 @@ function ComplianceInterceptionTab() {
                   <div style={{ flex: 1 }}>
                     <div className="flex items-center gap-3 mb-1">
                       <span style={{ fontSize: 11, fontWeight: 700, background: catBg[rule.category], color: catColors[rule.category], borderRadius: 5, padding: '2px 7px' }}>{rule.category.toUpperCase()}</span>
-                      <span style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{rule.name}</span>
+                      <span style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{lang === 'en' ? rule.nameEn : rule.name}</span>
                       <Badge bg={actionStyle.bg} color={actionStyle.color}>{actionStyle.label}</Badge>
-                      <span style={{ fontSize: 11, color: '#A0A5B1' }}>优先级 {rule.priority}</span>
+                      <span style={{ fontSize: 11, color: '#A0A5B1' }}>{t.aptPriority(rule.priority)}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#717786', fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>{rule.condition}</div>
-                    <div style={{ fontSize: 11.5, color: '#A0A5B1' }}>触发次数：<span style={{ fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{rule.triggeredCount}</span> · 最近触发：{rule.lastTriggered || '—'}</div>
+                    <div style={{ fontSize: 12, color: '#717786', fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>{lang === 'en' ? (rule.conditionEn ?? rule.condition) : rule.condition}</div>
+                    <div style={{ fontSize: 11.5, color: '#A0A5B1' }}>{t.aptTriggerCountLabel}<span style={{ fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{rule.triggeredCount}</span> · {t.aptLastTriggeredLabel}{rule.lastTriggered || '—'}</div>
                   </div>
                   <div className="flex items-center gap-3 ml-6">
                     <button className="btn-ghost" style={{ padding: 5 }}><Edit2 size={13} /></button>
@@ -648,9 +707,10 @@ function ComplianceInterceptionTab() {
   )
 }
 
-// ── Tab 6 — 合规报告 ──────────────────────────────────────────────────────────
+// ── Tab 6 — Compliance Reports ─────────────────────────────────────────────────
 
 function ComplianceReportTab() {
+  const { lang, t } = useLang()
   const [generating, setGenerating] = useState(false)
   const [genType, setGenType] = useState('appointment-status')
   const [genFormat, setGenFormat] = useState('PDF')
@@ -664,30 +724,30 @@ function ComplianceReportTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>合规报告中心</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>{t.aptReportCenter}</div>
         <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>
-          <Plus size={14} /> 生成新报告
+          <Plus size={14} /> {t.aptBtnNewReport}
         </button>
       </div>
 
       {showForm && (
         <Card style={{ marginBottom: 16, background: 'rgba(0,88,188,0.04)', border: '1px solid rgba(0,88,188,0.15)' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>配置报告参数</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{t.aptReportConfigTitle}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>报告类型</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t.aptReportTypeLabel}</label>
               <select value={genType} onChange={e => setGenType(e.target.value)} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                {Object.entries(REPORT_TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                {REPORT_TYPES.map(v => <option key={v} value={v}>{reportTypeLabel(t, v)}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>报告周期</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t.aptReportPeriodLabel}</label>
               <select className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                <option>2026年8月</option><option>2026年7月</option><option>2026-Q3</option><option>2026-Q2</option>
+                <option>{t.aptPeriodAug}</option><option>{t.aptPeriodJul}</option><option>2026-Q3</option><option>2026-Q2</option>
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>输出格式</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t.aptFormatLabel}</label>
               <div className="flex gap-2">
                 {(['PDF', 'Excel', 'CSV'] as const).map(f => (
                   <button key={f} onClick={() => setGenFormat(f)} style={{ flex: 1, padding: '7px 0', borderRadius: 8, fontSize: 12.5, fontWeight: 600, border: genFormat === f ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: genFormat === f ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: genFormat === f ? '#0058BC' : '#717786', cursor: 'pointer' }}>{f}</button>
@@ -696,9 +756,9 @@ function ComplianceReportTab() {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <button className="btn-ghost" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => setShowForm(false)}>取消</button>
+            <button className="btn-ghost" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => setShowForm(false)}>{t.aptCancel}</button>
             <button onClick={doGenerate} disabled={generating} style={{ padding: '7px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              {generating ? <><Loader2 size={13} className="animate-spin" />生成中…</> : '开始生成'}
+              {generating ? <><Loader2 size={13} className="animate-spin" />{t.aptGenerating}</> : t.aptBtnGenerate}
             </button>
           </div>
         </Card>
@@ -706,21 +766,21 @@ function ComplianceReportTab() {
 
       <div className="flex flex-col gap-3">
         {complianceReports.map(rp => {
-          const statusS = rp.status === 'ready' ? { bg: 'rgba(52,199,89,0.12)', color: '#1E8033', label: '可下载' } : rp.status === 'generating' ? { bg: 'rgba(255,159,10,0.12)', color: '#B06000', label: '生成中' } : rp.status === 'scheduled' ? { bg: 'rgba(180,180,180,0.15)', color: '#666', label: '已计划' } : { bg: 'rgba(255,59,48,0.12)', color: '#C0392B', label: '生成失败' }
+          const statusS = rp.status === 'ready' ? { bg: 'rgba(52,199,89,0.12)', color: '#1E8033', label: t.aptRptReady } : rp.status === 'generating' ? { bg: 'rgba(255,159,10,0.12)', color: '#B06000', label: t.aptRptGenerating } : rp.status === 'scheduled' ? { bg: 'rgba(180,180,180,0.15)', color: '#666', label: t.aptRptScheduled } : { bg: 'rgba(255,59,48,0.12)', color: '#C0392B', label: t.aptRptFailed }
           return (
             <Card key={rp.id} style={{ padding: '14px 16px' }}>
               <div className="flex items-center justify-between">
                 <div style={{ flex: 1 }}>
                   <div className="flex items-center gap-3 mb-1">
-                    <Badge bg="rgba(0,88,188,0.08)" color="#0058BC">{REPORT_TYPE_LABEL[rp.type]}</Badge>
-                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{rp.name}</span>
+                    <Badge bg="rgba(0,88,188,0.08)" color="#0058BC">{reportTypeLabel(t, rp.type)}</Badge>
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{lang === 'en' ? rp.nameEn : rp.name}</span>
                     <Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge>
                     <span style={{ fontSize: 11, color: '#A0A5B1', background: 'rgba(180,180,180,0.12)', padding: '1px 6px', borderRadius: 5 }}>{rp.format}</span>
                   </div>
                   <div style={{ fontSize: 12, color: '#717786' }}>
-                    {rp.generatedDate ? <>生成时间：<span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{rp.generatedDate}</span> · 生成人：{rp.generatedBy}</> : <>计划生成 · 操作人：{rp.generatedBy}</>}
-                    {rp.fileSize && <> · 大小：<span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{rp.fileSize}</span></>}
-                    {rp.recordCount && <> · 记录数：<span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{rp.recordCount}</span></>}
+                    {rp.generatedDate ? <>{t.aptGeneratedAtLabel}<span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{rp.generatedDate}</span> · {t.aptGeneratedByLabel}{rp.generatedBy}</> : <>{t.aptScheduledByPrefix}{rp.generatedBy}</>}
+                    {rp.fileSize && <> · {t.aptSizeLabel}<span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{rp.fileSize}</span></>}
+                    {rp.recordCount && <> · {t.aptRecordCountLabel}<span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{rp.recordCount}</span></>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
@@ -728,12 +788,12 @@ function ComplianceReportTab() {
                     <>
                       <button className="btn-ghost" style={{ padding: 6 }}><Eye size={14} /></button>
                       <button style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>
-                        <Download size={12} /> 下载
+                        <Download size={12} /> {t.aptBtnDownload}
                       </button>
                     </>
                   )}
-                  {rp.status === 'generating' && <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#B06000' }}><Loader2 size={13} className="animate-spin" />生成中</span>}
-                  {rp.status === 'scheduled' && <span style={{ fontSize: 12, color: '#A0A5B1' }}>等待执行</span>}
+                  {rp.status === 'generating' && <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#B06000' }}><Loader2 size={13} className="animate-spin" />{t.aptRptGenerating}</span>}
+                  {rp.status === 'scheduled' && <span style={{ fontSize: 12, color: '#A0A5B1' }}>{t.aptAwaitingRun}</span>}
                 </div>
               </div>
             </Card>
@@ -744,9 +804,10 @@ function ComplianceReportTab() {
   )
 }
 
-// ── Tab 7 — OFAC 筛查 ────────────────────────────────────────────────────────
+// ── Tab 7 — OFAC Screening ─────────────────────────────────────────────────────
 
 function OFACScreeningTab() {
+  const { t } = useLang()
   const [entityName, setEntityName] = useState('')
   const [entityType, setEntityType] = useState<'Individual' | 'Company'>('Company')
   const [screening, setScreening] = useState(false)
@@ -771,23 +832,23 @@ function OFACScreeningTab() {
   return (
     <div>
       <Card style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 4 }}>OFAC 制裁名单实时筛查</div>
-        <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 16 }}>对客户、受益人、关联实体进行 SDN / SDGT / OFSI 等制裁名单检查</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 4 }}>{t.aptOfacScreenTitle}</div>
+        <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 16 }}>{t.aptOfacScreenSub}</div>
         <div className="flex items-end gap-3">
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>实体名称 *</label>
-            <input value={entityName} onChange={e => setEntityName(e.target.value)} placeholder="输入个人姓名或企业名称…" className="input-glass" style={{ width: '100%', fontSize: 13 }} />
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t.aptEntityNameLabel}</label>
+            <input value={entityName} onChange={e => setEntityName(e.target.value)} placeholder={t.aptEntityNamePlaceholder} className="input-glass" style={{ width: '100%', fontSize: 13 }} />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>类型</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t.aptTypeLabel}</label>
             <div className="flex gap-2">
-              {(['Company', 'Individual'] as const).map(t => (
-                <button key={t} onClick={() => setEntityType(t)} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, border: entityType === t ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: entityType === t ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: entityType === t ? '#0058BC' : '#717786', cursor: 'pointer' }}>{t === 'Company' ? '企业' : '个人'}</button>
+              {(['Company', 'Individual'] as const).map(ty => (
+                <button key={ty} onClick={() => setEntityType(ty)} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, border: entityType === ty ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: entityType === ty ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: entityType === ty ? '#0058BC' : '#717786', cursor: 'pointer' }}>{ty === 'Company' ? t.aptTypeCompany : t.aptTypeIndividual}</button>
               ))}
             </div>
           </div>
           <button onClick={doScreen} disabled={!entityName || screening} style={{ padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: entityName && !screening ? '#0058BC' : 'rgba(0,88,188,0.3)', color: '#fff', border: 'none', cursor: entityName && !screening ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {screening ? <><Loader2 size={13} className="animate-spin" />筛查中…</> : <><Search size={13} />开始筛查</>}
+            {screening ? <><Loader2 size={13} className="animate-spin" />{t.aptScreeningNow}</> : <><Search size={13} />{t.aptBtnScreen}</>}
           </button>
         </div>
 
@@ -797,11 +858,11 @@ function OFACScreeningTab() {
               {screenResult.result === 'clear' ? <CheckCircle2 size={20} color="#1E8033" /> : screenResult.result === 'watchlist' ? <AlertTriangle size={20} color="#B06000" /> : <XOctagon size={20} color="#C0392B" />}
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14, color: screenResult.result === 'clear' ? '#1E8033' : screenResult.result === 'watchlist' ? '#B06000' : '#C0392B' }}>
-                  {screenResult.result === 'clear' ? '筛查通过 — 无制裁记录' : screenResult.result === 'watchlist' ? `疑似匹配 — 相似度 ${screenResult.score}%` : '筛查未通过 — 制裁名单命中'}
+                  {screenResult.result === 'clear' ? t.aptScreenClear : screenResult.result === 'watchlist' ? t.aptScreenWatch(screenResult.score ?? 0) : t.aptScreenBlocked}
                 </div>
-                {screenResult.entry && <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>匹配条目：{screenResult.entry}</div>}
-                {screenResult.result === 'watchlist' && <div style={{ fontSize: 12, color: '#B06000', marginTop: 4 }}>建议进行人工复核后方可出单</div>}
-                {screenResult.result === 'blocked' && <div style={{ fontSize: 12, color: '#C0392B', marginTop: 4 }}>已自动拦截，禁止为该实体出单</div>}
+                {screenResult.entry && <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t.aptMatchedEntryLabel}{screenResult.entry}</div>}
+                {screenResult.result === 'watchlist' && <div style={{ fontSize: 12, color: '#B06000', marginTop: 4 }}>{t.aptWatchHint}</div>}
+                {screenResult.result === 'blocked' && <div style={{ fontSize: 12, color: '#C0392B', marginTop: 4 }}>{t.aptBlockedHint}</div>}
               </div>
             </div>
           </div>
@@ -810,10 +871,10 @@ function OFACScreeningTab() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 18 }}>
         {[
-          { label: '历史筛查总数', value: ofacScreenings.length, color: '#181C23' },
-          { label: '清单无记录', value: clearCount, color: '#1E8033' },
-          { label: '疑似匹配', value: watchCount, color: '#B06000' },
-          { label: '已拦截', value: blockCount, color: '#C0392B' },
+          { label: t.aptKpiScreenTotal, value: ofacScreenings.length, color: '#181C23' },
+          { label: t.aptOfacClear, value: clearCount, color: '#1E8033' },
+          { label: t.aptOfacWatchlist, value: watchCount, color: '#B06000' },
+          { label: t.aptResultBlocked, value: blockCount, color: '#C0392B' },
         ].map(s => (
           <Card key={s.label}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
@@ -826,7 +887,7 @@ function OFACScreeningTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['时间戳', '实体名称', '类型', '结果', '匹配条目', '操作人', '处置'].map(h => (
+              {[t.aptColTimestamp, t.aptColEntityName, t.aptColType, t.aptColResult, t.aptColMatchedEntry, t.aptColOperator, t.aptColDisposition].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786' }}>{h}</th>
               ))}
             </tr>
@@ -839,17 +900,17 @@ function OFACScreeningTab() {
                   <td style={{ padding: '10px 14px', fontSize: 11.5, fontFamily: "'JetBrains Mono', monospace", color: '#717786', whiteSpace: 'nowrap' }}>{s.timestamp}</td>
                   <td style={{ padding: '10px 14px', fontWeight: 600, color: '#181C23' }}>{s.entityName}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#717786' }}>{s.entityType}</td>
-                  <td style={{ padding: '10px 14px' }}><Badge bg={rs.bg} color={rs.color}>{rs.label}</Badge></td>
+                  <td style={{ padding: '10px 14px' }}><Badge bg={rs.bg} color={rs.color}>{ofacLabel(t, s.result)}</Badge></td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: s.matchedEntry ? '#B06000' : '#C1C6D7' }}>{s.matchedEntry || '—'}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#555' }}>{s.screenedBy}</td>
                   <td style={{ padding: '10px 14px' }}>
                     {s.result === 'watchlist' && (
                       s.overrideApproved
-                        ? <span style={{ fontSize: 11.5, color: '#1E8033', fontWeight: 600 }}>已放行</span>
-                        : <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>人工审核</button>
+                        ? <span style={{ fontSize: 11.5, color: '#1E8033', fontWeight: 600 }}>{t.aptReleased}</span>
+                        : <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>{t.aptResultManualReview}</button>
                     )}
-                    {s.result === 'blocked' && <span style={{ fontSize: 11.5, color: '#C0392B', fontWeight: 600 }}>已拦截</span>}
-                    {s.result === 'clear' && <span style={{ fontSize: 11.5, color: '#1E8033' }}>通过</span>}
+                    {s.result === 'blocked' && <span style={{ fontSize: 11.5, color: '#C0392B', fontWeight: 600 }}>{t.aptResultBlocked}</span>}
+                    {s.result === 'clear' && <span style={{ fontSize: 11.5, color: '#1E8033' }}>{t.aptOfacPassed}</span>}
                   </td>
                 </tr>
               )
@@ -864,13 +925,13 @@ function OFACScreeningTab() {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'apply',     icon: <FileCheck size={15} />,   label: 'Appointment 申请' },
-  { id: 'track',     icon: <Activity size={15} />,    label: '状态跟踪' },
-  { id: 'renewal',   icon: <RefreshCw size={15} />,   label: '续期与终止' },
-  { id: 'nipr',      icon: <ShieldCheck size={15} />, label: 'NIPR 牌照管理' },
-  { id: 'intercept', icon: <Ban size={15} />,         label: '出单合规拦截' },
-  { id: 'report',    icon: <FileText size={15} />,    label: '合规报告' },
-  { id: 'ofac',      icon: <Search size={15} />,      label: 'OFAC 筛查' },
+  { id: 'apply',     icon: <FileCheck size={15} /> },
+  { id: 'track',     icon: <Activity size={15} /> },
+  { id: 'renewal',   icon: <RefreshCw size={15} /> },
+  { id: 'nipr',      icon: <ShieldCheck size={15} /> },
+  { id: 'intercept', icon: <Ban size={15} /> },
+  { id: 'report',    icon: <FileText size={15} /> },
+  { id: 'ofac',      icon: <Search size={15} /> },
 ] as const
 
 type TabId = typeof TABS[number]['id']
@@ -880,7 +941,18 @@ interface Props {
 }
 
 export default function AppointmentView({ navigateTo }: Props) {
+  const { t } = useLang()
   const [tab, setTab] = useState<TabId>('apply')
+
+  const tabLabels: Record<TabId, string> = {
+    apply: t.aptTabApply,
+    track: t.aptTabTrack,
+    renewal: t.aptTabRenewal,
+    nipr: t.aptTabNipr,
+    intercept: t.aptTabIntercept,
+    report: t.aptTabReport,
+    ofac: t.aptTabOfac,
+  }
 
   const expiredLicenses = niprLicenses.filter(l => l.daysToExpiry < 0).length
   const pendingApps = appointmentRecords.filter(r => r.status === 'pending' || r.status === 'under-review').length
@@ -890,37 +962,37 @@ export default function AppointmentView({ navigateTo }: Props) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>合规管理</h1>
-          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>管理渠道商 Appointment 申请、牌照核验、出单合规拦截及 OFAC 制裁筛查</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px' }}>{t.aptTitle}</h1>
+          <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>{t.aptSubtitle}</p>
         </div>
         <div className="flex items-center gap-3">
           {expiredLicenses > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,59,48,0.1)', border: '1px solid rgba(255,59,48,0.25)', fontSize: 12.5, fontWeight: 600, color: '#C0392B' }}>
-              <AlertTriangle size={13} /> {expiredLicenses} 个牌照已过期
+              <AlertTriangle size={13} /> {t.aptExpiredLicenses(expiredLicenses)}
             </div>
           )}
           {urgentRenewals > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.25)', fontSize: 12.5, fontWeight: 600, color: '#B06000' }}>
-              <Bell size={13} /> {urgentRenewals} 个即将到期
+              <Bell size={13} /> {t.aptExpiringSoon(urgentRenewals)}
             </div>
           )}
         </div>
       </div>
 
       <div className="tab-bar mb-6">
-        {TABS.map(t => (
+        {TABS.map(tabItem => (
           <div
-            key={t.id}
-            className={`tab-item${tab === t.id ? ' active' : ''}`}
-            onClick={() => setTab(t.id)}
+            key={tabItem.id}
+            className={`tab-item${tab === tabItem.id ? ' active' : ''}`}
+            onClick={() => setTab(tabItem.id)}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            {t.icon}
-            {t.label}
-            {t.id === 'apply' && pendingApps > 0 && (
+            {tabItem.icon}
+            {tabLabels[tabItem.id]}
+            {tabItem.id === 'apply' && pendingApps > 0 && (
               <span style={{ background: '#FF9F0A', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{pendingApps}</span>
             )}
-            {t.id === 'nipr' && expiredLicenses > 0 && (
+            {tabItem.id === 'nipr' && expiredLicenses > 0 && (
               <span style={{ background: '#FF3B30', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{expiredLicenses}</span>
             )}
           </div>

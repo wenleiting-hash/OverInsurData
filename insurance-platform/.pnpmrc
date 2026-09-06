@@ -1,0 +1,3 @@
+allowed-build-scripts=@nestjs/core,@nestjs/cli,typescript
+ip-scripts.prefer-offline=false
+ip-frozen-lockfile=false

@@ -1,0 +1,7 @@
+﻿docker-compose : no configuration file provided: not found
+所在位置 行:1 字符: 34
++ ... WorkProject/OverInsurData; docker-compose up -d postgres 2>&1 | Out-F ...
++                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (no configuratio...ided: not found:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

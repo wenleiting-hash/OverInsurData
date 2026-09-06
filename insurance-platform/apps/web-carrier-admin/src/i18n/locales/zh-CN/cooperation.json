@@ -1,5 +1,81 @@
 {
-  "cooperation": {
+  "tabs": {
+    "establish": "合作关系建立",
+    "terminate": "合作关系终止",
+    "contracts": "合同协议管理",
+    "settlement": "结算参数配置",
+    "contacts": "对接人联络",
+    "renewal": "续约管理",
+    "integration": "产品资源接入"
+  },
+  "headers": {
+    "title": "合作管理",
+    "subtitle": "{activeCoops} 家合作保险公司 · {pendingCoops} 个申请处理中",
+    "createNew": "新建合作申请"
+  },
+  "wizard": {
+    "title": "新建合作关系申请",
+    "steps": ["选择保险公司", "合作范围", "条款确认", "提交"],
+    "step0": {
+      "title": "选择保险公司",
+      "empty": "所有合规保险公司均已建立合作关系",
+      "status": {
+        "verified": "已认证",
+        "pending": "待审核"
+      }
+    },
+    "step1": {
+      "title": "合作范围配置",
+      "coopType": "合作类型",
+      "coopTypes": {
+        "fullService": "全服务合作",
+        "fullServiceDesc": "所有险种、完整渠道服务",
+        "preferred": "优选合作",
+        "preferredDesc": "主要险种、专项服务支持",
+        "specialty": "专项合作",
+        "specialtyDesc": "指定险种或专业业务线",
+        "surplusLines": "Surplus Lines",
+        "surplusLinesDesc": "非标准/E&S 市场业务"
+      },
+      "linesOfBusiness": "业务线范围",
+      "states": "经营州"
+    },
+    "step2": {
+      "title": "条款确认与备注",
+      "commissionTier": "佣金等级",
+      "tiers": {
+        "tier1": "Tier-1",
+        "tier1Desc": "标准优选费率",
+        "tier2": "Tier-2",
+        "tier2Desc": "标准费率",
+        "tier3": "Tier-3",
+        "tier3Desc": "基础费率"
+      },
+      "notes": "申请备注",
+      "summary": "申请摘要"
+    },
+    "step3": {
+      "confirmTitle": "确认提交合作申请",
+      "description": "申请提交后将进入内部合规审核，同时向保险公司发送合作意向通知。审批通过后系统将自动创建合作记录。",
+      "confirmation": "我确认以上信息准确，同意提交合作申请"
+    }
+  },
+  "toast": {
+    "applicationSubmitted": "合作申请已成功提交，预计 5-10 个工作日审核完成",
+    "terminationSubmitted": "合作关系终止申请已提交（{insurer}），预计 3-5 个工作日审批完成"
+  },
+  "view": {
+    "common": {
+      "cancel": "取消",
+      "edit": "编辑",
+      "close": "关闭"
+    },
+    "title": "合作管理",
+    "subtitle": "{active} 家合作保险公司 · {pending} 个申请处理中 · {renewals} 项续约待处理",
+    "renewalsUrgent": "{count} 项续约紧急",
+    "actions": {
+      "newApplication": "新建合作申请"
+    },
     "tabs": {
       "establish": "合作关系建立",
       "terminate": "合作关系终止",
@@ -9,17 +85,221 @@
       "renewal": "续约管理",
       "integration": "产品资源接入"
     },
-    "headers": {
-      "title": "合作管理",
-      "subtitle": "{activeCoops} 家合作保险公司 · {pendingCoops} 个申请处理中",
-      "createNew": "新建合作申请"
+    "coopStatus": {
+      "draft": "草稿",
+      "submitted": "已提交",
+      "underReview": "审核中",
+      "approved": "合作中",
+      "rejected": "已拒绝",
+      "terminated": "已终止"
+    },
+    "contractStatus": {
+      "draft": "草稿",
+      "negotiating": "谈判中",
+      "pendingSign": "待签署",
+      "active": "有效",
+      "expiring": "即将到期",
+      "expired": "已到期",
+      "terminated": "已终止"
+    },
+    "integrationStatus": {
+      "available": "可接入",
+      "requested": "已申请",
+      "inReview": "审核中",
+      "approved": "已批准",
+      "integrated": "已接入",
+      "rejected": "已拒绝",
+      "suspended": "已暂停"
+    },
+    "renewalPriority": {
+      "critical": "紧急",
+      "high": "高",
+      "normal": "正常",
+      "low": "低"
+    },
+    "renewalStatus": {
+      "upcoming": "待处理",
+      "inNegotiation": "谈判中",
+      "renewed": "已续约",
+      "atRisk": "风险",
+      "lapsed": "已失效"
+    },
+    "stats": {
+      "active": "合作中",
+      "reviewing": "审核中",
+      "terminated": "已终止",
+      "lobs": "覆盖险种"
+    },
+    "coopCard": {
+      "term": "合作期限",
+      "permanent": "永久",
+      "commission": "佣金等级",
+      "unspecified": "未指定",
+      "owner": "负责人",
+      "viewDetail": "查看详情"
+    },
+    "contracts": {
+      "summary": "共 {total} 份合同 · {active} 份有效 · {expiring} 份即将到期",
+      "upload": "上传合同",
+      "create": "新建合同",
+      "th": {
+        "name": "合同名称",
+        "insurer": "保险公司",
+        "type": "类型",
+        "version": "版本",
+        "validity": "有效期",
+        "signatoryUs": "签署方（我司）",
+        "signatoryThem": "签署方（对方）",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "daysLeft": "({days}天)",
+      "autoRenewBadge": "自动续",
+      "tags": {
+        "3yr": "3年",
+        "5yr": "5年",
+        "annual": "年度",
+        "hnw": "高净值",
+        "commercial": "商业险",
+        "renewing": "续约谈判中",
+        "dataSharing": "数据共享"
+      },
+      "actions": {
+        "view": "查看",
+        "download": "下载",
+        "renew": "续约",
+        "sign": "签署"
+      }
+    },
+    "settlement": {
+      "lastUpdated": "最后更新：{date} · {by}",
+      "normal": "正常",
+      "toastLoaded": "结算参数已加载，请在编辑器中修改后保存",
+      "cycle": "结算周期",
+      "cutoff": "账单截止",
+      "cutoffValue": "每月 {day} 日",
+      "paymentTerm": "付款账期",
+      "paymentMethod": "付款方式",
+      "reconFormat": "对账格式",
+      "monthly": "月结",
+      "quarterly": "季结",
+      "semiAnnual": "半年结",
+      "saved": "配置已保存",
+      "billCutoffDay": "账单截止日（每月）",
+      "paymentTermsDays": "付款账期（天）",
+      "premiumCollection": "保费归集方式",
+      "enableApiRecon": "启用 API 实时对账",
+      "enableApiReconDesc": "通过 API 自动同步保单和佣金数据，减少人工对账",
+      "saveConfig": "保存配置",
+      "editTitle": "编辑结算配置 — {name}"
+    },
+    "contacts": {
+      "searchInsurer": "搜索保险公司",
+      "addContact": "添加联系人",
+      "allInsurers": "全部保险公司",
+      "count": "{count} 位联系人",
+      "primary": "主要",
+      "escalation": "升级"
+    },
+    "terminate": {
+      "warning": "合作关系终止操作将影响所有在售产品和渠道授权，请在充分评估后操作。",
+      "coopInfo": "合作类型：{type} · 合同到期：{date}",
+      "productsOwner": "产品 12 个 · 负责人 {owner}",
+      "initiate": "发起终止申请",
+      "withInsurer": "终止与 {insurer} 的合作关系",
+      "terminatedSection": "已终止合作",
+      "terminatedAt": "{date} 终止",
+      "currentInfo": "合作类型：{type} · 当前到期：{date}",
+      "impact": {
+        "products": "关联产品",
+        "productsValue": "{count} 个",
+        "productsDesc": "停止接受新保报价",
+        "channels": "合作渠道",
+        "channelsValue": "{count} 个",
+        "channelsDesc": "产品授权将被批量收回",
+        "contracts": "有效合同",
+        "contractsValue": "{count} 份",
+        "contractsDesc": "需依合同条款处理"
+      },
+      "reasonLabel": "终止原因 *",
+      "reasons": {
+        "expired": "合作协议到期，不再续约",
+        "compliance": "合规问题无法解决",
+        "strategy": "业务战略调整",
+        "mutual": "双方协商一致终止",
+        "counterparty": "对方提出终止",
+        "performance": "业绩不达标",
+        "other": "其他原因（备注中说明）"
+      },
+      "typeLabel": "终止方式 *",
+      "types": {
+        "endOfTerm": "合同到期终止",
+        "endOfTermDesc": "按合同条款，{date}",
+        "immediate": "立即终止",
+        "immediateDesc": "立即执行，需双方确认",
+        "scheduled": "指定日期终止",
+        "scheduledDesc": "自定义终止日期"
+      },
+      "noteLabel": "备注说明",
+      "notePlaceholder": "填写终止背景、后续安排或特殊事项…",
+      "confirmPrefix": "我已知悉终止影响，确认申请终止与",
+      "confirmSuffix": "的合作关系，本申请需主管审批后生效并记录至审计日志。",
+      "submit": "提交终止申请",
+      "toastSubmitted": "合作关系终止申请已提交（{insurer}），预计 3-5 个工作日审批完成",
+      "done": {
+        "title": "终止申请已提交",
+        "desc": "申请进入审批流程，审批通过后按所选时间执行终止操作。",
+        "back": "返回列表"
+      }
+    },
+    "renewal": {
+      "timeline": "续约时间轴",
+      "expiryDate": "到期日：",
+      "overdue": "已超期 {days} 天",
+      "daysLeft": "剩余 {days} 天",
+      "lastAction": "最新动态：{action} ({date})",
+      "owner": "负责人：{name}",
+      "autoRenew": "自动续约",
+      "initiate": "发起续约"
+    },
+    "priority": {
+      "high": "高",
+      "normal": "正常",
+      "low": "低"
+    },
+    "integration": {
+      "all": "全部",
+      "requestProduct": "申请产品接入",
+      "applicant": "申请人：{name}",
+      "priorityLabel": "优先级：",
+      "estimatedPremium": "预期保费",
+      "nationwide": "全国",
+      "apiDoc": "API 文档 ✓",
+      "testPassed": "测试通过 ✓",
+      "requestAccess": "申请接入",
+      "startTech": "开始技术对接",
+      "viewProduct": "查看产品"
     },
     "wizard": {
       "title": "新建合作关系申请",
-      "steps": ["选择保险公司", "合作范围", "条款确认", "提交"],
+      "prev": "← 上一步",
+      "next": "下一步 →",
+      "submit": "提交申请",
+      "done": {
+        "title": "合作申请已提交",
+        "desc": "申请已进入合规审核流程，预计 5–10 个工作日完成，审批结果将通过邮件通知。",
+        "back": "返回合作列表"
+      },
+      "stepNames": {
+        "select": "选择保险公司",
+        "scope": "合作范围",
+        "terms": "条款确认",
+        "submit": "提交"
+      },
       "step0": {
         "title": "选择保险公司",
         "empty": "所有合规保险公司均已建立合作关系",
+        "coopTypeLabel": "合作类型",
         "status": {
           "verified": "已认证",
           "pending": "待审核"
@@ -39,31 +319,348 @@
           "surplusLinesDesc": "非标准/E&S 市场业务"
         },
         "linesOfBusiness": "业务线范围",
-        "states": "经营州"
+        "states": "经营州",
+        "moreStates": "…（完整 50 州选择器）"
       },
       "step2": {
         "title": "条款确认与备注",
         "commissionTier": "佣金等级",
         "tiers": {
-          "tier1": "Tier-1",
           "tier1Desc": "标准优选费率",
-          "tier2": "Tier-2",
           "tier2Desc": "标准费率",
-          "tier3": "Tier-3",
           "tier3Desc": "基础费率"
         },
         "notes": "申请备注",
-        "summary": "申请摘要"
+        "notesPlaceholder": "补充说明合作背景、特殊条款要求或业务预期…",
+        "summaryTitle": "申请摘要",
+        "summary": {
+          "insurer": "保险公司",
+          "coopType": "合作类型",
+          "lines": "业务线",
+          "states": "经营州",
+          "commission": "佣金等级",
+          "none": "未选择"
+        }
       },
       "step3": {
         "confirmTitle": "确认提交合作申请",
         "description": "申请提交后将进入内部合规审核，同时向保险公司发送合作意向通知。审批通过后系统将自动创建合作记录。",
         "confirmation": "我确认以上信息准确，同意提交合作申请"
       }
+    }
+  },
+  "contacts": {
+    "backToList": "返回合作列表",
+    "title": "对接人管理",
+    "subtitle": "管理保险公司各职能角色的对接人员",
+    "stats": {
+      "total": "联系人总数",
+      "active": "活跃",
+      "accountManagers": "客户经理",
+      "recentLogs": "近期记录"
     },
-    "toast": {
-      "applicationSubmitted": "合作申请已成功提交，预计 5-10 个工作日审核完成",
-      "terminationSubmitted": "合作关系终止申请已提交（{{insurer}}），预计 3-5 个工作日审批完成"
+    "actions": {
+      "addContact": "添加联系人",
+      "export": "导出"
+    },
+    "searchPlaceholder": "按姓名、邮箱或电话搜索...",
+    "filter": {
+      "allRoles": "所有角色",
+      "allStatus": "所有状态",
+      "activeOnly": "仅活跃",
+      "inactiveOnly": "仅停用"
+    },
+    "status": {
+      "active": "活跃",
+      "inactive": "停用"
+    },
+    "note": "提示：选择一位联系人查看详情和沟通记录",
+    "empty": {
+      "title": "选择一位联系人",
+      "desc": "从列表中选择联系人，查看其详情、联系信息和沟通记录"
+    },
+    "detail": {
+      "contactInfo": "联系信息",
+      "professionalDetails": "职业信息",
+      "labels": {
+        "email": "邮箱",
+        "directPhone": "直线电话",
+        "mobile": "手机",
+        "officeAddress": "办公地址",
+        "position": "职位",
+        "department": "部门",
+        "role": "角色",
+        "primaryContact": "主要联系人",
+        "status": "状态"
+      },
+      "yes": "是",
+      "no": "否",
+      "exportLogs": "导出 {count} 条沟通记录",
+      "deactivate": "停用",
+      "activate": "启用",
+      "edit": "编辑"
+    },
+    "logs": {
+      "title": "沟通记录",
+      "total": "({count} 条)",
+      "addLog": "+ 记录沟通",
+      "filterAll": "全部",
+      "filterCalls": "电话",
+      "filterEmails": "邮件",
+      "empty": {
+        "title": "暂无沟通记录",
+        "desc": "在上方添加第一条沟通记录"
+      },
+      "followUp": "跟进：",
+      "due": "截止："
+    },
+    "roles": {
+      "accountManager": "客户经理",
+      "underwriting": "核保联系人",
+      "claims": "理赔联系人",
+      "finance": "财务联系人",
+      "it": "技术联系人",
+      "compliance": "合规联系人",
+      "executive": "高管联系人"
+    },
+    "commTypes": {
+      "phone": "电话",
+      "email": "邮件",
+      "meeting": "会议",
+      "im": "即时通讯",
+      "siteVisit": "现场访问"
+    },
+    "alerts": {
+      "addContact": "添加新联系人弹窗 - 待实现",
+      "editContact": "编辑联系人：{name}",
+      "deactivateConfirm": "停用 {name}？",
+      "deactivated": "联系人已成功停用！",
+      "activate": "启用 {name}",
+      "selectFirst": "请先选择一位联系人",
+      "exporting": "正在导出 {count} 条沟通记录..."
+    }
+  },
+  "lifecycle": {
+    "backToList": "返回合作列表",
+    "title": "合作状态与续约管理",
+    "subtitle": "跟踪合作全生命周期并管理续约评估",
+    "stats": {
+      "negotiating": "谈判中",
+      "pendingSignature": "待签署",
+      "approved": "已批准",
+      "inProgress": "进行中",
+      "expiringSoon": "即将到期",
+      "terminated": "已终止",
+      "pendingApproval": "待审批",
+      "expired": "已到期"
+    },
+    "searchPlaceholder": "按保险公司名称或合作ID搜索...",
+    "filter": {
+      "allStatuses": "所有状态",
+      "month": "本月",
+      "quarter": "本季度",
+      "year": "本年"
+    },
+    "expiringAlert": "{count} 项合作将在 90 天内到期",
+    "daysLeft": "{days} 天剩余",
+    "reviewAll": "查看全部",
+    "setReminders": "设置提醒",
+    "expiryListTitle": "到期详情列表（{count} 条）",
+    "col": {
+      "insurer": "保险公司",
+      "type": "类型",
+      "status": "状态",
+      "effectiveDate": "生效日期",
+      "expirationDate": "到期日期",
+      "daysLeft": "剩余天数",
+      "totalPremium": "总保费",
+      "rating": "评级",
+      "actions": "操作"
+    },
+    "permanent": "永久",
+    "renew": "续约",
+    "noExpiring": "90 天内无到期合作",
+    "showing": "显示 {shown} / {total} 项合作",
+    "exportReport": "导出报告",
+    "setUpAlerts": "设置预警",
+    "quality": {
+      "title": "质量评估",
+      "avgLossRatio": "平均赔付率",
+      "renewalRate": "续保率",
+      "complaintRate": "投诉率",
+      "disputeRate": "争议率",
+      "strategicAlignment": "战略契合度"
+    },
+    "performance": {
+      "title": "业绩趋势",
+      "thisPeriod": "本期",
+      "lastPeriod": "上期",
+      "premiumVolume": "保费规模",
+      "policiesSold": "保单数",
+      "commissionIncome": "佣金收入",
+      "channelCount": "渠道数"
+    },
+    "alert": {
+      "renewalStart": "正在为 {name} 启动续约评估"
+    }
+  },
+  "terminateDetail": {
+    "backToList": "返回合作列表",
+    "title": "终止合作关系",
+    "subtitle": "发起和管理合作关系的终止流程",
+    "warning": {
+      "title": "⚠️ 此操作将永久终止合作关系",
+      "item1": "所有渠道授权将被自动收回",
+      "item2": "将向保险公司提交 Appointment 终止申请",
+      "item3": "渠道将立即收到通知",
+      "item4": "此操作需要法务、合规和总经理审批"
+    },
+    "form": {
+      "selectCoop": "选择合作关系*",
+      "selectPlaceholder": "选择要终止的合作",
+      "reason": "终止原因*",
+      "reasonPlaceholder": "选择原因",
+      "type": "终止方式*",
+      "typePlaceholder": "选择终止方式",
+      "effectiveDate": "终止生效日期",
+      "immediate": "立即终止",
+      "immediateDesc": "批准后立即生效",
+      "futureDate": "指定日期",
+      "futureDateDesc": "设置具体终止日期",
+      "terminationDate": "终止日期*",
+      "transitionPeriod": "过渡期（天）*",
+      "viewImpact": "查看影响范围",
+      "cancel": "取消"
+    },
+    "preview": {
+      "title": "已选合作",
+      "insurer": "保险公司",
+      "coopType": "合作类型",
+      "status": "状态",
+      "effectiveDate": "生效日期",
+      "expirationDate": "到期日期",
+      "permanent": "永久",
+      "impactTitle": "影响概要",
+      "impactDesc": "点击\"查看影响范围\"查看详细分解",
+      "noSelection": "未选择合作"
+    },
+    "notes": {
+      "title": "重要提示",
+      "item1": "所有相关方将收到自动通知",
+      "item2": "将生成综合审计报告",
+      "item3": "待处理报价可能需要特殊处理",
+      "item4": "有效保单需要服务连续性规划"
+    },
+    "modal": {
+      "title": "影响分析与处理",
+      "subtitle": "{insurer} - {type} 合作",
+      "affectedProducts": "受影响产品",
+      "authorizedChannels": "已授权渠道",
+      "pendingQuotes": "待处理报价",
+      "activePolicies": "有效保单",
+      "unpaidCommissions": "未付佣金",
+      "appointmentsToTerminate": "待终止 Appointment",
+      "strategyTitle": "业务延续策略",
+      "pendingQuoteTitle": "待处理报价处理",
+      "selectStrategy": "选择处理策略...",
+      "activePolicyTitle": "有效保单服务安排",
+      "selectArrangement": "选择服务安排...",
+      "commissionTitle": "未付佣金结算",
+      "selectPlan": "选择结算方案...",
+      "batchTitle": "批量操作",
+      "recalling": "收回中...",
+      "recallChannels": "收回 {count} 个渠道授权",
+      "filing": "提交中...",
+      "terminateAppointments": "终止 {count} 个 Appointment",
+      "nextStepsTitle": "后续步骤",
+      "nextSteps": {
+        "1": "审查所有影响数据并选择上述处理策略",
+        "2": "执行批量操作（收回授权、提交 Appointment）",
+        "3": "提交审批流程",
+        "4": "完成后生成审计报告"
+      },
+      "close": "关闭",
+      "continueApproval": "继续审批"
+    },
+    "workflow": {
+      "title": "审批流程",
+      "legalReview": "法务审查",
+      "complianceReview": "合规审查",
+      "gmApproval": "总经理审批"
+    },
+    "alerts": {
+      "selectFields": "请选择合作、原因和方式",
+      "recallSuccess": "{count} 个渠道授权已成功收回！",
+      "terminateSuccess": "{count} 个 Appointment 已安排终止！",
+      "terminated": "合作关系已成功终止！所有操作已完成。"
+    }
+  },
+  "contractMgmt": {
+    "backToList": "返回合作列表",
+    "title": "合同与协议管理",
+    "subtitle": "管理与保险公司所有合同和协议",
+    "stats": {
+      "total": "合同总数",
+      "active": "有效",
+      "expiringSoon": "即将到期（90天）",
+      "draft": "草稿"
+    },
+    "expiringAlert": "{count} 份合同将在 90 天内到期",
+    "daysLeft": "{days} 天剩余",
+    "searchPlaceholder": "按合同名称或编号搜索...",
+    "filter": {
+      "allTypes": "所有类型",
+      "allStatuses": "所有状态"
+    },
+    "dateRange": {
+      "to": "至",
+      "startDate": "开始日期",
+      "endDate": "结束日期"
+    },
+    "applyFilter": "应用筛选",
+    "showing": "显示 {shown} / {total} 份合同",
+    "addContract": "添加合同",
+    "col": {
+      "name": "合同名称",
+      "number": "合同编号",
+      "insurer": "保险公司",
+      "type": "类型",
+      "effectiveDate": "生效日期",
+      "expirationDate": "到期日期",
+      "status": "状态",
+      "daysLeft": "剩余天数",
+      "actions": "操作",
+      "comm": "佣金"
+    },
+    "daysUnit": "天",
+    "noResults": "未找到符合条件的合同",
+    "types": {
+      "masterAgreement": "主协议",
+      "productSupplement": "产品补充协议",
+      "nda": "保密协议 (NDA)",
+      "dpa": "数据处理协议 (DPA)",
+      "commissionSupplement": "佣金补充协议",
+      "compliance": "合规协议"
+    },
+    "status": {
+      "draft": "草稿",
+      "pendingApproval": "待审批",
+      "signed": "已签署",
+      "inEffect": "有效",
+      "expiringSoon": "即将到期",
+      "expired": "已到期",
+      "terminated": "已终止"
+    },
+    "actions": {
+      "viewDetails": "查看详情",
+      "edit": "编辑",
+      "downloadPDF": "下载 PDF"
+    },
+    "alerts": {
+      "addContract": "创建新合同弹窗 - 待实现",
+      "editContract": "编辑合同：{name}",
+      "viewDetails": "查看详情：{name}",
+      "downloadingPDF": "下载 PDF：{name}.pdf"
     }
   }
 }

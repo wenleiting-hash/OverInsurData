@@ -4,8 +4,8 @@ import type { ViewId } from '@/App'
 import {
   LayoutDashboard, Building2, Package, ShieldCheck, Wallet,
   BarChart3, Users, Network, UserPlus, Key, DollarSign, CreditCard,
-  Trophy, GraduationCap, ChevronDown, ChevronRight, Settings,
-  Link, TrendingUp, Languages,
+  Trophy, GraduationCap, ChevronDown, ChevronRight,
+  Globe, TrendingUp, Languages, Handshake, UserCog
 } from 'lucide-react'
 
 interface NavGroup {
@@ -19,7 +19,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'insurer-list', label: 'menu.insurerList', icon: <Building2 size={15} /> },
       { id: 'product-list', label: 'menu.productManagement', icon: <Package size={15} /> },
-      { id: 'cooperation', label: 'menu.cooperationManagement', icon: <Link size={15} /> },
+      { id: 'cooperation', label: 'menu.cooperationManagement', icon: <Handshake size={15} /> },
       { 
         id: 'appointment', 
         label: 'menu.appointmentCompliance', 
@@ -33,7 +33,7 @@ const navGroups: NavGroup[] = [
     label: 'menu.channels',
     items: [
       { id: 'channel-list', label: 'menu.channelList', icon: <Users size={15} /> },
-      { id: 'channel-master', label: 'menu.channelMasterData', icon: <Settings size={15} /> },
+      { id: 'channel-master', label: 'menu.channelMasterData', icon: <Network size={15} /> },
       { id: 'channel-hierarchy', label: 'menu.channelHierarchy', icon: <Network size={15} /> },
       { id: 'channel-onboarding', label: 'menu.onboardingManagement', icon: <UserPlus size={15} /> },
       { id: 'product-auth', label: 'menu.productAuthorization', icon: <Key size={15} /> },
@@ -41,15 +41,16 @@ const navGroups: NavGroup[] = [
       { id: 'commission-settlement', label: 'menu.commissionSettlement', icon: <CreditCard size={15} /> },
       { id: 'channel-performance', label: 'menu.performanceAssessment', icon: <Trophy size={15} /> },
       { id: 'channel-training', label: 'menu.trainingCertification', icon: <GraduationCap size={15} /> },
-      { id: 'channel-portal', label: 'menu.channelPortal', icon: <Link size={15} /> },
+      { id: 'channel-portal', label: 'menu.channelPortal', icon: <Globe size={15} /> },
       { id: 'channel-analytics', label: 'menu.channelAnalytics', icon: <TrendingUp size={15} /> },
     ],
   },
   {
     label: 'menu.settings',
     items: [
+      { id: 'user-list', label: 'menu.userManagement', icon: <UserCog size={15} /> },
+      { id: 'permission-management', label: 'menu.permissionManagement', icon: <ShieldCheck size={15} /> },
       { id: 'i18n-management', label: 'menu.i18nManagement', icon: <Languages size={15} /> },
-      { id: 'permission-management', label: 'menu.permissionManagement', icon: <Key size={15} /> },
     ],
   },
 ]
@@ -97,9 +98,9 @@ export default function Sidebar({ currentView, navigateTo }: Props) {
         >
           <ShieldCheck size={18} color="#fff" strokeWidth={2} />
         </div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', lineHeight: 1.2 }}>InsureOS</div>
-          <div style={{ fontSize: 10.5, color: '#717786', fontWeight: 400 }}>海外保险管理平台</div>
+          <div style={{ fontSize: 10.5, color: '#717786', fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('common.brandTagline')}</div>
         </div>
       </div>
 
@@ -172,15 +173,12 @@ export default function Sidebar({ currentView, navigateTo }: Props) {
               flexShrink: 0,
             }}
           >
-            管
+            {t('common.admin').slice(0, 1)}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('common.admin')}</div>
-            <div style={{ fontSize: 11, color: '#717786' }}>Platform Admin</div>
+            <div style={{ fontSize: 11, color: '#717786' }}>{t('common.adminRole')}</div>
           </div>
-          <button className="btn-ghost" style={{ padding: 6 }}>
-            <Settings size={14} />
-          </button>
         </div>
       </div>
     </aside>

@@ -5,7 +5,7 @@ import { useLang, type Lang } from '../i18n'
 
 // ─── Settings dropdown ────────────────────────────────────────────────────────
 
-function SettingsDropdown({ onClose }: { onClose: () => void }) {
+function SettingsDropdown({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
   const { lang, t, setLang } = useLang()
   const ref = useRef<HTMLDivElement>(null)
 
@@ -95,6 +95,7 @@ function SettingsDropdown({ onClose }: { onClose: () => void }) {
           }}
           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(186,26,26,0.11)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'rgba(186,26,26,0.06)')}
+          onClick={() => { onClose(); onLogout() }}
         >
           <LogOut size={13} />{t.settingsLogout}
         </button>
@@ -108,9 +109,10 @@ function SettingsDropdown({ onClose }: { onClose: () => void }) {
 interface Props {
   currentView: string
   navigateTo: (view: ViewId) => void
+  onLogout: () => void
 }
 
-export default function TopBar({ currentView, navigateTo }: Props) {
+export default function TopBar({ currentView, navigateTo, onLogout }: Props) {
   const { t } = useLang()
   const [showSettings, setShowSettings] = useState(false)
   const settingsBtnRef = useRef<HTMLDivElement>(null)
@@ -127,7 +129,7 @@ export default function TopBar({ currentView, navigateTo }: Props) {
       }}
     >
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5" style={{ fontSize: 13.5 }}>
+      <div className="flex items-center gap-1.5" style={{ fontSize: 13.5, whiteSpace: 'nowrap', flexShrink: 0 }}>
         <button
           className="btn-ghost"
           style={{ padding: '3px 6px', fontSize: 13.5, color: '#717786' }}
@@ -150,15 +152,15 @@ export default function TopBar({ currentView, navigateTo }: Props) {
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5" style={{ flexShrink: 1, minWidth: 0, justifyContent: 'flex-end' }}>
         {/* Search */}
-        <div className="relative">
+        <div className="relative" style={{ flex: '0 1 230px', minWidth: 0, maxWidth: 230 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
           <input
             type="text"
             placeholder={t.searchPlaceholder}
             className="input-glass"
-            style={{ paddingLeft: 30, width: 230, fontSize: 13 }}
+            style={{ paddingLeft: 30, width: '100%', minWidth: 0, fontSize: 13 }}
           />
         </div>
 
@@ -198,10 +200,9 @@ export default function TopBar({ currentView, navigateTo }: Props) {
               <div style={{ fontSize: 12.5, fontWeight: 600, color: '#181C23', whiteSpace: 'nowrap' }}>{t.adminName}</div>
               <div style={{ fontSize: 11, color: '#717786', whiteSpace: 'nowrap' }}>{t.adminRole}</div>
             </div>
-            <Settings size={13} style={{ color: showSettings ? '#0058BC' : '#A0A5B4', marginLeft: 2, flexShrink: 0 }} />
           </button>
 
-          {showSettings && <SettingsDropdown onClose={() => setShowSettings(false)} />}
+          {showSettings && <SettingsDropdown onClose={() => setShowSettings(false)} onLogout={onLogout} />}
         </div>
       </div>
     </header>

@@ -89,7 +89,7 @@ export interface NIPRLicense {
 // COMPLIANCE INTERCEPTION LOGS
 // ============================================================================
 
-export type InterceptResult = 'blocked' | 'warned' | 'passed' | 'manual-review'
+export type InterceptResult = 'blocked' | 'warned' | 'passed' | 'manual-review' | 'allowed' | 'flagged'
 export type InterceptReason = 
   | 'no-appointment'           // No valid appointment
   | 'expired-appointment'      // Appointment expired
@@ -114,6 +114,18 @@ export interface ComplianceInterception {
   result: InterceptResult   // blocked/warned/passed/manual-review
   reasons: InterceptReason[] // Multiple reasons possible
   reasonDescriptions: string[] // Chinese descriptions for UI
+  reason?: InterceptReason  // Primary reason (legacy single-value field)
+  severity?: 'critical' | 'high' | 'medium' | 'low' // Risk severity
+  actionType?: string       // Action taken by the system
+  matchedEntity?: string    // Matched OFAC/compliance entity
+  listSource?: string       // Sanctions list source
+  matchScore?: number       // Similarity score (0-100)
+  channelNpn?: string       // Channel NPN license number
+  lineOfAuthority?: string  // Line of authority
+  rejectionDetail?: string  // Detailed rejection explanation
+  releasedAt?: string       // Release timestamp (if released)
+  releaseNote?: string      // Release justification
+  reviewedAt?: string       // Review timestamp (if reviewed)
   reviewedBy?: string       // If manually reviewed
   overrideApproved?: boolean // If override approved
   overrideNote?: string     // Override justification
@@ -129,8 +141,10 @@ export type RuleAction = 'block' | 'warn' | 'require-review'
 export interface ComplianceRule {
   id: string              // cr1, cr2...
   name: string            // Rule name (Chinese)
+  nameEn: string          // Rule name (English)
   category: RuleCategory  // appointment/license/ofac/channel/product
   condition: string       // Rule condition (Chinese)
+  conditionEn: string     // Rule condition (English)
   action: RuleAction      // block/warn/require-review
   enabled: boolean        // Is rule active
   priority: number        // Priority (lower = higher priority)
@@ -144,20 +158,84 @@ export interface ComplianceRule {
 
 export type OFACResult = 'clear' | 'watchlist' | 'blocked' | 'pending'
 
+// Sanction list sources
+type SanctionListSource = 
+  | 'SDN'           // Specially Designated Nationals List
+  | 'CONSOLIDATED'   // Consolidated Sanctions List
+  | 'SDGT'           // Global Terrorism Sanctions
+  | 'IRAN'           // Iran Sanctions
+  | 'CYBER2'         // Cyber-related Sanctions
+  | 'FOREIGN SANCTIONS MAGNITSKY ACT' // Magnitsky Sanctions
+  | 'SSI'            // Sectoral Sanctions Identification List
+  | 'NONSDN'         // Non-SDN List
+
+// Sanction match details
+export interface SanctionMatch {
+  id: string                    // match1, match2...
+  screeningId: string           // Parent screening ID
+  sourceList: SanctionListSource
+  matchedName: string           // Name on sanctions list
+  alias?: string[]              // Alternative names
+  program: string[]             // Sanctions program names
+  score: number                 // Similarity score (0-100)
+  scoreLevel: 'low' | 'medium' | 'high' | 'exact'
+  attributes: {
+    name: string
+    dob?: string               // Date of birth
+    idNumber?: string          // Passport, SSN, Tax ID
+    nationality?: string[]     // Nationality/Citizenship
+    address?: string           // Address
+    companyType?: string       // LLC, Corp, etc.
+    registrationPlace?: string // Place of incorporation
+    vesselFlag?: string        // Ship flag for vessels
+    imoNumber?: string           // IMO number for ships
+  }
+  additionalInfo?: string       // Additional description
+  effectiveDate?: string       // When sanctions imposed
+  expirationDate?: string      // When sanctions expire
+}
+
+// Match review decision
+type MatchReviewDecision = 'false-positive' | 'true-positive' | 'needs-investigation'
+
+export interface MatchReview {
+  id: string                    // Review ID
+  screeningId: string           // Screening ID being reviewed
+  matchId: string               // Specific match being reviewed
+  decision: MatchReviewDecision
+  reviewerName: string          // Name of person conducting review
+  reviewDate: string           // ISO datetime of review
+  reasoning: string            // Detailed reasoning for decision
+  supportingEvidence?: string[] // Supporting documents/notes
+  approvalChain?: string[]     // Approvers in chain (for true-positive)
+  createdAt: string            // Creation timestamp
+  updatedAt?: string           // Last update timestamp
+}
+
 export interface OFACScreening {
   id: string          // of1, of2...
   timestamp: string   // YYYY-MM-DD HH:MM:SS
   entityName: string  // Entity being screened
   entityType: 'Individual' | 'Company' | 'Vessel' | 'Aircraft'
+  country?: string[]            // Country/Nationality (can be multiple)
+  dateOfBirth?: string          // DOB for individuals
+  dateRegistered?: string       // Registration date for companies
+  identificationNumber?: string // Passport number, Tax ID, etc.
+  address?: string              // Physical address
+  vesselFlag?: string           // Ship flag for vessels
+  imoNumber?: string            // IMO number for ships
   screenedBy: string  // "System Auto" or human name
   result: OFACResult  // clear/watchlist/blocked/pending
   matchScore?: number // Similarity score (0-100)
+  matchScoreLevel?: 'low' | 'medium' | 'high' | 'exact'
   matchedEntry?: string  // Matched entry name
   matchedList?: string   // SDN List, SDGT List, etc.
+  program?: string[]     // Sanctions program names
   policyId?: string    // Related policy ID
   reviewedBy?: string  // If manually reviewed
   reviewNote?: string  // Review notes
   overrideApproved?: boolean // If override approved
+  reviewDate?: string  // Date of manual review
 }
 
 // ============================================================================
@@ -747,25 +825,123 @@ export const REPORT_TYPE_LABEL: Record<string, string> = {
 }
 
 export const COMPLIANCE_RULES: ComplianceRule[] = [
-  { id: 'cr1', name: 'Appointment 必须有效', category: 'appointment', condition: '出单时检查渠道 - 保险公司 - 州 - 业务线的 Appointment 状态 = approved', action: 'block', enabled: true, priority: 1, triggeredCount: 47, lastTriggered: '2026-08-22' },
-  { id: 'cr2', name: 'Appointment 到期拦截', category: 'appointment', condition: 'Appointment.expiryDate < today', action: 'block', enabled: true, priority: 2, triggeredCount: 23, lastTriggered: '2026-08-22' },
-  { id: 'cr3', name: '牌照有效性检查', category: 'license', condition: '渠道对应州牌照 status IN (active, pending)', action: 'block', enabled: true, priority: 3, triggeredCount: 12, lastTriggered: '2026-08-22' },
-  { id: 'cr4', name: '牌照到期警告', category: 'license', condition: 'license.daysToExpiry BETWEEN 0 AND 30', action: 'warn', enabled: true, priority: 4, triggeredCount: 8, lastTriggered: '2026-08-21' },
-  { id: 'cr5', name: 'OFAC SDN 精确匹配拦截', category: 'ofac', condition: 'customer.name EXACT_MATCH OFAC SDN list', action: 'block', enabled: true, priority: 1, triggeredCount: 2, lastTriggered: '2026-07-18' },
-  { id: 'cr6', name: 'OFAC 模糊匹配人工审核', category: 'ofac', condition: 'OFAC similarity_score >= 75%', action: 'require-review', enabled: true, priority: 2, triggeredCount: 9, lastTriggered: '2026-08-21' },
-  { id: 'cr7', name: '暂停渠道拦截', category: 'channel', condition: 'channel.status = suspended', action: 'block', enabled: true, priority: 1, triggeredCount: 18, lastTriggered: '2026-08-22' },
-  { id: 'cr8', name: 'Non-Admitted 产品州授权', category: 'product', condition: 'product.type = Non-Admitted AND state NOT IN product.states', action: 'block', enabled: true, priority: 2, triggeredCount: 6, lastTriggered: '2026-08-18' },
+  {
+    id: 'cr1',
+    name: 'Appointment 必须有效',
+    nameEn: 'Valid Appointment Required',
+    category: 'appointment',
+    condition: '出单时检查渠道 - 保险公司 - 州 - 业务线的 Appointment 状态 = approved',
+    conditionEn: 'At bind time, verify channel-insurer-state-line Appointment status = approved',
+    action: 'block',
+    enabled: true,
+    priority: 1,
+    triggeredCount: 47,
+    lastTriggered: '2026-08-22',
+  },
+  {
+    id: 'cr2',
+    name: 'Appointment 到期拦截',
+    nameEn: 'Expired Appointment Block',
+    category: 'appointment',
+    condition: 'Appointment.expiryDate < today',
+    conditionEn: 'Appointment.expiryDate < today',
+    action: 'block',
+    enabled: true,
+    priority: 2,
+    triggeredCount: 23,
+    lastTriggered: '2026-08-22',
+  },
+  {
+    id: 'cr3',
+    name: '牌照有效性检查',
+    nameEn: 'License Validity Check',
+    category: 'license',
+    condition: '渠道对应州牌照 status IN (active, pending)',
+    conditionEn: 'Channel state license status IN (active, pending)',
+    action: 'block',
+    enabled: true,
+    priority: 3,
+    triggeredCount: 12,
+    lastTriggered: '2026-08-22',
+  },
+  {
+    id: 'cr4',
+    name: '牌照到期警告',
+    nameEn: 'License Expiry Warning',
+    category: 'license',
+    condition: 'license.daysToExpiry BETWEEN 0 AND 30',
+    conditionEn: 'license.daysToExpiry BETWEEN 0 AND 30',
+    action: 'warn',
+    enabled: true,
+    priority: 4,
+    triggeredCount: 8,
+    lastTriggered: '2026-08-21',
+  },
+  {
+    id: 'cr5',
+    name: 'OFAC SDN 精确匹配拦截',
+    nameEn: 'OFAC SDN Exact Match Block',
+    category: 'ofac',
+    condition: 'customer.name EXACT_MATCH OFAC SDN list',
+    conditionEn: 'customer.name EXACT_MATCH OFAC SDN list',
+    action: 'block',
+    enabled: true,
+    priority: 1,
+    triggeredCount: 2,
+    lastTriggered: '2026-07-18',
+  },
+  {
+    id: 'cr6',
+    name: 'OFAC 模糊匹配人工审核',
+    nameEn: 'OFAC Fuzzy Match Manual Review',
+    category: 'ofac',
+    condition: 'OFAC similarity_score >= 75%',
+    conditionEn: 'OFAC similarity_score >= 75%',
+    action: 'require-review',
+    enabled: true,
+    priority: 2,
+    triggeredCount: 9,
+    lastTriggered: '2026-08-21',
+  },
+  {
+    id: 'cr7',
+    name: '暂停渠道拦截',
+    nameEn: 'Suspended Channel Block',
+    category: 'channel',
+    condition: 'channel.status = suspended',
+    conditionEn: 'channel.status = suspended',
+    action: 'block',
+    enabled: true,
+    priority: 1,
+    triggeredCount: 18,
+    lastTriggered: '2026-08-22',
+  },
+  {
+    id: 'cr8',
+    name: 'Non-Admitted 产品州授权',
+    nameEn: 'Non-Admitted Product State Authorization',
+    category: 'product',
+    condition: 'product.type = Non-Admitted AND state NOT IN product.states',
+    conditionEn: 'product.type = Non-Admitted AND state NOT IN product.states',
+    action: 'block',
+    enabled: true,
+    priority: 2,
+    triggeredCount: 6,
+    lastTriggered: '2026-08-18',
+  },
 ]
 
 export const OFAC_SCREENINGS: OFACScreening[] = [
   { id: 'of1', timestamp: '2026-08-22 11:08:02', entityName: 'Desert Solar Holdings', entityType: 'Company', screenedBy: 'System Auto', result: 'clear', policyId: 'QT-2026-088398' },
-  { id: 'of2', timestamp: '2026-08-21 16:44:00', entityName: 'Gulf Coast Energy Partners', entityType: 'Company', screenedBy: 'System Auto', result: 'watchlist', matchScore: 78, matchedEntry: 'Gulf Coast Energy Trading LLC', matchedList: 'SDN List', policyId: 'QT-2026-087912', reviewedBy: 'Chen Hao', reviewNote: '经人工核查，为不同实体，可放行', overrideApproved: true },
-  { id: 'of3', timestamp: '2026-08-19 10:23:14', entityName: 'Ali Hassan Al-Rashid', entityType: 'Individual', screenedBy: 'System Auto', result: 'blocked', matchScore: 96, matchedEntry: 'ALI HASSAN AL-RASHID', matchedList: 'SDN List', reviewedBy: 'Zhang Wei', reviewNote: '确认为 SDN 制裁名单人员，拒绝出单' },
-  { id: 'of4', timestamp: '2026-08-18 14:11:38', entityName: 'Sunshine Logistics Inc', entityType: 'Company', screenedBy: 'System Auto', result: 'clear' },
-  { id: 'of5', timestamp: '2026-08-17 09:55:22', entityName: 'Pacific Bridge Trading', entityType: 'Company', screenedBy: 'System Auto', result: 'clear' },
-  { id: 'of6', timestamp: '2026-08-16 16:33:50', entityName: 'Omega Financial Services', entityType: 'Company', screenedBy: 'System Auto', result: 'watchlist', matchScore: 82, matchedEntry: 'Omega Financial LLC (Syria)', matchedList: 'SDGT List', reviewedBy: 'Liu Yang', reviewNote: '不同注册地，风险评级提升至中风险，可放行', overrideApproved: true },
-  { id: 'of7', timestamp: '2026-08-15 11:20:44', entityName: 'North Star Mining Corp', entityType: 'Company', screenedBy: 'System Auto', result: 'clear' },
-  { id: 'of8', timestamp: '2026-08-14 08:44:09', entityName: 'Bay Area Tech Ventures', entityType: 'Company', screenedBy: 'System Auto', result: 'clear', policyId: 'QT-2026-088301' },
+  { id: 'of2', timestamp: '2026-08-21 16:44:00', entityName: 'Gulf Coast Energy Partners', entityType: 'Company', country: ['US'], screenedBy: 'System Auto', result: 'watchlist', matchScore: 78, matchScoreLevel: 'medium', matchedEntry: 'Gulf Coast Energy Trading LLC', matchedList: 'SDN', program: ['IRAN'], policyId: 'QT-2026-087912', reviewedBy: 'Chen Hao', reviewNote: '经人工核查，为不同实体，可放行', overrideApproved: true, reviewDate: '2026-08-21 17:00:00' },
+  { id: 'of3', timestamp: '2026-08-19 10:23:14', entityName: 'Ali Hassan Al-Rashid', entityType: 'Individual', country: ['Syria', 'Iran'], dateOfBirth: '1975-03-15', identificationNumber: 'Passport No. A12345678', address: 'Damascus, Syria', screenedBy: 'System Auto', result: 'blocked', matchScore: 96, matchScoreLevel: 'exact', matchedEntry: 'ALI HASSAN AL-RASHID', matchedList: 'SDN', program: ['SYRIA', 'TERRORISM'], policyId: 'QT-2026-087542', reviewedBy: 'Zhang Wei', reviewNote: '确认为 SDN 制裁名单人员，拒绝出单', overrideApproved: false, reviewDate: '2026-08-19 11:30:00' },
+  { id: 'of4', timestamp: '2026-08-18 14:11:38', entityName: 'Sunshine Logistics Inc', entityType: 'Company', country: ['US'], screenedBy: 'System Auto', result: 'clear', policyId: 'QT-2026-088301' },
+  { id: 'of5', timestamp: '2026-08-17 09:55:22', entityName: 'Pacific Bridge Trading', entityType: 'Company', country: ['Singapore'], screenedBy: 'System Auto', result: 'clear' },
+  { id: 'of6', timestamp: '2026-08-16 16:33:50', entityName: 'Omega Financial Services', entityType: 'Company', country: ['UAE'], dateRegistered: '2020-05-12', identificationNumber: 'Tax ID 98-7654321', address: 'Dubai, UAE', screenedBy: 'System Auto', result: 'watchlist', matchScore: 82, matchScoreLevel: 'high', matchedEntry: 'Omega Financial LLC (Syria)', matchedList: 'SDGT', program: ['GLOBAL_TERRORISM'], policyId: 'QT-2026-087890', reviewedBy: 'Liu Yang', reviewNote: '不同注册地，风险评级提升至中风险，可放行', overrideApproved: true, reviewDate: '2026-08-16 18:00:00' },
+  { id: 'of7', timestamp: '2026-08-15 11:20:44', entityName: 'North Star Mining Corp', entityType: 'Company', country: ['Canada'], screenedBy: 'System Auto', result: 'clear' },
+  { id: 'of8', timestamp: '2026-08-14 08:44:09', entityName: 'Bay Area Tech Ventures', entityType: 'Company', country: ['US'], dateRegistered: '2019-03-20', identificationNumber: 'EIN 12-3456789', address: 'San Francisco, CA, US', screenedBy: 'System Auto', result: 'clear', policyId: 'QT-2026-088301' },
+  { id: 'of9', timestamp: '2026-08-13 15:30:00', entityName: 'Vessel "Pacific Dream"', entityType: 'Vessel', country: ['Panama'], vesselFlag: 'Panama', imoNumber: 'IMO 1234567', screenedBy: 'System Auto', result: 'watchlist', matchScore: 73, matchScoreLevel: 'medium', matchedEntry: 'MV Pacific Dream', matchedList: 'CONSOLIDATED', program: ['NORTH_KOREA'], policyId: 'QT-2026-087654' },
+  { id: 'of10', timestamp: '2026-08-12 10:15:00', entityName: "John Michael Smith", entityType: 'Individual', country: ['UK'], dateOfBirth: '1980-07-22', identificationNumber: 'Passport No. ZK1234567', address: 'London, UK', screenedBy: 'System Auto', result: 'blocked', matchScore: 98, matchScoreLevel: 'exact', matchedEntry: 'JOHN MICHAEL SMITH', matchedList: 'FOREIGN SANCTIONS MAGNITSKY ACT', program: ['MAGNITSKY'], policyId: 'QT-2026-087321', reviewedBy: 'Sarah Chen', reviewNote: '确认与 Magnitsky 制裁名单完全匹配，必须冻结资产并报告', overrideApproved: false, reviewDate: '2026-08-12 14:00:00' },
 ]
 
 export const COMPLIANCE_REPORTS: ComplianceReport[] = [

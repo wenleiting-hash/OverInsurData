@@ -470,3 +470,39 @@ export function formatCurrency(val: number, short?: boolean): string {
 export function formatPercent(val: number): string {
   return `${(val * 100).toFixed(1)}%`;
 }
+
+export interface Channel {
+  id: string;
+  name: string;
+  type: 'Independent Agency' | 'Broker' | 'MGA' | 'Wholesale Broker' | 'Direct';
+  status: 'active' | 'inactive' | 'onboarding' | 'suspended';
+  tier: 'Platinum' | 'Gold' | 'Silver' | 'Standard';
+  parentId?: string;
+  level: number;
+  agentCount: number;
+  totalPremium: number;
+  policyCount: number;
+  lossRatio: number;
+  renewalRate: number;
+  commissionRate: number;
+  state: string;
+  region: Region;
+  joinDate: string;
+  npnCode: string;
+  manager: string;
+}
+
+export const channels: Channel[] = [
+  { id: 'c1', name: 'Pacific Coast Insurance Group', type: 'Independent Agency', status: 'active', tier: 'Platinum', level: 1, agentCount: 128, totalPremium: 245000000, policyCount: 9800, lossRatio: 0.588, renewalRate: 0.892, commissionRate: 0.12, state: 'CA', region: 'West', joinDate: '2019-02-15', npnCode: 'NPN12348901', manager: 'Sarah Chen' },
+  { id: 'c2', name: 'Lone Star Brokerage', type: 'Broker', status: 'active', tier: 'Platinum', level: 1, agentCount: 96, totalPremium: 198000000, policyCount: 7900, lossRatio: 0.612, renewalRate: 0.871, commissionRate: 0.11, state: 'TX', region: 'Southeast', joinDate: '2019-08-20', npnCode: 'NPN23459012', manager: 'James Rodriguez' },
+  { id: 'c3', name: 'Great Lakes Insurance Partners', type: 'MGA', status: 'active', tier: 'Gold', level: 1, agentCount: 72, totalPremium: 156000000, policyCount: 6200, lossRatio: 0.602, renewalRate: 0.862, commissionRate: 0.13, state: 'IL', region: 'Midwest', joinDate: '2020-01-10', npnCode: 'NPN34560123', manager: 'Michael Wu' },
+  { id: 'c4', name: 'Empire State Insurance Services', type: 'Independent Agency', status: 'active', tier: 'Gold', level: 1, agentCount: 54, totalPremium: 134000000, policyCount: 5400, lossRatio: 0.619, renewalRate: 0.842, commissionRate: 0.11, state: 'NY', region: 'Northeast', joinDate: '2020-05-22', npnCode: 'NPN45671234', manager: 'Emily Johnson' },
+  { id: 'c5', name: 'Sunshine State Brokers', type: 'Broker', status: 'active', tier: 'Gold', level: 1, agentCount: 61, totalPremium: 121000000, policyCount: 5100, lossRatio: 0.638, renewalRate: 0.821, commissionRate: 0.10, state: 'FL', region: 'Southeast', joinDate: '2020-09-14', npnCode: 'NPN56782345', manager: 'Carlos Martinez' },
+  { id: 'c6', name: 'Midwest Specialty Risk', type: 'Wholesale Broker', status: 'active', tier: 'Silver', level: 1, agentCount: 38, totalPremium: 89000000, policyCount: 3600, lossRatio: 0.592, renewalRate: 0.878, commissionRate: 0.10, state: 'OH', region: 'Midwest', joinDate: '2021-02-08', npnCode: 'NPN67893456', manager: 'David Kim' },
+  { id: 'c7', name: 'Rocky Mountain Insurance Advisors', type: 'Independent Agency', status: 'active', tier: 'Silver', level: 1, agentCount: 29, totalPremium: 72000000, policyCount: 2900, lossRatio: 0.608, renewalRate: 0.851, commissionRate: 0.11, state: 'CO', region: 'West', joinDate: '2021-06-30', npnCode: 'NPN78904567', manager: 'Jennifer Park' },
+  { id: 'c8', name: 'Atlantic Coastal Risk Management', type: 'MGA', status: 'active', tier: 'Silver', level: 1, agentCount: 33, totalPremium: 68000000, policyCount: 2700, lossRatio: 0.624, renewalRate: 0.841, commissionRate: 0.12, state: 'NC', region: 'Southeast', joinDate: '2021-09-15', npnCode: 'NPN89015678', manager: 'Robert Lee' },
+  { id: 'c9', name: 'Southwest Insurance Network', type: 'Broker', status: 'onboarding', tier: 'Standard', level: 1, agentCount: 18, totalPremium: 28000000, policyCount: 1200, lossRatio: 0.652, renewalRate: 0.801, commissionRate: 0.09, state: 'AZ', region: 'West', joinDate: '2026-03-01', npnCode: 'NPN90126789', manager: 'Lisa Wang' },
+  { id: 'c10', name: 'Northeast Professional Services', type: 'Independent Agency', status: 'suspended', tier: 'Standard', level: 1, agentCount: 12, totalPremium: 22000000, policyCount: 890, lossRatio: 0.782, renewalRate: 0.682, commissionRate: 0.09, state: 'CT', region: 'Northeast', joinDate: '2022-01-20', npnCode: 'NPN01237890', manager: 'Tom Anderson' },
+  { id: 'c11', name: 'PCG - Bay Area Division', type: 'Independent Agency', status: 'active', tier: 'Gold', level: 2, parentId: 'c1', agentCount: 42, totalPremium: 86000000, policyCount: 3400, lossRatio: 0.579, renewalRate: 0.901, commissionRate: 0.11, state: 'CA', region: 'West', joinDate: '2020-04-15', npnCode: 'NPN11248901', manager: 'Amy Zhang' },
+  { id: 'c12', name: 'Lone Star - Houston Branch', type: 'Broker', status: 'active', tier: 'Gold', level: 2, parentId: 'c2', agentCount: 35, totalPremium: 72000000, policyCount: 2900, lossRatio: 0.621, renewalRate: 0.862, commissionRate: 0.10, state: 'TX', region: 'Southeast', joinDate: '2020-11-10', npnCode: 'NPN22359012', manager: 'Victor Gonzalez' },
+];

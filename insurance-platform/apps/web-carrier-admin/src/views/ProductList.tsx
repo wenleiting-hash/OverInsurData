@@ -1,20 +1,21 @@
 // Product List View - Core page for product management (功能点 10-14)
 // Features: List query, filtering, sorting, pagination, batch actions, CRUD navigation
-// Fully aligned with UI-V1.2 design spec
+// Synced with 设计原型V1.3 ProductList interaction: eye/edit/toggle row actions,
+// bulk list/delist actions, status modal wiring (session-memory state)
 
 import { useState, useMemo } from 'react'
-import { 
-  Plus, Search, XCircle, MoreHorizontal, Eye, Edit2, ToggleRight, ChevronUp, ChevronDown,
+import {
+  Plus, Search, XCircle, Eye, Edit2, ToggleRight, ChevronUp, ChevronDown,
   Download
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ViewId } from '@/App'
+import ProductStatusModal from '@/components/ProductStatusModal'
 import type { InsuranceProduct } from './data/mockProductData'
 import { products, formatCurrency, formatPercent } from './data/mockProductData'
 
 interface Props {
-  navigateTo: (view: ViewId) => void
-  onStatusChange?: (id: string) => void
+  navigateTo: (view: ViewId, params?: { carrierId?: string; productId?: string; userId?: string }) => void
 }
 
 const LINE_COLORS: Record<string, string> = {
@@ -26,9 +27,14 @@ const LINE_COLORS: Record<string, string> = {
 type SortKey = 'name' | 'premium' | 'lossRatio' | 'renewalRate' | 'policyCount'
 type SortDir = 'asc' | 'desc'
 
-export default function ProductList({ navigateTo, onStatusChange }: Props) {
+export default function ProductList({ navigateTo }: Props) {
   const { t, i18n } = useTranslation('product')
-  
+
+  // Session-memory product state: status changes via ProductStatusModal take
+  // effect instantly on table/KPI/footer counts (mirrors ChannelList pattern)
+  const [productState, setProductState] = useState<InsuranceProduct[]>(products)
+  const [statusModalId, setStatusModalId] = useState<string | null>(null)
+
   const [search, setSearch] = useState('')
   const [filterInsurer, setFilterInsurer] = useState<string>('all')
   const [filterLine, setFilterLine] = useState<string>('all')
@@ -38,7 +44,7 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const filtered = useMemo(() => {
-    return products.filter(p => {
+    return productState.filter(p => {
       const q = search.toLowerCase()
       const matchSearch = !q || p.productName.toLowerCase().includes(q) || p.productCode.toLowerCase().includes(q)
       const matchInsurer = filterInsurer === 'all' || p.insurerName === filterInsurer
@@ -46,7 +52,7 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
       const matchStatus = filterStatus === 'all' || p.status === filterStatus
       return matchSearch && matchInsurer && matchLine && matchStatus
     })
-  }, [search, filterInsurer, filterLine, filterStatus])
+  }, [productState, search, filterInsurer, filterLine, filterStatus])
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -72,29 +78,46 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
       : <ChevronDown size={12} style={{ opacity: 0.3 }} />
   )
 
-  const statusLabels: Record<string, { cls: string; orb: string; label: string }> = {
-    'Active': { cls: 'badge-green', orb: '', label: t('values.statusOnSale') },
-    'Paused': { cls: 'badge-yellow', orb: '', label: t('values.statusPaused') },
-    'Inactive': { cls: 'badge-gray', orb: '', label: t('values.statusOffSale') },
-    'Pending': { cls: 'badge-purple', orb: '', label: t('values.statusPending') },
+  const statusLabels: Record<InsuranceProduct['status'], { cls: string; orb: string }> = {
+    'Active': { cls: 'badge-green', orb: 'orb-green' },
+    'Paused': { cls: 'badge-yellow', orb: 'orb-yellow' },
+    'Inactive': { cls: 'badge-gray', orb: 'orb-gray' },
+    'Pending': { cls: 'badge-purple', orb: 'orb-purple' },
   }
 
-  const insurerOptions = useMemo(() => Array.from(new Set(products.map(p => p.insurerName))), [])
-  const lineOptions = useMemo(() => [...new Set(products.map(p => p.lineOfBusiness))], [])
+  const statusText: Record<InsuranceProduct['status'], string> = {
+    'Active': t('values.statusOnSale'),
+    'Paused': t('values.statusPaused'),
+    'Inactive': t('values.statusOffSale'),
+    'Pending': t('values.statusPending'),
+  }
 
+  const confirmStatusChange = () => {
+    if (!statusModalId) return
+    setProductState(prev => prev.map(p => p.productId === statusModalId
+      ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active', isActive: p.status !== 'Active' }
+      : p
+    ))
+    setStatusModalId(null)
+  }
+
+  const insurerOptions = useMemo(() => Array.from(new Set(productState.map(p => p.insurerName))), [productState])
+  const lineOptions = useMemo(() => [...new Set(productState.map(p => p.lineOfBusiness))], [productState])
+
+  const statusModalProduct = statusModalId ? productState.find(p => p.productId === statusModalId) : undefined
 
   const handleExport = () => {
-    const headers = ['产品名称', '公司', '业务线', '状态', '本年保费', '保单数', '赔付率']
+    const headers = [t('tables.productName'), t('tables.insurerName'), t('tables.lineOfBusiness'), t('tables.status'), t('tables.premiumYTD'), t('tables.policyCount'), t('tables.lossRatio')]
     const csvData = sorted.map((p: InsuranceProduct) => [
       `"${p.productName}"`,
       p.insurerName,
       p.lineOfBusiness,
-      t(`values.status${p.status}`),
+      statusText[p.status],
       formatCurrency(p.premiumYTD ?? 0, true),
       p.policyCount?.toLocaleString() ?? 'N/A',
       formatPercent(p.lossRatio ?? 0),
     ].join(','))
-    
+
     const csvContent = [headers.join(','), ...csvData].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -104,6 +127,8 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
     link.click()
   }
 
+  const dateLocale = i18n.language.startsWith('en') ? 'en-US' : 'zh-CN'
+
   return (
     <div className="flex-1 overflow-auto">
       <div style={{ maxWidth: 1440, margin: '0 auto', padding: '32px 36px' }}>
@@ -111,7 +136,7 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{t('pages.productManagement')}</h1>
-            <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>共 {products.length} 个产品 · {filtered.length} 条结果</p>
+            <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>{t('list.countSummary', { total: productState.length, results: filtered.length })}</p>
           </div>
           <div className="flex items-center gap-2">
             <button className="btn-secondary" style={{ fontSize: 13 }} onClick={handleExport}>
@@ -128,23 +153,23 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
         <div className="card flex items-center gap-3 flex-wrap" style={{ padding: '14px 18px', marginBottom: 14 }}>
           <div className="relative" style={{ flex: 1, minWidth: 180 }}>
             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
-            <input type="text" placeholder="搜索产品名称、产品代码…" className="input-glass w-full" style={{ paddingLeft: 30, fontSize: 13 }}
+            <input type="text" placeholder={t('filters.searchPlaceholder')} className="input-glass w-full" style={{ paddingLeft: 30, fontSize: 13 }}
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <select className="input-glass" style={{ fontSize: 13 }} value={filterInsurer} onChange={e => setFilterInsurer(e.target.value)}>
-            <option value="all">全部保险公司</option>
+            <option value="all">{t('filters.allInsurers')}</option>
             {insurerOptions.map(insurer => <option key={insurer} value={insurer}>{insurer}</option>)}
           </select>
           <select className="input-glass" style={{ fontSize: 13 }} value={filterLine} onChange={e => setFilterLine(e.target.value)}>
-            <option value="all">业务线</option>
+            <option value="all">{t('filters.lineOfBusiness')}</option>
             {lineOptions.map(line => <option key={line} value={line}>{t(`values.lob${line}`)}</option>)}
           </select>
           <select className="input-glass" style={{ fontSize: 13 }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-            <option value="all">产品状态</option>
-            <option value="on-sale">{t('values.statusOnSale')}</option>
-            <option value="off-sale">{t('values.statusOffSale')}</option>
-            <option value="paused">{t('values.statusPaused')}</option>
-            <option value="pending">{t('values.statusPending')}</option>
+            <option value="all">{t('filters.status')}</option>
+            <option value="Active">{t('filters.active')}</option>
+            <option value="Inactive">{t('filters.inactive')}</option>
+            <option value="Paused">{t('filters.paused')}</option>
+            <option value="Pending">{t('filters.pending')}</option>
           </select>
           {(search || filterInsurer !== 'all' || filterLine !== 'all' || filterStatus !== 'all') && (
             <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}
@@ -157,11 +182,12 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
         {/* Bulk actions */}
         {selected.size > 0 && (
           <div className="glass-light flex items-center gap-3 px-4 py-2.5 mb-3" style={{ borderRadius: 10 }}>
-            <span style={{ fontSize: 13, color: '#0058BC', fontWeight: 500 }}>已选 {selected.size} 项</span>
-            <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => {
-              if(onStatusChange) sorted.forEach(p => onStatusChange(p.productId))
-            }}>
-              <ToggleRight size={13} />{t('bulkActions.batchActivate')}
+            <span style={{ fontSize: 13, color: '#0058BC', fontWeight: 500 }}>{t('bulkActions.selectedCount', { count: selected.size })}</span>
+            <button className="btn-ghost" style={{ fontSize: 12.5 }}>
+              <ToggleRight size={13} />{t('bulkActions.batchList')}
+            </button>
+            <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}>
+              <ToggleRight size={13} />{t('bulkActions.batchDelist')}
             </button>
             <button className="btn-ghost ml-auto" style={{ fontSize: 12.5 }} onClick={() => setSelected(new Set())}>
               {t('bulkActions.cancelSelection')}
@@ -202,20 +228,20 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
                 </th>
                 <th>{t('tables.effectiveDate')}</th>
                 <th className="sticky-right" data-col="status">{t('tables.status')}</th>
-                <th className="sticky-right" style={{ width: 90 }} data-col="actions">{t('tables.actions')}</th>
+                <th className="sticky-right" style={{ width: 120 }} data-col="actions">{t('tables.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map(p => {
                 const sc = statusLabels[p.status]
                 return (
-                  <tr key={p.productId} style={{ cursor: 'pointer' }} onClick={() => navigateTo('product-detail')}>
+                  <tr key={p.productId} style={{ cursor: 'pointer' }} onClick={() => navigateTo('product-detail', { productId: p.productId })}>
                     <td onClick={e => { e.stopPropagation(); toggleSelect(p.productId) }}>
                       <input type="checkbox" checked={selected.has(p.productId)} onChange={() => {}} style={{ cursor: 'pointer' }} />
                     </td>
                     <td className="sticky-first" style={{ width: 220 }}>
                       <div style={{ fontWeight: 600, color: '#181C23', fontSize: 13.5 }}>{p.productName}</div>
-                      <div style={{ fontSize: 11, color: '#717786' }}>{t(`values.${p.subLine}`)}</div>
+                      <div style={{ fontSize: 11, color: '#717786' }}>{p.subLine ? t(`values.${p.subLine}`) : p.subLine}</div>
                     </td>
                     <td className="sticky-first" style={{ width: 100 }}>
                       <span className="font-data" style={{ fontSize: 12, color: '#414755', background: 'rgba(236,237,249,0.8)', padding: '2px 7px', borderRadius: 5 }}>{p.productCode}</span>
@@ -228,10 +254,10 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
                       <span className={`badge ${LINE_COLORS[p.lineOfBusiness] || 'badge-gray'}`} style={{ fontSize: 11.5 }}>{t(`values.lob${p.lineOfBusiness}`)}</span>
                     </td>
                     <td>
-                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{t(`values.type${p.type === 'Individual' ? 'Individual' : p.type === 'Group' ? 'Group' : 'VoluntaryBenefits'}`)}</span>
+                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{t(`values.type${p.type}`)}</span>
                     </td>
                     <td style={{ textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}>
-                      {p.availableStates.length === 50 ? <span className="badge badge-blue" style={{ fontSize: 11 }}>全国</span> : p.availableStates.length}
+                      {p.availableStates.length === 50 ? <span className="badge badge-blue" style={{ fontSize: 11 }}>{t('values.nationwide')}</span> : p.availableStates.length}
                     </td>
                     <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 500 }}>
                       {formatCurrency(p.premiumYTD ?? 0, true)}
@@ -248,19 +274,33 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
                       {formatPercent(p.renewalRate ?? 0)}
                     </td>
                     <td style={{ width: 110, fontSize: 12.5, color: '#717786' }}>
-                      {new Date(p.effectiveDate).toLocaleDateString('zh-CN', {
+                      {new Date(p.effectiveDate).toLocaleDateString(dateLocale, {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit'
                       })}
                     </td>
-                    <td style={{ width: 75 }} data-col="status" className="sticky-right">
-                      <span className={`badge ${sc.cls}`} style={{ fontSize: 11 }}> {t(`values.status${p.status === 'Active' ? 'OnSale' : p.status === 'Paused' ? 'Paused' : p.status === 'Inactive' ? 'OffSale' : 'Pending'}`)}</span>
+                    <td style={{ width: 110 }} data-col="status" className="sticky-right">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`orb ${sc.orb}`} />
+                        <span style={{ fontSize: 12.5 }}>{statusText[p.status]}</span>
+                      </div>
                     </td>
-                    <td onClick={e => e.stopPropagation()} style={{ width: 90, position: 'relative' }} data-col="actions" className="sticky-right">
-                      <button className="btn-ghost" title={t('actions.more')} style={{ padding: '8px', borderRadius: 8 }}>
-                        <MoreHorizontal size={16} />
-                      </button>
+                    <td onClick={e => e.stopPropagation()} style={{ width: 120 }} data-col="actions" className="sticky-right">
+                      <div className="flex items-center gap-0.5">
+                        <button className="btn-ghost" style={{ padding: 5 }} title={t('actions.viewDetails')}
+                          onClick={() => navigateTo('product-detail', { productId: p.productId })}>
+                          <Eye size={14} />
+                        </button>
+                        <button className="btn-ghost" style={{ padding: 5 }} title={t('actions.edit')}
+                          onClick={() => navigateTo('product-edit', { productId: p.productId })}>
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="btn-ghost" style={{ padding: 5 }} title={p.status === 'Active' ? t('actions.delist') : t('actions.list')}
+                          onClick={() => setStatusModalId(p.productId)}>
+                          <ToggleRight size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -269,12 +309,19 @@ export default function ProductList({ navigateTo, onStatusChange }: Props) {
           </table>
         </div>
           <div style={{ padding: '12px 18px', borderTop: '0.5px solid rgba(193,198,215,0.4)' }}>
-            <span style={{ fontSize: 12.5, color: '#717786' }}>共 {sorted.length} 条产品记录</span>
+            <span style={{ fontSize: 12.5, color: '#717786' }}>{t('list.footerCount', { count: sorted.length })}</span>
           </div>
         </div>
       </div>
 
-
+      {/* Product status modal (list / delist) */}
+      {statusModalProduct && (
+        <ProductStatusModal
+          product={statusModalProduct}
+          onClose={() => setStatusModalId(null)}
+          onConfirm={confirmStatusChange}
+        />
+      )}
 
     </div>
   )

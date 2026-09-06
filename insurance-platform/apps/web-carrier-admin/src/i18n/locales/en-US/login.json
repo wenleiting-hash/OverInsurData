@@ -1,0 +1,47 @@
+{
+  "brand": {
+    "subtitle": "Overseas Insurance Management Platform"
+  },
+  "tabs": {
+    "password": "Account Login",
+    "sso": "Platform SSO"
+  },
+  "form": {
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Enter username",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "signIn": "Sign In",
+    "forgotPassword": "Forgot password?",
+    "emptyError": "Please enter your username and password",
+    "invalidCredentials": "Invalid username or password",
+    "accountLocked": "Account locked, please try again in 1 hour",
+    "networkError": "Network error, please try again"
+  },
+  "demo": {
+    "title": "Demo account",
+    "usernameLabel": "Username: ",
+    "passwordLabel": "Password: "
+  },
+  "sso": {
+    "viaTitle": "Sign in via Integrated Platform",
+    "descLine1": "InsureOS supports sub-system integration.",
+    "descLine2": "When redirected from an integrated platform, user credentials are carried automatically",
+    "paramsTitle": "Integration Parameters",
+    "paramToken": "Auth token (required)",
+    "paramUser": "User name (required)",
+    "paramRole": "User role (optional)",
+    "paramPlatform": "Source platform name (optional)",
+    "exampleLabel": "Example: ",
+    "exampleCode": "?token=xxx&user=Tom&role=Admin&platform=ERP",
+    "warning": "No integrated platform user info detected. Please redirect from your integrated platform with the required parameters."
+  },
+  "footer": {
+    "copyright": "© 2025 InsureOS · All rights reserved"
+  },
+  "a11y": {
+    "switchToZh": "Switch to Chinese",
+    "switchToEn": "Switch to English",
+    "togglePassword": "Show or hide password"
+  }
+}

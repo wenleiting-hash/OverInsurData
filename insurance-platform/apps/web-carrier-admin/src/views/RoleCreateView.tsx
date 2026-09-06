@@ -7,7 +7,8 @@ interface Props {
 }
 
 export default function RoleCreateView({ navigateTo }: Props) {
-  const { t } = useTranslation('permission');
+  const { t, i18n } = useTranslation('permission');
+  const isEn = i18n.language?.startsWith?.('en') ?? false;
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -19,19 +20,19 @@ export default function RoleCreateView({ navigateTo }: Props) {
     
     // 基础验证
     if (!formData.name.trim()) {
-      alert(t('pleaseEnter') || `请输入${t('roleName')}`);
+      alert(t('pleaseEnterRoleName'));
       return;
     }
-    
+
     if (!formData.code.trim()) {
-      alert(t('pleaseEnter') || `请输入${t('roleCode')}`);
+      alert(t('pleaseEnterRoleCode'));
       return;
     }
 
     // 🔴 todo: 调用真实 API 创建角色
-    console.log('创建角色数据:', formData);
-    
-    alert(t('createSuccess') || '角色创建成功！');
+    console.log('Create role data:', formData);
+
+    alert(t('roleCreateSuccess'));
     navigateTo('role-list');
   };
 
@@ -104,7 +105,7 @@ export default function RoleCreateView({ navigateTo }: Props) {
                 <button 
                   type="button"
                   className="btn-primary"
-                  onClick={() => alert(t('comingSoonPermissionConfig') || '权限配置功能开发中')}
+                  onClick={() => alert(t('comingSoonPermissionConfig'))}
                 >
                   {t('configurePermissions')}
                 </button>

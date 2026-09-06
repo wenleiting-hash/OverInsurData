@@ -54,7 +54,9 @@
     "cooperationType": "合作类型",
     "state": "总部所在州",
     "region": "大区",
-    "city": "城市"
+    "city": "城市",
+    "linesHint": "选择主营业务线（可多选）",
+    "selectState": "选择州"
   },
   "values": {
     "admitted": "Admitted（已获批准入）",
@@ -62,6 +64,7 @@
     "coopDirect": "直接代理",
     "coopMGA": "MGA（Managing General Agent）",
     "coopWholesale": "批发经纪",
+    "coopIndependent": "独立代理",
     "coopRecommend": "推荐合作",
     "coopPlatform": "聚合平台合作"
   },
@@ -93,6 +96,7 @@
     "manualEntry": "人工录入",
     "billCutoffDay": "账单截止日",
     "cutoffDayHint": "每月/季第几天为数据截止日",
+    "billCutoffPrefix": "每月第",
     "day": "天",
     "paymentTerm": "付款期限",
     "paymentHint": "对账完成后多少天内支付",
@@ -113,6 +117,8 @@
     "requiredDocs": "必须",
     "uploaded": "已上传",
     "notUploaded": "未上传",
+    "uploadBtn": "上传",
+    "fakeFileName": "合作协议_Draft_{{ts}}.pdf",
     "docs": {
       "businessLicense": "营业执照",
       "mainAgreement": "主合作协议",
@@ -124,7 +130,8 @@
   "navigation": {
     "previousStep": "上一步",
     "nextStep": "下一步",
-    "stepCount": "步骤 {current} / {total}"
+    "stepCount": "步骤 {current} / {total}",
+    "progressLabel": "填写进度"
   },
   "validation": {
     "missingRequired": "请填写必填字段",

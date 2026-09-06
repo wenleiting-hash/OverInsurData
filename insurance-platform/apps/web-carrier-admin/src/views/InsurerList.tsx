@@ -6,6 +6,8 @@ import {
 import { insurers, formatCurrency, formatPercent } from './data/mockDashboardData';
 import type { ViewId } from '@/App';
 import { useTranslation } from 'react-i18next';
+import DisableModal from '@/components/DisableModal';
+import BatchExportModal from '@/components/BatchExportModal';
 
 interface Props {
   navigateTo: (view: ViewId, params?: any) => void;
@@ -25,6 +27,8 @@ export default function InsurerList({ navigateTo }: Props) {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showExport, setShowExport] = useState(false);
+  const [disableTarget, setDisableTarget] = useState<string | null>(null);
   
   const pageSize = 8;
 
@@ -74,8 +78,13 @@ export default function InsurerList({ navigateTo }: Props) {
   };
 
   const handleExport = () => {
-    // 构建 CSV 内容
-    const headers = ['NAIC Code', '公司名称', '公司类型', 'AM Best 评级', '状态', '所属大区', '总保费', '赔付率', '续保率', '结算周期'];
+    // Build CSV content
+    const headers = [
+      t('list.csvHeaders.naicCode'), t('list.csvHeaders.companyName'), t('list.csvHeaders.companyType'),
+      t('list.csvHeaders.amBestRating'), t('list.csvHeaders.status'), t('list.csvHeaders.region'),
+      t('list.csvHeaders.totalPremium'), t('list.csvHeaders.lossRatio'), t('list.csvHeaders.renewalRate'),
+      t('list.csvHeaders.settlementCycle'),
+    ];
     const csvData = sorted.map(ins => [
       ins.naicCode,
       `"${ins.carrierName}"`,
@@ -108,9 +117,19 @@ export default function InsurerList({ navigateTo }: Props) {
   );
 
   const statusConfig = {
-    active: { cls: 'badge-green', orb: 'orb-green', label: '合作中', color: '#1a7a2e' },
-    inactive: { cls: 'badge-gray', orb: 'orb-gray', label: '已停用', color: '#414755' },
-    pending: { cls: 'badge-yellow', orb: 'orb-yellow', label: '待审核', color: '#7a5c00' },
+    active: { cls: 'badge-green', orb: 'orb-green', label: 'table.active', color: '#1a7a2e' },
+    inactive: { cls: 'badge-gray', orb: 'orb-gray', label: 'table.inactive', color: '#414755' },
+    pending: { cls: 'badge-yellow', orb: 'orb-yellow', label: 'table.pending', color: '#7a5c00' },
+  };
+
+  // Cooperation status column (V1.3: 4-state display driven by coopStatus)
+  const coopConfig: Record<string, { orb: string; label: string; color: string }> = {
+    active: { orb: 'orb-green', label: 'detail.coop.active', color: '#1a7a2e' },
+    expiring: { orb: 'orb-orange', label: 'detail.coop.expiring', color: '#a05800' },
+    negotiating: { orb: 'orb-purple', label: 'detail.coop.negotiating', color: '#0058BC' },
+    pending: { orb: 'orb-purple', label: 'detail.coop.negotiating', color: '#0058BC' },
+    suspended: { orb: 'orb-gray', label: 'detail.coop.terminated', color: '#BA1A1A' },
+    terminated: { orb: 'orb-gray', label: 'detail.coop.terminated', color: '#BA1A1A' },
   };
 
   return (
@@ -120,7 +139,7 @@ export default function InsurerList({ navigateTo }: Props) {
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{t('listTitle')}</h1>
           <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>
-            {t('listSubtitle', { count: insurers.length, filtered })}
+            {t('listSubtitle', { count: insurers.length, filtered: filtered.length })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -130,7 +149,7 @@ export default function InsurerList({ navigateTo }: Props) {
           <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => navigateTo('insurer-import')}>
             <Upload size={14} /> {t('actions.batchImport')}
           </button>
-          <button className="btn-secondary" style={{ fontSize: 13 }} onClick={handleExport}>
+          <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => setShowExport(true)}>
             <Download size={14} /> {t('actions.export')}
           </button>
           <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => navigateTo('insurer-new')}>
@@ -194,6 +213,7 @@ export default function InsurerList({ navigateTo }: Props) {
           </span>
           <button className="btn-ghost" style={{ fontSize: 12.5 }}><CheckCircle size={13} /> {t('bulkActions.batchEnable')}</button>
           <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}><XCircle size={13} /> {t('bulkActions.batchDisable')}</button>
+          <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => setShowExport(true)}><Download size={13} /> {t('bulkActions.exportSelected')}</button>
           <button className="btn-ghost ml-auto" style={{ fontSize: 12.5 }} onClick={() => setSelected(new Set())}>{t('bulkActions.cancelSelection')}</button>
         </div>
       )}
@@ -293,14 +313,19 @@ export default function InsurerList({ navigateTo }: Props) {
                       {formatPercent(ins.renewalRate ?? 0)}
                     </td>
                     <td>
-                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{ins.settlementCycle === 'Monthly' ? t('insurer.table.monthly') : t('insurer.table.quarterly')}</span>
+                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{ins.settlementCycle === 'Monthly' ? t('table.monthly') : t('table.quarterly')}</span>
                     </td>
                     <td>
                       <div className="flex items-center gap-1.5">
-                        <span className={`orb orb-${ins.status === 'active' ? 'green' : ins.status === 'pending' ? 'yellow' : 'gray'}`} />
-                        <span style={{ fontSize: 12.5, color: sc.color }}>
-                          {t(`insurer.table.${ins.status}`, { fallback: sc.label })}
-                        </span>
+                        {(() => {
+                          const cc = coopConfig[ins.coopStatus ?? ins.status] ?? coopConfig.active;
+                          return (
+                            <>
+                              <span className={`orb ${cc.orb}`} />
+                              <span style={{ fontSize: 12.5, color: cc.color }}>{t(cc.label)}</span>
+                            </>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td onClick={e => e.stopPropagation()}>
@@ -308,7 +333,7 @@ export default function InsurerList({ navigateTo }: Props) {
                         <button
                           className="btn-ghost"
                           style={{ padding: 5 }}
-                          title={t('insurer.table.viewDetails')}
+                          title={t('table.viewDetails')}
                           onClick={() => navigateTo('insurer-detail', { carrierId: ins.carrierId })}
                         >
                           <Eye size={14} />
@@ -316,7 +341,7 @@ export default function InsurerList({ navigateTo }: Props) {
                         <button
                           className="btn-ghost"
                           style={{ padding: 5 }}
-                          title={t('insurer.table.edit')}
+                          title={t('table.edit')}
                           onClick={() => navigateTo('insurer-edit', { carrierId: ins.carrierId })}
                         >
                           <Edit2 size={14} />
@@ -324,7 +349,8 @@ export default function InsurerList({ navigateTo }: Props) {
                         <button
                           className="btn-ghost"
                           style={{ padding: 5 }}
-                          title={t('insurer.table.more')}
+                          title={ins.status === 'inactive' ? t('detail.actions.enable') : t('detail.actions.disable')}
+                          onClick={() => setDisableTarget(ins.carrierId)}
                         >
                           <MoreHorizontal size={14} />
                         </button>
@@ -344,12 +370,12 @@ export default function InsurerList({ navigateTo }: Props) {
         >
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 12.5, color: '#717786' }}>
-              {t('insurer.pagination.totalCount', { count: sorted.length, page: page, pages: totalPages })}
+              {t('pagination.totalCount', { count: sorted.length, page: page, pages: totalPages })}
             </span>
             <select className="input-glass" style={{ fontSize: 12, padding: '4px 24px 4px 8px' }}>
-              <option>{t('insurer.pagination.pageSize')}</option>
-              <option>{t('insurer.pagination.pageSize20')}</option>
-              <option>{t('insurer.pagination.pageSize50')}</option>
+              <option>{t('pagination.pageSize')}</option>
+              <option>{t('pagination.pageSize20')}</option>
+              <option>{t('pagination.pageSize50')}</option>
             </select>
           </div>
           <div className="flex items-center gap-1">
@@ -376,6 +402,24 @@ export default function InsurerList({ navigateTo }: Props) {
 
       {sorted.length === 0 && (
         <div className="text-center py-12 text-[#717786]">{t('emptyState')}</div>
+      )}
+
+      {showExport && (
+        <BatchExportModal
+          totalCount={insurers.length}
+          selectedCount={selected.size}
+          filteredCount={filtered.length}
+          onClose={() => setShowExport(false)}
+          onExport={handleExport}
+        />
+      )}
+
+      {disableTarget && (
+        <DisableModal
+          carrierId={disableTarget}
+          onClose={() => setDisableTarget(null)}
+          onConfirm={() => setDisableTarget(null)}
+        />
       )}
     </div>
   );

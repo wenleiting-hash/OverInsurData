@@ -411,21 +411,54 @@ export const marketShareData = [
   { name: 'Others', value: 14.4, color: '#C1C6D7' },
 ]
 
-export const alertItems = [
-  { id: 1, type: 'expiring', severity: 'high', message: 'AIG 合作合同将于 39 天后到期（2026-09-30）', link: '5', time: '今天' },
-  { id: 2, type: 'appointment', severity: 'warning', message: '3 个渠道 Appointment 将在 60 天内到期', link: null, time: '今天' },
-  { id: 3, type: 'lossratio', severity: 'warning', message: 'Markel 赔付率 71.2%，超出预警阈值 65%', link: '9', time: '昨天' },
-  { id: 4, type: 'pending', severity: 'info', message: 'BHSI 保险公司档案审核待处理', link: '7', time: '2 天前' },
-  { id: 5, type: 'license', severity: 'warning', message: 'Northeast Professional Services NPN 牌照已过期', link: 'c10', time: '3 天前' },
-  { id: 6, type: 'settlement', severity: 'info', message: '8 月佣金对账已完成，待确认金额 $2.14M', link: null, time: '4 天前' },
+export interface AlertItem {
+  id: number
+  type: string
+  severity: 'high' | 'warning' | 'info'
+  link: string | null
+  timeKey: 'today' | 'yesterday' | 'daysAgo'
+  daysAgo?: number
+  // params for i18n message templates
+  days?: number
+  date?: string
+  count?: number
+  ratio?: string
+  threshold?: string
+  month?: number
+  amount?: string
+}
+
+export const alertItems: AlertItem[] = [
+  { id: 1, type: 'expiring', severity: 'high', link: '5', timeKey: 'today', days: 39, date: '2026-09-30' },
+  { id: 2, type: 'appointment', severity: 'warning', link: null, timeKey: 'today', count: 3, days: 60 },
+  { id: 3, type: 'lossratio', severity: 'warning', link: '9', timeKey: 'yesterday', ratio: '71.2%', threshold: '65%' },
+  { id: 4, type: 'pending', severity: 'info', link: '7', timeKey: 'daysAgo', daysAgo: 2 },
+  { id: 5, type: 'license', severity: 'warning', link: 'c10', timeKey: 'daysAgo', daysAgo: 3 },
+  { id: 6, type: 'settlement', severity: 'info', link: null, timeKey: 'daysAgo', daysAgo: 4, month: 8, amount: '$2.14M' },
 ]
 
-export const recentActivities = [
-  { id: 1, action: '保险公司新增', detail: 'BHSI (Berkshire Hathaway) 档案已提交审核', user: 'Liu Yang', time: '10 分钟前', icon: 'building' },
-  { id: 2, action: '产品上架', detail: 'Chubb Cyber Enterprise Risk 在 NY/CA 州完成上架', user: 'Wang Fang', time: '1 小时前', icon: 'package' },
-  { id: 3, action: 'Appointment 申请', detail: 'Southwest Insurance Network 向 Zurich 提交 AZ 州申请', user: 'Zhang Wei', time: '3 小时前', icon: 'shield' },
-  { id: 4, action: '佣金对账', detail: 'Travelers 8 月账单对账完成，差异率 0.3%', user: 'System', time: '昨天 16:40', icon: 'dollar' },
-  { id: 5, action: '渠道暂停', detail: 'Northeast Professional Services 因合规问题被暂停', user: 'Chen Hao', time: '昨天 09:12', icon: 'alert' },
+export interface RecentActivity {
+  id: number
+  actKey: 'newInsurer' | 'productLaunch' | 'appointment' | 'reconciliation' | 'channelSuspended'
+  user: string
+  icon: string
+  timeKey: 'min' | 'hour' | 'yesterdayClock'
+  n?: number
+  clock?: string
+  // params for i18n detail templates
+  entity?: string
+  entity2?: string
+  region?: string
+  month?: number
+  variance?: string
+}
+
+export const recentActivities: RecentActivity[] = [
+  { id: 1, actKey: 'newInsurer', user: 'Liu Yang', icon: 'building', timeKey: 'min', n: 10, entity: 'BHSI (Berkshire Hathaway)' },
+  { id: 2, actKey: 'productLaunch', user: 'Wang Fang', icon: 'package', timeKey: 'hour', n: 1, entity: 'Chubb Cyber Enterprise Risk', region: 'NY/CA' },
+  { id: 3, actKey: 'appointment', user: 'Zhang Wei', icon: 'shield', timeKey: 'hour', n: 3, entity: 'Southwest Insurance Network', entity2: 'Zurich', region: 'AZ' },
+  { id: 4, actKey: 'reconciliation', user: 'System', icon: 'dollar', timeKey: 'yesterdayClock', clock: '16:40', entity: 'Travelers', month: 8, variance: '0.3%' },
+  { id: 5, actKey: 'channelSuspended', user: 'Chen Hao', icon: 'alert', timeKey: 'yesterdayClock', clock: '09:12', entity: 'Northeast Professional Services' },
 ]
 
 export function formatCurrency(val: number, short = false): string {

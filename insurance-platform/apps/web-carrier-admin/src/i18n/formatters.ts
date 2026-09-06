@@ -22,7 +22,7 @@ export function formatCurrency(
   
   if (short) {
     const B = Math.abs(value) / 1_000_000_000;
-    return `${value < 0 ? '-' : ''}${B.toFixed(1)}B`;
+    return `${value < 0 ? '-' : ''}$${B.toFixed(1)}B`;
   }
   
   // Use proper locale formatting

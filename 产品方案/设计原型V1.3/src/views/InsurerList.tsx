@@ -6,6 +6,7 @@ import {
 import { insurers, formatCurrency, formatPercent } from '../data/mockData'
 import type { ViewId } from '../components/Sidebar'
 import BatchExportModal from '../components/BatchExportModal'
+import { useLang } from '../i18n'
 
 interface Props {
   navigateTo: (view: ViewId, params?: { insurerId?: string }) => void
@@ -16,6 +17,7 @@ type SortKey = 'name' | 'totalPremium' | 'lossRatio' | 'renewalRate' | 'channelC
 type SortDir = 'asc' | 'desc'
 
 export default function InsurerList({ navigateTo, onDisable }: Props) {
+  const { t } = useLang()
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -77,16 +79,16 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
   )
 
   const statusConfig = {
-    active: { cls: 'badge-green', orb: 'orb-green', label: '合作中' },
-    inactive: { cls: 'badge-gray', orb: 'orb-gray', label: '已停用' },
-    pending: { cls: 'badge-yellow', orb: 'orb-yellow', label: '待审核' },
+    active: { cls: 'badge-green', orb: 'orb-green', label: t.insStatusActive },
+    inactive: { cls: 'badge-gray', orb: 'orb-gray', label: t.insStatusInactive },
+    pending: { cls: 'badge-yellow', orb: 'orb-yellow', label: t.insStatusPending },
   }
 
   const coopConfig = {
-    active: { label: '正常', color: '#1a7a2e' },
-    negotiating: { label: '洽谈中', color: '#0058BC' },
-    expiring: { label: '即将到期', color: '#a05800' },
-    terminated: { label: '已终止', color: '#BA1A1A' },
+    active: { label: t.insCoopActive, color: '#1a7a2e' },
+    negotiating: { label: t.insCoopNegotiating, color: '#0058BC' },
+    expiring: { label: t.insCoopExpiring, color: '#a05800' },
+    terminated: { label: t.insCoopTerminated, color: '#BA1A1A' },
   }
 
   return (
@@ -94,21 +96,21 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>保险公司列表</h1>
-          <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>共 {insurers.length} 家保险公司 · {filtered.length} 条结果</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{t.insListTitle}</h1>
+          <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>{t.insListSubtitle(insurers.length, filtered.length)}</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => navigateTo('insurer-duplicate')}>
-            <Copy size={14} />重复检测
+            <Copy size={14} />{t.insBtnDuplicate}
           </button>
           <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => navigateTo('insurer-import')}>
-            <Upload size={14} />批量导入
+            <Upload size={14} />{t.insBtnImport}
           </button>
           <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => setShowExport(true)}>
-            <Download size={14} />导出
+            <Download size={14} />{t.insBtnExport}
           </button>
           <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => navigateTo('insurer-new')}>
-            <Plus size={14} />新增保险公司
+            <Plus size={14} />{t.insBtnNew}
           </button>
         </div>
       </div>
@@ -119,7 +121,7 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
           <input
             type="text"
-            placeholder="搜索公司名、简称、NAIC编码…"
+            placeholder={t.insSearchPlaceholder}
             className="input-glass w-full"
             style={{ paddingLeft: 30, fontSize: 13 }}
             value={search}
@@ -127,25 +129,25 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
           />
         </div>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1) }}>
-          <option value="all">公司类型</option>
+          <option value="all">{t.insFilterTypeAll}</option>
           <option value="Admitted">Admitted</option>
           <option value="Non-Admitted">Non-Admitted</option>
         </select>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1) }}>
-          <option value="all">合作状态</option>
-          <option value="active">合作中</option>
-          <option value="pending">待审核</option>
-          <option value="inactive">已停用</option>
+          <option value="all">{t.insFilterStatusAll}</option>
+          <option value="active">{t.insStatusActive}</option>
+          <option value="pending">{t.insStatusPending}</option>
+          <option value="inactive">{t.insStatusInactive}</option>
         </select>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterRegion} onChange={e => { setFilterRegion(e.target.value); setPage(1) }}>
-          <option value="all">大区</option>
+          <option value="all">{t.insFilterRegionAll}</option>
           <option value="Northeast">Northeast</option>
           <option value="Southeast">Southeast</option>
           <option value="Midwest">Midwest</option>
           <option value="West">West</option>
         </select>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterRating} onChange={e => { setFilterRating(e.target.value); setPage(1) }}>
-          <option value="all">AM Best 评级</option>
+          <option value="all">{t.insFilterRatingAll}</option>
           <option value="A++">A++</option>
           <option value="A+">A+</option>
           <option value="A">A</option>
@@ -154,7 +156,7 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
         </select>
         {(search || filterType !== 'all' || filterStatus !== 'all' || filterRegion !== 'all' || filterRating !== 'all') && (
           <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => { setSearch(''); setFilterType('all'); setFilterStatus('all'); setFilterRegion('all'); setFilterRating('all'); setPage(1) }}>
-            <XCircle size={13} /> 重置
+            <XCircle size={13} /> {t.insBtnReset}
           </button>
         )}
       </div>
@@ -162,11 +164,11 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
       {/* Bulk actions */}
       {selected.size > 0 && (
         <div className="glass-light flex items-center gap-3 px-4 py-2.5 mb-3" style={{ borderRadius: 10 }}>
-          <span style={{ fontSize: 13, color: '#0058BC', fontWeight: 500 }}>已选 {selected.size} 项</span>
-          <button className="btn-ghost" style={{ fontSize: 12.5 }}><CheckCircle size={13} />批量启用</button>
-          <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}><XCircle size={13} />批量停用</button>
-          <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => setShowExport(true)}><Download size={13} />导出选中</button>
-          <button className="btn-ghost ml-auto" style={{ fontSize: 12.5 }} onClick={() => setSelected(new Set())}>取消选择</button>
+          <span style={{ fontSize: 13, color: '#0058BC', fontWeight: 500 }}>{t.insSelectedCount(selected.size)}</span>
+          <button className="btn-ghost" style={{ fontSize: 12.5 }}><CheckCircle size={13} />{t.insBtnBulkEnable}</button>
+          <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}><XCircle size={13} />{t.insBtnBulkDisable}</button>
+          <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => setShowExport(true)}><Download size={13} />{t.insBtnExportSelected}</button>
+          <button className="btn-ghost ml-auto" style={{ fontSize: 12.5 }} onClick={() => setSelected(new Set())}>{t.insBtnClearSelection}</button>
         </div>
       )}
 
@@ -185,25 +187,25 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
                   />
                 </th>
                 <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                  <span className="flex items-center gap-1">公司名称 <SortIcon k="name" /></span>
+                  <span className="flex items-center gap-1">{t.insColName} <SortIcon k="name" /></span>
                 </th>
-                <th>NAIC编码</th>
-                <th>公司类型</th>
+                <th>{t.insColNaic}</th>
+                <th>{t.insColType}</th>
                 <th>AM Best</th>
-                <th>总部大区</th>
+                <th>{t.insColRegion}</th>
                 <th onClick={() => handleSort('totalPremium')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">总保费 <SortIcon k="totalPremium" /></span>
+                  <span className="flex items-center gap-1 justify-end">{t.insColPremium} <SortIcon k="totalPremium" /></span>
                 </th>
-                <th style={{ textAlign: 'right' }}>保单数</th>
+                <th style={{ textAlign: 'right' }}>{t.insColPolicies}</th>
                 <th onClick={() => handleSort('lossRatio')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">赔付率 <SortIcon k="lossRatio" /></span>
+                  <span className="flex items-center gap-1 justify-end">{t.insColLossRatio} <SortIcon k="lossRatio" /></span>
                 </th>
                 <th onClick={() => handleSort('renewalRate')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">续保率 <SortIcon k="renewalRate" /></span>
+                  <span className="flex items-center gap-1 justify-end">{t.insColRenewal} <SortIcon k="renewalRate" /></span>
                 </th>
-                <th>结算方式</th>
-                <th>合作状态</th>
-                <th style={{ width: 80 }}>操作</th>
+                <th>{t.insColSettlement}</th>
+                <th>{t.insColCoopStatus}</th>
+                <th style={{ width: 80 }}>{t.insColActions}</th>
               </tr>
             </thead>
             <tbody>
@@ -265,7 +267,7 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
                       {formatPercent(ins.renewalRate)}
                     </td>
                     <td>
-                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{ins.settlementCycle === 'Monthly' ? '月结' : '季结'}</span>
+                      <span className="badge badge-gray" style={{ fontSize: 11 }}>{ins.settlementCycle === 'Monthly' ? t.insSettlementMonthly : t.insSettlementQuarterly}</span>
                     </td>
                     <td>
                       <div className="flex items-center gap-1.5">
@@ -278,7 +280,7 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
                         <button
                           className="btn-ghost"
                           style={{ padding: 5 }}
-                          title="查看详情"
+                          title={t.insTitleView}
                           onClick={() => navigateTo('insurer-detail', { insurerId: ins.id })}
                         >
                           <Eye size={14} />
@@ -286,7 +288,7 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
                         <button
                           className="btn-ghost"
                           style={{ padding: 5 }}
-                          title="编辑"
+                          title={t.insTitleEdit}
                           onClick={() => navigateTo('insurer-edit', { insurerId: ins.id })}
                         >
                           <Edit2 size={14} />
@@ -294,7 +296,7 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
                         <button
                           className="btn-ghost"
                           style={{ padding: 5 }}
-                          title={ins.status === 'inactive' ? '启用' : '停用'}
+                          title={ins.status === 'inactive' ? t.insTitleEnable : t.insTitleDisable}
                           onClick={() => onDisable(ins.id)}
                         >
                           <MoreHorizontal size={14} />
@@ -315,12 +317,12 @@ export default function InsurerList({ navigateTo, onDisable }: Props) {
         >
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 12.5, color: '#717786' }}>
-              共 {sorted.length} 条 · 第 {page} / {totalPages} 页
+              {t.insPager(sorted.length, page, totalPages)}
             </span>
             <select className="input-glass" style={{ fontSize: 12, padding: '4px 24px 4px 8px' }}>
-              <option>每页 8 条</option>
-              <option>每页 20 条</option>
-              <option>每页 50 条</option>
+              <option>{t.insPerPage(8)}</option>
+              <option>{t.insPerPage(20)}</option>
+              <option>{t.insPerPage(50)}</option>
             </select>
           </div>
           <div className="flex items-center gap-1">

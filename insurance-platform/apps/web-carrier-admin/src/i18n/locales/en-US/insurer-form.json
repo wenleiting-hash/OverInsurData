@@ -54,7 +54,9 @@
     "cooperationType": "Cooperation Type",
     "state": "State",
     "region": "Region",
-    "city": "City"
+    "city": "City",
+    "linesHint": "Select primary lines of business (multiple allowed)",
+    "selectState": "Select a state"
   },
   "values": {
     "admitted": "Admitted",
@@ -62,6 +64,7 @@
     "coopDirect": "Direct Agent",
     "coopMGA": "MGA (Managing General Agent)",
     "coopWholesale": "Wholesale Broker",
+    "coopIndependent": "Independent Agency",
     "coopRecommend": "Recommended Partner",
     "coopPlatform": "Aggregator Platform"
   },
@@ -93,6 +96,7 @@
     "manualEntry": "Manual Entry",
     "billCutoffDay": "Bill Cutoff Day",
     "cutoffDayHint": "Which day of month/quarter for data cutoff",
+    "billCutoffPrefix": "Day",
     "day": "day(s)",
     "paymentTerm": "Payment Term",
     "paymentHint": "Days to pay after reconciliation completed",
@@ -113,6 +117,8 @@
     "requiredDocs": "Required",
     "uploaded": "Uploaded",
     "notUploaded": "Not uploaded",
+    "uploadBtn": "Upload",
+    "fakeFileName": "Agreement_Draft_{{ts}}.pdf",
     "docs": {
       "businessLicense": "Business License",
       "mainAgreement": "Master Agreement",
@@ -124,7 +130,8 @@
   "navigation": {
     "previousStep": "Previous",
     "nextStep": "Next",
-    "stepCount": "Step {current} / {total}"
+    "stepCount": "Step {current} / {total}",
+    "progressLabel": "Progress"
   },
   "validation": {
     "missingRequired": "Please fill in all required fields",

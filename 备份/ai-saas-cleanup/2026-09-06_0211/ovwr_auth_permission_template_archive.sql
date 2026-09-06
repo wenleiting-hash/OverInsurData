@@ -1,0 +1,7 @@
+﻿   ovwr_template_id    | ovwr_template_name  |  ovwr_template_code   |                               ovwr_description                               | ovwr_scope | ovwr_is_default | ovwr_usage_count | ovwr_metadata | ovwr_status |        ovwr_created_at        |        ovwr_updated_at        
+-----------------------+---------------------+-----------------------+------------------------------------------------------------------------------+------------+-----------------+------------------+---------------+-------------+-------------------------------+-------------------------------
+ tpl-ovwr-admin-001    | Super Administrator | tpl-admin-full        | Default admin template with all system permissions                           | system     | t               |                0 |               | 1           | 2026-09-02 09:19:47.911264+00 | 2026-09-02 09:19:47.911264+00
+ tpl-ovwr-operator-001 | Operator Standard   | tpl-operator-standard | Standard operator permissions including i18n and basic permission management | department | f               |                0 |               | 1           | 2026-09-02 09:19:47.911264+00 | 2026-09-02 09:19:47.911264+00
+ tpl-ovwr-viewer-001   | Viewer Basic        | tpl-viewer-basic      | Read-only viewer template with minimal permissions                           | project    | f               |                0 |               | 1           | 2026-09-02 09:19:47.911264+00 | 2026-09-02 09:19:47.911264+00
+(3 rows)
+

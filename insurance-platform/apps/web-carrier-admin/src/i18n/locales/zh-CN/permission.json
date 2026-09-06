@@ -1,13 +1,12 @@
 {
   "title": "权限管理",
-  "description": "管理系统角色、用户和访问控制策略",
+  "description": "描述",
   "roleList": "角色列表",
   "createRole": "新建角色",
   "editRole": "编辑角色",
   "deleteRole": "删除角色",
   "roleName": "角色名称",
   "roleCode": "角色编码",
-  "description": "描述",
   "permissions": "权限配置",
   "users": "用户管理",
   "assignRole": "分配角色",
@@ -33,5 +32,394 @@
   "operationLogs": "操作日志",
   "loginLogs": "登录日志",
   "searchPlaceholder": "搜索...",
-  "actions": "操作"
+  "actions": "操作",
+  "view": {
+    "title": "用户权限管理",
+    "subtitle": "{roles} 个角色 · {users} 位用户 · 功能 / 数据 / 操作 三维权限管控",
+    "copyRole": "复制角色",
+    "createRole": "新建角色",
+    "saveChanges": "保存修改",
+    "savedToast": "权限配置已保存",
+    "roleList": "角色列表",
+    "systemBadge": "系统",
+    "systemBuiltIn": "系统内置",
+    "assignedUsers": "已分配用户",
+    "tabs": {
+      "func": "功能权限",
+      "data": "数据权限",
+      "op": "操作权限",
+      "compare": "角色对比"
+    },
+    "sections": {
+      "func": "功能权限",
+      "data": "数据权限",
+      "dataDesc": "控制该角色可以访问和查看的数据范围",
+      "op": "操作权限",
+      "opDescPrefix": "控制敏感操作的执行权限。",
+      "approvalTerm": "「审批」",
+      "opDescSuffix": "表示需提交审批流后方可执行。",
+      "highRiskWarning": "该角色含有高风险操作权限，请谨慎分配"
+    },
+    "funcTree": {
+      "insurer": "保险公司管理",
+      "insurer_list": "保险公司列表",
+      "insurer_detail": "保险公司详情",
+      "insurer_create": "新增保险公司",
+      "insurer_edit": "编辑保险公司",
+      "insurer_product": "产品管理",
+      "insurer_finance": "财务与结算",
+      "insurer_analytics": "数据分析",
+      "channel": "渠道管理",
+      "channel_list": "渠道列表",
+      "channel_create": "新增渠道",
+      "channel_hierarchy": "渠道层级",
+      "channel_onboarding": "入驻管理",
+      "channel_portal": "渠道门户",
+      "channel_analytics": "渠道分析",
+      "commission": "佣金管理",
+      "commission_scheme": "佣金方案",
+      "commission_settlement": "佣金结算",
+      "commission_auth": "产品授权",
+      "report": "报表与分析",
+      "report_dashboard": "总览仪表盘",
+      "report_performance": "绩效报表",
+      "report_export": "数据导出",
+      "system": "系统管理",
+      "system_users": "用户管理",
+      "system_roles": "角色权限",
+      "system_i18n": "文案管理",
+      "system_audit": "审计日志"
+    },
+    "dataScope": {
+      "insurer_data": {
+        "label": "保险公司数据",
+        "desc": "可查看的保险公司范围"
+      },
+      "channel_data": {
+        "label": "渠道数据",
+        "desc": "可查看的渠道及子渠道"
+      },
+      "commission_data": {
+        "label": "佣金与结算数据",
+        "desc": "佣金方案、结算记录"
+      },
+      "policy_data": {
+        "label": "保单数据",
+        "desc": "保单列表及详情"
+      },
+      "finance_data": {
+        "label": "财务数据",
+        "desc": "收款、对账、发票记录"
+      },
+      "report_data": {
+        "label": "分析报表数据",
+        "desc": "KPI、趋势、导出数据"
+      },
+      "user_data": {
+        "label": "用户与操作日志",
+        "desc": "操作记录、登录日志"
+      }
+    },
+    "dataLevel": {
+      "full": {
+        "label": "全部",
+        "desc": "所有记录"
+      },
+      "region": {
+        "label": "大区",
+        "desc": "仅所属大区"
+      },
+      "team": {
+        "label": "团队",
+        "desc": "仅所属团队"
+      },
+      "own": {
+        "label": "本人",
+        "desc": "仅本人创建/负责"
+      },
+      "none": {
+        "label": "不可见",
+        "desc": "无权访问"
+      }
+    },
+    "opModule": {
+      "insurer": "保险公司",
+      "channel": "渠道",
+      "commission": "佣金",
+      "product": "产品",
+      "report": "报表",
+      "system": "系统"
+    },
+    "opPerm": {
+      "insurer_disable": {
+        "label": "停用保险公司",
+        "desc": "将保险公司状态设为停用"
+      },
+      "insurer_delete": {
+        "label": "删除保险公司",
+        "desc": "永久删除保险公司及关联数据"
+      },
+      "channel_delete": {
+        "label": "删除渠道",
+        "desc": "删除渠道及其所有子渠道"
+      },
+      "channel_suspend": {
+        "label": "暂停渠道",
+        "desc": "暂停渠道的所有业务"
+      },
+      "channel_approve": {
+        "label": "审批渠道入驻",
+        "desc": "批准或拒绝渠道入驻申请"
+      },
+      "commission_approve": {
+        "label": "审批佣金方案",
+        "desc": "批准佣金费率变更"
+      },
+      "commission_pay": {
+        "label": "发起结算打款",
+        "desc": "触发佣金结算转账"
+      },
+      "product_publish": {
+        "label": "上架/下架产品",
+        "desc": "变更产品状态"
+      },
+      "report_export": {
+        "label": "批量导出数据",
+        "desc": "导出超 10,000 条记录"
+      },
+      "user_resetpwd": {
+        "label": "重置用户密码",
+        "desc": "强制重置其他用户的密码"
+      },
+      "user_deactivate": {
+        "label": "停用账号",
+        "desc": "禁止用户登录系统"
+      },
+      "role_edit": {
+        "label": "编辑角色权限",
+        "desc": "修改任意角色的权限配置"
+      }
+    },
+    "permLevel": {
+      "full": "完全",
+      "view": "只读",
+      "own": "本人",
+      "team": "团队",
+      "region": "大区",
+      "none": "禁止"
+    },
+    "opResult": {
+      "allow": "允许",
+      "deny": "禁止",
+      "conditional": "审批"
+    },
+    "risk": {
+      "high": "高风险",
+      "medium": "中风险",
+      "low": "低风险"
+    },
+    "role": {
+      "superadmin": {
+        "name": "超级管理员",
+        "desc": "拥有所有权限，可管理用户和角色"
+      },
+      "ops_manager": {
+        "name": "运营经理",
+        "desc": "管理保险公司、渠道、佣金，可查看全量数据"
+      },
+      "channel_manager": {
+        "name": "渠道专员",
+        "desc": "专职渠道管理，仅看自己大区数据"
+      },
+      "finance_analyst": {
+        "name": "财务分析师",
+        "desc": "查看财务与佣金数据，只读权限"
+      },
+      "readonly": {
+        "name": "只读用户",
+        "desc": "仅查看基本信息，无编辑权限"
+      }
+    },
+    "compare": {
+      "compare": "对比",
+      "diffCount": "差异 {count} 处",
+      "identical": "两个角色的权限配置完全相同",
+      "permItem": "权限项",
+      "funcDiff": "功能权限差异",
+      "dataDiff": "数据权限差异",
+      "opDiff": "操作权限差异"
+    }
+  },
+  "searchRolePlaceholder": "搜索角色名称或编码...",
+  "comingSoon": "此功能模块正在开发中",
+  "userListDescription": "用户列表页面开发中",
+  "backToDashboard": "返回首页",
+  "loading": "加载中...",
+  "editUser": "编辑用户",
+  "deleteUser": "删除用户",
+  "selectRolePlaceholder": "请选择角色",
+  "roleSuperAdmin": "超级管理员",
+  "roleGeneralAdmin": "普通管理员",
+  "roleReadonlyUser": "只读用户",
+  "enterRoleNamePlaceholder": "请输入角色名称",
+  "enterRoleCodePlaceholder": "请输入角色编码",
+  "enterDescriptionPlaceholder": "请输入描述",
+  "saveAndContinue": "保存并继续配置",
+  "saveAndClose": "保存并关闭",
+  "pleaseEnterRoleName": "请输入角色名称",
+  "pleaseEnterRoleCode": "请输入角色编码",
+  "pleaseEnterUserName": "请输入用户名",
+  "pleaseEnterPassword": "请输入密码",
+  "pleaseEnterEmail": "请输入邮箱",
+  "roleCreateSuccess": "角色创建成功！",
+  "userUpdateSuccess": "用户信息更新成功！",
+  "userDeleteSuccess": "用户已删除！",
+  "confirmDelete": "确定要删除此角色吗？此操作不可恢复。",
+  "confirmDeleteUser": "确定要删除此用户吗？此操作不可恢复。",
+  "confirmResetPassword": "确定要重置此用户的密码吗？用户将收到邮件通知。",
+  "passwordResetSuccess": "密码重置邮件已发送！",
+  "usernameReadOnlyHint": "用户名创建后不可修改",
+  "changeRoleWarning": "修改角色将影响用户的权限，请谨慎操作。",
+  "mfaStatus": "MFA 状态",
+  "mfaEnabled": "已启用",
+  "mfaDisabled": "未启用",
+  "passwordManagement": "密码管理",
+  "resetPassword": "重置密码",
+  "resetPasswordHint": "向用户发送密码重置邮件，用户需在收到邮件后重置密码。",
+  "deleteUserWarning": "删除用户将永久移除该账号，且不可恢复。",
+  "cancel": "取消",
+  "updateSuccess": "更新成功！",
+  "deleteSuccess": "删除成功！",
+  "userMgmt": {
+    "title": "用户管理",
+    "description": "管理系统用户账户、角色分配及访问权限",
+    "export": "导出",
+    "newUser": "新建用户",
+    "stats": {
+      "total": "全部用户",
+      "active": "正常",
+      "inactive": "停用",
+      "locked": "已锁定",
+      "pending": "待激活"
+    },
+    "filters": {
+      "search": "搜索姓名、用户名、邮箱或电话...",
+      "allStatus": "全部状态",
+      "allRoles": "全部角色",
+      "allDepts": "全部部门",
+      "reset": "重置"
+    },
+    "table": {
+      "user": "用户",
+      "emailPhone": "邮箱 / 手机",
+      "deptRoles": "部门 / 角色",
+      "auth": "认证",
+      "status": "状态",
+      "lastLogin": "最近登录",
+      "actions": "操作",
+      "never": "从未登录",
+      "empty": "未找到匹配的用户"
+    },
+    "footer": {
+      "filteredFrom": "筛选出 {n} 位用户（共 {total} 位）",
+      "userCount": "共 {n} 位用户",
+      "manageRoles": "管理角色权限"
+    },
+    "menu": {
+      "editUser": "编辑用户",
+      "resetPassword": "重置密码",
+      "disableAccount": "停用账号",
+      "enableAccount": "启用账号",
+      "deleteUser": "删除用户"
+    },
+    "auth": {
+      "local": "本地账号",
+      "sso": "SSO",
+      "ssoFull": "SSO（集成）",
+      "ldap": "LDAP"
+    },
+    "createModal": {
+      "title": "新建用户",
+      "description": "创建新的平台用户账号并分配角色",
+      "create": "创建用户"
+    },
+    "editModal": {
+      "title": "编辑用户",
+      "description": "更新 {name} 的账号信息与权限",
+      "saveChanges": "保存修改"
+    },
+    "resetModal": {
+      "title": "重置密码",
+      "newPassword": "新密码",
+      "confirmPassword": "确认新密码",
+      "mismatch": "两次输入的密码不一致",
+      "confirmReset": "确认重置"
+    },
+    "deleteModal": {
+      "title": "删除用户",
+      "message": "确定要删除用户 {name} 吗？该操作不可恢复，删除后该用户将无法登录平台。",
+      "cancel": "取消"
+    },
+    "field": {
+      "fullName": "姓名",
+      "username": "用户名",
+      "email": "邮箱",
+      "phone": "电话",
+      "department": "部门",
+      "authMethod": "认证方式",
+      "initialPassword": "初始密码",
+      "roleAssignment": "角色分配",
+      "remarks": "备注",
+      "accountStatus": "账号状态"
+    },
+    "ph": {
+      "fullName": "请输入姓名",
+      "username": "请输入用户名",
+      "email": "请输入邮箱",
+      "phone": "请输入电话（选填）",
+      "selectDepartment": "请选择部门",
+      "initialPassword": "至少 8 位字符",
+      "confirmPassword": "请再次输入新密码",
+      "remarks": "请输入备注（选填）"
+    },
+    "roles": {
+      "superAdmin": "超级管理员",
+      "opsAdmin": "运营管理员",
+      "carrierAdmin": "保险公司管理员",
+      "agent": "代理人",
+      "channelManager": "渠道专员",
+      "financeSpecialist": "财务专员",
+      "readonly": "只读用户"
+    },
+    "depts": {
+      "tech": "技术部",
+      "ops": "运营部",
+      "finance": "财务部",
+      "channel": "渠道部",
+      "compliance": "合规部",
+      "marketing": "市场部"
+    },
+    "status": {
+      "active": "活跃",
+      "inactive": "停用",
+      "locked": "已锁定",
+      "pending": "待激活"
+    },
+    "toast": {
+      "created": "用户创建成功",
+      "updated": "用户信息已更新",
+      "passwordReset": "密码已重置",
+      "deleted": "用户已删除",
+      "enabled": "账号已启用",
+      "disabled": "账号已停用",
+      "exported": "用户数据导出成功"
+    },
+    "error": {
+      "createFailed": "创建用户失败",
+      "updateFailed": "更新用户失败",
+      "deleteFailed": "删除用户失败",
+      "passwordResetFailed": "重置密码失败",
+      "toggleStatusFailed": "更新账号状态失败"
+    }
+  }
 }

@@ -83,10 +83,10 @@ export default function Sidebar({ currentView, navigateTo }: Props) {
       ],
     },
     {
-      label: '系统管理',
+      label: t.navGroupSystem,
       items: [
-        { id: 'i18n-management' as ViewId, label: '多语言管理', icon: <Languages size={15} /> },
-        { id: 'permission' as ViewId,      label: '权限管理',   icon: <ShieldCheck size={15} /> },
+        { id: 'i18n-management' as ViewId, label: t.navI18nMgmt, icon: <Languages size={15} /> },
+        { id: 'permission' as ViewId,      label: t.navPermission, icon: <ShieldCheck size={15} /> },
       ],
     },
   ]

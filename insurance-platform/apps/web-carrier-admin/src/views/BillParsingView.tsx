@@ -13,7 +13,7 @@ interface Props {
 
 export default function BillParsingView({ navigateTo }: Props) {
   const { t } = useTranslation('finance')
-  
+
   const [billId, setBillId] = useState<string>('BILL-2026-08-001')
   const [searchQuery, setSearchQuery] = useState('')
   const [matchStatusFilter, setMatchStatusFilter] = useState<'ALL' | 'MATCHED' | 'UNMATCHED' | 'AMBIGUOUS'>('ALL')
@@ -112,7 +112,7 @@ export default function BillParsingView({ navigateTo }: Props) {
     if (status === 'AMBIGUOUS') {
       return <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">{t('labels.ambiguous')}</span>
     }
-    return <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">Unknown</span>
+    return <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">{t('billParsing.unknown')}</span>
   }
 
   const filteredRecords = parsedRecords.filter(record => {
@@ -145,7 +145,7 @@ export default function BillParsingView({ navigateTo }: Props) {
           className="btn-secondary flex items-center"
         >
           <ArrowLeft size={16} className="mr-2" />
-          Back to Import
+          {t('billParsing.backToImport')}
         </button>
       </div>
 
@@ -153,14 +153,14 @@ export default function BillParsingView({ navigateTo }: Props) {
       <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-xl p-6 text-white mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm opacity-90 mb-1">Current Bill</div>
+            <div className="text-sm opacity-90 mb-1">{t('billParsing.currentBill')}</div>
             <div className="text-2xl font-bold">{billId}</div>
-            <div className="text-sm opacity-80 mt-1">Month: 2026-08 • Format: CSV • Records: {parsingStats.total}</div>
+            <div className="text-sm opacity-80 mt-1">{t('billParsing.billInfo', { month: '2026-08', format: 'CSV', count: parsingStats.total })}</div>
           </div>
           <div className="text-right">
-            <div className="text-sm opacity-90 mb-1">Success Rate</div>
+            <div className="text-sm opacity-90 mb-1">{t('billParsing.successRate')}</div>
             <div className="text-3xl font-bold">{parsingStats.successRate}%</div>
-            <div className="text-sm opacity-80">{parsingStats.matched} / {parsingStats.total} matched</div>
+            <div className="text-sm opacity-80">{t('billParsing.matchedRatio', { matched: parsingStats.matched, total: parsingStats.total })}</div>
           </div>
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function BillParsingView({ navigateTo }: Props) {
         <div className="card p-4 border-l-4 border-green-500">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-600 mb-1">Matched</div>
+              <div className="text-sm text-gray-600 mb-1">{t('billParsing.stats.matched')}</div>
               <div className="text-2xl font-bold text-gray-900">{parsingStats.matched}</div>
             </div>
             <CheckCircle className="text-green-600" size={28} />
@@ -179,7 +179,7 @@ export default function BillParsingView({ navigateTo }: Props) {
         <div className="card p-4 border-l-4 border-red-500">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-600 mb-1">Unmatched</div>
+              <div className="text-sm text-gray-600 mb-1">{t('billParsing.stats.unmatched')}</div>
               <div className="text-2xl font-bold text-gray-900">{parsingStats.unmatched}</div>
             </div>
             <XCircle className="text-red-600" size={28} />
@@ -188,7 +188,7 @@ export default function BillParsingView({ navigateTo }: Props) {
         <div className="card p-4 border-l-4 border-yellow-500">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-600 mb-1">Ambiguous</div>
+              <div className="text-sm text-gray-600 mb-1">{t('billParsing.stats.ambiguous')}</div>
               <div className="text-2xl font-bold text-gray-900">{parsingStats.ambiguous}</div>
             </div>
             <AlertTriangle className="text-yellow-600" size={28} />
@@ -197,7 +197,7 @@ export default function BillParsingView({ navigateTo }: Props) {
         <div className="card p-4 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-600 mb-1">Total</div>
+              <div className="text-sm text-gray-600 mb-1">{t('billParsing.stats.total')}</div>
               <div className="text-2xl font-bold text-gray-900">{parsingStats.total}</div>
             </div>
             <Database className="text-blue-600" size={28} />
@@ -214,7 +214,7 @@ export default function BillParsingView({ navigateTo }: Props) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
               <input
                 type="text"
-                placeholder="Search by policy number, NPN, or producer name..."
+                placeholder={t('billParsing.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -224,16 +224,16 @@ export default function BillParsingView({ navigateTo }: Props) {
 
           {/* Filters */}
           <div className="flex items-center space-x-3 ml-4">
-            <span className="text-sm text-gray-600">Filter:</span>
+            <span className="text-sm text-gray-600">{t('billParsing.filterLabel')}</span>
             <select
               value={matchStatusFilter}
               onChange={(e) => setMatchStatusFilter(e.target.value as typeof matchStatusFilter)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              <option value="ALL">All Records</option>
-              <option value="MATCHED">Matched Only</option>
-              <option value="UNMATCHED">Unmatched Only</option>
-              <option value="AMBIGUOUS">Ambiguous Only</option>
+              <option value="ALL">{t('billParsing.filterAll')}</option>
+              <option value="MATCHED">{t('billParsing.filterMatched')}</option>
+              <option value="UNMATCHED">{t('billParsing.filterUnmatched')}</option>
+              <option value="AMBIGUOUS">{t('billParsing.filterAmbiguous')}</option>
             </select>
           </div>
 
@@ -241,14 +241,14 @@ export default function BillParsingView({ navigateTo }: Props) {
           {selectedRecords.size > 0 && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-700">
-                {selectedRecords.size} selected
+                {t('billParsing.selectedCount', { count: selectedRecords.size })}
               </span>
               <button
                 onClick={handleBatchMatch}
                 className="btn-secondary flex items-center px-4 py-2"
               >
                 <Save size={14} className="mr-2" />
-                Batch Match
+                {t('billParsing.batchMatch')}
               </button>
             </div>
           )}
@@ -275,25 +275,25 @@ export default function BillParsingView({ navigateTo }: Props) {
                 />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Policy Number
+                {t('billParsing.col.policyNumber')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Producer
+                {t('billParsing.col.producer')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Product
+                {t('billParsing.col.product')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Premium
+                {t('billParsing.col.premium')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Commission
+                {t('billParsing.col.commission')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                {t('billParsing.col.status')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                {t('billParsing.col.actions')}
               </th>
             </tr>
           </thead>
@@ -334,10 +334,10 @@ export default function BillParsingView({ navigateTo }: Props) {
                         onClick={() => handleManualMatch(record.id)}
                         className="text-teal-600 hover:text-teal-800 font-medium mr-3"
                       >
-                        Manual Match
+                        {t('billParsing.manualMatch')}
                       </button>
                       <button className="text-red-600 hover:text-red-800 font-medium">
-                        Skip
+                        {t('billParsing.skip')}
                       </button>
                     </>
                   ) : (
@@ -352,8 +352,8 @@ export default function BillParsingView({ navigateTo }: Props) {
         {filteredRecords.length === 0 && (
           <div className="text-center py-12">
             <Filter className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No records found</h3>
-            <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('billParsing.noRecords')}</h3>
+            <p className="mt-1 text-sm text-gray-500">{t('billParsing.noRecordsDesc')}</p>
           </div>
         )}
       </div>
@@ -362,21 +362,21 @@ export default function BillParsingView({ navigateTo }: Props) {
       {showMatchingModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Manual Record Matching</h3>
-            <p className="text-gray-600 mb-4">Select the matching policy and producer from the system...</p>
-            
+            <h3 className="text-xl font-bold text-gray-900 mb-4">{t('billParsing.modal.title')}</h3>
+            <p className="text-gray-600 mb-4">{t('billParsing.modal.desc')}</p>
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search System Records</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('billParsing.modal.searchLabel')}</label>
                 <input
                   type="text"
-                  placeholder="Enter policy number, NPN, or name..."
+                  placeholder={t('billParsing.modal.searchPlaceholder')}
                   className="input-block"
                 />
               </div>
 
               <div className="border border-gray-200 rounded-lg p-4">
-                <div className="text-sm text-gray-600">Matching results will appear here...</div>
+                <div className="text-sm text-gray-600">{t('billParsing.modal.resultsPlaceholder')}</div>
               </div>
             </div>
 
@@ -385,13 +385,13 @@ export default function BillParsingView({ navigateTo }: Props) {
                 onClick={() => setShowMatchingModal(false)}
                 className="btn-secondary"
               >
-                Cancel
+                {t('billParsing.modal.cancel')}
               </button>
               <button
                 onClick={() => setShowMatchingModal(false)}
                 className="btn-primary"
               >
-                Confirm Match
+                {t('billParsing.modal.confirmMatch')}
               </button>
             </div>
           </div>

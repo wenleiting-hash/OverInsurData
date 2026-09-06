@@ -5,6 +5,8 @@
  * BASED ON: UI-V1.2 design spec with strict layout constraints
  */
 
+import type { JSX } from 'react';
+
 export const TABLE_CONFIG = {
   // Standard column widths (pixels)
   COLUMNS: {

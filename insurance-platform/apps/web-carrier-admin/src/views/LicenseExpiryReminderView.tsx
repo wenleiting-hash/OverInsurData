@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ViewId } from '@/App';
-import { AlertTriangle, Clock, CheckCircle, XCircle, Bell, Filter, Download, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle, XCircle, Bell, Filter, Download, RefreshCw, FileText } from 'lucide-react';
 
 interface LicenseAlert {
   id: string;
   channelName: string;
+  channelNameEn: string;
   licenseType: string;
   licenseNumber: string;
   expiryDate: string;
@@ -25,6 +26,7 @@ const mockAlerts: LicenseAlert[] = [
   {
     id: 'alert1',
     channelName: '北京经纪门店',
+    channelNameEn: 'Beijing Brokerage',
     licenseType: 'NIPR Producer License',
     licenseNumber: 'BRK-BJ-2023-045',
     expiryDate: '2026-09-05',
@@ -37,6 +39,7 @@ const mockAlerts: LicenseAlert[] = [
   {
     id: 'alert2',
     channelName: '上海代理点',
+    channelNameEn: 'Shanghai Agency',
     licenseType: 'CA Medical Specialist License',
     licenseNumber: 'AGT-SH-MED-089',
     expiryDate: '2026-09-12',
@@ -49,6 +52,7 @@ const mockAlerts: LicenseAlert[] = [
   {
     id: 'alert3',
     channelName: '广州 MG 公司',
+    channelNameEn: 'Guangzhou MGA Co.',
     licenseType: 'TX MGA Appointment',
     licenseNumber: 'MG-GZ-TX-012',
     expiryDate: '2026-10-15',
@@ -61,6 +65,7 @@ const mockAlerts: LicenseAlert[] = [
   {
     id: 'alert4',
     channelName: '深圳 MGA 总部',
+    channelNameEn: 'Shenzhen MGA HQ',
     licenseType: 'FL Comprehensive Agent',
     licenseNumber: 'MGA-GD-FL-001',
     expiryDate: '2026-12-31',
@@ -73,6 +78,7 @@ const mockAlerts: LicenseAlert[] = [
   {
     id: 'alert5',
     channelName: '杭州保险经纪公司',
+    channelNameEn: 'Hangzhou Insurance Brokerage',
     licenseType: 'NY Life Insurance',
     licenseNumber: 'BRK-HZ-NY-078',
     expiryDate: '2026-08-31',
@@ -84,7 +90,8 @@ const mockAlerts: LicenseAlert[] = [
 ];
 
 export default function LicenseExpiryReminderView({ navigateTo }: Props) {
-  const { t } = useTranslation('appointment');
+  const { t, i18n } = useTranslation('appointment');
+  const isEn = i18n.language?.startsWith?.('en') ?? false;
   const [selectedSeverityFilter, setSelectedSeverityFilter] = useState<string>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
   const [alertCountdown, setAlertCountdown] = useState(30); // 30 seconds countdown for demo
@@ -97,10 +104,10 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
       renewed: 'bg-green-100 text-green-700 border-green-300',
     };
     const labels: Record<string, string> = {
-      notified: '已通知',
-      reminded: '再次提醒',
-      expired: '已过期',
-      renewed: '已续期',
+      notified: t('licenseExpiry.status.notified'),
+      reminded: t('licenseExpiry.status.reminded'),
+      expired: t('licenseExpiry.status.expired'),
+      renewed: t('licenseExpiry.status.renewed'),
     };
     return (
       <span className={`px-2 py-1 border rounded-md text-xs font-medium ${colors[status]}`}>
@@ -113,34 +120,34 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
     if (days <= 0) {
       return (
         <span className="px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded-md text-xs font-bold">
-          ⚠️ 已过期
+          {t('licenseExpiry.daysRemaining.expired')}
         </span>
       );
     }
     if (days <= 7) {
       return (
         <span className="px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded-md text-xs font-bold">
-          {days}天内
+          {t('licenseExpiry.daysRemaining.within', { days })}
         </span>
       );
     }
     if (days <= 14) {
       return (
-        <span className="px-2 py-1 bg-orange-100 text-orange-700 border border-orange-300 rounded-md text-xs font-bold">
-          {days}天内
+        <span className="px-2 py-1 bg-orange-100 text-orange-700 border-orange-300 rounded-md text-xs font-bold">
+          {t('licenseExpiry.daysRemaining.within', { days })}
         </span>
       );
     }
     if (days <= 30) {
       return (
         <span className="px-2 py-1 bg-yellow-100 text-yellow-700 border-yellow-300 rounded-md text-xs font-semibold">
-          {days}天内
+          {t('licenseExpiry.daysRemaining.within', { days })}
         </span>
       );
     }
     return (
       <span className="px-2 py-1 bg-green-100 text-green-700 border border-green-300 rounded-md text-xs font-semibold">
-        {days}天
+        {t('licenseExpiry.daysRemaining.days', { days })}
       </span>
     );
   };
@@ -152,9 +159,9 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
       completed: 'bg-green-100 text-green-700 border-green-300',
     };
     const labels: Record<string, string> = {
-      pending: '待处理',
-      'in-progress': '处理中',
-      completed: '已完成',
+      pending: t('licenseExpiry.renewalStatus.pending'),
+      'in-progress': t('licenseExpiry.renewalStatus.inProgress'),
+      completed: t('licenseExpiry.renewalStatus.completed'),
     };
     return (
       <span className={`px-2 py-1 border rounded-md text-xs font-medium ${colors[status]}`}>
@@ -180,7 +187,7 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
   };
 
   const handleRefresh = () => {
-    console.log('刷新许可证状态数据');
+    console.log(t('licenseExpiry.refreshLog'));
     setAlertCountdown(30);
   };
 
@@ -188,64 +195,64 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('licenseExpiry') || '许可证到期提醒'}</h1>
-        <p className="text-gray-600">{t('expiryDescription') || '监控渠道代理商各类许可证有效期并自动发送提醒'} </p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('licenseExpiry.title')}</h1>
+        <p className="text-gray-600">{t('licenseExpiry.description')}</p>
       </div>
 
       {/* Statistics Cards */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
         <div className="glass p-6 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">预警总数</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t('licenseExpiry.stats.totalAlerts')}</h3>
             <Bell className="text-purple-600" size={20} />
           </div>
           <p className="text-2xl font-bold text-gray-900 mb-1">{stats.totalAlerts}</p>
-          <p className="text-xs text-gray-500">当前监控中</p>
+          <p className="text-xs text-gray-500">{t('licenseExpiry.stats.totalAlertsSub')}</p>
         </div>
 
         <div className="glass p-6 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">紧急预警</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t('licenseExpiry.stats.criticalAlerts')}</h3>
             <Clock className="text-red-600" size={20} />
           </div>
           <p className="text-2xl font-bold text-gray-900 mb-1">{stats.criticalCount}</p>
-          <p className="text-xs text-red-600">⚠️ 需立即处理</p>
+          <p className="text-xs text-red-600">{t('licenseExpiry.stats.criticalAlertsSub')}</p>
         </div>
 
         <div className="glass p-6 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">已过期</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t('licenseExpiry.stats.expired')}</h3>
             <XCircle className="text-orange-600" size={20} />
           </div>
           <p className="text-2xl font-bold text-gray-900 mb-1">{stats.expiredCount}</p>
-          <p className="text-xs text-orange-600">❌ 影响业务</p>
+          <p className="text-xs text-orange-600">{t('licenseExpiry.stats.expiredSub')}</p>
         </div>
 
         <div className="glass p-6 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">续期中</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t('licenseExpiry.stats.inProgress')}</h3>
             <RefreshCw className="text-blue-600" size={20} />
           </div>
           <p className="text-2xl font-bold text-gray-900 mb-1">{stats.inProgressRenewals}</p>
-          <p className="text-xs text-blue-600">▶️ 跟进处理</p>
+          <p className="text-xs text-blue-600">{t('licenseExpiry.stats.inProgressSub')}</p>
         </div>
 
         <div className="glass p-6 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">合规率</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t('licenseExpiry.stats.complianceRate')}</h3>
             <CheckCircle className="text-green-600" size={20} />
           </div>
           <p className="text-2xl font-bold text-gray-900 mb-1">{stats.complianceRate}%</p>
-          <p className="text-xs text-green-600">↑ 达标率高</p>
+          <p className="text-xs text-green-600">{t('licenseExpiry.stats.complianceRateSub')}</p>
         </div>
 
         <div className="glass p-6 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700">平均周期</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t('licenseExpiry.stats.avgCycle')}</h3>
             <FileText className="text-yellow-600" size={20} />
           </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{stats.avgProcessingTime}天</p>
-          <p className="text-xs text-gray-500">续费处理时长</p>
+          <p className="text-2xl font-bold text-gray-900 mb-1">{t('licenseExpiry.stats.avgProcessingDays', { n: stats.avgProcessingTime })}</p>
+          <p className="text-xs text-gray-500">{t('licenseExpiry.stats.avgCycleSub')}</p>
         </div>
       </div>
 
@@ -259,11 +266,11 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
               onChange={(e) => setSelectedSeverityFilter(e.target.value)}
               className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">所有严重程度</option>
-              <option value="critical">严重</option>
-              <option value="high">高危</option>
-              <option value="medium">中危</option>
-              <option value="low">低危</option>
+              <option value="all">{t('licenseExpiry.filter.allSeverities')}</option>
+              <option value="critical">{t('licenseExpiry.filter.severityCritical')}</option>
+              <option value="high">{t('licenseExpiry.filter.severityHigh')}</option>
+              <option value="medium">{t('licenseExpiry.filter.severityMedium')}</option>
+              <option value="low">{t('licenseExpiry.filter.severityLow')}</option>
             </select>
           </div>
 
@@ -273,25 +280,25 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
               onChange={(e) => setSelectedStatusFilter(e.target.value)}
               className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">所有状态</option>
-              <option value="notified">已通知</option>
-              <option value="reminded">再次提醒</option>
-              <option value="expired">已过期</option>
-              <option value="renewed">已续期</option>
+              <option value="all">{t('licenseExpiry.filter.allStatuses')}</option>
+              <option value="notified">{t('licenseExpiry.filter.statusNotified')}</option>
+              <option value="reminded">{t('licenseExpiry.filter.statusReminded')}</option>
+              <option value="expired">{t('licenseExpiry.filter.statusExpired')}</option>
+              <option value="renewed">{t('licenseExpiry.filter.statusRenewed')}</option>
             </select>
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            <button 
+            <button
               className="btn-secondary"
               onClick={handleRefresh}
             >
               <RefreshCw size={16} className="mr-2" />
-              刷新数据
+              {t('licenseExpiry.action.refreshData')}
             </button>
             <button className="btn-secondary">
               <Download size={16} />
-              导出清单
+              {t('licenseExpiry.action.exportList')}
             </button>
           </div>
         </div>
@@ -304,25 +311,25 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
             <thead className="bg-gray-100">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  渠道信息
+                  {t('licenseExpiry.table.colChannel')}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  许可证类型
+                  {t('licenseExpiry.table.colLicenseType')}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  有效期倒计时
+                  {t('licenseExpiry.table.colCountdown')}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  风险级别
+                  {t('licenseExpiry.table.colSeverity')}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  状态
+                  {t('licenseExpiry.table.colStatus')}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  续期进度
+                  {t('licenseExpiry.table.colRenewalProgress')}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  操作
+                  {t('licenseExpiry.table.colActions')}
                 </th>
               </tr>
             </thead>
@@ -333,15 +340,15 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
                   alert.severity === 'critical' ? 'bg-yellow-50' : ''
                 }`}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-semibold text-gray-900">{alert.channelName}</div>
-                    <div className="text-xs text-gray-500 mt-1">牌照号：{alert.licenseNumber}</div>
+                    <div className="font-semibold text-gray-900">{isEn ? alert.channelNameEn : alert.channelName}</div>
+                    <div className="text-xs text-gray-500 mt-1">{t('licenseExpiry.table.licenseNumberLabel')}{alert.licenseNumber}</div>
                     {alert.lastNotifiedAt && (
-                      <div className="text-xs text-gray-400 mt-1">上次通知：{alert.lastNotifiedAt}</div>
+                      <div className="text-xs text-gray-400 mt-1">{t('licenseExpiry.table.lastNotifiedLabel')}{alert.lastNotifiedAt}</div>
                     )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-semibold text-gray-900">{alert.licenseType}</div>
-                    <div className="text-xs text-gray-500">到期：{alert.expiryDate}</div>
+                    <div className="text-xs text-gray-500">{t('licenseExpiry.table.expiryLabel')}{alert.expiryDate}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getDaysRemainingBadge(alert.daysRemaining)}
@@ -349,22 +356,22 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     {alert.severity === 'critical' && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded-md text-xs font-bold">
-                        ⚡ 严重
+                        {t('licenseExpiry.severity.critical')}
                       </span>
                     )}
                     {alert.severity === 'high' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 border border-orange-300 rounded-md text-xs font-semibold">
-                        ⚠️ 高危
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 border-orange-300 rounded-md text-xs font-semibold">
+                        {t('licenseExpiry.severity.high')}
                       </span>
                     )}
                     {alert.severity === 'medium' && (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 border-yellow-300 rounded-md text-xs font-medium">
-                        🔶 中危
+                        {t('licenseExpiry.severity.medium')}
                       </span>
                     )}
                     {alert.severity === 'low' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 border border-green-300 rounded-md text-xs font-medium">
-                        🟢 低风险
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 border-green-300 rounded-md text-xs font-medium">
+                        {t('licenseExpiry.severity.low')}
                       </span>
                     )}
                   </td>
@@ -383,11 +390,11 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3">
-                      查看详情 →
+                      {t('licenseExpiry.action.viewDetail')}
                     </button>
                     {alert.status !== 'renewed' && (
                       <button className="text-green-600 hover:text-green-800 text-sm font-medium">
-                        发起续期 →
+                        {t('licenseExpiry.action.startRenewal')}
                       </button>
                     )}
                   </td>
@@ -402,14 +409,14 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
       {filteredData.length === 0 && (
         <div className="max-w-7xl mx-auto mt-12 text-center glass p-12 rounded-lg">
           <Bell className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">暂无预警记录</h3>
-          <p className="text-gray-600 mb-4">当前筛选条件下没有预警记录</p>
-          <button 
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('licenseExpiry.empty.title')}</h3>
+          <p className="text-gray-600 mb-4">{t('licenseExpiry.empty.desc')}</p>
+          <button
             className="btn-secondary"
             onClick={handleRefresh}
           >
             <RefreshCw size={16} className="mr-2" />
-            刷新数据
+            {t('licenseExpiry.action.refreshData')}
           </button>
         </div>
       )}
@@ -418,25 +425,25 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
       <div className="max-w-7xl mx-auto mt-6 glass p-6 rounded-lg">
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <AlertTriangle className="text-orange-600" size={20} />
-          快速行动建议
+          {t('licenseExpiry.quickAction.title')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded">
-            <h3 className="font-bold text-gray-900 mb-2">需要立即处理</h3>
-            <p className="text-2xl font-bold text-red-600">{stats.criticalCount}个</p>
-            <p className="text-xs text-gray-600">≤7 天到期的许可证</p>
+            <h3 className="font-bold text-gray-900 mb-2">{t('licenseExpiry.quickAction.immediateTitle')}</h3>
+            <p className="text-2xl font-bold text-red-600">{t('licenseExpiry.quickAction.immediateCount', { n: stats.criticalCount })}</p>
+            <p className="text-xs text-gray-600">{t('licenseExpiry.quickAction.immediateDesc')}</p>
           </div>
 
           <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
-            <h3 className="font-bold text-gray-900 mb-2">已过期需关注</h3>
-            <p className="text-2xl font-bold text-yellow-600">{stats.expiredCount}个</p>
-            <p className="text-xs text-gray-600">可能影响业务开展</p>
+            <h3 className="font-bold text-gray-900 mb-2">{t('licenseExpiry.quickAction.expiredTitle')}</h3>
+            <p className="text-2xl font-bold text-yellow-600">{t('licenseExpiry.quickAction.expiredCount', { n: stats.expiredCount })}</p>
+            <p className="text-xs text-gray-600">{t('licenseExpiry.quickAction.expiredDesc')}</p>
           </div>
 
           <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <h3 className="font-bold text-gray-900 mb-2">批量续期窗口</h3>
-            <p className="text-2xl font-bold text-blue-600">30-90天</p>
-            <p className="text-xs text-gray-600">提前规划续期计划</p>
+            <h3 className="font-bold text-gray-900 mb-2">{t('licenseExpiry.quickAction.batchTitle')}</h3>
+            <p className="text-2xl font-bold text-blue-600">{t('licenseExpiry.quickAction.batchRange')}</p>
+            <p className="text-xs text-gray-600">{t('licenseExpiry.quickAction.batchDesc')}</p>
           </div>
         </div>
       </div>

@@ -4,17 +4,11 @@ import {
   CheckCircle2, Info, Check,
 } from 'lucide-react'
 import type { ViewId } from '../components/Sidebar'
+import { useLang } from '../i18n'
 
 interface Props {
   navigateTo: (view: ViewId) => void
 }
-
-const STEPS = [
-  { label: '选择渠道',    sub: '选择申请渠道商',      icon: ShieldCheck },
-  { label: '选择保险公司', sub: '选择目标保险公司',    icon: Building2 },
-  { label: '配置详情',    sub: '州 · 业务线 · 说明', icon: MapPin },
-  { label: '确认提交',    sub: '核对信息并提交',      icon: FileText },
-]
 
 const CHANNELS = [
   { id: 'c1', name: 'Pacific Coast Insurance Group',   npn: 'NPN12348901', state: 'CA', agents: 142 },
@@ -53,9 +47,17 @@ function FldLabel({ children, required }: { children: React.ReactNode; required?
 }
 
 export default function AppointmentNewView({ navigateTo }: Props) {
+  const { t } = useLang()
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ channelId: '', insurer: '', state: '', line: '', reason: '', urgent: false })
+
+  const STEPS = [
+    { label: t.aptWizStep1, sub: t.aptWizStep1Sub, icon: ShieldCheck },
+    { label: t.aptWizStep2, sub: t.aptWizStep2Sub, icon: Building2 },
+    { label: t.aptWizStep3, sub: t.aptWizStep3Sub, icon: MapPin },
+    { label: t.aptWizStep4, sub: t.aptWizStep4Sub, icon: FileText },
+  ]
 
   const canNext = [!!form.channelId, !!form.insurer, !!form.state && !!form.line, true]
   const selectedChannel = CHANNELS.find(c => c.id === form.channelId)
@@ -77,13 +79,13 @@ export default function AppointmentNewView({ navigateTo }: Props) {
             style={{ fontSize: 13, marginBottom: 10, padding: '6px 10px' }}
             onClick={() => navigateTo('appointment')}
           >
-            <ArrowLeft size={14} /> 返回合规管理
+            <ArrowLeft size={14} /> {t.aptWizBack}
           </button>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23', letterSpacing: '-0.3px', margin: 0 }}>
-            新建 Appointment 申请
+            {t.aptWizTitle}
           </h1>
           <p style={{ fontSize: 13, color: '#717786', marginTop: 4 }}>
-            通过 NIPR 为渠道商提交 Appointment 申请，处理周期通常为 2–6 周
+            {t.aptWizSubtitle}
           </p>
         </div>
       </div>
@@ -94,7 +96,7 @@ export default function AppointmentNewView({ navigateTo }: Props) {
         {/* ── Left: vertical step list ── */}
         <div className="card" style={{ padding: '20px 16px', position: 'sticky', top: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#A0A5B4', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14, paddingLeft: 4 }}>
-            申请进度
+            {t.aptWizProgressLabel}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {STEPS.map((s, i) => {
@@ -102,7 +104,7 @@ export default function AppointmentNewView({ navigateTo }: Props) {
               const state = i < step ? 'done' : i === step ? 'active' : 'upcoming'
               return (
                 <div
-                  key={s.label}
+                  key={i}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '10px 10px', borderRadius: 10,
@@ -139,23 +141,23 @@ export default function AppointmentNewView({ navigateTo }: Props) {
           {/* Selected summary */}
           {(selectedChannel || selectedInsurer) && (
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: '0.5px solid rgba(193,198,215,0.4)' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#A0A5B4', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>已选信息</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#A0A5B4', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{t.aptWizSelected}</div>
               {selectedChannel && (
                 <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 11, color: '#A0A5B4', marginBottom: 2 }}>渠道商</div>
+                  <div style={{ fontSize: 11, color: '#A0A5B4', marginBottom: 2 }}>{t.aptColChannel}</div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#181C23', lineHeight: 1.3 }}>{selectedChannel.name}</div>
                   <div style={{ fontSize: 11, color: '#717786', fontFamily: "'JetBrains Mono', monospace", marginTop: 1 }}>{selectedChannel.npn}</div>
                 </div>
               )}
               {selectedInsurer && (
                 <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 11, color: '#A0A5B4', marginBottom: 2 }}>保险公司</div>
+                  <div style={{ fontSize: 11, color: '#A0A5B4', marginBottom: 2 }}>{t.aptColInsurer}</div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#181C23' }}>{selectedInsurer.name}</div>
                 </div>
               )}
               {form.state && (
                 <div>
-                  <div style={{ fontSize: 11, color: '#A0A5B4', marginBottom: 2 }}>申请州 / 业务线</div>
+                  <div style={{ fontSize: 11, color: '#A0A5B4', marginBottom: 2 }}>{t.aptWizStateLine}</div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>
                     {form.state}{form.line ? ` · ${form.line}` : ''}
                   </div>
@@ -169,12 +171,12 @@ export default function AppointmentNewView({ navigateTo }: Props) {
         <div>
           <div className="card" style={{ padding: '28px 32px' }}>
 
-            {/* Step 0 — 选择渠道 */}
+            {/* Step 0 — Select channel */}
             {step === 0 && (
               <div>
                 <div style={{ marginBottom: 18 }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>选择渠道商</h2>
-                  <p style={{ fontSize: 13, color: '#717786' }}>选择要申请 Appointment 的渠道商，已排除无效牌照渠道</p>
+                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>{t.aptWizStep1Heading}</h2>
+                  <p style={{ fontSize: 13, color: '#717786' }}>{t.aptWizStep1Desc}</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {CHANNELS.map(ch => {
@@ -202,7 +204,7 @@ export default function AppointmentNewView({ navigateTo }: Props) {
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 700, fontSize: 14, color: '#181C23', lineHeight: 1.3 }}>{ch.name}</div>
                             <div style={{ fontSize: 12, color: '#717786', marginTop: 3, fontFamily: "'JetBrains Mono', monospace" }}>
-                              NPN: {ch.npn} · {ch.state} · {ch.agents} 名代理人
+                              NPN: {ch.npn} · {ch.state} · {t.aptWizAgents(ch.agents)}
                             </div>
                           </div>
                           {active && (
@@ -218,12 +220,12 @@ export default function AppointmentNewView({ navigateTo }: Props) {
               </div>
             )}
 
-            {/* Step 1 — 选择保险公司 */}
+            {/* Step 1 — Select insurer */}
             {step === 1 && (
               <div>
                 <div style={{ marginBottom: 18 }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>选择保险公司</h2>
-                  <p style={{ fontSize: 13, color: '#717786' }}>选择要申请 Appointment 的保险公司</p>
+                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>{t.aptWizStep2Heading}</h2>
+                  <p style={{ fontSize: 13, color: '#717786' }}>{t.aptWizStep2Desc}</p>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {INSURERS.map(ins => {
@@ -257,16 +259,16 @@ export default function AppointmentNewView({ navigateTo }: Props) {
               </div>
             )}
 
-            {/* Step 2 — 配置详情 */}
+            {/* Step 2 — Details */}
             {step === 2 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
                 <div style={{ marginBottom: 2 }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>配置申请详情</h2>
-                  <p style={{ fontSize: 13, color: '#717786' }}>选择申请州、业务线，并填写补充说明</p>
+                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>{t.aptWizStep3Heading}</h2>
+                  <p style={{ fontSize: 13, color: '#717786' }}>{t.aptWizStep3Desc}</p>
                 </div>
 
                 <div>
-                  <FldLabel required>申请州</FldLabel>
+                  <FldLabel required>{t.aptWizFieldState}</FldLabel>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 6 }}>
                     {US_STATES.map(s => {
                       const active = form.state === s
@@ -289,7 +291,7 @@ export default function AppointmentNewView({ navigateTo }: Props) {
                 </div>
 
                 <div>
-                  <FldLabel required>业务线</FldLabel>
+                  <FldLabel required>{t.aptWizFieldLine}</FldLabel>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {LINES.map(l => {
                       const active = form.line === l
@@ -311,12 +313,12 @@ export default function AppointmentNewView({ navigateTo }: Props) {
                 </div>
 
                 <div>
-                  <FldLabel>申请说明</FldLabel>
+                  <FldLabel>{t.aptWizFieldNotes}</FldLabel>
                   <textarea
                     value={form.reason}
                     onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
                     rows={4}
-                    placeholder="请输入申请原因、业务背景等补充说明…"
+                    placeholder={t.aptWizNotesPlaceholder}
                     className="input-glass w-full"
                     style={{ resize: 'vertical' }}
                   />
@@ -338,44 +340,44 @@ export default function AppointmentNewView({ navigateTo }: Props) {
                     style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
                   />
                   <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: form.urgent ? '#C0392B' : '#181C23' }}>标记为紧急申请</div>
-                    <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>启用加急处理通道，预计 3 个工作日内完成审批</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: form.urgent ? '#C0392B' : '#181C23' }}>{t.aptWizUrgent}</div>
+                    <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>{t.aptWizUrgentHint}</div>
                   </div>
                 </label>
               </div>
             )}
 
-            {/* Step 3 — 确认提交 */}
+            {/* Step 3 — Review & submit */}
             {step === 3 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 <div style={{ marginBottom: 2 }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>确认申请信息</h2>
-                  <p style={{ fontSize: 13, color: '#717786' }}>提交前请仔细核对以下信息，提交后将自动进入 NIPR 处理流程</p>
+                  <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181C23', margin: '0 0 6px' }}>{t.aptWizStep4Heading}</h2>
+                  <p style={{ fontSize: 13, color: '#717786' }}>{t.aptWizStep4Desc}</p>
                 </div>
 
                 <div style={{ borderRadius: 12, border: '0.5px solid rgba(0,88,188,0.2)', overflow: 'hidden' }}>
                   <div style={{ padding: '12px 18px', background: 'rgba(0,88,188,0.05)', borderBottom: '0.5px solid rgba(0,88,188,0.12)', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <FileCheck size={15} color="#0058BC" />
-                    <span style={{ fontSize: 13.5, fontWeight: 700, color: '#181C23' }}>申请摘要</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: '#181C23' }}>{t.aptWizSummary}</span>
                   </div>
                   <div style={{ padding: '4px 18px 10px' }}>
-                    {[
-                      ['渠道商',   selectedChannel?.name ?? '—'],
-                      ['渠道 NPN', selectedChannel?.npn ?? '—'],
-                      ['保险公司', form.insurer || '—'],
-                      ['申请州',   form.state || '—'],
-                      ['业务线',   form.line || '—'],
-                      ['优先级',   form.urgent ? '紧急（加急通道）' : '普通'],
-                      ...(form.reason ? [['申请说明', form.reason]] as const : []),
-                    ].map(([k, v]) => (
-                      <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '0.5px solid rgba(193,198,215,0.3)', padding: '10px 0', fontSize: 13, gap: 12 }}>
-                        <span style={{ color: '#717786', flexShrink: 0 }}>{k}</span>
+                    {([
+                      { id: 'channel',  label: t.aptColChannel,   value: selectedChannel?.name ?? '—' },
+                      { id: 'npn',      label: t.aptWizChannelNpn, value: selectedChannel?.npn ?? '—' },
+                      { id: 'insurer',  label: t.aptColInsurer,    value: form.insurer || '—' },
+                      { id: 'state',    label: t.aptWizFieldState, value: form.state || '—' },
+                      { id: 'line',     label: t.aptWizFieldLine,  value: form.line || '—' },
+                      { id: 'priority', label: t.aptWizPriority,   value: form.urgent ? t.aptWizUrgentValue : t.aptWizNormalValue },
+                      ...(form.reason ? [{ id: 'notes', label: t.aptWizFieldNotes, value: form.reason }] : []),
+                    ]).map(row => (
+                      <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '0.5px solid rgba(193,198,215,0.3)', padding: '10px 0', fontSize: 13, gap: 12 }}>
+                        <span style={{ color: '#717786', flexShrink: 0 }}>{row.label}</span>
                         <span style={{
                           fontWeight: 600,
-                          color: k === '优先级' && form.urgent ? '#C0392B' : '#181C23',
-                          fontFamily: k === '渠道 NPN' ? "'JetBrains Mono', monospace" : undefined,
+                          color: row.id === 'priority' && form.urgent ? '#C0392B' : '#181C23',
+                          fontFamily: row.id === 'npn' ? "'JetBrains Mono', monospace" : undefined,
                           textAlign: 'right',
-                        }}>{v}</span>
+                        }}>{row.value}</span>
                       </div>
                     ))}
                   </div>
@@ -383,10 +385,10 @@ export default function AppointmentNewView({ navigateTo }: Props) {
 
                 <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,159,10,0.07)', border: '0.5px solid rgba(255,159,10,0.28)', lineHeight: 1.65 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 700, fontSize: 13, color: '#7A5000', marginBottom: 6 }}>
-                    <Info size={14} /> 提交前注意事项
+                    <Info size={14} /> {t.aptWizNoticeTitle}
                   </div>
                   <p style={{ fontSize: 12.5, color: '#7A5000', margin: 0 }}>
-                    提交后系统将自动通过 NIPR 提交 Appointment 申请，处理周期通常为 2–6 周，具体视州监管机构而定。请确保渠道牌照在申请州有效且未过期。
+                    {t.aptWizNoticeBody}
                   </p>
                 </div>
               </div>
@@ -400,7 +402,7 @@ export default function AppointmentNewView({ navigateTo }: Props) {
               style={{ fontSize: 13 }}
               onClick={() => step > 0 ? setStep(s => s - 1) : navigateTo('appointment')}
             >
-              <ArrowLeft size={14} />{step === 0 ? '取消' : '上一步'}
+              <ArrowLeft size={14} />{step === 0 ? t.aptCancel : t.aptWizPrev}
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: '#A0A5B4' }}>
@@ -416,10 +418,10 @@ export default function AppointmentNewView({ navigateTo }: Props) {
                 }}
               >
                 {step < STEPS.length - 1
-                  ? <>下一步 <ArrowLeft size={14} style={{ transform: 'rotate(180deg)' }} /></>
+                  ? <>{t.aptWizNext} <ArrowLeft size={14} style={{ transform: 'rotate(180deg)' }} /></>
                   : saving
-                    ? <><CheckCircle2 size={13} className="animate-spin" />提交中…</>
-                    : <><CheckCircle2 size={13} />确认提交</>
+                    ? <><CheckCircle2 size={13} className="animate-spin" />{t.aptWizSubmitting}</>
+                    : <><CheckCircle2 size={13} />{t.aptWizConfirmSubmit}</>
                 }
               </button>
             </div>

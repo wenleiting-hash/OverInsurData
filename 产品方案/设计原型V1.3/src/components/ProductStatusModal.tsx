@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { X, ToggleRight, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
+import { X, ToggleRight, AlertTriangle } from 'lucide-react'
 import { products, insurers } from '../data/mockData'
+import { useLang } from '../i18n'
 
 interface Props {
   productId: string
@@ -8,28 +9,14 @@ interface Props {
   onConfirm: () => void
 }
 
-const DELIST_REASONS = [
-  '费率文件到期，待重新备案',
-  '监管要求暂停销售',
-  '产品迭代升级，替换为新版本',
-  '该州市场退出',
-  '承保公司要求下架',
-  '业绩不达标，战略调整',
-  '其他原因（请在备注中说明）',
-]
-
-const LIST_REASONS = [
-  '监管审批已通过',
-  '费率文件重新备案完成',
-  '市场重新开放',
-  '产品升级完成',
-  '其他原因',
-]
-
 export default function ProductStatusModal({ productId, onClose, onConfirm }: Props) {
+  const { t } = useLang()
   const prod = products.find(p => p.id === productId) ?? products[0]
   const ins = insurers.find(i => i.id === prod.insurerId)
   const isListing = prod.status !== 'on-sale'
+
+  const delistReasons = [t.psmDelistR1, t.psmDelistR2, t.psmDelistR3, t.psmDelistR4, t.psmDelistR5, t.psmDelistR6, t.psmDelistR7]
+  const listReasons = [t.psmListR1, t.psmListR2, t.psmListR3, t.psmListR4, t.psmListR5]
 
   const [reason, setReason] = useState('')
   const [scope, setScope] = useState<'all' | 'selected'>('all')
@@ -39,7 +26,7 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
   const [confirmed, setConfirmed] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
-  const reasons = isListing ? LIST_REASONS : DELIST_REASONS
+  const reasons = isListing ? listReasons : delistReasons
   const canConfirm = reason && (effectDate === 'immediate' || futureDate) && confirmed
 
   return (
@@ -64,7 +51,7 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>
-                {isListing ? '产品上架' : '产品下架'}
+                {isListing ? t.psmListTitle : t.psmDelistTitle}
               </div>
               <div style={{ fontSize: 12.5, color: '#717786' }}>{prod.name} · {ins?.shortName}</div>
             </div>
@@ -78,14 +65,14 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
             <div style={{ background: 'rgba(255,149,0,0.07)', border: '0.5px solid rgba(255,149,0,0.25)', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle size={14} style={{ color: '#a05800' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#7a5c00' }}>下架影响范围</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#7a5c00' }}>{t.psmImpactTitle}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {[
-                  { label: '在售保单', value: prod.policyCount.toLocaleString() },
-                  { label: '可售州', value: prod.states[0] === 'ALL' ? '全国' : `${prod.states.length} 州` },
-                  { label: '相关渠道', value: `~${Math.floor(prod.policyCount / 500)} 个` },
-                  { label: '预计影响保费', value: `$${(prod.premium / 1000000 * 0.15).toFixed(1)}M` },
+                  { label: t.psmImpactPolicies, value: prod.policyCount.toLocaleString() },
+                  { label: t.psmImpactStates, value: prod.states[0] === 'ALL' ? t.prdNationwide : t.psmStatesCount(prod.states.length) },
+                  { label: t.psmImpactChannels, value: t.psmChannelsCount(Math.floor(prod.policyCount / 500)) },
+                  { label: t.psmImpactPremium, value: `$${(prod.premium / 1000000 * 0.15).toFixed(1)}M` },
                 ].map(k => (
                   <div key={k.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.6)', borderRadius: 10, padding: '8px 10px' }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{k.value}</div>
@@ -94,7 +81,7 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
                 ))}
               </div>
               <div style={{ fontSize: 12, color: '#7a5c00', marginTop: 12 }}>
-                下架后：停止新保报价，已有保单按原合同正常续保至到期，渠道产品授权将自动暂停。
+                {t.psmImpactNote}
               </div>
             </div>
           )}
@@ -102,11 +89,11 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
           {/* Scope — delist only */}
           {!isListing && (
             <div style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 8 }}>下架范围</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 8 }}>{t.psmScopeTitle}</div>
               <div className="flex gap-3">
                 {[
-                  { val: 'all', label: '全部可售州下架' },
-                  { val: 'selected', label: '指定州下架' },
+                  { val: 'all', label: t.psmScopeAll },
+                  { val: 'selected', label: t.psmScopeSelected },
                 ].map(o => (
                   <label key={o.val} style={{
                     flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', borderRadius: 9, cursor: 'pointer',
@@ -124,7 +111,7 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
           {/* Reason */}
           <div style={{ marginBottom: 18 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 8 }}>
-              {isListing ? '上架原因' : '下架原因'}<span style={{ color: '#BA1A1A' }}> *</span>
+              {isListing ? t.psmListReasonTitle : t.psmDelistReasonTitle}<span style={{ color: '#BA1A1A' }}> *</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {reasons.map(r => (
@@ -143,18 +130,18 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
 
           {/* Note */}
           <div style={{ marginBottom: 18 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 6 }}>备注说明</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 6 }}>{t.psmNoteTitle}</div>
             <textarea className="input-glass" style={{ width: '100%', minHeight: 72, resize: 'vertical', fontSize: 13.5 }}
-              placeholder="可选填写说明或背景信息…" value={note} onChange={e => setNote(e.target.value)} />
+              placeholder={t.psmNotePlaceholder} value={note} onChange={e => setNote(e.target.value)} />
           </div>
 
           {/* Effect date */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 8 }}>
-              生效时间<span style={{ color: '#BA1A1A' }}> *</span>
+              {t.psmEffectTitle}<span style={{ color: '#BA1A1A' }}> *</span>
             </div>
             <div className="flex gap-2">
-              {[{ val: 'immediate', label: '立即生效' }, { val: 'scheduled', label: '定时生效' }].map(opt => (
+              {[{ val: 'immediate', label: t.psmEffectImmediate }, { val: 'scheduled', label: t.psmEffectScheduled }].map(opt => (
                 <label key={opt.val} style={{
                   flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 9, cursor: 'pointer',
                   background: effectDate === opt.val ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
@@ -175,15 +162,15 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
             <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)}
               style={{ marginTop: 2, accentColor: '#0058BC', width: 15, height: 15, flexShrink: 0 }} />
             <span style={{ fontSize: 13, color: '#414755' }}>
-              我已了解此操作的影响，确认{isListing ? '上架' : '下架'}
-              <strong style={{ color: '#181C23' }}> {prod.name}</strong>。本操作将记录至审计日志。
+              {t.psmConfirmLead}{isListing ? t.psmVerbList : t.psmVerbDelist}
+              <strong style={{ color: '#181C23' }}> {prod.name}</strong>{t.psmConfirmTail}
             </span>
           </label>
         </div>
 
         {/* Footer */}
         <div style={{ padding: '16px 24px', borderTop: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', justifyContent: 'flex-end', gap: 10, background: 'rgba(241,243,254,0.5)' }}>
-          <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={onClose}>取消</button>
+          <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={onClose}>{t.prdCancel}</button>
           <button
             onClick={onConfirm}
             disabled={!canConfirm}
@@ -196,7 +183,7 @@ export default function ProductStatusModal({ productId, onClose, onConfirm }: Pr
             }}
           >
             <ToggleRight size={14} />
-            {isListing ? '确认上架' : '提交下架申请'}
+            {isListing ? t.psmConfirmListBtn : t.psmSubmitDelistBtn}
           </button>
         </div>
       </div>
