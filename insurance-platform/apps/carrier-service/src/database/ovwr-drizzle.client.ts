@@ -1,27 +1,19 @@
 /**
  * OverInsur (ovwr) Drizzle Client
  * 
- * Uses the shared domain-models package with ovwr_ prefixed tables
- * Connects to ai_saas database in the existing PostgreSQL container
+ * DEPRECATED: This file is retained for backward compatibility only.
+ * All new code should import from './drizzle.client' directly.
+ * 
+ * The separate connection pool has been removed to avoid resource conflicts.
+ * Both schemas (carrier + ovwr) now share the same pool via drizzle.client.ts.
  */
 
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { pool } from './drizzle.client';
 import * as ovwrSchema from '@overinsur/domain-models';
 
-// PostgreSQL connection pool (using existing Docker container)
-export const ovwrPool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number.parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'ai_saas', // Changed from carrier_subsystem to ai_saas
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
-
-// Create Drizzle instance with ovwr schema
-export const ovwrDb = drizzle(ovwrPool, { schema: ovwrSchema });
+// Reuse the shared pool from drizzle.client.ts (no separate connection pool)
+export const ovwrPool = pool;
+export const ovwrDb = drizzle(pool, { schema: ovwrSchema });
 
 export default ovwrDb;

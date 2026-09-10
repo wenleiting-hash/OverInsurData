@@ -3,6 +3,10 @@ import type { InsuranceCarrier } from './mockData'
 /**
  * Appointment & Compliance Module Data Models
  * 功能点 27-35: Appointment 申请/跟踪/续期/终止 + NIPR 校验 + 合规拦截 + 报告生成+OFAC 筛查
+ *
+ * ⚠ 已废弃：本文件当前没有被任何视图引用（活代码走 ./mockComplianceData 与 ./appointmentComplianceData）。
+ *   其中带 approved / waiverApproved / reviewedBy 等字段名属于早期原型遗留，不是本系统的业务语义。
+ *   本系统没有任何审批流程，请勿基于本文件新增功能；待确认后可整文件删除。
  */
 
 // ==================== Appointment Application ====================
@@ -421,7 +425,7 @@ export function generateMockInterceptions(): ComplianceInterception[] {
       'Agent license expired or invalid',
       'No appointment authorization in this state',
       'Channel not authorized to sell this product',
-      'Product not approved for sale in this state',
+      'Product not authorized for sale in this state',
       'Required training certification not completed',
       'Premium amount exceeds agent limit',
       'Agent status suspended or terminated'
@@ -430,9 +434,9 @@ export function generateMockInterceptions(): ComplianceInterception[] {
       'Renew agent license immediately',
       'Submit appointment application first',
       'Obtain product authorization from carrier',
-      'Restrict sales to approved states only',
+      'Restrict sales to authorized states only',
       'Complete required training course',
-      'Request supervisor approval or downgrade quote',
+      'Downgrade the quote to fit the agent limit',
       'Restore agent status or assign to another agent'
     ][i % rules.length],
     waiverRequested: Math.random() > 0.8,

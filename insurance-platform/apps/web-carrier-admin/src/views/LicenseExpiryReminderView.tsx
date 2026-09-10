@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ViewId } from '@/App';
 import { AlertTriangle, Clock, CheckCircle, XCircle, Bell, Filter, Download, RefreshCw, FileText } from 'lucide-react';
+import { useLicenseReminders } from '@/services/complianceService';
 
 interface LicenseAlert {
   id: string;
@@ -21,80 +22,15 @@ interface Props {
   navigateTo: (view: ViewId) => void;
 }
 
-// Mock data - License alerts
-const mockAlerts: LicenseAlert[] = [
-  {
-    id: 'alert1',
-    channelName: '北京经纪门店',
-    channelNameEn: 'Beijing Brokerage',
-    licenseType: 'NIPR Producer License',
-    licenseNumber: 'BRK-BJ-2023-045',
-    expiryDate: '2026-09-05',
-    daysRemaining: 5,
-    severity: 'critical',
-    status: 'reminded',
-    lastNotifiedAt: '2026-08-28',
-    renewalStatus: 'in-progress',
-  },
-  {
-    id: 'alert2',
-    channelName: '上海代理点',
-    channelNameEn: 'Shanghai Agency',
-    licenseType: 'CA Medical Specialist License',
-    licenseNumber: 'AGT-SH-MED-089',
-    expiryDate: '2026-09-12',
-    daysRemaining: 12,
-    severity: 'high',
-    status: 'notified',
-    lastNotifiedAt: '2026-08-25',
-    renewalStatus: 'pending',
-  },
-  {
-    id: 'alert3',
-    channelName: '广州 MG 公司',
-    channelNameEn: 'Guangzhou MGA Co.',
-    licenseType: 'TX MGA Appointment',
-    licenseNumber: 'MG-GZ-TX-012',
-    expiryDate: '2026-10-15',
-    daysRemaining: 45,
-    severity: 'medium',
-    status: 'notified',
-    lastNotifiedAt: '2026-08-20',
-    renewalStatus: 'pending',
-  },
-  {
-    id: 'alert4',
-    channelName: '深圳 MGA 总部',
-    channelNameEn: 'Shenzhen MGA HQ',
-    licenseType: 'FL Comprehensive Agent',
-    licenseNumber: 'MGA-GD-FL-001',
-    expiryDate: '2026-12-31',
-    daysRemaining: 122,
-    severity: 'low',
-    status: 'notified',
-    lastNotifiedAt: '2026-08-15',
-    renewalStatus: 'pending',
-  },
-  {
-    id: 'alert5',
-    channelName: '杭州保险经纪公司',
-    channelNameEn: 'Hangzhou Insurance Brokerage',
-    licenseType: 'NY Life Insurance',
-    licenseNumber: 'BRK-HZ-NY-078',
-    expiryDate: '2026-08-31',
-    daysRemaining: 0,
-    severity: 'critical',
-    status: 'expired',
-    renewalStatus: 'pending',
-  },
-];
-
+// API data
 export default function LicenseExpiryReminderView({ navigateTo }: Props) {
-  const { t, i18n } = useTranslation('appointment');
+  const { t, i18n } = useTranslation('compliance');
   const isEn = i18n.language?.startsWith?.('en') ?? false;
+  const { data: remindersRes, isLoading } = useLicenseReminders();
+  const alerts: any[] = remindersRes?.data ?? [];
   const [selectedSeverityFilter, setSelectedSeverityFilter] = useState<string>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
-  const [alertCountdown, setAlertCountdown] = useState(30); // 30 seconds countdown for demo
+  const [alertCountdown, setAlertCountdown] = useState(30);
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -170,7 +106,7 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
     );
   };
 
-  const filteredData = mockAlerts.filter((alert) => {
+  const filteredData = alerts.filter((alert) => {
     if (selectedSeverityFilter !== 'all' && alert.severity !== selectedSeverityFilter) return false;
     if (selectedStatusFilter !== 'all' && alert.status !== selectedStatusFilter) return false;
     return true;
@@ -178,11 +114,11 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
 
   // Statistics
   const stats = {
-    totalAlerts: mockAlerts.length,
-    criticalCount: mockAlerts.filter(a => a.daysRemaining <= 7).length,
-    expiredCount: mockAlerts.filter(a => a.daysRemaining <= 0).length,
-    inProgressRenewals: mockAlerts.filter(a => a.renewalStatus === 'in-progress').length,
-    complianceRate: ((mockAlerts.filter(a => a.status !== 'expired').length / mockAlerts.length) * 100).toFixed(0),
+    totalAlerts: alerts.length,
+    criticalCount: alerts.filter(a => a.daysRemaining <= 7).length,
+    expiredCount: alerts.filter(a => a.daysRemaining <= 0).length,
+    inProgressRenewals: alerts.filter(a => a.renewalStatus === 'in-progress').length,
+    complianceRate: alerts.length > 0 ? ((alerts.filter(a => a.status !== 'expired').length / alerts.length) * 100).toFixed(0) : '0',
     avgProcessingTime: 15, // days average to renew
   };
 
@@ -192,7 +128,7 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('licenseExpiry.title')}</h1>
@@ -308,7 +244,7 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
       <div className="max-w-7xl mx-auto glass rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-100">
+            <thead className="bg-[rgba(246,248,255,0.9)]">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   {t('licenseExpiry.table.colChannel')}
@@ -333,12 +269,12 @@ export default function LicenseExpiryReminderView({ navigateTo }: Props) {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredData.map((alert) => (
-                <tr key={alert.id} className={`hover:bg-gray-50 transition-colors ${
+            <tbody className="bg-[rgba(255,255,255,0.95)] divide-y divide-[rgba(193,198,215,0.25)]">
+              {filteredData.map((alert, idx) => (
+                <tr key={alert.id} className={`hover:bg-[rgba(246,248,255,0.55)] transition-colors ${
                   alert.status === 'expired' ? 'bg-red-50' :
                   alert.severity === 'critical' ? 'bg-yellow-50' : ''
-                }`}>
+                }`} style={alert.status !== 'expired' && alert.severity !== 'critical' ? { background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' } : undefined}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-semibold text-gray-900">{isEn ? alert.channelNameEn : alert.channelName}</div>
                     <div className="text-xs text-gray-500 mt-1">{t('licenseExpiry.table.licenseNumberLabel')}{alert.licenseNumber}</div>

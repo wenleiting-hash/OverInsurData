@@ -1,93 +1,21 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ViewId } from '@/App';
+import { useComplianceDashboard } from '@/services/complianceService';
 import { 
   Shield, AlertTriangle, CheckCircle, FileText, Bell, TrendingUp, 
   Clock, DollarSign, Activity, BarChart3, Database 
 } from 'lucide-react';
 
-interface ComplianceStats {
-  totalComplaints: number;
-  resolvedComplaints: number;
-  pendingComplaints: number;
-  ofacHits: number;
-  auditReports: number;
-  riskScore: number;
-  complianceRate: number;
-}
-
-interface RecentAlerts {
-  id: number;
-  title: string;
-  titleEn: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  message: string;
-  timestamp: string;
-  category: string;
-}
-
-const mockStats: ComplianceStats = {
-  totalComplaints: 47,
-  resolvedComplaints: 39,
-  pendingComplaints: 8,
-  ofacHits: 0,
-  auditReports: 24,
-  riskScore: 72,
-  complianceRate: 96.5,
-};
-
-const mockRecentAlerts: RecentAlerts[] = [
-  {
-    id: 1,
-    title: '证书即将过期',
-    titleEn: 'Certificate Expiring Soon',
-    severity: 'medium',
-    message: 'California P&C License (#LIC-2024-CA) expires in 15 days',
-    timestamp: '2024-09-01T10:30:00Z',
-    category: 'certificate'
-  },
-  {
-    id: 2,
-    title: 'NIPR 牌照审核中',
-    titleEn: 'NIPR License Under Review',
-    severity: 'low',
-    message: 'Texas Life Insurance Appointment application under review (ID: APP-TX-8392)',
-    timestamp: '2024-09-01T08:15:00Z',
-    category: 'appointment'
-  },
-  {
-    id: 3,
-    title: 'OFAC 筛查警告',
-    titleEn: 'OFAC Screening Warning',
-    severity: 'high',
-    message: 'Potential match detected for new agent Zhang Wei - Manual review required',
-    timestamp: '2024-08-31T16:45:00Z',
-    category: 'ofac'
-  },
-  {
-    id: 4,
-    title: '监管通知发布',
-    titleEn: 'Regulatory Notice Published',
-    severity: 'medium',
-    message: 'New California Department of Insurance regulations effective October 1, 2024',
-    timestamp: '2024-08-31T14:20:00Z',
-    category: 'regulatory'
-  },
-  {
-    id: 5,
-    title: '审计报告完成',
-    titleEn: 'Audit Report Completed',
-    severity: 'low',
-    message: 'Q2 2024 compliance audit completed with no major findings',
-    timestamp: '2024-08-30T11:00:00Z',
-    category: 'audit'
-  }
-];
-
 export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (view: ViewId) => void }) {
   const { t, i18n } = useTranslation('compliance');
   const isEn = i18n.language?.startsWith?.('en') ?? false;
   const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
+  const { data, isLoading, error } = useComplianceDashboard();
+
+  const stats = data?.stats ?? { complaint_count: 0, resolution_rate: 0, risk_score: 0, compliance_rate: 0 };
+  const ofac = data?.ofac_summary ?? { total: 0, blocked: 0, watchlist: 0, cleared: 0 };
+  const recentAlerts = data?.recent_alerts ?? [];
 
   const getSeverityColor = (severity: string) => {
     const colors: Record<string, string> = {
@@ -129,7 +57,7 @@ export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (v
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('stats.totalComplaints')}</h3>
               <Database className="text-slate-400" size={20} />
             </div>
-            <p className="text-3xl font-bold text-slate-800 mb-1">{mockStats.totalComplaints}</p>
+            <p className="text-3xl font-bold text-slate-800 mb-1">{stats.complaint_count}</p>
             <div className="flex items-center gap-2 text-xs text-green-600">
               <TrendingUp size={14} />
               <span>+12.5% vs last month</span>
@@ -143,11 +71,8 @@ export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (v
               <CheckCircle className="text-emerald-500" size={20} />
             </div>
             <p className="text-3xl font-bold text-emerald-600 mb-1">
-              {Math.round((mockStats.resolvedComplaints / mockStats.totalComplaints) * 100)}%
+              {stats.resolution_rate}%
             </p>
-            <div className="text-xs text-slate-500">
-              {mockStats.resolvedComplaints} resolved out of {mockStats.totalComplaints}
-            </div>
           </div>
 
           {/* Risk Score Card */}
@@ -156,11 +81,11 @@ export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (v
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('stats.riskScore')}</h3>
               <Activity className="text-amber-500" size={20} />
             </div>
-            <p className="text-3xl font-bold text-amber-600 mb-1">{mockStats.riskScore}/100</p>
+            <p className="text-3xl font-bold text-amber-600 mb-1">{stats.risk_score}/100</p>
             <div className="w-full bg-slate-100 rounded-full h-2">
               <div 
                 className="bg-gradient-to-r from-amber-400 to-orange-500 h-2 rounded-full transition-all"
-                style={{ width: `${mockStats.riskScore}%` }}
+                style={{ width: `${stats.risk_score}%` }}
               />
             </div>
             <div className="text-xs text-slate-500 mt-1">Moderate risk level</div>
@@ -172,7 +97,7 @@ export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (v
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('stats.complianceRate')}</h3>
               <BarChart3 className="text-blue-500" size={20} />
             </div>
-            <p className="text-3xl font-bold text-blue-600 mb-1">{mockStats.complianceRate}%</p>
+            <p className="text-3xl font-bold text-blue-600 mb-1">{stats.compliance_rate}%</p>
             <div className="flex items-center gap-2 text-xs text-green-600">
               <TrendingUp size={14} />
               <span>+2.3% vs last quarter</span>
@@ -195,7 +120,12 @@ export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (v
             </div>
             
             <div className="divide-y divide-slate-50">
-              {mockRecentAlerts.map((alert) => (
+              {isLoading ? (
+                <div className="px-6 py-8 text-center text-slate-400">Loading...</div>
+              ) : recentAlerts.length === 0 ? (
+                <div className="px-6 py-8 text-center text-slate-400">{t('alerts.empty', 'No recent alerts')}</div>
+              ) : (
+                recentAlerts.map((alert: any) => (
                 <div key={alert.id} className="px-6 py-4 hover:bg-slate-50 transition-colors cursor-pointer group">
                   <div className="flex items-start gap-4">
                     <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
@@ -228,7 +158,8 @@ export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (v
                     </div>
                   </div>
                 </div>
-              ))}
+              ))
+            )}
             </div>
           </div>
         </div>
@@ -283,17 +214,17 @@ export default function ComplianceDashboardView({ navigateTo }: { navigateTo: (v
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Total screened agents</span>
-                <span className="font-semibold text-slate-800">1,247</span>
+                <span className="font-semibold text-slate-800">{ofac.total}</span>
               </div>
               
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">OFAC hits</span>
-                <span className="font-semibold text-red-600">{mockStats.ofacHits}</span>
+                <span className="font-semibold text-red-600">{ofac.blocked}</span>
               </div>
               
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Pending review</span>
-                <span className="font-semibold text-amber-600">2</span>
+                <span className="font-semibold text-amber-600">{ofac.watchlist}</span>
               </div>
               
               <div className="flex items-center justify-between">

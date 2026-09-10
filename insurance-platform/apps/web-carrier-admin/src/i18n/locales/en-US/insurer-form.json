@@ -1,12 +1,12 @@
 {
   "header": {
     "titleCreate": "Add Insurance Carrier",
-    "subtitleCreate": "Complete all information and submit for review. Upon approval, onboarding is completed.",
+    "subtitleCreate": "Complete all information to create the carrier. It will be active immediately.",
     "titleEdit": "Edit · {name}",
     "subtitleEdit": "Save modifications. All changes will be recorded in the audit log.",
     "saveDraft": "Save Draft",
     "saved": "Saved",
-    "submitAudit": "Submit for Review",
+    "createInsurer": "Create Carrier",
     "saveChanges": "Save Changes"
   },
   "steps": {
@@ -83,6 +83,7 @@
     "notRated": "— Not Rated —"
   },
   "settlementFields": {
+    "selectPlaceholder": "Please select",
     "settlementCycle": "Settlement Cycle",
     "monthly": "Monthly",
     "quarterly": "Quarterly",
@@ -111,13 +112,14 @@
     "platform": "Platform collects → Settles uniformly"
   },
   "documents": {
-    "uploadHint": "Upload relevant qualification documents. Contract documents will enter legal review upon submission.",
+    "uploadHint": "Upload relevant qualification documents.",
     "clickUpload": "Click to upload files",
     "supportedFormats": "Supports PDF, Word, Excel; single file max 50MB",
     "requiredDocs": "Required",
     "uploaded": "Uploaded",
     "notUploaded": "Not uploaded",
     "uploadBtn": "Upload",
+    "previewBtn": "Preview",
     "fakeFileName": "Agreement_Draft_{{ts}}.pdf",
     "docs": {
       "businessLicense": "Business License",
@@ -131,10 +133,22 @@
     "previousStep": "Previous",
     "nextStep": "Next",
     "stepCount": "Step {current} / {total}",
-    "progressLabel": "Progress"
+    "progressLabel": "Progress",
+    "submitting": "Submitting…"
   },
   "validation": {
     "missingRequired": "Please fill in all required fields",
     "invalidNaic": "NAIC code format error, must be 5 digits"
+  },
+  "errors": {
+    "requiredFields": "Please fill in Company Name and NAIC Code",
+    "fieldRequired": "This field is required",
+    "missingRegulatory": "Please fill in headquarters information",
+    "missingRatings": "Please fill in financial ratings",
+    "missingSettlement": "Please fill in settlement configuration",
+    "missingDocuments": "Please upload qualification documents",
+    "submitFailed": "Submission Failed",
+    "naicDuplicate": "This NAIC Code already exists, please use a different one",
+    "naicAvailable": "NAIC Code is available"
   }
 }

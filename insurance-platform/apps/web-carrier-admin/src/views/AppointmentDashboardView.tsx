@@ -58,7 +58,7 @@ export default function AppointmentDashboardView({ navigateTo }: Props) {
     {
       title: 'Status Tracking',
       icon: <Eye className="text-blue-600" size={24}/>,
-      description: 'Monitor approval progress',
+      description: 'Monitor processing progress',
       onClick: () => navigateTo('appointment-tracking'),
       color: 'blue',
       count: stats.underReview,
@@ -193,20 +193,20 @@ export default function AppointmentDashboardView({ navigateTo }: Props) {
           label="Total Appointments" 
           value={stats.totalAppointments.toString()} 
           icon={<FileText className="text-purple-600"/>}
-          description={`${stats.approved} approved`}
+          description={`${stats.approved} effective`}
         />
         <StatCard 
-          label="Pending" 
+          label="Pending Effective" 
           value={stats.pending.toString()} 
           icon={<Clock className="text-orange-600"/>}
-          description="Awaiting approval"
+          description="Not yet effective"
         />
         <StatCard 
-          label="Under Review" 
+          label="Processing" 
           value={stats.underReview.toString()} 
           warn={stats.underReview > 5}
           icon={<Shield className="text-blue-600"/>}
-          description="Internal review"
+          description="In progress"
         />
         <StatCard 
           label="Expired" 
@@ -232,7 +232,7 @@ export default function AppointmentDashboardView({ navigateTo }: Props) {
           label="Avg Processing" 
           value={`${stats.avgProcessingDays}d`} 
           icon={<CheckCircle className="text-green-600"/>}
-          description="Approval timeline"
+          description="Processing timeline"
         />
         <StatCard 
           label="Active Interceptions" 
@@ -327,7 +327,7 @@ export default function AppointmentDashboardView({ navigateTo }: Props) {
           <HealthMetric 
             label="NIPR Processing" 
             status="Normal" 
-            value={`${stats.underReview} under review`}
+            value={`${stats.underReview} processing`}
           />
           <HealthMetric 
             label="License Validations" 
@@ -369,12 +369,14 @@ const StatCard = ({
   </div>
 );
 
+// 本系统没有任何审批流程：approved/pending/under-review/rejected 只是委任记录的
+// 生命周期状态（已生效 / 待生效 / 处理中 / 已失效），不是审批结论。
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, { bg: string; text: string; label: string }> = {
-    approved: { bg: 'bg-green-50', text: 'text-green-700', label: 'Approved' },
-    pending: { bg: 'bg-yellow-50', text: 'text-yellow-700', label: 'Pending' },
-    'under-review': { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Under Review' },
-    rejected: { bg: 'bg-red-50', text: 'text-red-700', label: 'Rejected' },
+    approved: { bg: 'bg-green-50', text: 'text-green-700', label: 'Effective' },
+    pending: { bg: 'bg-yellow-50', text: 'text-yellow-700', label: 'Pending Effective' },
+    'under-review': { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Processing' },
+    rejected: { bg: 'bg-red-50', text: 'text-red-700', label: 'Void' },
     expired: { bg: 'bg-gray-50', text: 'text-gray-700', label: 'Expired' },
     terminated: { bg: 'bg-gray-50', text: 'text-gray-700', label: 'Terminated' },
   };

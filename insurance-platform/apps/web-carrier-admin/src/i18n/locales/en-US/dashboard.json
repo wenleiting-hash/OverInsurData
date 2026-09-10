@@ -73,7 +73,7 @@
     "expiring": "AIG partnership contract expires in {days} days ({date})",
     "appointments": "{count} channel appointments expiring within {days} days",
     "lossRatio": "Markel loss ratio {ratio} exceeds the {threshold} alert threshold",
-    "profileReview": "BHSI insurer profile review pending",
+    "profileReview": "BHSI insurer profile incomplete",
     "licenseExpired": "Northeast Professional Services NPN license expired",
     "reconciled": "{monthLabel} commission reconciliation completed — {amount} pending confirmation",
     "recentActivityItem": {
@@ -99,7 +99,7 @@
   },
   "statuses": {
     "expiring": "Expiring",
-    "pending": "Pending",
+    "pending": "Pending Effective",
     "active": "Active"
   },
   "common": {
@@ -133,7 +133,7 @@
     },
     "actions": {
       "newInsurer": "Insurer Added",
-      "newInsurerDetail": "{name} profile submitted for review",
+      "newInsurerDetail": "{name} profile created successfully",
       "productLaunch": "Product Launched",
       "productLaunchDetail": "{product} launched in {states}",
       "appointment": "Appointment Application",

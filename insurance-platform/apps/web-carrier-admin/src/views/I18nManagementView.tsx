@@ -7,6 +7,8 @@ import {
   ChevronDown, Copy, Languages,
 } from 'lucide-react'
 import type { ViewId } from '@/App'
+import { useGetTranslations, useUpdateTranslation } from '@/services/i18nService'
+import type { TranslationEntry } from '@/services/i18nService'
 import { INITIAL_ENTRIES, type CopyEntry } from './data/i18nCopyEntries'
 
 interface Props {
@@ -165,7 +167,20 @@ function ToastPreview({ entry, lang }: { entry: CopyEntry; lang: 'en' | 'zh' }) 
 
 export default function I18nManagementView({ navigateTo }: Props) {
   const { t } = useTranslation('common')
-  const [entries, setEntries] = useState<CopyEntry[]>(INITIAL_ENTRIES)
+  const { data: apiData, isLoading, refetch } = useGetTranslations({ pageSize: 200 })
+  const updateMutation = useUpdateTranslation()
+
+  // Map API data to CopyEntry format, fallback to mock data
+  const apiEntries: CopyEntry[] = (apiData?.data || []).map((te: TranslationEntry) => ({
+    id: te.ovwr_translation_id,
+    module: te.ovwr_module || te.ovwr_namespace,
+    section: te.ovwr_section || te.ovwr_namespace,
+    key: te.ovwr_key,
+    en: te.ovwr_en_us || '',
+    zh: te.ovwr_zh_cn || '',
+    type: (te.ovwr_type as CopyEntry['type']) || 'label',
+  }))
+  const entries = apiEntries.length > 0 ? apiEntries : INITIAL_ENTRIES
   const [activeModule, setActiveModule] = useState('all')
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('all')
@@ -189,8 +204,16 @@ export default function I18nManagementView({ navigateTo }: Props) {
     return acc
   }, {})
 
-  const handleSave = (id: string, en: string, zh: string) => {
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, en, zh, modified: true } : e))
+  const handleSave = async (id: string, en: string, zh: string) => {
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        dto: { ovwrEnUS: en, ovwrZhCN: zh },
+      })
+      refetch()
+    } catch (err) {
+      console.error('Failed to save translation:', err)
+    }
     setEditingId(null)
   }
 

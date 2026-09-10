@@ -1,12 +1,12 @@
 {
   "header": {
     "titleCreate": "新增保险公司",
-    "subtitleCreate": "填写完整信息后提交审核，审核通过后完成入驻",
+    "subtitleCreate": "填写完整信息后直接创建，创建后立即生效",
     "titleEdit": "编辑 · {name}",
     "subtitleEdit": "修改字段后保存，变更将记录至审计日志",
     "saveDraft": "保存草稿",
     "saved": "已保存",
-    "submitAudit": "提交审核",
+    "createInsurer": "创建保险公司",
     "saveChanges": "保存修改"
   },
   "steps": {
@@ -83,6 +83,7 @@
     "notRated": "— 未评级 —"
   },
   "settlementFields": {
+    "selectPlaceholder": "请选择",
     "settlementCycle": "结算周期",
     "monthly": "月度结算（每月）",
     "quarterly": "季度结算（每季）",
@@ -111,13 +112,14 @@
     "platform": "平台代收后统一结算"
   },
   "documents": {
-    "uploadHint": "请上传保险公司相关资质文件。合同类文件提交后将进入法务审核流程。",
+    "uploadHint": "请上传保险公司相关资质文件。",
     "clickUpload": "点击上传文件",
     "supportedFormats": "支持 PDF、Word、Excel；单文件不超过 50MB",
     "requiredDocs": "必须",
     "uploaded": "已上传",
     "notUploaded": "未上传",
     "uploadBtn": "上传",
+    "previewBtn": "预览",
     "fakeFileName": "合作协议_Draft_{{ts}}.pdf",
     "docs": {
       "businessLicense": "营业执照",
@@ -131,10 +133,22 @@
     "previousStep": "上一步",
     "nextStep": "下一步",
     "stepCount": "步骤 {current} / {total}",
-    "progressLabel": "填写进度"
+    "progressLabel": "填写进度",
+    "submitting": "提交中…"
   },
   "validation": {
     "missingRequired": "请填写必填字段",
     "invalidNaic": "NAIC 编码格式错误，应为 5 位数字"
+  },
+  "errors": {
+    "requiredFields": "请填写公司名称和 NAIC 编码",
+    "fieldRequired": "此字段为必填项",
+    "missingRegulatory": "请填写总部信息",
+    "missingRatings": "请填写财务评级",
+    "missingSettlement": "请填写结算配置",
+    "missingDocuments": "请上传资质文件",
+    "submitFailed": "提交失败",
+    "naicDuplicate": "该 NAIC 编码已存在，请更换后重试",
+    "naicAvailable": "NAIC 编码可用"
   }
 }

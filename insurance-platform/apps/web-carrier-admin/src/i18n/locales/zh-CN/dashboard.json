@@ -73,7 +73,7 @@
     "expiring": "AIG 合作合同将于 {days} 天后到期（{date}）",
     "appointments": "{count} 个渠道 Appointment 将在 {days} 天内到期",
     "lossRatio": "Markel 赔付率 {ratio}，超出预警阈值 {threshold}",
-    "profileReview": "BHSI 保险公司档案审核待处理",
+    "profileReview": "BHSI 保险公司档案待完善",
     "licenseExpired": "Northeast Professional Services NPN 牌照已过期",
     "reconciled": "{monthLabel}佣金对账已完成，待确认金额 {amount}",
     "recentActivityItem": {
@@ -99,7 +99,7 @@
   },
   "statuses": {
     "expiring": "即将到期",
-    "pending": "待审核",
+    "pending": "待生效",
     "active": "合作中"
   },
   "common": {
@@ -133,7 +133,7 @@
     },
     "actions": {
       "newInsurer": "保险公司新增",
-      "newInsurerDetail": "{name} 档案已提交审核",
+      "newInsurerDetail": "{name} 档案已创建完成",
       "productLaunch": "产品上架",
       "productLaunchDetail": "{product} 在 {states} 州完成上架",
       "appointment": "Appointment 申请",

@@ -1,59 +1,57 @@
 /**
- * Database Schema Index - OverInsur (overinsur_db) Version
- * 
- * Exports all Drizzle ORM table definitions for clean OVERINSURDATA container
- * Database: overinsur_db within OVERINSURDATA container (port 5433)
- * Per V2.1 Design Document - No 'ovwr_' prefix for clarity
+ * Database Schema Index - OverInsur Platform
+ *
+ * Exports all Drizzle ORM table definitions.
+ *
+ * AUTHORITY:
+ * - User/Role/Department/RefreshToken: auth-user-schema-ovwr.ts (V5)
+ * - Permission/OperationLog: permission-schema-ovwr.ts (ovwr_auth_db)
  */
 
-// Import i18n_db schemas (clean names without prefix)
-export { 
-  ovwrAuthI18nTranslation, 
-  ovwrAuthI18nVersion, 
-  ovwrAuthI18nReviewQueue, 
-  ovwrDictTerm 
+// ─── i18n schemas ──────────────────────────────────────────────────
+
+export {
+  ovwrAuthI18nTranslation,
+  ovwrAuthI18nVersion,
+  ovwrAuthI18nReviewQueue,
+  ovwrDictTerm,
 } from './i18n-schema-ovwr';
 
-// Import user management schemas (with ovwr_ prefix) - legacy
-export { 
+// ─── User Management (auth_user table in ai_saas DB) ──────────────
+
+export {
   ovwrAuthDepartment,
   ovwrAuthRole,
   ovwrAuthUser,
   ovwrAuthUserRole,
+  ovwrAuthRefreshToken,
 } from './auth-user-schema-ovwr';
 
-// Import permission schemas (with ovwr_ prefix) - legacy
-export { 
+// ─── Permission Management (ovwr_ prefixed tables in ovwr_auth_db) ─
+
+export {
   ovwrAuthPermission,
+  ovwrAuthUserRole as ovwrAuthUserRolePerm,
   ovwrAuthRolePermission,
   ovwrAuthPermissionTemplate,
   ovwrAuthOperationLog,
-  ovwrAuthRefreshToken,
 } from './permission-schema-ovwr';
 
-// Import user preferences schemas (with ovwr_ prefix)
-export { 
+// ─── User Preferences ──────────────────────────────────────────────
+
+export {
   ovwrUserPreferences,
 } from './user-preferences-ovwr';
 
-// Import new V2.1 schemas (NO PREFIX - Clean design)
-export { 
-  authUser,
-  authUserRole,
-  authPermission,
-  authRolePermission,
-  authPermissionTemplate,
-  authOperationLog,
-} from './overinsur-auth';
+// ─── Backward-compatible aliases (i18n tables) ─────────────────────
 
-// Re-export for backward compatibility only (i18n tables)
-export { 
+export {
   ovwrAuthI18nTranslation as authI18nTranslation,
   ovwrAuthI18nVersion as authI18nVersion,
   ovwrAuthI18nReviewQueue as authI18nReviewQueue,
   ovwrDictTerm as dictTerm,
 } from './i18n-schema-ovwr';
 
-export { 
+export {
   ovwrUserPreferences as userPreferences,
 } from './user-preferences-ovwr';

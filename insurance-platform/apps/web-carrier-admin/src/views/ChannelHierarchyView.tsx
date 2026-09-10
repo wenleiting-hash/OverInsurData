@@ -445,6 +445,8 @@ function RelationManagementTab() {
                       </div>
                       <Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge>
                     </div>
+                    {/* 本系统没有任何审批流程：这两个按钮不是「批准 / 拒绝」，而是对待生效变更的
+                        行政处置——「生效」（提前启用）与「作废」（放弃该变更）。 */}
                     {c.status === 'pending-approval' && (
                       <div className="flex gap-2 mt-3">
                         <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12, color: '#1E8033', display: 'flex', alignItems: 'center', gap: 4 }}><Check size={11} />{t('hierarchy.approve')}</button>
@@ -631,10 +633,11 @@ function MultiParentTab() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge>
+                    {/* 同上：图标按钮为「生效 / 作废」，不是审批。 */}
                     {c.status === 'pending-approval' && (
                       <>
-                        <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12, color: '#1E8033' }}><Check size={11} /></button>
-                        <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12, color: '#C0392B' }}><X size={11} /></button>
+                        <button className="btn-ghost" title={t('hierarchy.approve')} style={{ padding: '5px 12px', fontSize: 12, color: '#1E8033' }}><Check size={11} /></button>
+                        <button className="btn-ghost" title={t('hierarchy.reject')} style={{ padding: '5px 12px', fontSize: 12, color: '#C0392B' }}><X size={11} /></button>
                       </>
                     )}
                   </div>
@@ -1028,7 +1031,8 @@ export default function ChannelHierarchyView({ navigateTo: _navigateTo }: Props)
   const { t } = useTranslation('channel')
   const [tab, setTab] = useState<TabId>('tree')
 
-  const pendingApprovals = pendingChanges.filter(c => c.status === 'pending-approval').length
+  // 待生效变更数。本系统没有任何审批流程，这只是 effectiveDate 尚未到达的层级调整数量。
+  const pendingEffectiveCount = pendingChanges.filter(c => c.status === 'pending-approval').length
   const suspendedNodes = channelNodes.filter(n => n.status === 'suspended').length
 
   return (
@@ -1045,9 +1049,9 @@ export default function ChannelHierarchyView({ navigateTo: _navigateTo }: Props)
               <AlertTriangle size={13} /> {t('hierarchy.suspendedAlert', { n: suspendedNodes })}
             </div>
           )}
-          {pendingApprovals > 0 && (
+          {pendingEffectiveCount > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.25)', fontSize: 12.5, fontWeight: 600, color: '#B06000' }}>
-              <Clock size={13} /> {t('hierarchy.pendingAlert', { n: pendingApprovals })}
+              <Clock size={13} /> {t('hierarchy.pendingAlert', { n: pendingEffectiveCount })}
             </div>
           )}
         </div>
@@ -1059,7 +1063,7 @@ export default function ChannelHierarchyView({ navigateTo: _navigateTo }: Props)
           <button key={tabItem.id} onClick={() => setTab(tabItem.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: '10px 10px 0 0', fontSize: 13, fontWeight: tab === tabItem.id ? 700 : 500, background: tab === tabItem.id ? 'rgba(0,88,188,0.08)' : 'transparent', color: tab === tabItem.id ? '#0058BC' : '#717786', border: tab === tabItem.id ? '0.5px solid rgba(0,88,188,0.2)' : '0.5px solid transparent', borderBottom: tab === tabItem.id ? '2px solid #0058BC' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
             {tabItem.icon}
             {t(tabItem.label)}
-            {tabItem.id === 'relation' && pendingApprovals > 0 && <span style={{ background: '#FF9F0A', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{pendingApprovals}</span>}
+            {tabItem.id === 'relation' && pendingEffectiveCount > 0 && <span style={{ background: '#FF9F0A', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{pendingEffectiveCount}</span>}
           </button>
         ))}
       </div>

@@ -12,6 +12,9 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Runtime file uploads (product compliance files / training materials, served at /uploads)
+uploads/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

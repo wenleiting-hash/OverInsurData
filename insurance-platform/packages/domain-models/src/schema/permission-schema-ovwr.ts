@@ -1,13 +1,16 @@
 /**
  * OverInsur (ovwr) auth_db Schema Definitions (Permission Management Domain)
- * 
- * IMPORTANT: All tables use 'ovwr_' prefix to distinguish from existing projects
- * Database: auth_db within ai-saas-postgres container (port 5432)
+ *
+ * Database: ovwr_auth_db (separate from ai_saas)
+ * All tables use 'ovwr_' prefix to distinguish from existing projects.
+ *
+ * NOTE: ovwrAuthUser and ovwrAuthRefreshToken are now defined in auth-user-schema-ovwr.ts
+ * as the single source of truth for user/token tables.
  */
 
 import { pgTable, varchar, timestamp, index, jsonb, integer, text } from 'drizzle-orm/pg-core';
 
-// ─── ovwr_auth_permission (功能权限点表) ────────────────────────────────────
+// ─── ovwr_auth_permission (功能权限点表) ────────────────────────────────
 
 export const ovwrAuthPermission = pgTable('ovwr_auth_permission', {
   ovwrPermissionId: varchar('ovwr_permission_id', { length: 32 }).primaryKey(),
@@ -33,11 +36,11 @@ export const ovwrAuthPermission = pgTable('ovwr_auth_permission', {
   ovwrParentIdx: index('ovwr_idx_parent_permission').on(table.ovwrParentPermissionId),
 }));
 
-// ─── ovwr_auth_user_role (用户角色关联表) ──────────────────────────────────
+// ─── ovwr_auth_user_role (用户角色关联表 — ovwr_auth_db namespace) ────────
 
 export const ovwrAuthUserRole = pgTable('ovwr_auth_user_role', {
-  ovwrRoleId: varchar('ovwr_role_id', { length: 32 }).primaryKey(),
-  ovwrUserId: varchar('ovwr_user_id', { length: 32 }).notNull(), // Reference to auth_user table
+  ovwrRoleId: varchar('ovwr_role_id', { length: 32 }),
+  ovwrUserId: varchar('ovwr_user_id', { length: 32 }).notNull(),
   ovwrSourceType: varchar('ovwr_source_type', {
     enum: ['DIRECT_ASSIGN', 'INHERITED', 'TEMPLATE_APPLIED'],
   }),
@@ -55,12 +58,12 @@ export const ovwrAuthUserRole = pgTable('ovwr_auth_user_role', {
   ovwrIdxUserId: index('ovwr_idx_user_id').on(table.ovwrUserId),
 }));
 
-// ─── ovwr_auth_role_permission (角色权限关联表) ─────────────────────────────
+// ─── ovwr_auth_role_permission (角色权限关联表) ─────────────────────────
+// FIX: FK now references ovwr_auth_permission (not user_role table)
+// The role_id is a logical reference to ovwr_auth_role in ovwr_auth_db
 
 export const ovwrAuthRolePermission = pgTable('ovwr_auth_role_permission', {
-  ovwrRoleId: varchar('ovwr_role_id', { length: 32 })
-    .notNull()
-    .references(() => ovwrAuthUserRole.ovwrRoleId),
+  ovwrRoleId: varchar('ovwr_role_id', { length: 32 }).notNull(),
   ovwrPermissionId: varchar('ovwr_permission_id', { length: 32 })
     .notNull()
     .references(() => ovwrAuthPermission.ovwrPermissionId),
@@ -76,7 +79,7 @@ export const ovwrAuthRolePermission = pgTable('ovwr_auth_role_permission', {
   ovwrIdxPermission: index('ovwr_idx_permission').on(table.ovwrPermissionId),
 }));
 
-// ─── ovwr_auth_permission_template (权限模板表) ─────────────────────────────
+// ─── ovwr_auth_permission_template (权限模板表) ─────────────────────────
 
 export const ovwrAuthPermissionTemplate = pgTable('ovwr_auth_permission_template', {
   ovwrTemplateId: varchar('ovwr_template_id', { length: 32 }).primaryKey(),
@@ -105,7 +108,9 @@ export const ovwrAuthPermissionTemplate = pgTable('ovwr_auth_permission_template
   ovwrIdxUsageCount: index('ovwr_idx_usage_count').on(table.ovwrUsageCount),
 }));
 
-// ─── ovwr_auth_operation_log (操作审计日志表) ───────────────────────────────
+// ─── ovwr_auth_operation_log (操作审计日志表) ───────────────────────────
+// FIX: Added target_type, target_id, success, request_params columns
+// that user.service.ts logAudit() method requires
 
 export const ovwrAuthOperationLog = pgTable('ovwr_auth_operation_log', {
   ovwrLogId: varchar('ovwr_log_id', { length: 32 }).primaryKey(),
@@ -114,6 +119,10 @@ export const ovwrAuthOperationLog = pgTable('ovwr_auth_operation_log', {
   ovwrAction: varchar('ovwr_action', { length: 128 }).notNull(),
   ovwrModule: varchar('ovwr_module', { length: 32 }),
   ovwrPermissionCode: varchar('ovwr_permission_code', { length: 64 }),
+  ovwrTargetType: varchar('ovwr_target_type', { length: 32 }),
+  ovwrTargetId: varchar('ovwr_target_id', { length: 64 }),
+  ovwrSuccess: varchar('ovwr_success', { length: 8 }),
+  ovwrRequestParams: text('ovwr_request_params'),
   ovwrIp: varchar('ovwr_ip', { length: 64 }),
   ovwrUserAgent: text('ovwr_user_agent'),
   ovwrRequestId: varchar('ovwr_request_id', { length: 64 }),
@@ -133,46 +142,3 @@ export const ovwrAuthOperationLog = pgTable('ovwr_auth_operation_log', {
   ovwrIdxAction: index('ovwr_idx_action').on(table.ovwrAction),
   ovwrIdxModule: index('ovwr_idx_module').on(table.ovwrModule),
 }));
-
-// =====================================================
-// Auth User Schema
-// =====================================================
-
-/**
- * User Account Table - Core authentication entity
- */
-export const ovwrAuthUser = pgTable('ovwr_auth_user', {
-  ovwrUserId: varchar('ovwr_user_id', { length: 32 }).primaryKey(),
-  ovwrUsername: varchar('ovwr_username', { length: 64 }).unique().notNull(),
-  ovwrEmail: varchar('ovwr_email', { length: 128 }).unique().notNull(),
-  ovwrPasswordHash: varchar('ovwr_password_hash', { length: 255 }).notNull(),
-  ovwrFirstName: varchar('ovwr_first_name', { length: 64 }),
-  ovwrLastName: varchar('ovwr_last_name', { length: 64 }),
-  ovwrPhone: varchar('ovwr_phone', { length: 32 }),
-  ovwrAvatarUrl: varchar('ovwr_avatar_url', { length: 255 }),
-  ovwrStatus: varchar('ovwr_status', { length: 1 }).default('1'),
-  ovwrFailedLoginAttempts: integer('ovwr_failed_login_attempts').default(0),
-  ovwrLockedUntil: timestamp('ovwr_locked_until', { withTimezone: true }),
-  ovwrEmailVerified: varchar('ovwr_email_verified', { length: 1 }).default('0'),
-  ovwrPasswordChangedAt: timestamp('ovwr_password_changed_at', { withTimezone: true }),
-  ovwrLastLoginAt: timestamp('ovwr_last_login_at', { withTimezone: true }),
-  ovwrCreatedAt: timestamp('ovwr_created_at', { withTimezone: true }).defaultNow().notNull(),
-  ovwrUpdatedAt: timestamp('ovwr_updated_at', { withTimezone: true }).defaultNow().notNull(),
-  ovwrMetadata: jsonb('ovwr_metadata'),
-});
-
-/**
- * Refresh Token Table - JWT token rotation support
- */
-export const ovwrAuthRefreshToken = pgTable('ovwr_auth_refresh_token', {
-  ovwrRefreshTokenId: varchar('ovwr_refresh_token_id', { length: 32 }).primaryKey(),
-  ovwrUserId: varchar('ovwr_user_id', { length: 32 }).notNull(),
-  ovwrTokenHash: varchar('ovwr_token_hash', { length: 255 }).notNull(),
-  ovwrExpiresAt: timestamp('ovwr_expires_at', { withTimezone: true }).notNull(),
-  ovwrIssuedAt: timestamp('ovwr_issued_at', { withTimezone: true }).defaultNow().notNull(),
-  ovwrIpAddress: varchar('ovwr_ip_address', { length: 45 }),
-  ovwrUserAgent: varchar('ovwr_user_agent', { length: 255 }),
-  ovwrIsRevoked: varchar('ovwr_is_revoked', { length: 1 }).default('0'),
-  ovwrCreatedAt: timestamp('ovwr_created_at', { withTimezone: true }).defaultNow().notNull(),
-  ovwrUpdatedAt: timestamp('ovwr_updated_at', { withTimezone: true }).defaultNow().notNull(),
-});

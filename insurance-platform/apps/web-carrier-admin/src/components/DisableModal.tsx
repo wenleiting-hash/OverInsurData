@@ -1,26 +1,28 @@
 import { useState } from 'react';
-import { X, AlertTriangle, StopCircle, PlayCircle } from 'lucide-react';
-import { insurers } from '@/views/data/mockDashboardData';
+import { X, AlertTriangle, StopCircle, PlayCircle, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useToggleInsurerStatus } from '@/services/insurerService';
+import type { InsurerRecord } from '@/lib/user-api-client';
 
 interface Props {
-  carrierId: string;
+  insurer: InsurerRecord;
   onClose: () => void;
-  onConfirm: () => void;
 }
 
 const DISABLE_REASON_KEYS = ['contractExpired', 'compliance', 'lineExit', 'migration', 'mutual', 'carrier', 'other'];
 const ENABLE_REASON_KEYS = ['resolved', 'migrationDone', 'newContract', 'mgmt', 'otherShort'];
 
-export default function DisableModal({ carrierId, onClose, onConfirm }: Props) {
+export default function DisableModal({ insurer, onClose }: Props) {
   const { t } = useTranslation(['insurer', 'common']);
-  const ins = insurers.find(i => i.carrierId === carrierId) ?? insurers[0];
-  const isDisabling = ins.status !== 'inactive';
+  const toggleStatus = useToggleInsurerStatus();
+  const isDisabling = insurer.status === 'active';
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
   const [effectDate, setEffectDate] = useState('immediate');
   const [futureDate, setFutureDate] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const today = new Date().toISOString().split('T')[0];
   const reasonKeys = isDisabling ? DISABLE_REASON_KEYS : ENABLE_REASON_KEYS;
@@ -40,14 +42,14 @@ export default function DisableModal({ carrierId, onClose, onConfirm }: Props) {
   };
 
   const impactData = {
-    products: ins.productCount ?? 0,
-    channels: ins.channelCount ?? 0,
-    activePolicies: 12847,
-    pendingQuotes: 234,
-    pendingCommission: 892450,
+    products: insurer.product_count ?? 0,
+    channels: insurer.channel_count ?? 0,
+    activePolicies: 0,
+    pendingQuotes: 0,
+    pendingCommission: 0,
   };
 
-  const canConfirm = reason && (effectDate === 'immediate' || futureDate) && confirmed;
+  const canConfirm = reason && (effectDate === 'immediate' || futureDate) && confirmed && !toggleStatus.isPending;
 
   return (
     <div
@@ -85,7 +87,7 @@ export default function DisableModal({ carrierId, onClose, onConfirm }: Props) {
               <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>
                 {isDisabling ? t('modals.disable.titleDisable') : t('modals.disable.titleEnable')}
               </div>
-              <div style={{ fontSize: 12.5, color: '#717786' }}>{ins.shortName} · NAIC {ins.naicCode}</div>
+              <div style={{ fontSize: 12.5, color: '#717786' }}>{insurer.short_name || insurer.carrier_name} · NAIC {insurer.naic_code}</div>
             </div>
           </div>
           <button className="btn-ghost" style={{ padding: 6 }} onClick={onClose}>
@@ -202,32 +204,66 @@ export default function DisableModal({ carrierId, onClose, onConfirm }: Props) {
             />
             <span style={{ fontSize: 13, color: '#414755' }}>
               {isDisabling ? t('modals.disable.confirmDisablePre') : t('modals.disable.confirmEnablePre')}
-              <strong style={{ color: '#181C23' }}> {ins.carrierName}</strong>
+              <strong style={{ color: '#181C23' }}> {insurer.carrier_name}</strong>
               {t('modals.disable.confirmPost')}
             </span>
           </label>
         </div>
 
+        {/* Messages */}
+        {successMsg && (
+          <div style={{ padding: '0 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(52,199,89,0.10)', border: '0.5px solid rgba(52,199,89,0.3)', borderRadius: 10, marginTop: 14, fontSize: 13, color: '#1a7a2e' }}>
+              <CheckCircle size={14} />
+              <span>{successMsg}</span>
+              <button style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: '#1a7a2e' }} onClick={() => setSuccessMsg('')}><X size={13} /></button>
+            </div>
+          </div>
+        )}
+        {errorMsg && (
+          <div style={{ padding: '0 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(186,26,26,0.08)', border: '0.5px solid rgba(186,26,26,0.25)', borderRadius: 10, marginTop: 14, fontSize: 13, color: '#BA1A1A' }}>
+              <AlertTriangle size={14} />
+              <span>{errorMsg}</span>
+              <button style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: '#BA1A1A' }} onClick={() => setErrorMsg('')}><X size={13} /></button>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div style={{ padding: '16px 24px', borderTop: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', justifyContent: 'flex-end', gap: 10, background: 'rgba(241,243,254,0.5)' }}>
           <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={onClose}>{t('common:common.cancel')}</button>
           <button
-            onClick={onConfirm}
-            disabled={!canConfirm}
+            onClick={() => {
+              setErrorMsg('');
+              setSuccessMsg('');
+              toggleStatus.mutate(insurer.carrier_id || insurer.id!, {
+                onSuccess: () => {
+                  setSuccessMsg(isDisabling ? '保险公司已停用' : '保险公司已启用');
+                  setTimeout(() => onClose(), 800);
+                },
+                onError: (err: any) => {
+                  setErrorMsg(err?.response?.data?.message || '操作失败，请重试');
+                },
+              });
+            }}
+            disabled={!canConfirm || toggleStatus.isPending}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '9px 22px',
-              background: canConfirm ? (isDisabling ? '#BA1A1A' : '#0058BC') : 'rgba(193,198,215,0.5)',
-              color: canConfirm ? '#fff' : '#717786',
+              background: !canConfirm || toggleStatus.isPending ? 'rgba(193,198,215,0.5)' : isDisabling ? '#BA1A1A' : '#0058BC',
+              color: !canConfirm || toggleStatus.isPending ? '#717786' : '#fff',
               borderRadius: 9, fontSize: 13.5, fontWeight: 600,
-              cursor: canConfirm ? 'pointer' : 'not-allowed',
-              border: 'none',
-              transition: 'all 140ms',
+              cursor: canConfirm && !toggleStatus.isPending ? 'pointer' : 'not-allowed',
+              border: 'none', transition: 'all 140ms',
             }}
           >
-            {isDisabling ? <StopCircle size={14} /> : <PlayCircle size={14} />}
-            {isDisabling ? t('modals.disable.btnDisable') : t('modals.disable.btnEnable')}
+            {toggleStatus.isPending
+              ? <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              : isDisabling ? <StopCircle size={14} /> : <PlayCircle size={14} />}
+            {toggleStatus.isPending ? (isDisabling ? '正在停用...' : '正在启用...') : isDisabling ? t('modals.disable.btnDisable') : t('modals.disable.btnEnable')}
           </button>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     </div>

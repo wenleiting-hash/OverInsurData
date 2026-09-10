@@ -6,6 +6,8 @@ import {
   Upload, CheckCircle2, Eye,
 } from 'lucide-react';
 
+// 结算单状态。本系统没有任何审批流程：pending = 待结算（金额已算出、尚未确认），
+// approved = 待支付（已确认、进入支付队列），paid = 已支付。UI 文案取 settle2.status* 系列键。
 type SettlementStatus = 'pending' | 'approved' | 'paid';
 type ChannelTypeKey = 'agency' | 'mga' | 'fmo' | 'broker';
 type CommType = 'direct' | 'override' | 'renewal' | 'bonus' | 'chargeback';
@@ -26,7 +28,7 @@ interface SettlementRecord {
   totalAmount: number;
   status: SettlementStatus;
   payMethod: 'ACH' | 'check' | 'wire';
-  approvedBy: string | null;
+  approvedBy: string | null;   // 确认人（UI 显示为「确认人 / Confirmed By」），不是审批人
   paidDate: string | null;
   bankLast4: string;
 }
@@ -181,7 +183,7 @@ function SettlementTab({ schemes }: { schemes: SettlementRecord[] }) {
   const { t } = useTranslation('channel');
   const [selectedPeriod, setSelectedPeriod] = useState('2026-08');
   const [selectedId, setSelectedId] = useState<string | null>(schemes[0]?.id ?? null);
-  const [showApprovalModal, setShowApprovalModal] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState<string | null>(null);
   const [calcRunning, setCalcRunning] = useState(false);
 
   const runCalc = () => {
@@ -200,9 +202,9 @@ function SettlementTab({ schemes }: { schemes: SettlementRecord[] }) {
 
   const selected = schemes.find((r) => r.id === selectedId) ?? null;
 
-  const handleApprove = (id: string) => {
-    console.log('Approve settlement:', id);
-    setShowApprovalModal(null);
+  const handleConfirm = (id: string) => {
+    console.log('Confirm settlement:', id);
+    setShowConfirmModal(null);
   };
 
   const handleExport = (id: string) => {
@@ -343,7 +345,7 @@ function SettlementTab({ schemes }: { schemes: SettlementRecord[] }) {
                           {r.status === 'pending' && (
                             <button
                               className="px-2 py-[3px] rounded-[5px] text-[11px] font-bold text-white bg-[#0058BC] hover:opacity-90 transition-opacity"
-                              onClick={() => setShowApprovalModal(r.id)}
+                              onClick={() => setShowConfirmModal(r.id)}
                             >
                               {t('settle2.btnApproveShort')}
                             </button>
@@ -429,7 +431,7 @@ function SettlementTab({ schemes }: { schemes: SettlementRecord[] }) {
             {selected.status === 'pending' && (
               <button
                 className="btn-primary w-full justify-center mb-2"
-                onClick={() => setShowApprovalModal(selected.id)}
+                onClick={() => setShowConfirmModal(selected.id)}
               >
                 <Check size={14} />
                 {t('settle2.btnApprove')}
@@ -449,17 +451,17 @@ function SettlementTab({ schemes }: { schemes: SettlementRecord[] }) {
         )}
       </div>
 
-      {/* Approval Modal */}
-      {showApprovalModal && (
+      {/* 结算确认弹框 —— 本系统无审批流程，这里只是对待结算单的二次确认 */}
+      {showConfirmModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="card w-full max-w-sm p-6">
             <h3 className="text-base font-bold text-[#181C23] mb-2">{t('settle2.approveTitle')}</h3>
             <p className="text-sm text-[#717786] mb-5">{t('settle2.approveTip')}</p>
             <div className="flex justify-end gap-2">
-              <button className="btn-secondary" onClick={() => setShowApprovalModal(null)}>
+              <button className="btn-secondary" onClick={() => setShowConfirmModal(null)}>
                 {t('settle2.btnCancel')}
               </button>
-              <button className="btn-primary" onClick={() => handleApprove(showApprovalModal)}>
+              <button className="btn-primary" onClick={() => handleConfirm(showConfirmModal)}>
                 {t('settle2.btnApprove')}
               </button>
             </div>

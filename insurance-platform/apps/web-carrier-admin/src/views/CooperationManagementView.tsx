@@ -10,7 +10,6 @@ import {
 import type { ViewId } from '@/App'
 import Toast from '@/components/SuccessToast'
 import {
-  mockCooperations,
   mockContracts,
   mockSettlementConfigs,
   mockContactPersons,
@@ -21,6 +20,7 @@ import type {
   SettlementConfiguration,
   ContactPerson,
 } from './data/mockCooperationData'
+import { useGetCooperations, useTerminateCooperation } from '@/services/cooperationService'
 
 interface Props {
   navigateTo: (view: ViewId, params?: any) => void
@@ -89,11 +89,11 @@ const MOCK_CONTACTS = [
 
 // Mock renewal items for Tab 5
 const MOCK_RENEWALS = [
-  { id: 'renewal001', title: 'State Farm Partnership Renewal', insurerShort: 'State Farm', expiryDate: '2027-12-31', daysLeft: 45, priority: 'normal', status: 'upcoming', accountManager: 'Emily Chen', autoRenew: true, lastAction: 'Initial review completed', lastActionDate: '2024-08-15' },
+  { id: 'renewal001', title: 'State Farm Partnership Renewal', insurerShort: 'State Farm', expiryDate: '2027-12-31', daysLeft: 45, priority: 'normal', status: 'upcoming', accountManager: 'Emily Chen', autoRenew: true, lastAction: 'Initial check completed', lastActionDate: '2024-08-15' },
   { id: 'renewal002', title: 'Allstate Agreement Extension', insurerShort: 'Allstate', expiryDate: '2026-03-14', daysLeft: 125, priority: 'low', status: 'upcoming', accountManager: 'Kevin Wang', autoRenew: false, lastAction: 'Negotiation started', lastActionDate: '2024-07-20' },
   { id: 'renewal003', title: 'Progressive Contract Renewal', insurerShort: 'Progressive', expiryDate: '2025-05-31', daysLeft: 55, priority: 'high', status: 'in-negotiation', accountManager: 'Michael Thompson', autoRenew: false, lastAction: 'Terms discussion in progress', lastActionDate: '2024-08-25' },
   { id: 'renewal004', title: 'USAA Partnership Review', insurerShort: 'USAA', expiryDate: '2026-04-09', daysLeft: 190, priority: 'low', status: 'upcoming', accountManager: 'Emily Chen', autoRenew: false },
-  { id: 'renewal005', title: 'Liberty Mutual Agreement', insurerShort: 'Liberty Mutual', expiryDate: '2025-02-19', daysLeft: 80, priority: 'critical', status: 'upcoming', accountManager: 'David Martinez', autoRenew: true, lastAction: 'Legal review pending', lastActionDate: '2024-08-28' },
+  { id: 'renewal005', title: 'Liberty Mutual Agreement', insurerShort: 'Liberty Mutual', expiryDate: '2025-02-19', daysLeft: 80, priority: 'critical', status: 'upcoming', accountManager: 'David Martinez', autoRenew: true, lastAction: 'Awaiting legal confirmation', lastActionDate: '2024-08-28' },
 ]
 
 // Mock product integrations for Tab 7
@@ -101,7 +101,7 @@ const MOCK_INTEGRATIONS = [
   { id: 'int001', productName: 'Auto Classic Plus', productCode: 'AUTO-CL-001', line: 'Auto', insurerShort: 'State Farm', requestedBy: 'Kevin Wang', priority: 'normal', status: 'integrated', targetStates: ['CA', 'NV', 'AZ'], estimatedPremium: 2500000, technicalReqs: ['REST API', 'Real-time Quotes'], apiDoc: true, testCompleted: true, notes: 'Production ready' },
   { id: 'int002', productName: 'Homeowner Premier', productCode: 'HOME-PM-002', line: 'Home', insurerShort: 'State Farm', requestedBy: 'Kevin Wang', priority: 'high', status: 'approved', targetStates: ['CA', 'NV'], estimatedPremium: 1800000, technicalReqs: ['SOAP API', 'Batch Sync'], apiDoc: false, testCompleted: false },
   { id: 'int003', productName: 'Cyber Risk Coverage', productCode: 'CYBER-RSK-001', line: 'Commercial', insurerShort: 'Allstate', requestedBy: 'Michael Thompson', priority: 'high', status: 'in-review', targetStates: ['NY', 'NJ', 'PA'], estimatedPremium: 950000, technicalReqs: ['GraphQL', 'Webhooks'], apiDoc: true, testCompleted: false },
-  { id: 'int004', productName: 'Life Protect Advanced', productCode: 'LIFE-PR-003', line: 'Life', insurerShort: 'Allstate', requestedBy: 'Kevin Wang', priority: 'normal', status: 'requested', targetStates: ['ALL'], estimatedPremium: 3200000, technicalReqs: ['REST API'], apiDoc: false, testCompleted: false, notes: 'Awaiting underwriting approval' },
+  { id: 'int004', productName: 'Life Protect Advanced', productCode: 'LIFE-PR-003', line: 'Life', insurerShort: 'Allstate', requestedBy: 'Kevin Wang', priority: 'normal', status: 'requested', targetStates: ['ALL'], estimatedPremium: 3200000, technicalReqs: ['REST API'], apiDoc: false, testCompleted: false, notes: 'Awaiting underwriting assessment' },
   { id: 'int005', productName: 'Travel Insurance Basic', productCode: 'TRVL-BSC-001', line: 'Travel', insurerShort: 'Progressive', requestedBy: 'David Martinez', priority: 'low', status: 'available', targetStates: ['FL', 'TX'], estimatedPremium: 650000, technicalReqs: ['REST API', 'XML Feed'], apiDoc: false, testCompleted: false },
 ]
 
@@ -152,7 +152,7 @@ function EstablishWizard({ onCancel }: { onCancel: () => void }) {
   const [notes, setNotes] = useState('')
   const [done, setDone] = useState(false)
 
-  const availableInsurers = mockCooperations.filter(c => c.status === 'Approved').length > 0 ? [] : []
+  const availableInsurers: any[] = []
   const LINES = ['Auto', 'Home', 'Commercial', 'Cyber', 'Life', 'Travel', 'Professional', 'D&O', 'Specialty']
   const STATES_SAMPLE = ['CA', 'TX', 'FL', 'NY', 'IL', 'PA', 'OH', 'WA', 'CO', 'GA']
 
@@ -420,6 +420,22 @@ function SettlementEditPanel({ config, onClose }: { config: typeof MOCK_SETTLEME
 export default function CooperationManagementView({ navigateTo }: Props) {
   const { t, i18n } = useTranslation('cooperation')
   const isEn = i18n.language.startsWith('en')
+
+  // ── API-driven data fetching ──
+  const { data: apiCoops } = useGetCooperations()
+  const terminateCoop = useTerminateCooperation()
+  const mockCooperations: any[] = (apiCoops ?? []).map(c => ({
+    id: c.id, insurerId: c.carrier_id, insurerName: c.carrier_name ?? '',
+    cooperationType: c.cooperation_type, status: c.status, commissionTier: c.commission_tier,
+    notes: c.notes, notesEn: c.notes_en, settlementMethod: c.settlement_method,
+    settlementCycle: c.settlement_cycle, premiumCollectionMethod: c.premium_collection_method,
+    premiumSettlementCycle: c.premium_settlement_cycle, effectiveDate: c.effective_date,
+    expirationDate: c.expiration_date,
+    productScope: c.product_scope ?? { type: 'All' },
+    stateScope: c.state_scope ?? [],
+    contractFile: c.contract_file,
+    createdAt: c.created_at, updatedAt: c.updated_at, createdBy: c.created_by,
+  }))
   const [tab, setTab] = useState('establish') // ✅ Fix: Default to 'establish' tab
   const [showNewCoopWizard, setShowNewCoopWizard] = useState(false)
   const [integrationFilter, setIntegrationFilter] = useState('all')
@@ -550,7 +566,7 @@ export default function CooperationManagementView({ navigateTo }: Props) {
                         </div>
                       )}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
-                        {coop.stateScope.slice(0, 4).map(s => (
+                        {coop.stateScope.slice(0, 4).map((s: string) => (
                           <span key={s} className="badge badge-blue" style={{ fontSize: 10.5, background: 'rgba(0,88,188,0.07)', color: '#0058BC', borderColor: 'rgba(0,88,188,0.15)' }}>{s}</span>
                         ))}
                         {coop.stateScope.length > 4 && <span className="badge badge-gray" style={{ fontSize: 10.5 }}>+{coop.stateScope.length - 4}</span>}
@@ -811,7 +827,7 @@ export default function CooperationManagementView({ navigateTo }: Props) {
                         {t('view.terminate.coopInfo', { type: coop.cooperationType, date: coop.expirationDate?.slice(0, 10) || '—' })}
                       </div>
                       <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
-                        {coop.stateScope.slice(0, 4).map(s => <span key={s} className="badge badge-gray" style={{ fontSize: 10.5 }}>{s}</span>)}
+                        {coop.stateScope.slice(0, 4).map((s: string) => <span key={s} className="badge badge-gray" style={{ fontSize: 10.5 }}>{s}</span>)}
                         {coop.stateScope.length > 4 && <span className="badge badge-gray" style={{ fontSize: 10.5 }}>+{coop.stateScope.length - 4}</span>}
                       </div>
                     </div>
@@ -987,7 +1003,7 @@ export default function CooperationManagementView({ navigateTo }: Props) {
 
 // ─── Terminate Panel ──────────────────────────────────────────────────────────
 
-function TerminatePanel({ coop, onCancel, setToast }: { coop: typeof mockCooperations[number]; onCancel: () => void; setToast?: (toast: { type: 'success' | 'error'; message: string }) => void }) {
+function TerminatePanel({ coop, onCancel, setToast }: { coop: any; onCancel: () => void; setToast?: (toast: { type: 'success' | 'error'; message: string }) => void }) {
   const { t } = useTranslation('cooperation')
   const [reason, setReason] = useState('')
   const [termType, setTermType] = useState<'immediate' | 'end-of-term' | 'scheduled'>('end-of-term')

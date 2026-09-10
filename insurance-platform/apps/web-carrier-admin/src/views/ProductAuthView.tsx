@@ -5,10 +5,14 @@ import type { ViewId } from '@/App'
 import ProductAuthMatrixModal from '@/components/ProductAuthMatrixModal'
 
 interface Props { navigateTo: (view: ViewId) => void }
+/** 授权状态。本系统没有任何审批流程，所以 'pending' 指的是「待生效」——
+ *  授权已录入但 effective_date 尚未到达（如试用授权），不是「待审批」。 */
 type AuthStatus = 'active' | 'expiring' | 'expired' | 'pending' | 'withdrawn'
 type ChannelTypeKey = 'agency' | 'brokerage' | 'mga' | 'fmo'
 type AuthModeKey = 'permanent' | 'term' | 'trial'
-type OverLimitRule = 'manual-uw' | 'block' | 'supervisor'
+/** 超限处理规则。本系统没有任何审批流程，所以去掉了原 'supervisor'（需主管审批）选项，
+ *  超限只剩两种处置：转人工核保、禁止出单。 */
+type OverLimitRule = 'manual-uw' | 'block'
 
 interface OpPermissions { quote: boolean; bind: boolean; endorse: boolean; renewal: boolean; surrender: boolean }
 
@@ -144,7 +148,7 @@ const CHANNEL_PRODUCTS: CpConfig[] = [
     limits:{ perPolicy:'$50K', monthly:'$500K', quarterly:'$1.5M' }, overLimitRule:'manual-uw' },
   { id:'cp2', channel:'Pacific Coast Insurance', product:'Homeowners Elite', carrier:'Liberty Shield', state:'CA',
     ops:{quote:true, bind:true, endorse:true, renewal:true, surrender:true},
-    limits:{ perPolicy:'$30K', monthly:'$300K', quarterly:'$900K' }, overLimitRule:'supervisor' },
+    limits:{ perPolicy:'$30K', monthly:'$300K', quarterly:'$900K' }, overLimitRule:'manual-uw' },
   { id:'cp3', channel:'SunState MGA Partners', product:'Personal Auto Preferred', carrier:'Pacific Mutual', state:'TX',
     ops:{quote:true, bind:true, endorse:false, renewal:true, surrender:false},
     limits:{ perPolicy:'$100K', monthly:'$1.0M', quarterly:null }, overLimitRule:'block' },
@@ -587,7 +591,6 @@ export default function ProductAuthView(_: Props) {
                 {([
                   ['manual-uw', t('productAuthView.tab2.ruleEscalate')],
                   ['block', t('productAuthView.tab2.ruleBlock')],
-                  ['supervisor', t('productAuthView.tab2.ruleApprove')],
                 ] as [OverLimitRule, string][]).map(([v, l]) => {
                   const on = activeCpData.overLimitRule === v
                   return <span key={v} className="rounded-[8px] px-[12px] py-[5px] text-[12px] font-[700]"
@@ -598,13 +601,10 @@ export default function ProductAuthView(_: Props) {
               </div>
             </div>
 
-            {/* Footer buttons */}
+            {/* Footer buttons —— 原「提交审批」按钮已删除：本系统没有任何审批流程，配置保存即生效。 */}
             <div className="flex gap-2">
               <button className="inline-flex items-center justify-center gap-[6px] rounded-[8px] px-[20px] py-[8px] text-[12px] font-[700] text-white" style={{ backgroundColor: BRAND }}>
                 <Check size={14}/>{t('productAuthView.tab2.btnSave')}
-              </button>
-              <button className="inline-flex items-center justify-center gap-[4px] rounded-[8px] border-[0.666px] border-[rgba(193,198,215,0.55)] bg-white px-[20px] py-[8px] text-[12px] font-[600] text-[rgb(24,28,35)]">
-                {t('productAuthView.tab2.btnSubmit')}
               </button>
             </div>
           </div>

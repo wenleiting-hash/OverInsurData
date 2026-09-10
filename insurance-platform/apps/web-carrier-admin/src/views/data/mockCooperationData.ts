@@ -78,12 +78,17 @@ export type CooperationType =
   | 'Preferred'              // Preferred Partner
   | 'Surplus Lines'          // Surplus Lines Broker
 
+// 合作关系状态。本系统没有任何审批流程，枚举名沿用早期原型，实际语义为：
+//   Submitted  → 已提交（已向保司发出合作意向通知）
+//   UnderReview→ 处理中（资料核验 / 系统对接中）
+//   Approved   → 合作中（已生效）
+//   Rejected   → 已失效（合作未能建立）
 export type CooperationStatus = 
   | 'Draft'                  // Draft - not submitted (草稿)
-  | 'Submitted'              // Submitted for approval (已提交)
-  | 'UnderReview'           // Under internal review (审核中)
-  | 'Approved'              // Approved and active (合作中)
-  | 'Rejected'              // Application rejected (已拒绝)
+  | 'Submitted'              // Intent notification sent (已提交)
+  | 'UnderReview'           // Being processed (处理中)
+  | 'Approved'              // Effective / in cooperation (合作中)
+  | 'Rejected'              // Void - cooperation not established (已失效)
   | 'Terminated'            // Partnership terminated (已终止)
 
 export type SettlementMethod = 
@@ -151,8 +156,8 @@ export interface ContractAgreement {
   createdAt: string
   updatedAt: string
   createdBy: string
-  approvedBy?: string
-  approvedAt?: string
+  approvedBy?: string        // 使合作生效的操作人（本系统无审批流程，仅作变更记录）
+  approvedAt?: string        // 生效时间
 }
 
 export type ContractType = 
@@ -166,7 +171,7 @@ export type ContractType =
 
 export type ContractStatus = 
   | 'Draft'                  // Draft - editing
-  | 'PendingApproval'        // Awaiting legal approval
+  | 'PendingApproval'        // Awaiting legal confirmation (待法务确认)
   | 'PendingSignature'       // Signature pending
   | 'Signed'                 // Signed but not yet effective
   | 'InEffect'               // Currently active
@@ -218,8 +223,8 @@ export interface SettlementConfiguration {
   commissionTaxRate?: number         // Withholding tax rate (%)
   disputeResolutionRule?: DisputeRule
   
-  // Approval
-  requiresApproval: boolean          // Requires finance approval for changes
+  // 变更二次确认（字段名沿用后端 requires_approval，本系统无审批流程，仅表示需财务复核）
+  requiresApproval: boolean          // Changes need a second finance check
   
   // Metadata
   createdAt: string
@@ -767,8 +772,8 @@ export function generateMockCooperations(): InsuranceCooperation[] {
       productScope: { type: 'SpecificLOB', lobTypes: ['CYBER', 'D_O', 'E_O'] },
       stateScope: ['NY', 'DE', 'CA'],
       contractFile: undefined,
-      notes: '新合作申请，合规审核中',
-      notesEn: 'New partnership application under compliance review',
+      notes: '新合作申请，合规核验中',
+      notesEn: 'New partnership application under compliance verification',
       createdAt: '2026-08-01T09:00:00Z',
       updatedAt: '2026-08-01T09:00:00Z',
       createdBy: 'user_admin',
@@ -1434,7 +1439,7 @@ export const PENDING_QUOTE_ACTIONS: Array<{ value: string; label: string }> = [
 export const ACTIVE_POLICY_ACTIONS: Array<{ value: string; label: string }> = [
   { value: 'service-through-expiry', label: 'Continue Service Until Policy Expiry' },
   { value: 'transfer', label: 'Transfer Policies to Another Channel' },
-  { value: 'terminate-immediately', label: 'Terminate Coverage Immediately (Requires Legal Review)' },
+  { value: 'terminate-immediately', label: 'Terminate Coverage Immediately (Legal Team Notified)' },
 ]
 
 /** 未结佣金结算方案选项 */

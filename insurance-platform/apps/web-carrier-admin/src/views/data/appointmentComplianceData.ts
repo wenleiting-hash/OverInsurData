@@ -10,9 +10,11 @@ export interface AppointmentRecord {
   insurerShort: string
   state: string
   line: string
+  // 委任生命周期状态。本系统没有任何审批流程，这些值不是审批结论：
+  // approved = 已生效、pending = 待生效、under-review = 处理中（NIPR / 保司录入）、rejected = 已失效。
   status: 'approved' | 'pending' | 'rejected' | 'expired' | 'terminated' | 'under-review'
   submittedDate: string
-  approvedDate?: string
+  approvedDate?: string   // 生效日期（UI 文案为「生效日期 / Effective Date」）
   expiryDate: string
   terminatedDate?: string
   terminationReason?: string
@@ -106,12 +108,12 @@ export interface ComplianceInterception {
 
 export const interceptLogs: ComplianceInterception[] = [
   { id: 'ic1', timestamp: '2026-08-22 14:23:11', channelId: 'c10', channelName: 'Northeast Professional Services', insurerId: '8', insurerShort: 'Hartford', state: 'CT', line: 'Commercial', policyDraftId: 'QT-2026-088421', customerName: 'Metro Logistics LLC', premiumAmount: 28500, result: 'blocked', reasons: ['expired-appointment', 'suspended-channel'], reasonDescriptions: ['Hartford CT Commercial Appointment 已于 2026-07-14 过期', '渠道合规状态：已暂停'], reasonDescriptionsEn: ['The Hartford CT Commercial appointment expired on 2026-07-14', 'Channel compliance status: suspended'] },
-  { id: 'ic2', timestamp: '2026-08-22 11:08:45', channelId: 'c9', channelName: 'Southwest Insurance Network', insurerId: '6', insurerShort: 'Zurich', state: 'AZ', line: 'Commercial', policyDraftId: 'QT-2026-088398', customerName: 'Desert Solar Holdings', premiumAmount: 45200, result: 'blocked', reasons: ['no-appointment'], reasonDescriptions: ['Zurich AZ Commercial Appointment 申请审核中，尚未批准'], reasonDescriptionsEn: ['The Zurich AZ Commercial appointment is under review and has not been approved yet'] },
+  { id: 'ic2', timestamp: '2026-08-22 11:08:45', channelId: 'c9', channelName: 'Southwest Insurance Network', insurerId: '6', insurerShort: 'Zurich', state: 'AZ', line: 'Commercial', policyDraftId: 'QT-2026-088398', customerName: 'Desert Solar Holdings', premiumAmount: 45200, result: 'blocked', reasons: ['no-appointment'], reasonDescriptions: ['Zurich AZ Commercial Appointment 尚未生效（NIPR 处理中）'], reasonDescriptionsEn: ['The Zurich AZ Commercial appointment is not yet effective (NIPR processing)'] },
   { id: 'ic3', timestamp: '2026-08-22 09:31:22', channelId: 'c1', channelName: 'Pacific Coast Insurance Group', insurerId: '1', insurerShort: 'Travelers', state: 'CA', line: 'P&C', policyDraftId: 'QT-2026-088301', customerName: 'Bay Area Tech Ventures', premiumAmount: 67800, result: 'warned', reasons: ['expired-license'], reasonDescriptions: ['CA 牌照已于 2026-05-31 到期，需立即续期'], reasonDescriptionsEn: ['The CA license expired on 2026-05-31 and must be renewed immediately'] },
   { id: 'ic4', timestamp: '2026-08-21 16:44:10', channelId: 'c2', channelName: 'Lone Star Brokerage', insurerId: '1', insurerShort: 'Travelers', state: 'TX', line: 'P&C', policyDraftId: 'QT-2026-087912', customerName: 'Gulf Coast Energy Partners', premiumAmount: 112000, result: 'manual-review', reasons: ['ofac-match'], reasonDescriptions: ['客户名称与 OFAC SDN 列表存在模糊匹配（相似度 78%），需人工确认'], reasonDescriptionsEn: ['Fuzzy match between the customer name and the OFAC SDN list (78% similarity) — manual confirmation required'] },
   { id: 'ic5', timestamp: '2026-08-21 10:12:33', channelId: 'c7', channelName: 'Rocky Mountain Insurance Advisors', insurerId: '1', insurerShort: 'Travelers', state: 'CO', line: 'Auto', policyDraftId: 'QT-2026-087654', customerName: 'Summit Fleet Services', premiumAmount: 18900, result: 'blocked', reasons: ['expired-appointment', 'state-not-authorized'], reasonDescriptions: ['Travelers CO Auto Appointment 已终止', 'CO 州非授权经营区域'], reasonDescriptionsEn: ['The Travelers CO Auto appointment has been terminated', 'CO is outside the authorized operating territory'] },
   { id: 'ic6', timestamp: '2026-08-20 15:30:08', channelId: 'c3', channelName: 'Great Lakes Insurance Partners', insurerId: '3', insurerShort: 'Nationwide', state: 'IL', line: 'Auto', policyDraftId: 'QT-2026-087321', customerName: 'Chicago Fleet Leasing', premiumAmount: 34100, result: 'passed', reasons: [], reasonDescriptions: [], reasonDescriptionsEn: [] },
-  { id: 'ic7', timestamp: '2026-08-20 09:45:22', channelId: 'c5', channelName: 'Sunshine State Brokers', insurerId: '5', insurerShort: 'AIG', state: 'FL', line: 'Professional', policyDraftId: 'QT-2026-087198', customerName: 'Coastal Medical Associates', premiumAmount: 89600, result: 'warned', reasons: ['no-appointment'], reasonDescriptions: ['AIG FL Professional Appointment 申请正在审核（预计 5 工作日内审批）'], reasonDescriptionsEn: ['The AIG FL Professional appointment is under review (approval expected within 5 business days)'] },
+  { id: 'ic7', timestamp: '2026-08-20 09:45:22', channelId: 'c5', channelName: 'Sunshine State Brokers', insurerId: '5', insurerShort: 'AIG', state: 'FL', line: 'Professional', policyDraftId: 'QT-2026-087198', customerName: 'Coastal Medical Associates', premiumAmount: 89600, result: 'warned', reasons: ['no-appointment'], reasonDescriptions: ['AIG FL Professional Appointment 正在 NIPR 处理中（预计 5 工作日内生效）'], reasonDescriptionsEn: ['The AIG FL Professional appointment is being processed by NIPR (expected to take effect within 5 business days)'] },
 ]
 
 // ── Compliance Rules ───────────────────────────────────────────────────────────
@@ -131,7 +133,7 @@ export interface ComplianceRule {
 }
 
 export const complianceRules: ComplianceRule[] = [
-  { id: 'cr1', name: 'Appointment 必须有效', nameEn: 'Valid appointment required', category: 'appointment', condition: '出单时检查渠道-保险公司-州-业务线的 Appointment 状态 = approved', conditionEn: 'At binding time, verify that the channel-insurer-state-line appointment status = approved', action: 'block', enabled: true, priority: 1, triggeredCount: 47, lastTriggered: '2026-08-22' },
+  { id: 'cr1', name: 'Appointment 必须有效', nameEn: 'Valid appointment required', category: 'appointment', condition: '出单时检查渠道-保险公司-州-业务线的 Appointment 状态 = approved（已生效）', conditionEn: 'At binding time, verify that the channel-insurer-state-line appointment status = approved (effective)', action: 'block', enabled: true, priority: 1, triggeredCount: 47, lastTriggered: '2026-08-22' },
   { id: 'cr2', name: 'Appointment 到期拦截', nameEn: 'Expired appointment block', category: 'appointment', condition: 'Appointment.expiryDate < today', action: 'block', enabled: true, priority: 2, triggeredCount: 23, lastTriggered: '2026-08-22' },
   { id: 'cr3', name: '牌照有效性检查', nameEn: 'License validity check', category: 'license', condition: '渠道对应州牌照 status IN (active, pending)', conditionEn: 'Channel license in the application state has status IN (active, pending)', action: 'block', enabled: true, priority: 3, triggeredCount: 12, lastTriggered: '2026-08-22' },
   { id: 'cr4', name: '牌照到期警告', nameEn: 'License expiry warning', category: 'license', condition: 'license.daysToExpiry BETWEEN 0 AND 30', action: 'warn', enabled: true, priority: 4, triggeredCount: 8, lastTriggered: '2026-08-21' },

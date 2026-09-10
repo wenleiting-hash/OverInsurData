@@ -11,8 +11,8 @@
 import { useState, useMemo } from 'react';
 import { ArrowLeft, Search, ShieldAlert, CheckCircle, XCircle, AlertTriangle, Eye, Clock, FileText, Filter, Download, RefreshCw, PlusCircle } from 'lucide-react';
 import type { ViewId } from '@/App';
-import { OFAC_SCREENINGS, type OFACScreening } from '@/views/data/mockComplianceData';
 import { useTranslation } from 'react-i18next';
+import { useOFACList, useScreenOFAC, useReviewOFAC } from '@/services/complianceService';
 import { formatOFACResult, getMatchScoreLevel, type SanctionListSource } from '@/types/compliance/ofac-screening';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,15 +37,18 @@ export default function OFACScreeningView({ navigateTo }: Props) {
   const [sortBy, setSortBy] = useState<'timestamp' | 'entityName' | 'result' | 'matchScore'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Get all screenings data
-  const allScreenings: OFACScreening[] = useMemo(() => OFAC_SCREENINGS, []);
+  // Get all screenings data from API
+  const { data: ofacRes, isLoading: ofacLoading } = useOFACList(selectedResult !== 'all' ? { status: selectedResult } : undefined);
+  const screenMut = useScreenOFAC();
+  const reviewMut = useReviewOFAC();
+  const allScreenings: any[] = ofacRes?.data ?? [];
 
   // Extract unique countries for filter dropdown
   const uniqueCountries = useMemo(() => {
     const countries = new Set<string>();
     allScreenings.forEach(screening => {
       if (screening.country && Array.isArray(screening.country)) {
-        screening.country.forEach(c => countries.add(c));
+        screening.country.forEach((c: string) => countries.add(c));
       }
     });
     return Array.from(countries).sort();
@@ -165,7 +168,7 @@ export default function OFACScreeningView({ navigateTo }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Section */}
       <div className="mb-8">
         <button
@@ -415,7 +418,7 @@ export default function OFACScreeningView({ navigateTo }: Props) {
           <Card className="overflow-hidden bg-white/80 backdrop-blur-xl border border-slate-200 shadow-lg">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
+                <thead className="bg-[rgba(246,248,255,0.9)]">
                   <tr>
                     <th 
                       className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100"
@@ -464,9 +467,9 @@ export default function OFACScreeningView({ navigateTo }: Props) {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                  {filteredScreenings.map(screening => (
-                    <tr key={screening.id} className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 transition-all duration-200">
+                <tbody className="bg-[rgba(255,255,255,0.95)] divide-y divide-[rgba(193,198,215,0.25)]">
+                  {filteredScreenings.map((screening, idx) => (
+                    <tr key={screening.id} className="hover:bg-[rgba(246,248,255,0.55)] transition-all duration-200" style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-semibold text-slate-900">{screening.entityName}</div>
                         {screening.policyId && (

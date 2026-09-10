@@ -1,5 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Building2 } from 'lucide-react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/react-query-config';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -8,6 +10,7 @@ import LoginPage from '@/pages/LoginPage';
 import { VIEW_LABELS } from '@/navigation/viewMeta';
 import type { ViewId } from '@/navigation/viewMeta';
 import { useRTLManager } from '@/hooks/useRTLManager';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 
 // 视图按需加载（代码分割）：启动只加载 Layout + Dashboard，
 // 各模块视图在导航到时才拉取，隔离非当前模块的存量问题
@@ -24,6 +27,7 @@ const I18nManagementView = lazy(() => import('@/views/I18nManagementView'));
 const PermissionView = lazy(() => import('@/views/PermissionView'));
 const RoleListView = lazy(() => import('@/views/RoleListView'));
 const UserListView = lazy(() => import('@/views/UserListView'));
+const DepartmentView = lazy(() => import('@/views/DepartmentView'));
 
 // Compliance Views
 const AppointmentApplicationView = lazy(() => import('@/views/AppointmentApplicationView'));
@@ -47,7 +51,6 @@ const CommissionReconciliationView = lazy(() => import('@/views/CommissionReconc
 const DisputeManagementView = lazy(() => import('@/views/DisputeManagementView'));
 const SettlementConfigView = lazy(() => import('@/views/SettlementConfigView'));
 const PremiumReconciliationView = lazy(() => import('@/views/PremiumReconciliationView'));
-const FinanceEnhancementView = lazy(() => import('@/views/FinanceEnhancementView'));
 const ChannelMasterView = lazy(() => import('@/views/ChannelMasterView'));
 const ChannelList = lazy(() => import('@/views/ChannelList'));
 const ChannelNewView = lazy(() => import('@/views/ChannelNewView'));
@@ -67,8 +70,6 @@ const InsurerAnalyticsView = lazy(() => import('@/views/InsurerAnalyticsView'));
 
 const RoleCreateView = lazy(() => import('@/views/RoleCreateView'));
 const RoleEditView = lazy(() => import('@/views/RoleEditView'));
-const UserCreateView = lazy(() => import('@/views/UserCreateView'));
-const UserEditView = lazy(() => import('@/views/UserEditView'));
 
 interface AppState {
   currentView: ViewId;
@@ -93,8 +94,14 @@ export default function App() {
 
 // Internal component that uses auth context
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, logout } = useAuth();
   const location = useLocation();
+
+  // 空闲超时自动登出（30 分钟无操作）
+  useIdleTimeout(async () => {
+    await logout();
+    queryClient.clear(); // 清除所有缓存，避免下次登录显示过期数据
+  });
 
   // Initialize RTL direction manager
   useRTLManager();
@@ -152,8 +159,6 @@ function AppContent() {
       else if (state.currentView === 'role-create') path = '/permission/roles/create';
       else if (state.currentView === 'role-edit') path = '/permission/roles/edit';
       else if (state.currentView === 'user-list') path = '/permission/users';
-      else if (state.currentView === 'user-create') path = '/permission/users/create';
-      else if (state.currentView === 'user-edit') path = '/permission/users/edit';
       else if (state.currentView === 'menu-permission') path = '/permission/menus';
       else if (state.currentView === 'data-permission') path = '/permission/data';
       else if (state.currentView === 'operation-log') path = '/permission/logs/operation';
@@ -244,12 +249,6 @@ function AppContent() {
       case 'insurer-duplicate':
         return <InsurerDuplicate navigateTo={navigateTo} />;
 
-      case 'user-create':
-        return <UserCreateView navigateTo={navigateTo} />;
-
-      case 'user-edit':
-        return <UserEditView userId={state.selectedUserId || ''} navigateTo={navigateTo} />;
-
       case 'product-list':
         return <ProductList navigateTo={navigateTo} />;
 
@@ -322,9 +321,6 @@ function AppContent() {
       case 'finance-premium-recon':
         return <PremiumReconciliationView navigateTo={navigateTo} />;
 
-      case 'finance-enhancement':
-        return <FinanceEnhancementView navigateTo={navigateTo} />;
-
       case 'channel-list':
         return <ChannelList navigateTo={navigateTo} />;
       case 'channel-new':
@@ -349,6 +345,9 @@ function AppContent() {
 
       case 'user-list':
         return <UserListView navigateTo={navigateTo} />;
+
+      case 'department-management':
+        return <DepartmentView navigateTo={navigateTo} />;
 
       case 'role-edit':
         return <RoleEditView roleId={state.selectedRoleId || ''} navigateTo={navigateTo} />;
@@ -406,3 +405,5 @@ function AppContent() {
     </QueryClientProvider>
   );
 }
+
+// 部门管理页面已由 DepartmentView 组件替代（Figma V1.5 对齐）

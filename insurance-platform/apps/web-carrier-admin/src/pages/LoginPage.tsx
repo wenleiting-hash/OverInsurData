@@ -75,12 +75,17 @@ export default function LoginPage() {
       // Note: Navigation is handled by useEffect watching auth state
     } catch (err: any) {
       // Handle specific error cases
-      if (err.message.includes('Invalid')) {
-        setError(tr('invalidCredentials'));
-      } else if (err.message.includes('locked')) {
-        setError(tr('accountLocked'));
+      const msg = err.message || '';
+      if (msg.includes('密码错误') || msg.includes('Invalid') || msg.includes('credentials')) {
+        setError(tr('form.invalidCredentials'));
+      } else if (msg.includes('锁定') || msg.includes('locked')) {
+        setError(tr('form.accountLocked'));
+      } else if (msg.includes('停用') || msg.includes('deactivated') || msg.includes('inactive')) {
+        setError(tr('form.accountDeactivated'));
+      } else if (msg.includes('待激活') || msg.includes('pending')) {
+        setError(tr('form.accountPending'));
       } else {
-        setError(tr('networkError'));
+        setError(msg || tr('form.networkError'));
       }
     } finally {
       setIsLoading(false);

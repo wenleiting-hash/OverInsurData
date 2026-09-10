@@ -6,11 +6,11 @@ import {
   TrendingUp, TrendingDown,
 } from 'lucide-react';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
-import { insurers, premiumTrendData, marketShareData, formatCurrency, formatPercent } from './data/mockDashboardData';
-import { products, channels, documents, changeHistory, contacts } from './data/insurerDetails';
+import { formatCurrency, formatPercent } from '@/lib/format';
+import { useGetInsurer, useToggleInsurerStatus } from '@/services/insurerService';
 import type { ViewId } from '@/App';
 import { useTranslation } from 'react-i18next';
 import DisableModal from '@/components/DisableModal';
@@ -60,34 +60,201 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
   const [showDisable, setShowDisable] = useState(false);
   const lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
-  const findCarrier = (id: string) => insurers.find(i => i.carrierId === id) || insurers[0];
-  const carrier = findCarrier(carrierId);
+  // ── PDF Export (Print-optimized HTML) ──
+  const handleExportPdf = () => {
+    if (!apiCarrier) return;
+    const c = carrier;
+    const now = new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US');
+    const statusLabel = c.status === 'active'
+      ? (lang === 'zh' ? '合作中' : 'Active')
+      : (lang === 'zh' ? '已停用' : 'Inactive');
 
-  const carrierProducts = products.filter(p => p.insurerId === carrierId);
-  const carrierChannels = channels.filter(c => !c.parentId).slice(0, 5);
-  const carrierDocs = documents.filter(d => d.insurerId === carrierId);
-  const carrierHistory = changeHistory.filter(h => h.insurerId === carrierId);
-  const carrierContacts = contacts.filter(c => c.insurerId === carrierId);
-  const channelPremiumTotal = carrierChannels.reduce((s, c) => s + c.totalPremium, 0);
+    const html = `<!DOCTYPE html>
+<html lang="${lang === 'zh' ? 'zh-CN' : 'en-US'}">
+<head>
+<meta charset="utf-8"/>
+<title>${c.carrierName} - ${lang === 'zh' ? '保险公司详情报告' : 'Insurer Detail Report'}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #181C23; padding: 40px; font-size: 13px; line-height: 1.6; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  h2 { font-size: 15px; color: #0058BC; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #C1C6D7; }
+  .meta { color: #717786; font-size: 12px; margin-bottom: 20px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+  .badge-green { background: #e6f4ea; color: #1a7a2e; }
+  .badge-gray { background: #eee; color: #555; }
+  .badge-yellow { background: #fff3cd; color: #7a5c00; }
+  .badge-blue { background: #e8f0fe; color: #0058BC; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 32px; }
+  .field-label { font-size: 11px; color: #717786; font-weight: 500; }
+  .field-value { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .kpi-card { border: 1px solid #C1C6D7; border-radius: 8px; padding: 12px 16px; text-align: center; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: #0058BC; }
+  .kpi-label { font-size: 11px; color: #717786; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+  th { background: #F5F6FA; text-align: left; padding: 8px 10px; font-weight: 600; border-bottom: 1px solid #C1C6D7; }
+  td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+  .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #999; }
+  @media print { body { padding: 20px; } .no-print { display: none; } }
+</style>
+</head>
+<body>
+  <div class="no-print" style="text-align:right;margin-bottom:12px">
+    <button onclick="window.print()" style="padding:8px 24px;background:#0058BC;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">
+      ${lang === 'zh' ? '🖨️ 打印 / 另存为 PDF' : '🖨️ Print / Save as PDF'}
+    </button>
+  </div>
+
+  <h1>${c.carrierName}${c.shortName && c.shortName !== c.carrierName ? ` (${c.shortName})` : ''}</h1>
+  <div class="meta">
+    NAIC: ${c.naicCode || '-'} &nbsp;|&nbsp;
+    ${c.type || '-'} &nbsp;|&nbsp;
+    ${c.state ? c.state + ', ' : ''}${c.region || '-'} &nbsp;|&nbsp;
+    <span class="badge ${c.status === 'active' ? 'badge-green' : c.status === 'inactive' ? 'badge-gray' : 'badge-yellow'}">${statusLabel}</span>
+  </div>
+  <div class="meta">${lang === 'zh' ? '报告生成时间' : 'Report generated'}: ${now}</div>
+
+  <h2>${lang === 'zh' ? '核心指标' : 'Key Metrics'}</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-value">${c.revenue ? formatCurrency(c.revenue) : '-'}</div>
+      <div class="kpi-label">${lang === 'zh' ? '总保费' : 'Total Premium'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${c.policyCount?.toLocaleString() ?? '-'}</div>
+      <div class="kpi-label">${lang === 'zh' ? '保单数' : 'Policies'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${c.lossRatio ? formatPercent(c.lossRatio) : '-'}</div>
+      <div class="kpi-label">${lang === 'zh' ? '赔付率' : 'Loss Ratio'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${c.renewalRate ? formatPercent(c.renewalRate) : '-'}</div>
+      <div class="kpi-label">${lang === 'zh' ? '续保率' : 'Renewal Rate'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${c.channelCount ?? '-'}</div>
+      <div class="kpi-label">${lang === 'zh' ? '合作渠道' : 'Channels'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${c.productCount ?? '-'}</div>
+      <div class="kpi-label">${lang === 'zh' ? '产品数量' : 'Products'}</div>
+    </div>
+  </div>
+
+  <h2>${lang === 'zh' ? '基本信息' : 'Basic Information'}</h2>
+  <div class="grid">
+    <div><div class="field-label">${lang === 'zh' ? '公司全称' : 'Full Name'}</div><div class="field-value">${c.carrierName}</div></div>
+    <div><div class="field-label">${lang === 'zh' ? '公司简称' : 'Short Name'}</div><div class="field-value">${c.shortName || '-'}</div></div>
+    <div><div class="field-label">NAIC ${lang === 'zh' ? '编码' : 'Code'}</div><div class="field-value">${c.naicCode || '-'}</div></div>
+    <div><div class="field-label">${lang === 'zh' ? '公司类型' : 'Type'}</div><div class="field-value">${c.type || '-'}</div></div>
+    <div><div class="field-label">${lang === 'zh' ? '成立年份' : 'Founded'}</div><div class="field-value">${c.founded || '-'}</div></div>
+    <div><div class="field-label">${lang === 'zh' ? '官网' : 'Website'}</div><div class="field-value">${c.website || '-'}</div></div>
+    <div><div class="field-label">${lang === 'zh' ? '总部' : 'HQ'}</div><div class="field-value">${c.state || '-'}, ${c.region || '-'}</div></div>
+    <div><div class="field-label">${lang === 'zh' ? '合作类型' : 'Cooperation Type'}</div><div class="field-value">${c.coopType || '-'}</div></div>
+  </div>
+
+  <h2>${lang === 'zh' ? '财务评级' : 'Financial Ratings'}</h2>
+  <div class="grid">
+    <div><div class="field-label">AM Best</div><div class="field-value">${c.amBestRating || '-'}</div></div>
+    <div><div class="field-label">S&P</div><div class="field-value">${c.spRating || '-'}</div></div>
+    <div><div class="field-label">Moody's</div><div class="field-value">${c.moodysRating || '-'}</div></div>
+    <div><div class="field-label">Fitch</div><div class="field-value">${c.fitchRating || '-'}</div></div>
+  </div>
+
+  <h2>${lang === 'zh' ? '结算配置' : 'Settlement Configuration'}</h2>
+  <div class="grid">
+    <div><div class="field-label">${lang === 'zh' ? '结算周期' : 'Settlement Cycle'}</div><div class="field-value">${c.settlementCycle || '-'}</div></div>
+    <div><div class="field-label">${lang === 'zh' ? '合同到期日' : 'Contract Expiry'}</div><div class="field-value">${c.contractExpiry || '-'}</div></div>
+  </div>
+
+  ${c.lines && c.lines.length > 0 ? `
+  <h2>${lang === 'zh' ? '业务线' : 'Lines of Business'}</h2>
+  <div>${c.lines.map((l: string) => `<span class="badge badge-blue">${l}</span>`).join(' ')}</div>
+  ` : ''}
+
+  <div class="footer">
+    ${lang === 'zh' ? '本报告由系统自动生成，仅供参考' : 'This report is auto-generated for reference only'}
+  </div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+      // Auto-trigger print dialog after content loads
+      w.onload = () => w.print();
+    }
+  };
+
+  // ── API-driven data fetching ──
+  const { data: apiCarrier, isLoading } = useGetInsurer(carrierId);
+  const toggleStatus = useToggleInsurerStatus();
+
+  // Map API InsurerRecord to display-friendly shape
+  const carrier = apiCarrier ? {
+    carrierId: apiCarrier.id,
+    naicCode: apiCarrier.naic_code,
+    carrierName: apiCarrier.carrier_name,
+    shortName: apiCarrier.short_name,
+    type: apiCarrier.type,
+    status: apiCarrier.status,
+    region: apiCarrier.region,
+    state: apiCarrier.state,
+    lossRatio: apiCarrier.loss_ratio,
+    renewalRate: apiCarrier.renewal_rate,
+    revenue: apiCarrier.revenue,
+    policyCount: apiCarrier.policy_count,
+    commissionIncome: apiCarrier.commission_income,
+    coopStatus: apiCarrier.coop_status,
+    amBestRating: apiCarrier.am_best_rating,
+    spRating: apiCarrier.sp_rating,
+    moodysRating: apiCarrier.moodys_rating,
+    fitchRating: apiCarrier.fitch_rating,
+    settlementCycle: apiCarrier.settlement_cycle,
+    lines: apiCarrier.lines,
+    founded: apiCarrier.founded,
+    website: apiCarrier.website,
+    coopType: apiCarrier.coop_type,
+    contractExpiry: apiCarrier.contract_expiry,
+    channelCount: apiCarrier.channel_count,
+    productCount: apiCarrier.product_count,
+  } : {
+    carrierId: carrierId, naicCode: '', carrierName: 'Loading...', shortName: '...',
+    type: '', status: 'active', region: '', lossRatio: 0, renewalRate: 0, revenue: 0,
+    policyCount: 0, commissionIncome: 0, amBestRating: '', founded: undefined,
+    website: '', coopStatus: '', settlementCycle: 'Monthly', lines: [],
+    spRating: '', moodysRating: '', fitchRating: '', contractExpiry: '',
+    channelCount: 0, productCount: 0, coopType: '', state: '',
+  };
+
+  const carrierContacts: any[] = [];
+  const carrierProducts: any[] = [];
+  const carrierChannels: any[] = [];
+  const carrierDocs: any[] = [];
+  // 变更历史当前未接入真实数据（空数组），页面渲染 detail.history.emptyData。
+  // 数据契约见 ./data/insurerDetails 的 ChangeHistory —— 本系统没有任何审批流程，
+  // 其中 approvedBy / status='approved' 表示「使变更生效的处理人 / 变更已生效」。
+  const carrierHistory: any[] = [];
+  const channelPremiumTotal = 0;
 
   const coopColors: Record<string, string> = {
     active: '#1a7a2e',
     expiring: '#a05800',
-    negotiating: '#0058BC',
-    pending: '#0058BC',
     suspended: '#BA1A1A',
     terminated: '#BA1A1A',
   };
   const coopLabels: Record<string, string> = {
     active: 'detail.coop.active',
     expiring: 'detail.coop.expiring',
-    negotiating: 'detail.coop.negotiating',
-    pending: 'detail.coop.negotiating',
     suspended: 'detail.coop.terminated',
     terminated: 'detail.coop.terminated',
   };
   const coopKey = (carrier.coopStatus ?? carrier.status) as string;
-  const coopOrb = coopKey === 'active' ? 'orb-green' : coopKey === 'expiring' ? 'orb-orange' : coopKey === 'pending' || coopKey === 'negotiating' ? 'orb-purple' : 'orb-gray';
+  const coopOrb = coopKey === 'active' ? 'orb-green' : coopKey === 'expiring' ? 'orb-orange' : 'orb-gray';
 
   const roleLabel: Record<string, string> = {
     accountManager: t('detail.contacts.roleAccountManager'),
@@ -149,7 +316,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
           <ArrowLeft size={15} /> {t('detail.backToList')}
         </button>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary" style={{ fontSize: 13 }}>
+          <button className="btn-secondary" style={{ fontSize: 13 }} onClick={handleExportPdf}>
             <Download size={14} /> {t('detail.exportPdf')}
           </button>
           {carrier.status !== 'inactive' ? (
@@ -191,7 +358,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
           color: '#fff',
           boxShadow: '0 4px 16px rgba(0,88,188,0.28)',
         }}>
-          {carrier.shortName.slice(0, 2).toUpperCase()}
+          {(carrier.shortName || '').slice(0, 2).toUpperCase()}
         </div>
 
         {/* Identity */}
@@ -209,9 +376,9 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
             }}>
               AM Best {carrier.amBestRating || '-'}
             </span>
-            <span className={`badge ${carrier.status === 'active' ? 'badge-green' : carrier.status === 'pending' ? 'badge-yellow' : 'badge-gray'}`}>
-              <span className={`orb ${carrier.status === 'active' ? 'orb-green' : carrier.status === 'pending' ? 'orb-yellow' : 'orb-gray'}`} />
-              {carrier.status === 'active' ? t('detail.status.active') : carrier.status === 'pending' ? t('detail.status.pending') : t('detail.status.inactive')}
+            <span className={`badge ${carrier.status === 'active' ? 'badge-green' : 'badge-gray'}`}>
+              <span className={`orb ${carrier.status === 'active' ? 'orb-green' : 'orb-gray'}`} />
+              {carrier.status === 'active' ? t('detail.status.active') : t('detail.status.inactive')}
             </span>
           </div>
 
@@ -481,7 +648,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div style={{ fontSize: 14, color: '#717786' }}>
-                  {t('detail.channels.countPre')}<strong style={{ color: '#181C23' }}>{carrier.channelCount ?? carrierChannels.length}</strong>{t('detail.channels.countPost')}
+                  {t('detail.channels.countPre')}<strong style={{ color: '#181C23' }}>{carrierChannels.length > 0 ? carrierChannels.length : (carrier.channelCount ?? 0)}</strong>{t('detail.channels.countPost')}
                 </div>
               </div>
               <table className="data-table">
@@ -532,6 +699,11 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                   ))}
                 </tbody>
               </table>
+              {carrierChannels.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#717786', fontSize: 13 }}>
+                  {t('detail.channels.emptyData')}
+                </div>
+              )}
             </div>
           )}
 
@@ -628,6 +800,8 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                 {carrierHistory.map((rec, idx) => (
                   <div key={rec.historyId} style={{ display: 'flex', gap: 16, paddingBottom: 20 }}>
                     {/* Timeline */}
+                    {/* 本系统没有任何审批流程：rec.status 仅决定时间轴节点的配色与图标 ——
+                        approved = 变更已生效（绿）、auto = 系统自动同步（蓝）、其余 = 待生效（黄）。 */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
                       <div style={{
                         width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
@@ -669,6 +843,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                         <span style={{ fontWeight: 500, color: '#414755' }}>{rec.operator}</span>
                         <span style={{ marginLeft: 4 }}>({rec.operatorRole})</span>
                         {rec.reason && <span style={{ marginLeft: 8 }}>· {lang === 'en' ? rec.reasonEn : rec.reason}</span>}
+                        {/* approvedByPrefix 的文案已为「· 处理人: 」/ "· Handled by: "，不是审批人 */}
                         {rec.approvedBy && (
                           <span style={{ marginLeft: 8 }}>{t('detail.history.approvedByPrefix')}<span style={{ color: '#0058BC' }}>{rec.approvedBy}</span></span>
                         )}
@@ -677,6 +852,11 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                   </div>
                 ))}
               </div>
+              {carrierHistory.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#717786', fontSize: 13 }}>
+                  {t('detail.history.emptyData')}
+                </div>
+              )}
             </div>
           )}
 
@@ -685,7 +865,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div style={{ fontSize: 14, color: '#717786' }}>
-                  {t('detail.products.countPre')}<strong style={{ color: '#181C23' }}>{carrier.productCount ?? carrierProducts.length}</strong>{t('detail.products.countPost')}
+                  {t('detail.products.countPre')}<strong style={{ color: '#181C23' }}>{carrierProducts.length > 0 ? carrierProducts.length : (carrier.productCount ?? 0)}</strong>{t('detail.products.countPost')}
                 </div>
                 <button className="btn-primary" style={{ fontSize: 13 }}>
                   <Package size={14} />{t('detail.products.addProduct')}
@@ -740,6 +920,11 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                   ))}
                 </tbody>
               </table>
+              {carrierProducts.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#717786', fontSize: 13 }}>
+                  {t('detail.products.emptyData')}
+                </div>
+              )}
             </div>
           )}
 
@@ -751,18 +936,9 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <DollarSign size={14} style={{ color: '#0058BC' }} />{t('detail.performance.premiumTrend')}
                 </div>
-                <div style={{ height: 260 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={premiumTrendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.4)" />
-                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} tickFormatter={(v) => v + 'M'} width={42} />
-                      <Tooltip formatter={(v: any) => [v + 'M', t('detail.performance.premium')]} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
-                      <Line type="monotone" dataKey="newBiz" stroke="#34C759" strokeWidth={2} dot={{ r: 3, fill: '#34C759' }} name={t('detail.performance.newBiz')} />
-                      <Line type="monotone" dataKey="renewal" stroke="#0058BC" strokeWidth={2} dot={{ r: 3, fill: '#0058BC' }} name={t('detail.performance.renewal')} />
-                      <Line type="monotone" dataKey="premium" stroke="#9E3D00" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 4, fill: '#9E3D00' }} name={t('detail.performance.total')} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
+                  <TrendingUp size={32} style={{ color: '#C1C6D7' }} />
+                  <span style={{ fontSize: 13, color: '#717786' }}>{t('detail.performance.emptyData')}</span>
                 </div>
               </section>
 
@@ -794,18 +970,9 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                 {/* Channel Market Share */}
                 <section style={{ background: sectionBg, border: sectionBorder, borderRadius: 14, padding: 18 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23', marginBottom: 16 }}>{t('detail.performance.channelContribution')}</div>
-                  <div style={{ height: 220 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={marketShareData} layout="vertical" margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(193,198,215,0.3)" />
-                        <XAxis type="number" tick={{ fontSize: 11, fill: '#717786' }} hide />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: '#717786' }} width={72} style={{ fontFamily: "'JetBrains Mono', monospace" }} />
-                        <Tooltip cursor={{ fill: 'rgba(0,88,188,0.05)' }} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
-                        {marketShareData.map((m, i) => (
-                          <Cell key={i} fill={m.color} />
-                        ))}
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
+                    <TrendingUp size={32} style={{ color: '#C1C6D7' }} />
+                    <span style={{ fontSize: 13, color: '#717786' }}>{t('detail.performance.emptyData')}</span>
                   </div>
                 </section>
 
@@ -877,11 +1044,10 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
         </div>
       </div>
 
-      {showDisable && (
+      {showDisable && apiCarrier && (
         <DisableModal
-          carrierId={carrier.carrierId}
+          insurer={apiCarrier}
           onClose={() => setShowDisable(false)}
-          onConfirm={() => setShowDisable(false)}
         />
       )}
     </div>

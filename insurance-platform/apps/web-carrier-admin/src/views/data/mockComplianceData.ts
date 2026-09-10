@@ -8,13 +8,19 @@ import type { InsuranceCarrier } from './mockData';
 // APPOINTMENT RECORDS (Channel-Insurer Authorization)
 // ============================================================================
 
+// 委任记录的生命周期状态。本系统没有任何审批流程，所以这些值不是「审批结论」，而是：
+//   approved      → 已生效（委任已建立、可用于出单）
+//   pending       → 待生效（已录入，生效日期未到或 NIPR 尚未回执）
+//   under-review  → 处理中（NIPR / 保险公司正在录入处理）
+//   rejected      → 已失效（委任未能建立，如对应州牌照未激活）
+// 字段名沿用历史值以兼容既有 mock 数据与筛选逻辑，UI 文案统一走 i18n（appointment 命名空间）。
 export type AppointmentStatus = 
-  | 'approved'      // Approved and active
-  | 'pending'       // Submitted, waiting for review
-  | 'rejected'      // Application rejected
+  | 'approved'      // 已生效 / Effective
+  | 'pending'       // 待生效 / Pending effective
+  | 'rejected'      // 已失效 / Void
   | 'expired'       // Expired appointment
   | 'terminated'    // Terminated before expiry
-  | 'under-review'  // Under internal review
+  | 'under-review'  // 处理中 / Processing
 
 export type RenewalStatus = 
   | 'not-due'       // Not due yet
@@ -34,7 +40,7 @@ export interface AppointmentRecord {
   line: string                    // Line of business (P&C, Auto, Commercial...)
   status: AppointmentStatus
   submittedDate: string           // ISO date format
-  approvedDate?: string           // Optional for pending/rejected
+  approvedDate?: string           // 生效日期（UI 显示为「生效日期 / Effective Date」）；pending / rejected 时为空
   expiryDate: string              // ISO date format
   terminatedDate?: string         // If terminated
   terminationReason?: string      // Reason for termination
@@ -270,7 +276,7 @@ export interface ComplianceReport {
 
 export function generateMockAppointmentRecords(): AppointmentRecord[] {
   return [
-    // Approved appointments (6 records)
+    // 已生效委任（6 条）
     {
       id: 'ap1',
       channelId: 'c1',
@@ -392,7 +398,7 @@ export function generateMockAppointmentRecords(): AppointmentRecord[] {
       niprTransactionId: 'NIPR-2024-04512',
     },
     
-    // Pending applications (2 records)
+    // 待生效（2 条）
     {
       id: 'ap4',
       channelId: 'c4',
@@ -428,7 +434,7 @@ export function generateMockAppointmentRecords(): AppointmentRecord[] {
       renewalStatus: 'not-due',
     },
     
-    // Under-review (1 record)
+    // 处理中（1 条）
     {
       id: 'ap5',
       channelId: 'c5',
@@ -469,7 +475,7 @@ export function generateMockAppointmentRecords(): AppointmentRecord[] {
       niprTransactionId: 'NIPR-2023-12890',
     },
     
-    // Rejected (1 record)
+    // 已失效（1 条）
     {
       id: 'ap10',
       channelId: 'c1',
@@ -730,7 +736,7 @@ export function generateMockComplianceInterceptions(): ComplianceInterception[] 
       premiumAmount: 45200,
       result: 'blocked',
       reasons: ['no-appointment'],
-      reasonDescriptions: ['Zurich AZ Commercial Appointment 申请审核中，尚未批准'],
+      reasonDescriptions: ['Zurich AZ Commercial Appointment 尚未生效（NIPR 处理中）'],
     },
     {
       id: 'ic3',
@@ -810,7 +816,7 @@ export function generateMockComplianceInterceptions(): ComplianceInterception[] 
       premiumAmount: 89600,
       result: 'warned',
       reasons: ['no-appointment'],
-      reasonDescriptions: ['AIG FL Professional Appointment 申请正在审核（预计 5 工作日内审批）'],
+      reasonDescriptions: ['AIG FL Professional Appointment 正在 NIPR 处理中（预计 5 工作日内生效）'],
     },
   ]
 }

@@ -26,24 +26,30 @@ import {
 import { useTranslation } from 'react-i18next'
 import type { ViewId } from '@/App'
 import {
-  commissionBills,
-  billLineItems,
-  reconciliationDiffs,
-  settlementCycles,
-  premiumRecords,
-  premiumSummaries,
-  parseTemplates,
-  settlementHistory,
-  type BillImportStatus,
-  type DiffStatus,
-  type DiffType,
-  type CycleFrequency,
-  type SettlementMethod,
-  type PremiumDiffType,
-  type PremiumRecStatus,
-  type MatchStatus,
-  type SettlementCycleConfig,
-} from './data/financeData'
+  useFinanceBills, useBillLines, useDiffs, useSettlementConfigs,
+  useSettlementHistory, usePremiumRecords, usePremiumReconciliation,
+} from '@/services/financeService'
+
+// ── Inline types (migrated from financeData.ts) ──
+type BillImportStatus = 'pending-parse' | 'parsed' | 'reconciled' | 'exception' | 'settled' | 'archived'
+type MatchStatus = 'matched' | 'unmatched' | 'amount-diff' | 'rate-diff' | 'duplicate'
+type DiffType = 'rate-mismatch' | 'amount-mismatch' | 'missing-policy' | 'duplicate' | 'missing-in-bill'
+// 对账差异状态。本系统没有任何审批流程：'under-review' 是后端 finance.service 返回的契约值，
+// 语义为「差异正在核查处理中」，UI 文案统一走 financeSettlement.diffTab.dsReview（处理中 / Processing）。
+type DiffStatus = 'open' | 'under-review' | 'accepted' | 'disputed' | 'adjusted' | 'waived'
+type CycleFrequency = 'monthly' | 'quarterly' | 'semi-annual' | 'annual' | 'custom'
+type SettlementMethod = 'wire-transfer' | 'ach' | 'check' | 'offset'
+type PremiumDiffType = 'missing-remittance' | 'over-remittance' | 'rate-error' | 'cancellation-adj' | 'endorsement-adj'
+type PremiumRecStatus = 'matched' | 'exception' | 'adjusted' | 'pending'
+
+interface SettlementCycleConfig {
+  id: string; insurerId: string; insurerName: string; insurerShort: string;
+  frequency: CycleFrequency; cutoffDay: number; paymentDueDays: number;
+  method: SettlementMethod; currency: string; minSettleAmount: number;
+  autoReconcile: boolean; autoSettle: boolean; notifyDaysBefore: number;
+  bankAccount?: string; contactEmail: string; nextDueDate: string;
+  nextDueAmount?: number; ytdSettled: number;
+}
 
 /**
  * 财务与结算管理视图（对齐 Figma 原型）
@@ -57,7 +63,7 @@ type BillStatus = 'toParse' | 'parsed' | 'reconciled' | 'hasDiff' | 'settled'
 type StatusFilter = 'all' | BillStatus
 
 // 数据态（pending-parse / exception）→ 展示态（toParse / hasDiff）
-const DISPLAY_STATUS: Record<BillImportStatus, BillStatus> = {
+const DISPLAY_STATUS: Record<string, BillStatus> = {
   'pending-parse': 'toParse',
   parsed: 'parsed',
   reconciled: 'reconciled',
@@ -87,7 +93,8 @@ const STATUS_STYLE: Record<BillStatus, string> = {
 }
 
 // 差异状态徽章（对齐原型 DIFF_STATUS_STYLE）
-const DIFF_STATUS_CLS: Record<DiffStatus, string> = {
+// 本系统没有任何审批流程，这些状态只是对账差异的处理进度，不是审批结论。
+const DIFF_STATUS_CLS: Record<string, string> = {
   open: 'bg-[rgba(255,59,48,0.1)] text-[rgb(192,57,43)]',
   'under-review': 'bg-[rgba(0,122,255,0.1)] text-[rgb(0,93,199)]',
   accepted: 'bg-[rgba(52,199,89,0.1)] text-[rgb(30,128,51)]',
@@ -96,7 +103,7 @@ const DIFF_STATUS_CLS: Record<DiffStatus, string> = {
   waived: 'bg-[rgba(180,180,180,0.15)] text-[rgb(102,102,102)]',
 }
 
-const DIFF_STATUS_LABEL: Record<DiffStatus, string> = {
+const DIFF_STATUS_LABEL: Record<string, string> = {
   open: 'financeSettlement.diffTab.dsOpen',
   'under-review': 'financeSettlement.diffTab.dsReview',
   accepted: 'financeSettlement.diffTab.dsAccepted',
@@ -105,7 +112,7 @@ const DIFF_STATUS_LABEL: Record<DiffStatus, string> = {
   waived: 'financeSettlement.diffTab.dsWaived',
 }
 
-const DIFF_TYPE_LABEL: Record<DiffType, string> = {
+const DIFF_TYPE_LABEL: Record<string, string> = {
   'rate-mismatch': 'financeSettlement.parseTab.matchStatus.rateDiff',
   'amount-mismatch': 'financeSettlement.parseTab.matchStatus.amountDiff',
   'missing-policy': 'financeSettlement.diffTab.dtMissingPolicy',
@@ -114,7 +121,7 @@ const DIFF_TYPE_LABEL: Record<DiffType, string> = {
 }
 
 // 解析行匹配状态徽章（对齐原型 matchStyle）
-const MATCH_STATUS_CLS: Record<MatchStatus, string> = {
+const MATCH_STATUS_CLS: Record<string, string> = {
   matched: 'bg-[rgba(52,199,89,0.1)] text-[rgb(30,128,51)]',
   unmatched: 'bg-[rgba(255,59,48,0.1)] text-[rgb(192,57,43)]',
   'rate-diff': 'bg-[rgba(255,159,10,0.1)] text-[rgb(176,96,0)]',
@@ -122,7 +129,7 @@ const MATCH_STATUS_CLS: Record<MatchStatus, string> = {
   duplicate: 'bg-[rgba(130,80,255,0.1)] text-[rgb(123,63,202)]',
 }
 
-const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
+const MATCH_STATUS_LABEL: Record<string, string> = {
   matched: 'financeSettlement.parseTab.matchStatus.matched',
   unmatched: 'financeSettlement.parseTab.matchStatus.unmatched',
   'rate-diff': 'financeSettlement.parseTab.matchStatus.rateDiff',
@@ -131,21 +138,21 @@ const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
 }
 
 // 保费对账状态徽章
-const PREMIUM_STATUS_CLS: Record<PremiumRecStatus, string> = {
+const PREMIUM_STATUS_CLS: Record<string, string> = {
   matched: 'bg-[rgba(52,199,89,0.1)] text-[rgb(30,128,51)]',
   exception: 'bg-[rgba(255,59,48,0.1)] text-[rgb(192,57,43)]',
   adjusted: 'bg-[rgba(130,80,255,0.1)] text-[rgb(123,63,202)]',
   pending: 'bg-[rgba(255,159,10,0.1)] text-[rgb(176,96,0)]',
 }
 
-const PREMIUM_STATUS_LABEL: Record<PremiumRecStatus, string> = {
+const PREMIUM_STATUS_LABEL: Record<string, string> = {
   matched: 'financeSettlement.parseTab.matchStatus.matched',
   exception: 'financeSettlement.premiumTab.psException',
   adjusted: 'financeSettlement.diffTab.dsAdjusted',
   pending: 'financeSettlement.premiumTab.psPending',
 }
 
-const PREMIUM_DIFF_LABEL: Record<PremiumDiffType, string> = {
+const PREMIUM_DIFF_LABEL: Record<string, string> = {
   'missing-remittance': 'financeSettlement.premiumTab.pdtMissing',
   'over-remittance': 'financeSettlement.premiumTab.pdtOver',
   'rate-error': 'financeSettlement.premiumTab.pdtRateError',
@@ -153,7 +160,7 @@ const PREMIUM_DIFF_LABEL: Record<PremiumDiffType, string> = {
   'endorsement-adj': 'financeSettlement.premiumTab.pdtEndorsement',
 }
 
-const FREQ_LABEL: Record<CycleFrequency, string> = {
+const FREQ_LABEL: Record<string, string> = {
   monthly: 'financeSettlement.cycleTab.freqMonthly',
   quarterly: 'financeSettlement.cycleTab.freqQuarterly',
   'semi-annual': 'financeSettlement.cycleTab.freqSemiAnnual',
@@ -161,7 +168,7 @@ const FREQ_LABEL: Record<CycleFrequency, string> = {
   custom: 'financeSettlement.cycleTab.freqCustom',
 }
 
-const METHOD_LABEL: Record<SettlementMethod, string> = {
+const METHOD_LABEL: Record<string, string> = {
   'wire-transfer': 'financeSettlement.cycleTab.methodWire',
   ach: 'financeSettlement.cycleTab.methodAch',
   check: 'financeSettlement.cycleTab.methodCheck',
@@ -188,8 +195,8 @@ const NEW_CYCLE_DRAFT: SettlementCycleConfig = {
   ytdSettled: 0,
 }
 
-function fmt(n: number) {
-  return '$' + n.toLocaleString('en-US')
+function fmt(n: number | undefined | null) {
+  return '$' + (n ?? 0).toLocaleString('en-US')
 }
 
 // SOFT-FILL 软底徽章（对齐原型 Badge）
@@ -201,9 +208,18 @@ function Badge({ cls, children }: { cls: string; children: ReactNode }) {
   )
 }
 
-// 白底卡片容器（与账单表格容器同款）
+// 白底卡片容器（对齐原型 glass-card：bg=rgba(255,255,255,0.95) border=rgba(193,198,215,0.42) 无阴影 r=14px）
 function Card({ children, className = '', style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
-  return <div className={`rounded-xl border border-gray-100 bg-white shadow-sm ${className}`} style={style}>{children}</div>
+  return <div className={`rounded-[14px] border border-[rgba(193,198,215,0.42)] bg-[rgba(255,255,255,0.95)] ${className}`} style={style}>{children}</div>
+}
+
+// KPI 卡片色调常量（对齐原型 V2：8% 不透明度背景 + 13.3% 不透明度边框）
+const TINT: Record<string, { bg: string; bd: string }> = {
+  blue:   { bg: 'rgba(0,88,188,0.08)',   bd: '1px solid rgba(0,88,188,0.133)' },
+  green:  { bg: 'rgba(52,199,89,0.08)',  bd: '1px solid rgba(30,128,51,0.133)' },
+  red:    { bg: 'rgba(255,59,48,0.08)',  bd: '1px solid rgba(192,57,43,0.133)' },
+  orange: { bg: 'rgba(255,159,10,0.08)', bd: '1px solid rgba(176,96,0,0.133)' },
+  purple: { bg: 'rgba(123,63,202,0.08)', bd: '1px solid rgba(123,63,202,0.133)' },
 }
 
 // 裸 KPI（与页面顶部统计同款：标签 11px 灰 + 数值 22px 粗）
@@ -243,7 +259,8 @@ function FileTypeIcon({ ext }: { ext: string }) {
   return <File size={18} className="shrink-0 text-blue-500" />
 }
 
-function extOf(name: string) {
+function extOf(name: string | undefined | null) {
+  if (!name) return '';
   const i = name.lastIndexOf('.')
   return i >= 0 ? name.slice(i + 1) : ''
 }
@@ -252,6 +269,8 @@ function extOf(name: string) {
 
 function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void }) {
   const { t } = useTranslation('finance')
+  const { data: billsRes } = useFinanceBills()
+  const commissionBills: any[] = billsRes?.data ?? []
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadDone, setUploadDone] = useState(false)
@@ -284,9 +303,9 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
     const q = searchQuery.trim().toLowerCase()
     const byQuery =
       !q ||
-      b.fileName.toLowerCase().includes(q) ||
-      b.insurerShort.toLowerCase().includes(q) ||
-      b.period.toLowerCase().includes(q)
+      b.fileName?.toLowerCase().includes(q) ||
+      b.insurerShort?.toLowerCase().includes(q) ||
+      b.period?.toLowerCase().includes(q)
     return byStatus && byQuery
   })
 
@@ -375,10 +394,10 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
       </div>
 
       {/* 账单表格 */}
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-[14px] border border-[rgba(193,198,215,0.42)] bg-[rgba(255,255,255,0.95)]">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50/80">
+            <thead className="bg-[rgba(246,248,255,0.9)]">
               <tr>
                 <th className="px-5 sm:px-6 py-3.5 text-left text-[11px] sm:text-xs font-medium text-gray-500 whitespace-nowrap">
                   {t('financeSettlement.table.fileName')}
@@ -410,13 +429,14 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredBills.map((bill) => {
+              {filteredBills.map((bill, idx) => {
                 const ds = DISPLAY_STATUS[bill.status]
                 const showReconcile = ds === 'hasDiff' || ds === 'parsed'
                 return (
                   <tr
                     key={bill.id}
-                    className="cursor-pointer transition-colors hover:bg-gray-50/60"
+                    className="cursor-pointer transition-colors hover:bg-[rgba(246,248,255,0.55)]"
+                    style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}
                     onClick={() => onSelectBill(bill.id)}
                   >
                     <td className="px-5 sm:px-6 py-4">
@@ -425,9 +445,9 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
                           <FileTypeIcon ext={extOf(bill.fileName)} />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{bill.fileName}</div>
+                          <div className="text-sm font-medium text-gray-900 truncate">{bill.fileName ?? '—'}</div>
                           <div className="mt-0.5 text-[11px] sm:text-xs text-gray-400 whitespace-nowrap">
-                            {bill.fileFormat} · {bill.fileSize} · {bill.importDate.slice(0, 10)}
+                            {bill.fileFormat} · {bill.fileSize} · {(bill.importDate ?? '').slice(0, 10)}
                           </div>
                         </div>
                       </div>
@@ -442,7 +462,7 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
                       <Badge cls={STATUS_STYLE[ds]}>{t(`financeSettlement.status.${ds}`)}</Badge>
                     </td>
                     <td className="px-4 sm:px-6 py-4 text-right text-sm text-gray-900 tabular-nums whitespace-nowrap shrink-0">
-                      {bill.totalPolicies.toLocaleString('en-US')}
+                      {(bill.totalPolicies ?? 0).toLocaleString('en-US')}
                     </td>
                     <td className="px-4 sm:px-6 py-4 text-right text-sm text-gray-900 tabular-nums whitespace-nowrap shrink-0">
                       {fmt(bill.totalPremium)}
@@ -500,11 +520,15 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
                 )
               })}
               {filteredBills.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-sm text-gray-400">
-                    {t('comingSoon')}
-                  </td>
-                </tr>
+                <>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <tr key={`e${i}`}>
+                      <td colSpan={9} className="px-6 py-3 text-center text-sm text-gray-300">
+                        {i === 4 ? t('comingSoon') : '\u00A0'}
+                      </td>
+                    </tr>
+                  ))}
+                </>
               )}
             </tbody>
           </table>
@@ -518,12 +542,17 @@ function BillImportTab({ onSelectBill }: { onSelectBill: (id: string) => void })
 
 function BillParseTab({ initialBillId }: { initialBillId: string }) {
   const { t } = useTranslation('finance')
+  const { data: billsRes } = useFinanceBills()
+  const commissionBills: any[] = billsRes?.data ?? []
   const [selectedBill, setSelectedBill] = useState(initialBillId)
+  const { data: linesRes } = useBillLines(selectedBill)
+  const billLineItems: any[] = linesRes?.data ?? []
+  const parseTemplates: any[] = []
   const [parsing, setParsing] = useState(false)
   const [parsed, setParsed] = useState(false)
-  const bill = commissionBills.find((b) => b.id === selectedBill) ?? commissionBills[0]
-  const lines = billLineItems.filter((l) => l.billId === selectedBill)
-  const template = parseTemplates.find((tp) => tp.insurerId === bill.insurerId)
+  const bill = commissionBills.find((b: any) => b.id === selectedBill) ?? commissionBills[0]
+  const lines = billLineItems.filter((l: any) => l.billId === selectedBill)
+  const template = parseTemplates.find((tp: any) => tp.insurerId === bill?.insurerId)
 
   const doParse = () => {
     if (parsing) return
@@ -564,10 +593,10 @@ function BillParseTab({ initialBillId }: { initialBillId: string }) {
           </div>
           {(
             [
-              [t('financeSettlement.table.fileName'), bill.fileName.length > 24 ? bill.fileName.slice(0, 24) + '…' : bill.fileName],
+              [t('financeSettlement.table.fileName'), (bill.fileName ?? '—').length > 24 ? (bill.fileName ?? '—').slice(0, 24) + '…' : (bill.fileName ?? '—')],
               [t('financeSettlement.parseTab.format'), bill.fileFormat],
               [t('financeSettlement.table.period'), bill.period],
-              [t('financeSettlement.table.policyCount'), bill.totalPolicies.toLocaleString('en-US')],
+              [t('financeSettlement.table.policyCount'), (bill.totalPolicies ?? 0).toLocaleString('en-US')],
               [t('financeSettlement.table.totalPremium'), fmt(bill.totalPremium)],
               [t('financeSettlement.table.receivableCommission'), fmt(bill.totalCommission)],
             ] as Array<[string, string]>
@@ -631,27 +660,31 @@ function BillParseTab({ initialBillId }: { initialBillId: string }) {
         ) : (
           <div className="flex flex-col gap-4">
             {(parsed || lines.length > 0) && (
-              <div className="flex flex-wrap gap-x-8 gap-y-4">
-                <Kpi
-                  label={t('financeSettlement.parseTab.kpi.parsedLines')}
-                  value={(bill.parsedPolicies ?? lines.length).toLocaleString('en-US')}
-                  valueCls={kpiValueCls.blue}
-                />
-                <Kpi
-                  label={t('financeSettlement.parseTab.kpi.matched')}
-                  value={(bill.matchedPolicies ?? lines.filter((l) => l.matchStatus === 'matched').length).toLocaleString('en-US')}
-                  valueCls={kpiValueCls.green}
-                />
-                <Kpi
-                  label={t('financeSettlement.filters.hasDiff')}
-                  value={(bill.exceptionCount ?? lines.filter((l) => l.matchStatus !== 'matched').length).toLocaleString('en-US')}
-                  valueCls={kpiValueCls.red}
-                />
-                <Kpi
-                  label={t('financeSettlement.parseTab.kpi.matchRate')}
-                  value={bill.matchedPolicies ? `${((bill.matchedPolicies / bill.totalPolicies) * 100).toFixed(1)}%` : '—'}
-                  valueCls={kpiValueCls.purple}
-                />
+              <div className="mb-4 grid grid-cols-4 gap-3">
+                <Card className="p-3.5" style={{ background: TINT.blue.bg, border: TINT.blue.bd }}>
+                  <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.parseTab.kpi.parsedLines')}</div>
+                  <div className="mt-1 text-[20px] font-bold tabular-nums tracking-tight leading-none text-[#0058BC]">
+                    {(bill.parsedPolicies ?? lines.length).toLocaleString('en-US')}
+                  </div>
+                </Card>
+                <Card className="p-3.5" style={{ background: TINT.green.bg, border: TINT.green.bd }}>
+                  <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.parseTab.kpi.matched')}</div>
+                  <div className="mt-1 text-[20px] font-bold tabular-nums tracking-tight leading-none text-[#1E8033]">
+                    {(bill.matchedPolicies ?? lines.filter((l) => l.matchStatus === 'matched').length).toLocaleString('en-US')}
+                  </div>
+                </Card>
+                <Card className="p-3.5" style={{ background: TINT.red.bg, border: TINT.red.bd }}>
+                  <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.filters.hasDiff')}</div>
+                  <div className="mt-1 text-[20px] font-bold tabular-nums tracking-tight leading-none text-[#C0392B]">
+                    {(bill.exceptionCount ?? lines.filter((l) => l.matchStatus !== 'matched').length).toLocaleString('en-US')}
+                  </div>
+                </Card>
+                <Card className="p-3.5" style={{ background: TINT.purple.bg, border: TINT.purple.bd }}>
+                  <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.parseTab.kpi.matchRate')}</div>
+                  <div className="mt-1 text-[20px] font-bold tabular-nums tracking-tight leading-none text-[#7B3FCA]">
+                    {bill.matchedPolicies ? `${((bill.matchedPolicies / bill.totalPolicies) * 100).toFixed(1)}%` : '—'}
+                  </div>
+                </Card>
               </div>
             )}
 
@@ -659,7 +692,7 @@ function BillParseTab({ initialBillId }: { initialBillId: string }) {
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50/80">
+                    <thead className="bg-[rgba(246,248,255,0.9)]">
                       <tr>
                         {[
                           t('financeSettlement.parseTab.th.line'),
@@ -683,10 +716,14 @@ function BillParseTab({ initialBillId }: { initialBillId: string }) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {lines.map((l) => (
+                      {lines.map((l, idx) => (
                         <tr
                           key={l.id}
-                          className={l.matchStatus !== 'matched' ? 'bg-[rgba(255,159,10,0.04)]' : 'hover:bg-gray-50/60'}
+                          style={{
+                            background: l.matchStatus !== 'matched'
+                              ? 'rgba(255,159,10,0.04)'
+                              : idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)',
+                          }}
                         >
                           <td className="px-3 py-2 font-mono text-[11px] text-gray-400">{l.lineNumber}</td>
                           <td className="px-3 py-2 font-mono text-[11.5px] font-semibold text-[rgb(0,88,188)]">{l.policyNumber}</td>
@@ -723,6 +760,13 @@ function BillParseTab({ initialBillId }: { initialBillId: string }) {
                           </td>
                         </tr>
                       ))}
+                      {lines.length === 0 && Array.from({ length: 10 }).map((_, i) => (
+                        <tr key={`e${i}`}>
+                          <td colSpan={9} className="px-3 py-3 text-center text-[11px] text-gray-300">
+                            {i === 4 ? t('comingSoon') : '\u00A0'}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -739,6 +783,8 @@ function BillParseTab({ initialBillId }: { initialBillId: string }) {
 
 function CommissionReconcileTab() {
   const { t } = useTranslation('finance')
+  const { data: billsRes } = useFinanceBills()
+  const commissionBills: any[] = billsRes?.data ?? []
   const [period, setPeriod] = useState('2026-08')
   const [insurer, setInsurer] = useState('all')
 
@@ -787,27 +833,29 @@ function CommissionReconcileTab() {
       </div>
 
       {/* KPI */}
-      <div className="mb-5 flex flex-wrap gap-x-8 gap-y-4">
-        <Kpi
-          label={t('financeSettlement.reconcileTab.kpiBillCommission')}
-          value={fmt(totalBill)}
-          valueCls={kpiValueCls.blue}
-        />
-        <Kpi label={t('financeSettlement.reconcileTab.kpiVerified')} value={fmt(totalOur)} valueCls={kpiValueCls.green} />
-        <Kpi
-          label={t('financeSettlement.reconcileTab.kpiDiffAmount')}
-          value={fmt(totalDiff)}
-          valueCls={totalDiff > 0 ? kpiValueCls.red : kpiValueCls.green}
-        />
-        <Kpi
-          label={t('financeSettlement.reconcileTab.kpiReconRate')}
-          value={`${(
-            (billsToRecon.filter((b) => b.exceptionCount === 0 || b.status === 'reconciled').length /
-              Math.max(billsToRecon.length, 1)) *
-            100
-          ).toFixed(0)}%`}
-          valueCls={kpiValueCls.purple}
-        />
+      <div className="mb-5 grid grid-cols-4 gap-3.5">
+        <Card className="p-[18px_20px]" style={{ background: TINT.blue.bg, border: TINT.blue.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.reconcileTab.kpiBillCommission')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#0058BC]">{fmt(totalBill)}</div>
+          <div className="mt-1 text-[11px] text-[rgb(160,165,177)]">{billsToRecon.length} {t('financeSettlement.reconcileTab.summaryTitle')}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.green.bg, border: TINT.green.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.reconcileTab.kpiVerified')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#1E8033]">{fmt(totalOur)}</div>
+          <div className="mt-1 text-[11px] text-[rgb(160,165,177)]">{t('financeSettlement.reconcileTab.kpiVerified')}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: totalDiff > 0 ? TINT.red.bg : TINT.green.bg, border: totalDiff > 0 ? TINT.red.bd : TINT.green.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.reconcileTab.kpiDiffAmount')}</div>
+          <div className={`mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none ${totalDiff > 0 ? 'text-[#C0392B]' : 'text-[#1E8033]'}`}>{fmt(totalDiff)}</div>
+          <div className="mt-1 text-[11px] text-[rgb(160,165,177)]">{exceptionTotal} {t('financeSettlement.reconcileTab.thDiffCount')}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.purple.bg, border: TINT.purple.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.reconcileTab.kpiReconRate')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#7B3FCA]">
+            {`${((billsToRecon.filter((b) => b.exceptionCount === 0 || b.status === 'reconciled').length / Math.max(billsToRecon.length, 1)) * 100).toFixed(0)}%`}
+          </div>
+          <div className="mt-1 text-[11px] text-[rgb(160,165,177)]">{t('financeSettlement.reconcileTab.kpiReconRate')}</div>
+        </Card>
       </div>
 
       {/* 各保险公司对账汇总 */}
@@ -817,7 +865,7 @@ function CommissionReconcileTab() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50/80">
+            <thead className="bg-[rgba(246,248,255,0.9)]">
               <tr>
                 {[
                   t('financeSettlement.table.carrier'),
@@ -835,15 +883,15 @@ function CommissionReconcileTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {billsToRecon.map((b) => {
+              {billsToRecon.map((b, idx) => {
                 const diff = b.differenceAmount ?? 0
                 const ds = DISPLAY_STATUS[b.status]
                 return (
-                  <tr key={b.id} className="hover:bg-gray-50/60">
+                  <tr key={b.id} className="hover:bg-[rgba(246,248,255,0.55)]" style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}>
                     <td className="px-3.5 py-2.5">
                       <div className="text-[13px] font-bold text-gray-900">{b.insurerShort}</div>
                       <div className="text-[11px] text-gray-400">
-                        {b.period} · {b.fileName.slice(0, 28)}…
+                        {b.period} · {(b.fileName ?? '—').slice(0, 28)}…
                       </div>
                     </td>
                     <td className="px-3.5 py-2.5 font-mono text-[13px] font-bold text-[rgb(0,88,188)]">{fmt(b.totalCommission)}</td>
@@ -885,11 +933,18 @@ function CommissionReconcileTab() {
                   </tr>
                 )
               })}
+              {billsToRecon.length === 0 && Array.from({ length: 10 }).map((_, i) => (
+                <tr key={`e${i}`}>
+                  <td colSpan={7} className="px-3.5 py-3 text-center text-sm text-gray-300">
+                    {i === 4 ? t('comingSoon') : '\u00A0'}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </Card>
-
+      
       {/* 瀑布分析 */}
       <Card className="p-4">
         <div className="mb-3.5 text-[13px] font-bold text-gray-900">{t('financeSettlement.reconcileTab.waterfallTitle')}</div>
@@ -934,6 +989,8 @@ function CommissionReconcileTab() {
 
 function DiffHandlingTab() {
   const { t, i18n } = useTranslation('finance')
+  const { data: diffsRes } = useDiffs()
+  const reconciliationDiffs: any[] = diffsRes?.data ?? []
   const isEn = i18n.language.startsWith('en')
   const [statusFilter, setStatusFilter] = useState<DiffStatus | 'all'>('all')
   const [selectedDiff, setSelectedDiff] = useState<string | null>(null)
@@ -957,15 +1014,23 @@ function DiffHandlingTab() {
   return (
     <div>
       {/* KPI */}
-      <div className="mb-4 flex flex-wrap gap-x-8 gap-y-4">
-        <Kpi label={t('financeSettlement.diffTab.kpiOpen')} value={`${counts['open'] ?? 0}`} valueCls={kpiValueCls.red} />
-        <Kpi label={t('financeSettlement.diffTab.kpiDisputed')} value={`${counts['disputed'] ?? 0}`} valueCls={kpiValueCls.amber} />
-        <Kpi label={t('financeSettlement.diffTab.kpiInvolved')} value={fmt(totalDiff)} valueCls={kpiValueCls.blue} />
-        <Kpi
-          label={t('financeSettlement.diffTab.kpiClosed')}
-          value={`${(counts['accepted'] ?? 0) + (counts['adjusted'] ?? 0) + (counts['waived'] ?? 0)}`}
-          valueCls={kpiValueCls.green}
-        />
+      <div className="mb-4 grid grid-cols-4 gap-3.5">
+        <Card className="p-[18px_20px]" style={{ background: TINT.red.bg, border: TINT.red.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.diffTab.kpiOpen')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#C0392B]">{counts['open'] ?? 0}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.orange.bg, border: TINT.orange.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.diffTab.kpiDisputed')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[rgb(176,96,0)]">{counts['disputed'] ?? 0}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.blue.bg, border: TINT.blue.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.diffTab.kpiInvolved')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#0058BC]">{fmt(totalDiff)}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.green.bg, border: TINT.green.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.diffTab.kpiClosed')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#1E8033]">{(counts['accepted'] ?? 0) + (counts['adjusted'] ?? 0) + (counts['waived'] ?? 0)}</div>
+        </Card>
       </div>
 
       {/* 状态筛选 chips */}
@@ -1000,8 +1065,8 @@ function DiffHandlingTab() {
           return (
             <div
               key={d.id}
-              className={`overflow-hidden rounded-[14px] border bg-white transition-colors ${
-                isSelected ? 'border-[rgb(0,88,188)] bg-[rgba(0,88,188,0.03)]' : 'border-gray-200 hover:border-gray-300'
+              className={`overflow-hidden rounded-[14px] border transition-colors ${
+                isSelected ? 'border-[rgb(0,88,188)] bg-[rgba(0,88,188,0.06)]' : 'border-gray-200 bg-[rgba(255,255,255,0.95)] hover:border-gray-300'
               }`}
             >
               <div
@@ -1019,7 +1084,7 @@ function DiffHandlingTab() {
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 text-xs">
                     <span className="text-[rgb(113,119,134)]">
-                      {d.insurerShort} · {d.billName.length > 30 ? d.billName.slice(0, 30) + '…' : d.billName}
+                      {d.insurerShort} · {(d.billName ?? '—').length > 30 ? (d.billName ?? '—').slice(0, 30) + '…' : (d.billName ?? '—')}
                     </span>
                     <span className="text-gray-400">
                       {t('financeSettlement.diffTab.created')}
@@ -1126,6 +1191,11 @@ function DiffHandlingTab() {
             </div>
           )
         })}
+        {filtered.length === 0 && Array.from({ length: 10 }).map((_, i) => (
+          <div key={`e${i}`} className="rounded-[14px] border border-gray-100 bg-white/50 px-4 py-4 text-center text-sm text-gray-300">
+            {i === 4 ? t('comingSoon') : '\u00A0'}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1135,9 +1205,13 @@ function DiffHandlingTab() {
 
 function SettlementCycleTab() {
   const { t } = useTranslation('finance')
+  const { data: configRes } = useSettlementConfigs()
+  const settlementCycles: any[] = configRes?.data ?? []
+  const { data: histRes } = useSettlementHistory()
+  const settlementHistory: any[] = histRes?.data ?? []
   const [editId, setEditId] = useState<string | null>(null)
   const isDraft = editId === 'new'
-  const editCycle = isDraft ? NEW_CYCLE_DRAFT : settlementCycles.find((c) => c.id === editId)
+  const editCycle = isDraft ? NEW_CYCLE_DRAFT : settlementCycles.find((c: any) => c.id === editId)
 
   const totalNextDue = settlementCycles.reduce((s, c) => s + (c.nextDueAmount ?? 0), 0)
   const totalYtd = settlementCycles.reduce((s, c) => s + c.ytdSettled, 0)
@@ -1145,15 +1219,23 @@ function SettlementCycleTab() {
   return (
     <div>
       {/* KPI */}
-      <div className="mb-5 flex flex-wrap gap-x-8 gap-y-4">
-        <Kpi label={t('financeSettlement.cycleTab.kpiConfigs')} value={`${settlementCycles.length}`} valueCls={kpiValueCls.blue} />
-        <Kpi label={t('financeSettlement.cycleTab.kpiDueMonth')} value={fmt(totalNextDue)} valueCls={kpiValueCls.amber} />
-        <Kpi label={t('financeSettlement.cycleTab.kpiYtd')} value={fmt(totalYtd)} valueCls={kpiValueCls.green} />
-        <Kpi
-          label={t('financeSettlement.cycleTab.kpiAutoEnabled')}
-          value={`${settlementCycles.filter((c) => c.autoReconcile).length}`}
-          valueCls={kpiValueCls.purple}
-        />
+      <div className="mb-5 grid grid-cols-4 gap-3.5">
+        <Card className="p-[18px_20px]" style={{ background: TINT.blue.bg, border: TINT.blue.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.cycleTab.kpiConfigs')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#0058BC]">{settlementCycles.length}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.orange.bg, border: TINT.orange.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.cycleTab.kpiDueMonth')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[rgb(176,96,0)]">{fmt(totalNextDue)}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.green.bg, border: TINT.green.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.cycleTab.kpiYtd')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#1E8033]">{fmt(totalYtd)}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.purple.bg, border: TINT.purple.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.cycleTab.kpiAutoEnabled')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#7B3FCA]">{settlementCycles.filter((c) => c.autoReconcile).length}</div>
+        </Card>
       </div>
 
       <div className={`grid grid-cols-1 gap-5 ${editId && editCycle ? 'lg:grid-cols-[1fr_380px]' : ''}`}>
@@ -1303,7 +1385,7 @@ function SettlementCycleTab() {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50/80">
+              <thead className="bg-[rgba(246,248,255,0.9)]">
                 <tr>
                   {[
                     t('financeSettlement.table.carrier'),
@@ -1322,7 +1404,7 @@ function SettlementCycleTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {settlementHistory.map((s) => {
+                {settlementHistory.map((s, idx) => {
                   const st =
                     s.status === 'completed'
                       ? { cls: 'bg-[rgba(52,199,89,0.1)] text-[rgb(30,128,51)]', labelKey: 'financeSettlement.cycleTab.rsCompleted' }
@@ -1332,7 +1414,7 @@ function SettlementCycleTab() {
                           ? { cls: 'bg-[rgba(255,59,48,0.1)] text-[rgb(192,57,43)]', labelKey: 'financeSettlement.cycleTab.rsFailed' }
                           : { cls: 'bg-[rgba(180,180,180,0.15)] text-gray-500', labelKey: 'financeSettlement.cycleTab.rsReversed' }
                   return (
-                    <tr key={s.id} className="hover:bg-gray-50/60">
+                    <tr key={s.id} className="hover:bg-[rgba(246,248,255,0.55)]" style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}>
                       <td className="px-3.5 py-2.5 text-[13px] font-bold text-gray-900">{s.insurerShort}</td>
                       <td className="px-3.5 py-2.5 font-mono text-xs text-gray-600">{s.period}</td>
                       <td className={`px-3.5 py-2.5 font-mono text-xs ${s.settledDate ? 'text-gray-600' : 'text-gray-300'}`}>
@@ -1352,6 +1434,13 @@ function SettlementCycleTab() {
                     </tr>
                   )
                 })}
+                {settlementHistory.length === 0 && Array.from({ length: 10 }).map((_, i) => (
+                  <tr key={`e${i}`}>
+                    <td colSpan={8} className="px-3.5 py-3 text-center text-sm text-gray-300">
+                      {i === 4 ? t('comingSoon') : '\u00A0'}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -1365,6 +1454,10 @@ function SettlementCycleTab() {
 
 function PremiumReconcileTab() {
   const { t, i18n } = useTranslation('finance')
+  const { data: premRes } = usePremiumRecords()
+  const premiumRecords: any[] = premRes?.data ?? []
+  const { data: summRes } = usePremiumReconciliation()
+  const premiumSummaries: any[] = summRes?.data ?? []
   const isEn = i18n.language.startsWith('en')
   const [selectedInsurer, setSelectedInsurer] = useState('all')
 
@@ -1379,19 +1472,23 @@ function PremiumReconcileTab() {
   return (
     <div>
       {/* KPI */}
-      <div className="mb-5 flex flex-wrap gap-x-8 gap-y-4">
-        <Kpi label={t('financeSettlement.premiumTab.kpiExpected')} value={fmt(totalExpected)} valueCls={kpiValueCls.blue} />
-        <Kpi label={t('financeSettlement.premiumTab.kpiReceived')} value={fmt(totalRemitted)} valueCls={kpiValueCls.green} />
-        <Kpi
-          label={t('financeSettlement.reconcileTab.kpiDiffAmount')}
-          value={fmt(Math.abs(totalDiff))}
-          valueCls={totalDiff !== 0 ? kpiValueCls.red : kpiValueCls.green}
-        />
-        <Kpi
-          label={t('financeSettlement.premiumTab.kpiExceptions')}
-          value={`${exceptionCount}`}
-          valueCls={exceptionCount > 0 ? kpiValueCls.red : kpiValueCls.green}
-        />
+      <div className="mb-5 grid grid-cols-4 gap-3.5">
+        <Card className="p-[18px_20px]" style={{ background: TINT.blue.bg, border: TINT.blue.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.premiumTab.kpiExpected')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#0058BC]">{fmt(totalExpected)}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.green.bg, border: TINT.green.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.premiumTab.kpiReceived')}</div>
+          <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#1E8033]">{fmt(totalRemitted)}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.red.bg, border: TINT.red.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.reconcileTab.kpiDiffAmount')}</div>
+          <div className={`mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none ${totalDiff !== 0 ? 'text-[#C0392B]' : 'text-[#1E8033]'}`}>{fmt(Math.abs(totalDiff))}</div>
+        </Card>
+        <Card className="p-[18px_20px]" style={{ background: TINT.red.bg, border: TINT.red.bd }}>
+          <div className="text-[11px] text-[rgb(113,119,134)]">{t('financeSettlement.premiumTab.kpiExceptions')}</div>
+          <div className={`mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none ${exceptionCount > 0 ? 'text-[#C0392B]' : 'text-[#1E8033]'}`}>{exceptionCount}</div>
+        </Card>
       </div>
 
       {/* 各保险公司保费对账汇总 */}
@@ -1413,7 +1510,7 @@ function PremiumReconcileTab() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50/80">
+            <thead className="bg-[rgba(246,248,255,0.9)]">
               <tr>
                 {[
                   t('financeSettlement.table.carrier'),
@@ -1432,7 +1529,7 @@ function PremiumReconcileTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {summaries.map((s) => {
+              {summaries.map((s, idx) => {
                 const diff = s.totalExpected - s.totalRemitted
                 const matchPct = (s.matchRate * 100).toFixed(1)
                 const barCls =
@@ -1440,10 +1537,10 @@ function PremiumReconcileTab() {
                 const textCls =
                   s.matchRate >= 0.99 ? 'text-green-600' : s.matchRate >= 0.97 ? 'text-[rgb(176,96,0)]' : 'text-red-600'
                 return (
-                  <tr key={s.insurerId} className="hover:bg-gray-50/60">
+                  <tr key={s.insurerId} className="hover:bg-[rgba(246,248,255,0.55)]" style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}>
                     <td className="px-3.5 py-2.5 text-[13px] font-bold text-gray-900">{s.insurerShort}</td>
                     <td className="px-3.5 py-2.5 font-mono text-xs text-gray-600">{s.period}</td>
-                    <td className="px-3.5 py-2.5 font-mono text-[13px] text-gray-600">{s.totalPolicies.toLocaleString('en-US')}</td>
+                    <td className="px-3.5 py-2.5 font-mono text-[13px] text-gray-600">{(s.totalPolicies ?? 0).toLocaleString('en-US')}</td>
                     <td className="px-3.5 py-2.5 font-mono text-[13px] font-bold text-[rgb(0,88,188)]">{fmt(s.totalExpected)}</td>
                     <td className="px-3.5 py-2.5 font-mono text-[13px] text-gray-600">{fmt(s.totalRemitted)}</td>
                     <td
@@ -1471,6 +1568,13 @@ function PremiumReconcileTab() {
                   </tr>
                 )
               })}
+              {summaries.length === 0 && Array.from({ length: 10 }).map((_, i) => (
+                <tr key={`e${i}`}>
+                  <td colSpan={8} className="px-3.5 py-3 text-center text-sm text-gray-300">
+                    {i === 4 ? t('comingSoon') : '\u00A0'}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -1548,6 +1652,11 @@ function PremiumReconcileTab() {
             </Card>
           )
         })}
+        {filtered.length === 0 && Array.from({ length: 10 }).map((_, i) => (
+          <div key={`e${i}`} className="rounded-[14px] border border-gray-100 bg-white/50 px-4 py-4 text-center text-sm text-gray-300">
+            {i === 4 ? t('comingSoon') : '\u00A0'}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1562,14 +1671,22 @@ export default function FinanceDashboardView(_props: Props) {
   const [tab, setTab] = useState<TabId>('import')
   const [focusBillId, setFocusBillId] = useState<string | null>(null)
 
+  // API hooks for main component stats & badges
+  const { data: billsRes } = useFinanceBills()
+  const { data: diffsRes } = useDiffs()
+  const { data: premRes } = usePremiumRecords()
+  const billsData: any[] = billsRes?.data ?? []
+  const diffsData: any[] = diffsRes?.data ?? []
+  const premiumData: any[] = premRes?.data ?? []
+
   const handleSelectBill = (id: string) => {
     setFocusBillId(id)
     setTab('parse')
   }
 
-  const pendingCount = commissionBills.filter((b) => b.status === 'pending-parse').length
-  const diffCount = reconciliationDiffs.filter((d) => d.status === 'open').length
-  const premiumExceptionCount = premiumRecords.filter((r) => r.status === 'exception').length
+  const pendingCount = billsData.filter((b: any) => b.status === 'pending-parse').length
+  const diffCount = diffsData.filter((d: any) => d.status === 'open').length
+  const premiumExceptionCount = premiumData.filter((r: any) => r.status === 'exception').length
 
   const stepTabs: Array<{
     id: TabId
@@ -1586,30 +1703,30 @@ export default function FinanceDashboardView(_props: Props) {
   ]
 
   const stats = [
-    { labelKey: 'financeSettlement.stats.totalBills', value: `${commissionBills.length}`, cls: 'gray' },
+    { labelKey: 'financeSettlement.stats.totalBills', value: `${billsData.length}`, cls: 'gray' },
     {
       labelKey: 'financeSettlement.stats.pending',
-      value: `${commissionBills.filter((b) => b.status === 'pending-parse' || b.status === 'exception').length}`,
+      value: `${billsData.filter((b: any) => b.status === 'pending-parse' || b.status === 'exception').length}`,
       cls: 'red',
     },
     {
       labelKey: 'financeSettlement.stats.receivable',
-      value: fmt(commissionBills.reduce((s, b) => s + b.totalCommission, 0)),
+      value: fmt(billsData.reduce((s: number, b: any) => s + (b.totalCommission || 0), 0)),
       cls: 'blue',
     },
     {
       labelKey: 'financeSettlement.stats.settled',
       value: fmt(
-        commissionBills
-          .filter((b) => b.status === 'settled')
-          .reduce((s, b) => s + (b.reconciledAmount ?? b.totalCommission), 0)
+        billsData
+          .filter((b: any) => b.status === 'settled')
+          .reduce((s: number, b: any) => s + (b.reconciledAmount ?? b.totalCommission ?? 0), 0)
       ),
       cls: 'green',
     },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#EEF3FF] via-[#F8F9FE] to-white p-4 sm:p-8">
+    <div>
       {/* 页头 — ground truth: H1 fs=22px fw=800 mb=0; Subtitle fs=13px #717786; TopBadges rounded=9px px=12 py=6 fs=12.5 */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
@@ -1646,8 +1763,8 @@ export default function FinanceDashboardView(_props: Props) {
                 onClick={() => setTab(st.id)}
                 className={`flex shrink-0 items-center gap-2 rounded-t-[10px] rounded-b-none px-4 py-2 text-left text-[13px] whitespace-nowrap transition-colors ${
                   active
-                    ? 'border-0 bg-[rgba(0,88,188,0.08)] text-[rgb(0,88,188)] font-bold'
-                    : 'border-0 bg-transparent text-[rgb(113,119,134)] font-normal hover:text-[rgb(24,28,35)]'
+                    ? 'bg-[rgba(0,88,188,0.08)] text-[rgb(0,88,188)] font-bold border-b-2 border-[#0058BC]'
+                    : 'bg-transparent text-[rgb(113,119,134)] font-normal hover:text-[rgb(24,28,35)] border-b-2 border-transparent'
                 }`}
               >
                 <Icon size={16} className="shrink-0" />
@@ -1669,20 +1786,30 @@ export default function FinanceDashboardView(_props: Props) {
         </div>
       </div>
 
-      {/* 统计 KPI — ground truth：裸 4 列无卡无 bg；标签 fs=11px #717786 fw=400；数值 fs=22px #181C23 fw=700 mt=0 */}
-      <div className="mb-8 flex flex-wrap gap-x-8 gap-y-4">
-        {stats.map((stat) => (
-          <div key={stat.labelKey} className="shrink-0">
-            <div className="text-[11px] whitespace-nowrap text-[rgb(113,119,134)] font-normal">{t(stat.labelKey)}</div>
-            <div className="mt-0 text-[22px] font-bold tabular-nums tracking-tight leading-none text-[#181C23]">
-              {stat.value}
-            </div>
-          </div>
-        ))}
+      {/* 统计 KPI — 佣金对账和差异处理Tab不显示顶层KPI */}
+      {tab !== 'reconcile' && tab !== 'diff' && (
+      <div className="mb-5 grid grid-cols-4 gap-3.5">
+        {stats.map((stat) => {
+          const color = stat.cls === 'gray' ? '#181C23'
+            : stat.cls === 'red' ? (stat.value === '0' ? '#1E8033' : '#C0392B')
+            : stat.cls === 'blue' ? '#0058BC'
+            : stat.cls === 'green' ? '#1E8033'
+            : '#181C23'
+          const tintKey = stat.cls === 'gray' ? 'blue' : stat.cls === 'red' ? (stat.value === '0' ? 'green' : 'red') : stat.cls
+          return (
+            <Card key={stat.labelKey} className="p-[18px_20px]" style={{ background: TINT[tintKey]?.bg, border: TINT[tintKey]?.bd }}>
+              <div className="text-[11px] text-[rgb(113,119,134)]">{t(stat.labelKey)}</div>
+              <div className="mt-1.5 text-[22px] font-bold tabular-nums tracking-tight leading-none" style={{ color }}>
+                {stat.value}
+              </div>
+            </Card>
+          )
+        })}
       </div>
+      )}
 
       {tab === 'import' && <BillImportTab onSelectBill={handleSelectBill} />}
-      {tab === 'parse' && <BillParseTab initialBillId={focusBillId ?? commissionBills[0].id} />}
+      {tab === 'parse' && <BillParseTab initialBillId={focusBillId ?? billsData[0]?.id ?? ''} />}
       {tab === 'reconcile' && <CommissionReconcileTab />}
       {tab === 'diff' && <DiffHandlingTab />}
       {tab === 'cycle' && <SettlementCycleTab />}

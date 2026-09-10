@@ -1,12 +1,17 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import authApiClient from '../lib/auth-api-client';
+import { userApiClient } from '../lib/user-api-client';
+import { refreshAccessToken } from '../lib/token-refresh';
 
 // TypeScript types
 export interface User {
   userId: string;
   username: string;
   email?: string;
-  role: string;
+  roles: string[];
+  authMethod?: string;
+  /** @deprecated use roles array */
+  role?: string;
 }
 
 interface AuthState {
@@ -37,20 +42,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
   });
 
+  const loadUserLanguagePreference = async (userId: string) => {
+    try {
+      const res = await userApiClient.get('/users/preferences/current');
+      const langCode = res.data?.data?.ovwr_language_code;
+      if (langCode && ['en-US', 'zh-CN'].includes(langCode)) {
+        // Dynamic import to avoid circular dependency with i18n config
+        const i18nModule = await import('../i18n/config');
+        const i18n = i18nModule.default as any;
+        if (i18n?.language !== langCode) {
+          await i18n.changeLanguage(langCode);
+        }
+        localStorage.setItem('user_language', langCode);
+        localStorage.setItem(`user_language_${userId}`, langCode);
+      }
+    } catch (error) {
+      console.warn('Failed to load user language preference:', error);
+    }
+  };
+
   // Initialize auth state from localStorage on mount
   useEffect(() => {
     try {
       const jwtToken = localStorage.getItem('auth.access_token');
       const userDataStr = localStorage.getItem('auth.user_info');
 
-      if (jwtToken && userDataStr) {
+      if (jwtToken && userDataStr && userDataStr !== 'undefined' && userDataStr !== 'null') {
         const user: User = JSON.parse(userDataStr);
         setState({
           user,
           isLoading: false,
           isAuthenticated: true,
         });
+        loadUserLanguagePreference(user.userId);
       } else {
+        // Clear stale/invalid tokens
+        localStorage.removeItem('auth.access_token');
+        localStorage.removeItem('auth.refresh_token');
+        localStorage.removeItem('auth.user_info');
         setState({
           user: null,
           isLoading: false,
@@ -59,6 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error initializing auth state:', error);
+      // Clear corrupted data
+      localStorage.removeItem('auth.access_token');
+      localStorage.removeItem('auth.refresh_token');
+      localStorage.removeItem('auth.user_info');
       setState({
         user: null,
         isLoading: false,
@@ -85,16 +118,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: false,
         isAuthenticated: true,
       });
+
+      // Load user's language preference from backend
+      loadUserLanguagePreference(userData.userId);
     } catch (error: any) {
       console.error('Login failed:', error);
       
       // Handle specific error cases
       if (error.response?.status === 401) {
-        throw new Error('Invalid username or password');
-      } else if (error.response?.status === 423) {
-        throw new Error('Account locked, please try again later');
+        throw new Error('用户名或密码错误');
+      } else if (error.response?.status === 400) {
+        throw new Error('请求参数无效，请检查输入');
+      } else if (error.response?.status === 403) {
+        const msg = error.response?.data?.message || '';
+        if (msg.includes('locked')) {
+          throw new Error('账户已锁定，请稍后再试');
+        } else if (msg.includes('deactivated') || msg.includes('inactive')) {
+          throw new Error('账户已停用，请联系管理员');
+        } else if (msg.includes('pending')) {
+          throw new Error('账户待激活，请验证邮箱');
+        }
+        throw new Error(msg || '访问被拒绝');
       } else {
-        throw new Error('Network error, please try again');
+        throw new Error('网络错误，请稍后再试');
       }
     }
   };
@@ -123,26 +169,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Refresh access token function
+  // Refresh access token function (uses shared lock to prevent concurrent refresh races)
   const refreshToken = async (): Promise<void> => {
     try {
-      const currentRefreshToken = localStorage.getItem('auth.refresh_token');
-      if (!currentRefreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      const response = await authApiClient.post('/refresh', {
-        refreshToken: currentRefreshToken,
-      });
-
-      const { accessToken } = response.data.data;
-
-      // Update stored access token
-      localStorage.setItem('auth.access_token', accessToken);
+      await refreshAccessToken();
     } catch (error: any) {
       console.error('Token refresh failed:', error);
-      
-      // If refresh fails, force logout
       if (error.response?.status === 401) {
         await logout();
       }

@@ -6,7 +6,6 @@
     "subtitleEdit": "修改产品配置将生成新版本，所有变更记录至审计日志",
     "saveDraft": "保存草稿",
     "saved": "已保存",
-    "submitAudit": "提交审核",
     "saveChanges": "保存修改"
   },
   "steps": {
@@ -24,7 +23,7 @@
     },
     "states": {
       "label": "可售州",
-      "desc": "获批销售的州列表及审批状态"
+      "desc": "已开通销售的州列表"
     },
     "documents": {
       "label": "产品文件",
@@ -32,7 +31,7 @@
     },
     "review": {
       "label": "确认提交",
-      "desc": "最终核对并提交审核"
+      "desc": "最终核对并提交"
     }
   },
   "sections": {
@@ -40,7 +39,6 @@
     "carrierRelation": "所属保险公司",
     "underwritingConfig": "核保规则配置",
     "issueAuthorization": "出单授权设置",
-    "stateApproval": "州级监管审批",
     "productFiles": "产品相关附件",
     "requiredDocs": "必需文件",
     "optionalDocs": "可选文件",
@@ -82,6 +80,13 @@
     "lobHEALTH": "HEALTH（健康保险）",
     "lobCOMMERCIAL": "COMMERCIAL（商业保险）",
     "lobP_C": "P&C（财产与责任保险）",
+    "lobCYBER": "CYBER（网络保险）",
+    "lobTRAVEL": "TRAVEL（旅行保险）",
+    "lobPROFESSIONAL": "PROFESSIONAL（专业责任险）",
+    "lobD_O": "D&O（董事高管责任险）",
+    "lobE_O": "E&O（职业疏忽险）",
+    "lobMARINE": "MARINE（海运保险）",
+    "lobSPECIALTY": "SPECIALTY（特种保险）",
     "Liability": "责任险",
     "Collision": "碰撞险",
     "Comprehensive": "全面险",
@@ -94,23 +99,57 @@
     "Term Life": "定期寿险",
     "Whole Life": "终身寿险",
     "Critical Illness": "重大疾病险",
+    "Personal Auto": "个人车险",
+    "Commercial Auto": "商业车险",
+    "Fleet Auto": "车队车险",
+    "Landlord": "房东保险",
+    "General Liability": "公众责任险",
+    "Commercial Property": "商业财产险",
+    "Workers Comp": "工伤保险",
+    "Cyber Liability": "网络责任险",
+    "Data Breach": "数据泄露险",
+    "Network Security": "网络安全险",
+    "Universal Life": "万能寿险",
+    "Single Trip": "单次行程险",
+    "Annual Multi-Trip": "年度多次行程险",
+    "Business Travel": "商务旅行险",
+    "Professional Liability": "职业责任险",
+    "Medical Malpractice": "医疗责任险",
+    "Architects & Engineers": "建筑师与工程师责任险",
+    "Directors & Officers": "董事高管责任险",
+    "Employment Practices": "雇佣行为责任险",
+    "Fiduciary Liability": "受托人责任险",
+    "Errors & Omissions": "疏漏责任险",
+    "Technology E&O": "科技疏漏责任险",
+    "Media Liability": "媒体责任险",
+    "Inland Marine": "内陆运输险",
+    "Ocean Marine": "海洋运输险",
+    "Cargo": "货物运输险",
+    "Event Insurance": "活动保险",
+    "Pet Insurance": "宠物保险",
+    "Warranty": "产品保修险",
+    "Surety": "保证保险",
     "typeIndividual": "个人险",
     "typeGroup": "团体险",
     "typeVoluntaryBenefits": "自愿福利险",
+    "typeIncomplete": "未完成",
     "statusOnSale": "在售",
     "statusPaused": "暂停销售",
     "statusOffSale": "停售",
-    "statusPending": "待审核",
+    "statusIncomplete": "草稿",
     "underwritingAuto": "自动核保",
     "underwritingManual": "人工核保",
     "underwritingMGA": "MGA 核保",
+    "renewalGuaranteed": "保证续保",
+    "renewalConditional": "有条件续保",
+    "renewalNonRenewable": "定期不续保",
     "nationwide": "全国"
   },
   "warnings": {
     "autoUnderwriting": "自动核保模式下，系统将基于预设规则即时评估投保申请。请确保规则逻辑严谨，避免误拒或漏放。",
     "manualUnderwriting": "人工核保模式需后台专员介入审核，平均处理时间 1-3 个工作日。",
     "mgaAuthority": "启用 MGA 独立核保权后，该渠道可在限额内自行决定承保/拒保，无需平台干预。",
-    "stateApprovalRequired": "每个州均需单独获得监管批准才能销售。未获批的州将无法生成保单。",
+    "stateScopeNote": "仅已勾选的州可销售该产品，未勾选的州无法生成保单。",
     "expiryWarning": "产品停售日期前 90 天系统将自动下架并通知渠道停止新单。"
   },
   "ratings": {
@@ -144,7 +183,7 @@
     "paymentMethod": "支付方式"
   },
   "documents": {
-    "uploadHint": "请上传产品相关资质文件。合同类文件提交后将进入法务审核流程。",
+    "uploadHint": "请上传产品相关资质文件，供渠道下载与查阅。",
     "clickUpload": "点击上传文件",
     "supportedFormats": "支持 PDF、Word、Excel；单文件不超过 50MB",
     "requiredDocs": "必须",
@@ -162,6 +201,7 @@
     "previousStep": "上一步",
     "nextStep": "下一步",
     "stepCount": "步骤 {current} / {total}",
+    "submitting": "提交中...",
     "backToList": "返回列表",
     "viewDetails": "查看详情"
   },
@@ -183,7 +223,6 @@
     "active": "在售",
     "paused": "暂停",
     "inactive": "停售",
-    "pending": "待审核",
     "resetFilters": "清除筛选",
     "sortBy": "排序",
     "premiumYTD": "本年保费",
@@ -202,10 +241,18 @@
     "batchDisable": "批量禁用",
     "export": "导出",
     "import": "导入",
-    "more": "更多操作",
+    "more": "更多",
     "list": "上架",
     "delist": "下架",
-    "cancel": "取消"
+    "offSale": "停售",
+    "pause": "暂停",
+    "cancel": "取消",
+    "selectBeforeExport": "请先选择要导出的数据"
+  },
+  "export": {
+    "relRatePlans": "费率方案",
+    "relStates": "可售州明细",
+    "relAuthorizations": "渠道授权"
   },
   "bulkActions": {
     "selectedCount": "已选择 {count} 个产品",
@@ -213,9 +260,11 @@
     "batchDisable": "批量禁用",
     "batchList": "批量上架",
     "batchDelist": "批量下架",
+    "batchDelete": "批量删除",
     "cancelSelection": "取消选择"
   },
   "emptyState": "暂无数据",
+  "loading": "加载中…",
   "pagination": {
     "totalCount": "共 {count} 条 · 第 {page} / {pages} 页",
     "pageSize": "每页 10 条",
@@ -231,8 +280,6 @@
   "authorizationCount": "累计授权记录",
   "activeAuths": "有效授权",
   "validNow": "当前有效",
-  "pendingApprovals": "待审批",
-  "awaitingReview": "等待审核中",
   "expiredAuths": "已过期",
   "needsRenewal": "需要续期",
   "totalAuthorizedLimit": "累计授权限额",
@@ -246,7 +293,6 @@
   "noAuthorizationsDescription": "暂无产品授权记录，请添加新的授权配置",
   "authStatus": {
     "active": "有效",
-    "pending": "待审批",
     "expired": "已过期",
     "revoked": "已撤销"
   },
@@ -277,7 +323,7 @@
       "ratePlan": "费率方案配置",
       "underwriting": "核保规则",
       "apiTesting": "API 集成与测试",
-      "review": "审核与提交"
+      "review": "确认与提交"
     },
     "guide": {
       "title": "接入指南",
@@ -285,7 +331,7 @@
       "step2": "输入基本信息和可售州",
       "step3": "配置费率和核保规则",
       "step4": "测试报价/核保 API",
-      "step5": "提交审批并发布"
+      "step5": "确认配置并发布"
     },
     "dataSource": {
       "title": "数据源选项",
@@ -297,14 +343,14 @@
     "notes": {
       "title": "重要提示",
       "item1": "所有 API 集成需要安全认证",
-      "item2": "费率表需经精算批准",
+      "item2": "费率表需经精算测算校验",
       "item3": "测试必须通过后才能部署生产",
-      "item4": "核保规则需要合规审查"
+      "item4": "核保规则需与承保团队确认后生效"
     },
     "nav": {
       "previous": "上一步",
       "next": "下一步",
-      "submit": "提交审批",
+      "submit": "提交",
       "submitting": "提交中...",
       "confirmSubmit": "确认并提交"
     },
@@ -340,8 +386,8 @@
       "quoteLocalTable": "本地费率表",
       "requirementsTitle": "费率配置要求",
       "req1": "费率表须包含年龄段、性别和地域因子",
-      "req2": "所有费率须经州监管机构备案批准",
-      "req3": "生效日期须与监管备案日期一致",
+      "req2": "所有费率须与精算测算结果一致",
+      "req3": "生效日期须与费率版本一致",
       "req4": "保留历史费率版本以备审计"
     },
     "underwriting": {
@@ -379,7 +425,7 @@
       "readyNext": "可以进入下一步"
     },
     "review": {
-      "title": "审核并提交上市审批",
+      "title": "确认并提交上架",
       "configTitle": "配置摘要",
       "productName": "产品名称",
       "productCode": "产品代码",
@@ -394,15 +440,10 @@
       "automatic": "自动",
       "manual": "人工",
       "testResults": "测试结果",
-      "testsPassed": "{count} 项测试通过",
-      "approvalTitle": "需要审批流程",
-      "approval1": "产品经理审查",
-      "approval2": "合规审查",
-      "approval3": "技术验证",
-      "approval4": "最终审批"
+      "testsPassed": "{count} 项测试通过"
     },
     "alert": {
-      "submitted": "产品已成功提交上市审批！"
+      "submitted": "产品已成功提交上架！"
     }
   },
   "list": {
@@ -431,7 +472,7 @@
       "normalRange": "正常范围",
       "highRetention": "↑ 高留存",
       "normal": "正常",
-      "pendingApproval": "{count} 待审批",
+      "suspended": "{count} 已暂停",
       "allActive": "全部生效",
       "onlineMonths": "已上线 {count} 月"
     },
@@ -466,14 +507,9 @@
     "rates": {
       "summary": "共 {total} 个费率方案 · {active} 个生效中",
       "add": "新增费率方案",
-      "submitApproval": "提交审批",
       "active": "生效中",
       "draft": "草稿",
       "expired": "已到期",
-      "pending": "待审批",
-      "filingApproved": "已备案",
-      "filingPending": "备案中",
-      "filingNotRequired": "免备案",
       "validity": "有效期：{from} ～ {to}",
       "baseRate": "基础费率",
       "minPremium": "最低保费",
@@ -502,10 +538,9 @@
     },
     "states": {
       "notAvail": "未开通",
+      "suspended": "已暂停",
       "search": "搜索州名或代码…",
-      "applyNewState": "申请新州",
-      "channels": "{count} 渠道",
-      "underReview": "审批中"
+      "channels": "{count} 渠道"
     },
     "underwriting": {
       "summary": "共 {total} 条规则 · {active} 条生效中 · {testing} 条测试中",
@@ -529,10 +564,12 @@
       "uwGuide": "核保手册",
       "compliance": "合规文件",
       "expiringSoon": "即将到期",
+      "inactive": "已失效",
       "requiredFor": "必读：{list}",
       "validUntil": "有效期至 {date}",
       "downloadsSuffix": "次下载",
       "download": "下载",
+      "noFile": "该材料为历史数据，未关联可下载文件",
       "empty": "暂无培训材料，点击「上传材料」添加"
     },
     "performance": {
@@ -554,7 +591,11 @@
       "selectLine": "选择业务线",
       "description": "产品描述",
       "descPlaceholder": "描述产品的核心价值、目标客群和主要特点…",
-      "coverageHint": "选择本产品包含的承保类别"
+      "coverageHint": "选择本产品包含的承保类别",
+      "uwModeHint": "自动核保由系统按预设规则即时决策；人工核保需后台专员审核；MGA 委托授权渠道在限额内自行核保",
+      "renewalHint": "保证续保：到期自动续保；有条件续保：满足条件后方可续保；定期不续保：保险期间届满后终止",
+      "termHint": "单张保单允许的最长保险期间，单位为年",
+      "termYearUnit": "年"
     },
     "rates": {
       "configTitle": "费率结构配置",
@@ -589,10 +630,10 @@
     "documents": {
       "title": "合规文件上传",
       "subtitle": "上传产品上架所需的合规文件，带 * 为必传材料。",
-      "filing": "产品备案表",
-      "filingHint": "各州监管机构要求的产品备案文件",
+      "filing": "产品条款文件",
+      "filingHint": "产品条款与保障责任说明文件",
       "rates": "费率文件",
-      "ratesHint": "费率测算模型及备案费率表",
+      "ratesHint": "费率测算模型及费率表",
       "guideHint": "渠道销售用产品说明手册",
       "uwManual": "核保规则手册",
       "uwHint": "详细核保规则和操作指引",
@@ -600,18 +641,135 @@
       "supports": "支持 {accept}",
       "justUploaded": "{name}-v1.0.pdf — 刚刚上传",
       "remove": "移除",
-      "upload": "上传"
+      "upload": "上传",
+      "uploading": "上传中…",
+      "preview": "预览",
+      "download": "下载",
+      "uploadFailed": "文件上传失败"
     },
     "feedback": {
       "stepDone": "已完成",
+      "stepIncomplete": "待完善",
       "created": "产品创建成功",
       "stepsProgress": "{done} / {total} 步完成",
       "updated": "产品信息已更新",
-      "redirecting": "正在跳转至产品列表…"
+      "redirecting": "正在跳转至产品列表…",
+      "saveFailed": "保存失败，请重试"
     },
-    "submitListing": "提交上架申请"
+    "errors": {
+      "enterData": "请录入相关数据",
+      "missingBasic": "请先完善基本信息：产品全称、产品编码、承保公司、业务线均为必填",
+      "missingRates": "请先完善费率配置：基础费率、最低保费、最高保费均为必填",
+      "missingUnderwriting": "请先完善核保配置：投保年龄下限与上限均为必填",
+      "missingStates": "请至少选择一个可售州",
+      "missingDocuments": "请上传全部必传的合规文件（产品条款文件、费率文件、产品说明手册）",
+      "fieldRequired": "此项为必填",
+      "codeDuplicate": "该产品编码已被占用，请更换后重试",
+      "codeAvailable": "该产品编码可用"
+    },
+    "submitListing": "提交上架"
   },
   "modals": {
+    "addRule": {
+      "title": "新增核保规则",
+      "subtitle": "规则创建后立即加入该产品的核保决策链",
+      "name": "规则名称",
+      "namePlaceholder": "如：无驾照申请人拒保",
+      "nameEn": "规则名称（英文）",
+      "category": "规则分类",
+      "action": "执行动作",
+      "priority": "优先级",
+      "condition": "触发条件（IF）",
+      "conditionPlaceholder": "如：申请人无有效驾照",
+      "conditionEn": "触发条件（英文）",
+      "conditionDetail": "条件说明",
+      "conditionDetailEn": "条件说明（英文）",
+      "actionValue": "动作结果（THEN）",
+      "actionValuePlaceholder": "如：拒保",
+      "actionValueEn": "动作结果（英文）",
+      "status": "规则状态",
+      "actions": {
+        "approve": "通过承保",
+        "decline": "拒保",
+        "refer": "转人工核保",
+        "surcharge": "附加保费",
+        "discount": "折扣优惠"
+      },
+      "statuses": {
+        "active": "生效中",
+        "testing": "测试中",
+        "inactive": "已停用"
+      },
+      "nameRequired": "请填写规则名称",
+      "conditionRequired": "请填写触发条件",
+      "cancel": "取消",
+      "submit": "创建规则",
+      "submitting": "创建中…",
+      "success": "核保规则已创建",
+      "failed": "创建核保规则失败"
+    },
+    "editRule": {
+      "title": "编辑核保规则",
+      "subtitle": "修改保存后立即对该产品的核保决策生效",
+      "submit": "保存修改",
+      "submitting": "保存中…"
+    },
+    "addRatePlan": {
+      "title": "新增费率方案",
+      "subtitle": "方案创建后立即加入该产品的费率体系",
+      "name": "方案名称",
+      "namePlaceholder": "如：标准个人车险费率（2026 版）",
+      "nameRequired": "请填写方案名称",
+      "tier": "方案档位",
+      "tiers": {
+        "Standard": "标准",
+        "Enhanced": "增强",
+        "Premium": "高端",
+        "Basic": "基础"
+      },
+      "status": "方案状态",
+      "effectiveDate": "生效日期",
+      "expiryDate": "失效日期",
+      "baseRateRequired": "请填写基础费率",
+      "premiumRangeInvalid": "最低保费不能高于最高保费",
+      "dateRangeInvalid": "失效日期不能早于生效日期",
+      "ratingFactors": "费率影响因子",
+      "addFactor": "添加因子",
+      "noFactor": "尚未配置影响因子，可不填；填写后权重合计建议为 100%",
+      "factorDesc": "说明（中文）",
+      "factorDescEn": "说明（英文）",
+      "weightSumWarn": "当前因子权重合计 {sum}%，建议合计为 100%",
+      "submit": "创建方案",
+      "submitting": "创建中…"
+    },
+    "editRatePlan": {
+      "title": "编辑费率方案",
+      "subtitle": "修改后立即对该产品的渠道报价生效",
+      "submit": "保存修改",
+      "submitting": "保存中…"
+    },
+    "uploadMaterial": {
+      "title": "上传培训材料",
+      "subtitle": "文件将上传至服务器并登记到该产品的培训材料库",
+      "pickFile": "点击选择文件",
+      "pickHint": "支持 PDF / Word / Excel / PPT / 图片，单个文件不超过 20MB",
+      "changeFile": "点击可更换文件",
+      "uploading": "文件上传中…",
+      "uploadFailed": "文件上传失败",
+      "fileRequired": "请先选择并上传文件",
+      "titleField": "材料标题",
+      "titleRequired": "请填写材料标题",
+      "titleEn": "材料标题（英文）",
+      "type": "材料类型",
+      "version": "版本号",
+      "requiredFor": "适用渠道",
+      "expiryDate": "有效期至",
+      "cancel": "取消",
+      "submit": "上传并登记",
+      "submitting": "提交中…",
+      "success": "培训材料已上传",
+      "failed": "上传培训材料失败"
+    },
     "statusModal": {
       "listTitle": "产品上架",
       "delistTitle": "产品下架",
@@ -628,15 +786,15 @@
       "scopeSelected": "指定州下架",
       "listReasonTitle": "上架原因",
       "delistReasonTitle": "下架原因",
-      "delistR1": "费率文件到期，待重新备案",
-      "delistR2": "监管要求暂停销售",
+      "delistR1": "费率文件到期，需更新费率方案",
+      "delistR2": "风控要求暂停销售",
       "delistR3": "产品迭代升级，替换为新版本",
       "delistR4": "该州市场退出",
       "delistR5": "承保公司要求下架",
       "delistR6": "业绩不达标，战略调整",
       "delistR7": "其他原因（请在备注中说明）",
-      "listR1": "监管审批已通过",
-      "listR2": "费率文件重新备案完成",
+      "listR1": "产品配置与费率文件已齐备",
+      "listR2": "费率文件已更新完成",
       "listR3": "市场重新开放",
       "listR4": "产品升级完成",
       "listR5": "其他原因",
@@ -650,7 +808,35 @@
       "verbDelist": "下架",
       "confirmTail": "。本操作将记录至审计日志。",
       "confirmListBtn": "确认上架",
-      "submitDelistBtn": "提交下架申请"
+      "submitDelistBtn": "确认下架"
     }
+  },
+  "menu": {
+    "activate": "生效",
+    "deactivate": "失效",
+    "markActive": "置为有效",
+    "markInactive": "置为无效",
+    "deleteConfirmTitle": "确认删除",
+    "deleteRuleConfirm": "确定删除核保规则「{name}」吗？删除后该规则将不再参与核保决策，且不可恢复。",
+    "deleteMaterialConfirm": "确定删除培训材料「{name}」吗？已上传的文件也会一并移除，且不可恢复。",
+    "deleteRatePlanConfirm": "确定删除费率方案「{name}」吗？删除后渠道报价将无法再使用该方案，且不可恢复。",
+    "confirmDelete": "确认删除",
+    "deleting": "删除中…",
+    "ruleUpdated": "核保规则已更新",
+    "ruleUpdateFailed": "更新核保规则失败",
+    "ruleStatusUpdated": "核保规则状态已更新",
+    "ruleStatusFailed": "更新核保规则状态失败",
+    "ruleDeleted": "核保规则已删除",
+    "ruleDeleteFailed": "删除核保规则失败",
+    "materialStatusUpdated": "培训材料状态已更新",
+    "materialStatusFailed": "更新培训材料状态失败",
+    "materialDeleted": "培训材料已删除",
+    "materialDeleteFailed": "删除培训材料失败",
+    "ratePlanCreated": "费率方案已创建",
+    "ratePlanCreateFailed": "创建费率方案失败",
+    "ratePlanUpdated": "费率方案已更新",
+    "ratePlanUpdateFailed": "更新费率方案失败",
+    "ratePlanDeleted": "费率方案已删除",
+    "ratePlanDeleteFailed": "删除费率方案失败"
   }
 }

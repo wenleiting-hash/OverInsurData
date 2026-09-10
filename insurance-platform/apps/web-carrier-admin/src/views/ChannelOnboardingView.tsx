@@ -26,12 +26,17 @@ import type { ViewId } from '@/App'
 
 /**
  * Channel onboarding & admission management view (pixel-perfect, aligned to Figma prototype)
- * Online application · Document review · NIPR / background / E&O verification · Contract signing · Account provisioning · Training certification
+ * Online application · Document verification · NIPR / background / E&O verification · Contract signing · Account provisioning · Training certification
+ *
+ * 本系统没有任何审批流程。入驻流程里的每个环节都是「资料核验 + 步骤推进」，
+ * 不存在「提交审批 → 批准/驳回」的审批门禁。
  */
 interface Props {
   navigateTo: (view: ViewId) => void
 }
 
+// 申请人所处入驻环节。注意：'pendingApproval' 只是历史枚举名，语义是「待生效」（资料已齐、
+// 等待账号开通生效），不是「待审批」；UI 文案统一取 onboardingView.status.pendingApproval。
 type ApplicantStatus =
   | 'training'
   | 'docReview'
@@ -49,7 +54,7 @@ interface Applicant {
   status: ApplicantStatus
   /** Completed steps (out of 10 total) */
   progress: number
-  reviewer: string
+  reviewer: string        // 跟进核验人（合规部），不是审批人
   reviewerEn: string
   email?: string
 }
@@ -65,7 +70,7 @@ const MOCK_APPLICANTS: Applicant[] = [
   { id: 'a7', name: 'Emily Chen', typeKey: 'individual', state: 'NJ', status: 'pendingApproval', progress: 4, reviewer: '王芳', reviewerEn: 'Wang Fang', email: 'emily.c@email.com' },
 ]
 
-// ============ Tab 2 document review mock ============
+// ============ Tab 2 document verification mock ============
 type DocStatus = 'passed' | 'failed' | 'warning'
 interface DocumentItem {
   id: string
@@ -174,7 +179,9 @@ const MOCK_TRAINING_ACCOUNTS = [
   },
 ]
 
-// ============ Tab 6 rejection & supplement mock ============
+// ============ Tab 6 退回与补充 mock ============
+// 本系统没有审批流程，所以这里不是「驳回审批」，而是「资料核验未通过→退回补充」：
+// 条目只记录退回原因、退回时间、需补充的材料与补充截止日，供申请人补件后重新核验。
 interface RejectionItem {
   id: string
   applicantName: string

@@ -39,6 +39,9 @@
     "copyRole": "Copy Role",
     "createRole": "Create Role",
     "saveChanges": "Save Changes",
+    "deleteRole": "Delete Role",
+    "deleteRoleConfirm": "Are you sure you want to delete role {name}? This action cannot be undone.",
+    "systemRoleNoActions": "System built-in roles cannot be modified",
     "savedToast": "Permission configuration saved",
     "roleList": "Role List",
     "systemBadge": "System",
@@ -56,8 +59,8 @@
       "dataDesc": "Control the data scope this role can access and view",
       "op": "Operation Permissions",
       "opDescPrefix": "Controls whether sensitive operations can be performed. ",
-      "approvalTerm": "“Approval”",
-      "opDescSuffix": " means the operation must go through an approval workflow before execution.",
+      "approvalTerm": "“Confirmation”",
+      "opDescSuffix": " means the operation requires a second confirmation before execution.",
       "highRiskWarning": "This role has high-risk operation permissions, please assign with caution"
     },
     "funcTree": {
@@ -168,12 +171,12 @@
         "desc": "Suspend all business of the channel"
       },
       "channel_approve": {
-        "label": "Approve Channel Onboarding",
-        "desc": "Approve or reject channel onboarding applications"
+        "label": "Confirm Channel Onboarding",
+        "desc": "Confirm or return channel onboarding applications"
       },
       "commission_approve": {
-        "label": "Approve Commission Scheme",
-        "desc": "Approve commission rate changes"
+        "label": "Confirm Commission Scheme",
+        "desc": "Confirm commission rate changes"
       },
       "commission_pay": {
         "label": "Initiate Settlement Payout",
@@ -211,7 +214,7 @@
     "opResult": {
       "allow": "Allow",
       "deny": "Deny",
-      "conditional": "Approval"
+      "conditional": "Confirmation"
     },
     "risk": {
       "high": "High Risk",
@@ -303,7 +306,7 @@
       "pending": "Pending"
     },
     "filters": {
-      "search": "Search name, username, email or phone...",
+      "search": "Search name, username, email...",
       "allStatus": "All Statuses",
       "allRoles": "All Roles",
       "allDepts": "All Departments",
@@ -318,6 +321,7 @@
       "lastLogin": "Recent Login",
       "actions": "Actions",
       "never": "Never logged in",
+      "noRoles": "No roles assigned",
       "empty": "No matching users found"
     },
     "footer": {
@@ -389,27 +393,19 @@
       "remarks": "Enter remarks (optional)"
     },
     "roles": {
-      "superAdmin": "Super Admin",
-      "opsAdmin": "Ops Admin",
-      "carrierAdmin": "Carrier Admin",
-      "agent": "Agent",
-      "channelManager": "Channel Manager",
-      "financeSpecialist": "Finance Specialist",
-      "readonly": "Readonly"
+      "super_admin": "Super Admin",
+      "ops_manager": "Ops Manager",
+      "channel_manager": "Channel Manager",
+      "finance_staff": "Finance Staff",
+      "readonly_user": "Read-Only User"
     },
     "depts": {
-      "tech": "Technology",
-      "ops": "Operations",
-      "finance": "Finance",
-      "channel": "Channel",
-      "compliance": "Compliance",
-      "marketing": "Marketing"
-    },
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive",
-      "locked": "Locked",
-      "pending": "Pending"
+      "TECH": "Technology",
+      "OPS": "Operations",
+      "FIN": "Finance",
+      "CHANNEL": "Channel",
+      "COMPLIANCE": "Compliance",
+      "MARKET": "Marketing"
     },
     "toast": {
       "created": "User created successfully",
@@ -425,7 +421,25 @@
       "updateFailed": "Failed to update user",
       "deleteFailed": "Failed to delete user",
       "passwordResetFailed": "Failed to reset password",
-      "toggleStatusFailed": "Failed to update account status"
+      "toggleStatusFailed": "Failed to update account status",
+      "cannotDisableSelf": "Cannot disable your own account"
+    }
+  },
+  "roleMgmt": {
+    "description": "Manage system roles and permission configurations",
+    "users": "Users",
+    "empty": "No matching roles found",
+    "footer": "{n} roles in total",
+    "roleNameEn": "Role Name (English)",
+    "toast": {
+      "created": "Role created successfully",
+      "updated": "Role updated successfully",
+      "deleted": "Role deleted"
+    },
+    "error": {
+      "createFailed": "Failed to create role",
+      "updateFailed": "Failed to update role",
+      "deleteFailed": "Failed to delete role"
     }
   }
 }

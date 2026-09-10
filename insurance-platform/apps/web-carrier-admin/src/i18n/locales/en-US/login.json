@@ -14,8 +14,10 @@
     "signIn": "Sign In",
     "forgotPassword": "Forgot password?",
     "emptyError": "Please enter your username and password",
-    "invalidCredentials": "Invalid username or password",
+    "invalidCredentials": "Please enter correct username and password!",
     "accountLocked": "Account locked, please try again in 1 hour",
+    "accountDeactivated": "This account has been deactivated, please contact administrator",
+    "accountPending": "Account pending activation, please verify your email",
     "networkError": "Network error, please try again"
   },
   "demo": {

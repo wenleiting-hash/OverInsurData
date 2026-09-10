@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ViewId } from '@/App';
 import { FileText, Download, Calendar, Filter, Plus, RefreshCw, Shield } from 'lucide-react';
+import { useReports, useGenerateReport } from '@/services/complianceService';
 
 interface ReportTemplate {
   id: string;
@@ -63,8 +64,8 @@ const mockTemplates: ReportTemplate[] = [
     id: 'tpl3',
     name: 'Appointment 申请月报',
     nameEn: 'Appointment Application Monthly Report',
-    description: '月度 Appointment 申请审批统计与趋势分析',
-    descriptionEn: 'Monthly appointment application approval statistics and trend analysis',
+    description: '月度 Appointment 申请处理统计与趋势分析',
+    descriptionEn: 'Monthly appointment application processing statistics and trend analysis',
     category: '申请管理',
     categoryEn: 'Application Management',
     frequency: 'monthly',
@@ -183,7 +184,7 @@ export default function ComplianceReportGeneratorView({ navigateTo }: Props) {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('reportGen.title')}</h1>
@@ -283,7 +284,7 @@ export default function ComplianceReportGeneratorView({ navigateTo }: Props) {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-100">
+            <thead className="bg-[rgba(246,248,255,0.9)]">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   {t('reportGen.colReportName')}
@@ -308,9 +309,9 @@ export default function ComplianceReportGeneratorView({ navigateTo }: Props) {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredData.map((report) => (
-                <tr key={report.id} className="hover:bg-gray-50 transition-colors">
+            <tbody className="bg-[rgba(255,255,255,0.95)] divide-y divide-[rgba(193,198,215,0.25)]">
+              {filteredData.map((report, idx) => (
+                <tr key={report.id} className="hover:bg-[rgba(246,248,255,0.55)] transition-colors" style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-semibold text-gray-900">{isEn ? report.templateNameEn : report.templateName}</div>
                   </td>

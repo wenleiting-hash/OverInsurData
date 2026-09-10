@@ -1,18 +1,21 @@
 /**
  * User Management Module
- * ✅ Fixed: Removed database constructor dependency
- * Uses mock data until real DB integration is configured
+ *
+ * Registers UserService, RoleService, and their controllers.
  */
 
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
+import { RoleService } from './role.service';
 import { UserController } from './user.controller';
-import { CreateUserDto, UpdateUserDto } from './dtos/user.dto';
+import { RoleController } from './role.controller';
+import { PasswordHashingService } from '../../common/services/password-hashing.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Module({
-  imports: [], // No external dependencies needed now (mock data)
-  controllers: [UserController],
-  providers: [UserService],
-  exports: [UserService],
+  imports: [],
+  controllers: [UserController, RoleController],
+  providers: [UserService, RoleService, PasswordHashingService, JwtAuthGuard],
+  exports: [UserService, RoleService, PasswordHashingService],
 })
 export class UserModule {}

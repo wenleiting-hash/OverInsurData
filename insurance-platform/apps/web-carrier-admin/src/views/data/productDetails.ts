@@ -20,9 +20,9 @@ export interface RatePlan {
   maxPremium: number
   effectiveDate: string
   expiryDate: string
-  status: 'active' | 'draft' | 'expired' | 'pending'
+  /** 本系统无审批流程：无 'pending'（待审批）态，也无监管备案（filingStatus）。 */
+  status: 'active' | 'draft' | 'expired'
   ratingFactors: { factor: RatingFactorKey; description: string; descriptionEn: string; weight: number }[]
-  filingStatus: 'approved' | 'pending' | 'not-required'
 }
 
 export interface ProductState {
@@ -30,8 +30,7 @@ export interface ProductState {
   name: string
   enabled: boolean
   effectiveDate?: string
-  filingNumber?: string
-  status: 'active' | 'pending' | 'suspended' | 'not-available'
+  status: 'active' | 'suspended' | 'not-available'
   channelCount?: number
 }
 
@@ -92,7 +91,6 @@ export const ratePlans: RatePlan[] = [
       { factor: 'creditScore', description: 'Credit-based insurance score', descriptionEn: 'Credit-based insurance score', weight: 0.20 },
       { factor: 'territory', description: '城市/郊区/农村区分', descriptionEn: 'Urban / suburban / rural tiering', weight: 0.20 },
     ],
-    filingStatus: 'approved',
   },
   {
     id: 'rp2', productId: 'p1001', name: 'Enhanced Auto',
@@ -105,14 +103,12 @@ export const ratePlans: RatePlan[] = [
       { factor: 'creditScore', description: 'Tier 1–6 分级', descriptionEn: 'Tier 1–6 banding', weight: 0.20 },
       { factor: 'usage', description: '通勤/商用/偶尔', descriptionEn: 'Commuting / business / pleasure', weight: 0.15 },
     ],
-    filingStatus: 'approved',
   },
   {
     id: 'rp3', productId: 'p1001', name: 'Q4 2025 Archived',
     tier: 'Standard', baseRate: 1190, minPremium: 460, maxPremium: 4000,
     effectiveDate: '2025-10-01', expiryDate: '2025-12-31', status: 'expired',
     ratingFactors: [],
-    filingStatus: 'approved',
   },
   {
     id: 'rp4', productId: 'p1006', name: 'High-Value Masterpiece',
@@ -124,7 +120,6 @@ export const ratePlans: RatePlan[] = [
       { factor: 'naturalRisk', description: '洪水/地震/飓风区', descriptionEn: 'Flood / earthquake / hurricane zones', weight: 0.25 },
       { factor: 'lossHistory', description: '过去 7 年理赔记录', descriptionEn: 'Claims record for the past 7 years', weight: 0.25 },
     ],
-    filingStatus: 'approved',
   },
   {
     id: 'rp5', productId: 'p1002', name: 'Enterprise Cyber Standard',
@@ -136,7 +131,6 @@ export const ratePlans: RatePlan[] = [
       { factor: 'securityPosture', description: '第三方安全扫描结果', descriptionEn: 'Third-party security scan results', weight: 0.30 },
       { factor: 'incidentHistory', description: '过去 5 年网络事件', descriptionEn: 'Cyber incidents in the past 5 years', weight: 0.15 },
     ],
-    filingStatus: 'not-required',
   },
   {
     id: 'rp6', productId: 'p1002', name: 'Enterprise Cyber Enhanced',
@@ -149,7 +143,6 @@ export const ratePlans: RatePlan[] = [
       { factor: 'securityPosture', description: 'BitSight / SecurityScorecard', descriptionEn: 'BitSight / SecurityScorecard', weight: 0.25 },
       { factor: 'supplyChain', description: '关键供应商数量', descriptionEn: 'Number of critical vendors', weight: 0.15 },
     ],
-    filingStatus: 'pending',
   },
 ]
 
@@ -173,15 +166,11 @@ const ALL_STATES: { code: string; name: string }[] = [
   { code: 'WI', name: 'Wisconsin' }, { code: 'WY', name: 'Wyoming' },
 ]
 
-// 与 mockProductData.products.availableStates 对齐的激活州；pending 州为演示数据
+// 与 mockProductData.products.availableStates 对齐的激活州
 const ACTIVE_CODES: Record<string, string[]> = {
   p1001: ['CA', 'NV', 'AZ'],
   p1002: ['NY', 'NJ', 'PA'],
   p1006: ['NY', 'CT'],
-}
-const PENDING_CODES: Record<string, string[]> = {
-  p1001: ['OR'],
-  p1006: ['NJ'],
 }
 
 // 确定性渠道数（避免 Math.random 每次渲染抖动）
@@ -189,14 +178,12 @@ const channelCountFor = (code: string) => 3 + (code.charCodeAt(0) * 7 + code.cha
 
 export function getProductStates(productId: string): ProductState[] {
   const activeSet = new Set(ACTIVE_CODES[productId] ?? ['CA', 'TX', 'NY'])
-  const pendingSet = new Set(PENDING_CODES[productId] ?? [])
   return ALL_STATES.map(s => ({
     code: s.code,
     name: s.name,
     enabled: activeSet.has(s.code),
-    status: pendingSet.has(s.code) ? 'pending' : activeSet.has(s.code) ? 'active' : 'not-available',
+    status: activeSet.has(s.code) ? 'active' : 'not-available',
     effectiveDate: activeSet.has(s.code) ? '2020-01-01' : undefined,
-    filingNumber: activeSet.has(s.code) ? `FL-${s.code}-${productId.toUpperCase()}-2020` : undefined,
     channelCount: activeSet.has(s.code) ? channelCountFor(s.code) : 0,
   }))
 }
@@ -257,8 +244,8 @@ export const underwritingRules: UnderwritingRule[] = [
     category: 'referral', priority: 6,
     condition: '驾龄 < 2年 AND credit_score < 580',
     conditionEn: 'drivingExperience < 2 years AND credit_score < 580',
-    conditionDetail: '新手驾驶员且信用分低于 580 需人工审核',
-    conditionDetailEn: 'Newly licensed drivers with a credit score below 580 require manual review',
+    conditionDetail: '新手驾驶员且信用分低于 580 需转人工核保',
+    conditionDetailEn: 'Newly licensed drivers with a credit score below 580 require manual underwriting review',
     action: 'refer', actionValue: '转标准核保团队，附加 15-25%', actionValueEn: 'Refer to standard underwriting team; apply 15–25% surcharge',
     status: 'testing', lastModified: '2026-08-01', modifiedBy: 'Liu Yang',
   },
@@ -277,8 +264,8 @@ export const underwritingRules: UnderwritingRule[] = [
     category: 'eligibility', priority: 2,
     condition: 'industry = Healthcare AND revenue > $1B',
     conditionEn: 'industry = Healthcare AND revenue > $1B',
-    conditionDetail: '医疗行业年收入超 10 亿需特别承保审批',
-    conditionDetailEn: 'Healthcare risks with annual revenue above $1B require special underwriting approval',
+    conditionDetail: '医疗行业年收入超 10 亿需转专业医疗险核保',
+    conditionDetailEn: 'Healthcare risks with annual revenue above $1B must be referred to specialty healthcare underwriting',
     action: 'refer', actionValue: '转专业医疗险承保委员会', actionValueEn: 'Refer to the Healthcare Professional Liability committee',
     status: 'active', lastModified: '2026-03-22', modifiedBy: 'Zhang Wei',
   },

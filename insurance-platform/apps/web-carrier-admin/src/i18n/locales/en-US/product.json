@@ -6,7 +6,6 @@
     "subtitleEdit": "Modifications will generate a new version. All changes are recorded in the audit log.",
     "saveDraft": "Save Draft",
     "saved": "Saved",
-    "submitAudit": "Submit for Review",
     "saveChanges": "Save Changes"
   },
   "steps": {
@@ -24,7 +23,7 @@
     },
     "states": {
       "label": "Available States",
-      "desc": "List of approved states and regulatory status"
+      "desc": "List of states where the product is on sale"
     },
     "documents": {
       "label": "Product Documents",
@@ -40,7 +39,6 @@
     "carrierRelation": "Carrier Relationship",
     "underwritingConfig": "Underwriting Rules",
     "issueAuthorization": "Issue Authorization Settings",
-    "stateApproval": "State Regulatory Approval",
     "productFiles": "Product Related Attachments",
     "requiredDocs": "Required Documents",
     "optionalDocs": "Optional Documents",
@@ -82,6 +80,13 @@
     "lobHEALTH": "HEALTH (Health Insurance)",
     "lobCOMMERCIAL": "COMMERCIAL (Commercial)",
     "lobP_C": "P&C (Property & Casualty)",
+    "lobCYBER": "CYBER (Cyber Liability)",
+    "lobTRAVEL": "TRAVEL (Travel Insurance)",
+    "lobPROFESSIONAL": "PROFESSIONAL (Professional Liability)",
+    "lobD_O": "D&O (Directors & Officers)",
+    "lobE_O": "E&O (Errors & Omissions)",
+    "lobMARINE": "MARINE (Marine Insurance)",
+    "lobSPECIALTY": "SPECIALTY (Specialty Lines)",
     "Liability": "Liability",
     "Collision": "Collision",
     "Comprehensive": "Comprehensive",
@@ -94,23 +99,57 @@
     "Term Life": "Term Life",
     "Whole Life": "Whole Life",
     "Critical Illness": "Critical Illness",
+    "Personal Auto": "Personal Auto",
+    "Commercial Auto": "Commercial Auto",
+    "Fleet Auto": "Fleet Auto",
+    "Landlord": "Landlord",
+    "General Liability": "General Liability",
+    "Commercial Property": "Commercial Property",
+    "Workers Comp": "Workers Comp",
+    "Cyber Liability": "Cyber Liability",
+    "Data Breach": "Data Breach",
+    "Network Security": "Network Security",
+    "Universal Life": "Universal Life",
+    "Single Trip": "Single Trip",
+    "Annual Multi-Trip": "Annual Multi-Trip",
+    "Business Travel": "Business Travel",
+    "Professional Liability": "Professional Liability",
+    "Medical Malpractice": "Medical Malpractice",
+    "Architects & Engineers": "Architects & Engineers",
+    "Directors & Officers": "Directors & Officers",
+    "Employment Practices": "Employment Practices",
+    "Fiduciary Liability": "Fiduciary Liability",
+    "Errors & Omissions": "Errors & Omissions",
+    "Technology E&O": "Technology E&O",
+    "Media Liability": "Media Liability",
+    "Inland Marine": "Inland Marine",
+    "Ocean Marine": "Ocean Marine",
+    "Cargo": "Cargo",
+    "Event Insurance": "Event Insurance",
+    "Pet Insurance": "Pet Insurance",
+    "Warranty": "Warranty",
+    "Surety": "Surety",
     "typeIndividual": "Individual",
     "typeGroup": "Group",
     "typeVoluntaryBenefits": "Voluntary Benefits",
+    "typeIncomplete": "Incomplete",
     "statusOnSale": "On Sale",
     "statusPaused": "Paused",
     "statusOffSale": "Off Sale",
-    "statusPending": "Pending",
+    "statusIncomplete": "Draft",
     "underwritingAuto": "Auto Underwriting",
     "underwritingManual": "Manual Underwriting",
     "underwritingMGA": "MGA Underwriting",
+    "renewalGuaranteed": "Guaranteed Renewal",
+    "renewalConditional": "Conditional Renewal",
+    "renewalNonRenewable": "Non-Renewable",
     "nationwide": "Nationwide"
   },
   "warnings": {
     "autoUnderwriting": "In automatic underwriting mode, applications are evaluated instantly based on predefined rules. Ensure logic is robust to avoid false rejections or approvals.",
     "manualUnderwriting": "Manual underwriting requires specialist intervention. Average processing time is 1-3 business days.",
     "mgaAuthority": "Enabling MGA independent authority allows the channel to approve/decline within limits without platform intervention.",
-    "stateApprovalRequired": "Each state requires separate regulatory approval before selling. Policies cannot be issued in unapproved states.",
+    "stateScopeNote": "The product can only be sold in the states selected below. Policies cannot be issued in unselected states.",
     "expiryWarning": "Products will be automatically disabled 90 days before expiration date with notifications sent to channels."
   },
   "ratings": {
@@ -144,7 +183,7 @@
     "paymentMethod": "Payment Method"
   },
   "documents": {
-    "uploadHint": "Upload relevant product qualification documents. Contract files will enter legal review upon submission.",
+    "uploadHint": "Upload relevant product qualification documents for channels to download and review.",
     "clickUpload": "Click to upload files",
     "supportedFormats": "Supports PDF, Word, Excel; single file max 50MB",
     "requiredDocs": "Required",
@@ -162,6 +201,7 @@
     "previousStep": "Previous",
     "nextStep": "Next",
     "stepCount": "Step {current} / {total}",
+    "submitting": "Submitting...",
     "backToList": "Back to List",
     "viewDetails": "View Details"
   },
@@ -183,7 +223,6 @@
     "active": "Active",
     "paused": "Paused",
     "inactive": "Inactive",
-    "pending": "Pending",
     "resetFilters": "Reset Filters",
     "sortBy": "Sort By",
     "premiumYTD": "Premium YTD",
@@ -205,7 +244,15 @@
     "more": "More",
     "list": "List",
     "delist": "Delist",
-    "cancel": "Cancel"
+    "offSale": "Off-sale",
+    "pause": "Pause",
+    "cancel": "Cancel",
+    "selectBeforeExport": "Please select data to export first"
+  },
+  "export": {
+    "relRatePlans": "Rate Plans",
+    "relStates": "State Details",
+    "relAuthorizations": "Channel Authorizations"
   },
   "bulkActions": {
     "selectedCount": "{count} selected",
@@ -213,9 +260,11 @@
     "batchDisable": "Batch Disable",
     "batchList": "Bulk List",
     "batchDelist": "Bulk Delist",
+    "batchDelete": "Bulk Delete",
     "cancelSelection": "Cancel Selection"
   },
   "emptyState": "No data yet",
+  "loading": "Loading…",
   "pagination": {
     "totalCount": "{count} total · Page {page} / {pages}",
     "pageSize": "10 per page",
@@ -231,8 +280,6 @@
   "authorizationCount": "Cumulative auth records",
   "activeAuths": "Active Auths",
   "validNow": "Currently valid",
-  "pendingApprovals": "Pending Approvals",
-  "awaitingReview": "Awaiting review",
   "expiredAuths": "Expired",
   "needsRenewal": "Needs renewal",
   "totalAuthorizedLimit": "Total Authorized Limit",
@@ -246,7 +293,6 @@
   "noAuthorizationsDescription": "No product authorization records found. Please add new authorization configuration.",
   "authStatus": {
     "active": "Active",
-    "pending": "Pending",
     "expired": "Expired",
     "revoked": "Revoked"
   },
@@ -277,7 +323,7 @@
       "ratePlan": "Rate Plan Configuration",
       "underwriting": "Underwriting Rules",
       "apiTesting": "API Integration & Testing",
-      "review": "Review & Submit for Approval"
+      "review": "Confirm & Submit"
     },
     "guide": {
       "title": "Onboarding Guide",
@@ -285,7 +331,7 @@
       "step2": "Enter basic info and available states",
       "step3": "Configure rates and underwriting rules",
       "step4": "Test quote/underwriting APIs",
-      "step5": "Submit for approval and publish"
+      "step5": "Confirm the configuration and publish"
     },
     "dataSource": {
       "title": "Data Source Options",
@@ -297,14 +343,14 @@
     "notes": {
       "title": "Important Notes",
       "item1": "All API integrations require security certification",
-      "item2": "Rate tables must be actuarially approved",
+      "item2": "Rate tables must be validated by actuarial modelling",
       "item3": "Testing must pass before production deployment",
-      "item4": "Underwriting rules need compliance review"
+      "item4": "Underwriting rules must be confirmed with the underwriting team"
     },
     "nav": {
       "previous": "Previous Step",
       "next": "Next Step",
-      "submit": "Submit for Approval",
+      "submit": "Submit",
       "submitting": "Submitting...",
       "confirmSubmit": "Confirm & Submit"
     },
@@ -340,8 +386,8 @@
       "quoteLocalTable": "Local Rate Table",
       "requirementsTitle": "Rate Configuration Requirements",
       "req1": "Rate table must include age bands, gender, and geographic factors",
-      "req2": "All rates must be filed and approved by state regulators",
-      "req3": "Effective date must match regulatory filing dates",
+      "req2": "All rates must match the actuarial modelling results",
+      "req3": "Effective date must match the rate version",
       "req4": "Maintain historical rate versions for audit trail"
     },
     "underwriting": {
@@ -379,7 +425,7 @@
       "readyNext": "Ready for next step"
     },
     "review": {
-      "title": "Review & Submit for Listing Approval",
+      "title": "Confirm & Submit for Listing",
       "configTitle": "Configuration Summary",
       "productName": "Product Name",
       "productCode": "Product Code",
@@ -394,15 +440,10 @@
       "automatic": "Automatic",
       "manual": "Manual",
       "testResults": "Test Results",
-      "testsPassed": "{count} tests passed",
-      "approvalTitle": "Approval Workflow Required",
-      "approval1": "Product Manager Review",
-      "approval2": "Compliance Review",
-      "approval3": "Technical Validation",
-      "approval4": "Final Approval"
+      "testsPassed": "{count} tests passed"
     },
     "alert": {
-      "submitted": "Product successfully submitted for listing approval!"
+      "submitted": "Product successfully submitted for listing!"
     }
   },
   "list": {
@@ -431,7 +472,7 @@
       "normalRange": "Within normal range",
       "highRetention": "↑ High retention",
       "normal": "Normal",
-      "pendingApproval": "{count} pending approval",
+      "suspended": "{count} suspended",
       "allActive": "All effective",
       "onlineMonths": "Live for {count} months"
     },
@@ -466,14 +507,9 @@
     "rates": {
       "summary": "{total} rate plans · {active} active",
       "add": "Add Rate Plan",
-      "submitApproval": "Submit for Approval",
       "active": "Active",
       "draft": "Draft",
       "expired": "Expired",
-      "pending": "Pending Approval",
-      "filingApproved": "Filed",
-      "filingPending": "Filing in Progress",
-      "filingNotRequired": "Filing Not Required",
       "validity": "Effective: {from} – {to}",
       "baseRate": "Base Rate",
       "minPremium": "Min Premium",
@@ -502,10 +538,9 @@
     },
     "states": {
       "notAvail": "Not Available",
+      "suspended": "Suspended",
       "search": "Search state name or code…",
-      "applyNewState": "Apply for New State",
-      "channels": "{count} channels",
-      "underReview": "Under Review"
+      "channels": "{count} channels"
     },
     "underwriting": {
       "summary": "{total} rules · {active} active · {testing} in testing",
@@ -529,10 +564,12 @@
       "faq": "FAQ",
       "video": "Video Course",
       "expiringSoon": "Expiring Soon",
+      "inactive": "Inactive",
       "requiredFor": "Required for: {list}",
       "validUntil": "Valid until {date}",
       "downloadsSuffix": "downloads",
       "download": "Download",
+      "noFile": "Legacy record — no downloadable file is attached",
       "empty": "No training materials yet — click \"Upload Material\" to add one"
     },
     "performance": {
@@ -554,7 +591,11 @@
       "selectLine": "Select a line",
       "description": "Description",
       "descPlaceholder": "Describe the core value, target customers, and key features of the product…",
-      "coverageHint": "Select the coverage categories included in this product"
+      "coverageHint": "Select the coverage categories included in this product",
+      "uwModeHint": "Auto: the system decides instantly by preset rules. Manual: an underwriter reviews each case. MGA: the channel underwrites itself within its delegated authority.",
+      "renewalHint": "Guaranteed: renews automatically at term end. Conditional: renews only when the conditions are met. Non-Renewable: terminates when the term expires.",
+      "termHint": "The longest policy term allowed for a single policy, in years",
+      "termYearUnit": "yr"
     },
     "rates": {
       "configTitle": "Rate Structure",
@@ -589,10 +630,10 @@
     "documents": {
       "title": "Compliance Documents",
       "subtitle": "Upload the compliance documents required for listing. Items marked * are mandatory.",
-      "filing": "Product Filing Form",
-      "filingHint": "Product filing documents required by state regulators",
-      "rates": "Rate Filing",
-      "ratesHint": "Rating model and filed rate tables",
+      "filing": "Product Wording",
+      "filingHint": "Policy wording and coverage documentation",
+      "rates": "Rate Document",
+      "ratesHint": "Rating model and rate tables",
       "guideHint": "Sales-facing product manual for channels",
       "uwManual": "Underwriting Rules Manual",
       "uwHint": "Detailed underwriting rules and operating guidelines",
@@ -600,18 +641,135 @@
       "supports": "Supports {accept}",
       "justUploaded": "{name}-v1.0.pdf — just uploaded",
       "remove": "Remove",
-      "upload": "Upload"
+      "upload": "Upload",
+      "uploading": "Uploading…",
+      "preview": "Preview",
+      "download": "Download",
+      "uploadFailed": "File upload failed"
     },
     "feedback": {
       "stepDone": "Completed",
+      "stepIncomplete": "Incomplete",
       "created": "Product Created",
       "stepsProgress": "{done} / {total} steps completed",
       "updated": "Product Updated",
-      "redirecting": "Redirecting to the product list…"
+      "redirecting": "Redirecting to the product list…",
+      "saveFailed": "Save failed, please try again"
     },
-    "submitListing": "Submit for Listing"
+    "errors": {
+      "enterData": "Please fill in the required data",
+      "missingBasic": "Complete the basic information first: product name, product code, carrier and line of business are all required",
+      "missingRates": "Complete the rate configuration first: base rate, minimum premium and maximum premium are all required",
+      "missingUnderwriting": "Complete the underwriting configuration first: minimum and maximum issue age are both required",
+      "missingStates": "Select at least one salable state",
+      "missingDocuments": "Upload all mandatory compliance files (product wording, rate document, product guide)",
+      "fieldRequired": "This field is required",
+      "codeDuplicate": "This product code is already in use — please choose another one",
+      "codeAvailable": "This product code is available"
+    },
+    "submitListing": "Submit Listing"
   },
   "modals": {
+    "addRule": {
+      "title": "Add Underwriting Rule",
+      "subtitle": "The rule joins this product's underwriting decision chain immediately",
+      "name": "Rule Name",
+      "namePlaceholder": "e.g. Decline applicants without a license",
+      "nameEn": "Rule Name (English)",
+      "category": "Category",
+      "action": "Action",
+      "priority": "Priority",
+      "condition": "Trigger Condition (IF)",
+      "conditionPlaceholder": "e.g. Applicant has no valid driver's license",
+      "conditionEn": "Trigger Condition (English)",
+      "conditionDetail": "Condition Detail",
+      "conditionDetailEn": "Condition Detail (English)",
+      "actionValue": "Action Result (THEN)",
+      "actionValuePlaceholder": "e.g. Decline",
+      "actionValueEn": "Action Result (English)",
+      "status": "Rule Status",
+      "actions": {
+        "approve": "Approve",
+        "decline": "Decline",
+        "refer": "Refer to underwriter",
+        "surcharge": "Surcharge",
+        "discount": "Discount"
+      },
+      "statuses": {
+        "active": "Active",
+        "testing": "Testing",
+        "inactive": "Inactive"
+      },
+      "nameRequired": "Rule name is required",
+      "conditionRequired": "Trigger condition is required",
+      "cancel": "Cancel",
+      "submit": "Create Rule",
+      "submitting": "Creating…",
+      "success": "Underwriting rule created",
+      "failed": "Failed to create underwriting rule"
+    },
+    "editRule": {
+      "title": "Edit Underwriting Rule",
+      "subtitle": "Changes take effect for this product's underwriting decisions as soon as they are saved",
+      "submit": "Save Changes",
+      "submitting": "Saving…"
+    },
+    "addRatePlan": {
+      "title": "Add Rate Plan",
+      "subtitle": "The plan joins this product's rating structure as soon as it is created",
+      "name": "Plan Name",
+      "namePlaceholder": "e.g. Standard Personal Auto Rate (2026)",
+      "nameRequired": "Please enter a plan name",
+      "tier": "Tier",
+      "tiers": {
+        "Standard": "Standard",
+        "Enhanced": "Enhanced",
+        "Premium": "Premium",
+        "Basic": "Basic"
+      },
+      "status": "Plan Status",
+      "effectiveDate": "Effective Date",
+      "expiryDate": "Expiry Date",
+      "baseRateRequired": "Please enter the base rate",
+      "premiumRangeInvalid": "The minimum premium cannot exceed the maximum premium",
+      "dateRangeInvalid": "The expiry date cannot be earlier than the effective date",
+      "ratingFactors": "Rating Factors",
+      "addFactor": "Add Factor",
+      "noFactor": "No rating factors yet — this is optional. When filled in, the weights should add up to 100%",
+      "factorDesc": "Description",
+      "factorDescEn": "Description (EN)",
+      "weightSumWarn": "Factor weights currently add up to {sum}% — 100% is recommended",
+      "submit": "Create Plan",
+      "submitting": "Creating…"
+    },
+    "editRatePlan": {
+      "title": "Edit Rate Plan",
+      "subtitle": "Changes take effect for this product's channel quotes immediately",
+      "submit": "Save Changes",
+      "submitting": "Saving…"
+    },
+    "uploadMaterial": {
+      "title": "Upload Training Material",
+      "subtitle": "The file is uploaded to the server and registered in this product's material library",
+      "pickFile": "Click to select a file",
+      "pickHint": "PDF / Word / Excel / PPT / images, up to 20MB per file",
+      "changeFile": "Click to replace the file",
+      "uploading": "Uploading file…",
+      "uploadFailed": "File upload failed",
+      "fileRequired": "Please select and upload a file first",
+      "titleField": "Material Title",
+      "titleRequired": "Material title is required",
+      "titleEn": "Material Title (English)",
+      "type": "Material Type",
+      "version": "Version",
+      "requiredFor": "Required For Channels",
+      "expiryDate": "Valid Until",
+      "cancel": "Cancel",
+      "submit": "Upload & Register",
+      "submitting": "Submitting…",
+      "success": "Training material uploaded",
+      "failed": "Failed to upload training material"
+    },
     "statusModal": {
       "listTitle": "List Product",
       "delistTitle": "Delist Product",
@@ -628,15 +786,15 @@
       "scopeSelected": "Delist in selected states",
       "listReasonTitle": "Listing Reason",
       "delistReasonTitle": "Delisting Reason",
-      "delistR1": "Rate filing expired — refiling required",
-      "delistR2": "Sales suspended by regulatory requirement",
+      "delistR1": "Rate document expired — rate plan needs an update",
+      "delistR2": "Sales suspended by risk-control requirement",
       "delistR3": "Product upgrade — replaced by a new version",
       "delistR4": "Market exit in this state",
       "delistR5": "Delisting requested by the carrier",
       "delistR6": "Performance shortfall — strategic adjustment",
       "delistR7": "Other (please specify in the note)",
-      "listR1": "Regulatory approval received",
-      "listR2": "Rate refiling completed",
+      "listR1": "Product configuration and rate documents are complete",
+      "listR2": "Rate document updated",
       "listR3": "Market reopened",
       "listR4": "Product upgrade completed",
       "listR5": "Other reason",
@@ -650,7 +808,35 @@
       "verbDelist": "delisting",
       "confirmTail": ". This action will be recorded in the audit log.",
       "confirmListBtn": "Confirm Listing",
-      "submitDelistBtn": "Submit Delisting Request"
+      "submitDelistBtn": "Confirm Delisting"
     }
+  },
+  "menu": {
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "markActive": "Mark as Active",
+    "markInactive": "Mark as Inactive",
+    "deleteConfirmTitle": "Confirm Deletion",
+    "deleteRuleConfirm": "Delete the underwriting rule \"{name}\"? It will no longer take part in underwriting decisions, and this cannot be undone.",
+    "deleteMaterialConfirm": "Delete the training material \"{name}\"? The uploaded file is removed as well, and this cannot be undone.",
+    "deleteRatePlanConfirm": "Delete the rate plan \"{name}\"? Channel quotations will no longer be able to use it, and this cannot be undone.",
+    "confirmDelete": "Delete",
+    "deleting": "Deleting…",
+    "ruleUpdated": "Underwriting rule updated",
+    "ruleUpdateFailed": "Failed to update the underwriting rule",
+    "ruleStatusUpdated": "Underwriting rule status updated",
+    "ruleStatusFailed": "Failed to update the underwriting rule status",
+    "ruleDeleted": "Underwriting rule deleted",
+    "ruleDeleteFailed": "Failed to delete the underwriting rule",
+    "materialStatusUpdated": "Training material status updated",
+    "materialStatusFailed": "Failed to update the training material status",
+    "materialDeleted": "Training material deleted",
+    "materialDeleteFailed": "Failed to delete the training material",
+    "ratePlanCreated": "Rate plan created",
+    "ratePlanCreateFailed": "Failed to create the rate plan",
+    "ratePlanUpdated": "Rate plan updated",
+    "ratePlanUpdateFailed": "Failed to update the rate plan",
+    "ratePlanDeleted": "Rate plan deleted",
+    "ratePlanDeleteFailed": "Failed to delete the rate plan"
   }
 }

@@ -24,6 +24,7 @@ const NAMESPACES = {
   product: 'product',
   channel: 'channel',
   permission: 'permission',
+  department: 'department',
   appointment: 'appointment',
   compliance: 'compliance',
   finance: 'finance',
@@ -103,6 +104,7 @@ export async function initLazyI18n(
     'product',
     'channel',
     'permission',
+    'department',
   ];
   
   await loadLocales(initialLng, primaryNamespaces);

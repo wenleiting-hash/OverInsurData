@@ -38,7 +38,7 @@
     "inactive": "非活动",
     "expired": "已过期",
     "suspended": "已暂停",
-    "pending": "审核中",
+    "pending": "待核发",
     "cancelled": "已取消"
   },
   "verificationStatus": {

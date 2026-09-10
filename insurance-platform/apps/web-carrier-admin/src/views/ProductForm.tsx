@@ -3,14 +3,16 @@
 // check + free jump, Field hint tooltips, rate-type cards, stable coverage/factor
 // keys resolved to i18n, submission success card, then redirect back to the list
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
-  ChevronLeft, ChevronRight, Check, AlertCircle, CheckCircle, Info, X,
-  Upload, FileText, AlertTriangle, XCircle,
+  ChevronLeft, ArrowLeft, ArrowRight, Send, AlertCircle, CheckCircle, Info, X,
+  Upload, FileText, AlertTriangle, XCircle, Package, Shield, Globe, BookOpen, Eye, Loader,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { InsuranceProduct } from './data/mockProductData'
-import { products } from './data/mockProductData'
+import { useGetProduct, useCreateProduct, useUpdateProduct } from '@/services/productService'
+import { useGetInsurers } from '@/services/insurerService'
+import { productApi } from '@/lib/user-api-client'
+import type { ProductDocument } from '@/lib/user-api-client'
 
 interface Props {
   productId?: string  // Edit mode has ID, create mode is undefined
@@ -42,7 +44,19 @@ const COVERAGE_BACKFILL: Record<string, CoverageKey> = {
   UninsuredMotorist: 'um',
   RoadsideAssistance: 'roadside',
   VehicleReplacement: 'substitute',
+  NewCarValue: 'newCarValue',
+  DeductibleWaiver: 'deductibleWaiver',
 }
+
+/** 大小写无关的 coverages 解析表：历史种子数据存 PascalCase 展示名（"Liability"），本表单提交的是
+ *  camelCase 稳定 key（"liability"）。两种写法都要能回填——否则编辑一次就会把已有 coverages 静默清空。 */
+const COVERAGE_LOOKUP: Record<string, CoverageKey> = {
+  ...Object.fromEntries(COVERAGE_KEYS.map(k => [k.toLowerCase(), k] as [string, CoverageKey])),
+  ...Object.fromEntries(Object.entries(COVERAGE_BACKFILL).map(([k, v]) => [k.toLowerCase(), v] as [string, CoverageKey])),
+}
+
+const toCoverageKey = (v: unknown): CoverageKey | undefined =>
+  typeof v === 'string' ? COVERAGE_LOOKUP[v.toLowerCase()] : undefined
 
 // 费率影响因子（稳定 key → detail.rates.fac* 标签）
 const FACTOR_KEYS = ['drivingRecord', 'vehicleType', 'drivingExperience', 'creditScore', 'territory', 'usage', 'ageBand', 'claimsHistory', 'vehicleValue', 'safetyEquip'] as const
@@ -62,6 +76,23 @@ const FACTOR_LABEL_KEYS: Record<FactorKey, string> = {
 }
 
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
+
+// PRD 3.2.3: 11 business lines + sub-line linkage
+const BUSINESS_LINES = ['Auto', 'Home', 'Commercial', 'Cyber', 'Life', 'Travel', 'Professional', 'D&O', 'E&O', 'Marine', 'Specialty'] as const
+
+const SUB_LINE_MAP: Record<string, string[]> = {
+  Auto: ['Personal Auto', 'Commercial Auto', 'Fleet Auto'],
+  Home: ['Homeowners', 'Renters', 'Condo', 'Landlord'],
+  Commercial: ['General Liability', 'Commercial Property', 'Workers Comp', 'BOP'],
+  Cyber: ['Cyber Liability', 'Data Breach', 'Network Security'],
+  Life: ['Term Life', 'Whole Life', 'Universal Life'],
+  Travel: ['Single Trip', 'Annual Multi-Trip', 'Business Travel'],
+  Professional: ['Professional Liability', 'Medical Malpractice', 'Architects & Engineers'],
+  'D&O': ['Directors & Officers', 'Employment Practices', 'Fiduciary Liability'],
+  'E&O': ['Errors & Omissions', 'Technology E&O', 'Media Liability'],
+  Marine: ['Inland Marine', 'Ocean Marine', 'Cargo'],
+  Specialty: ['Event Insurance', 'Pet Insurance', 'Warranty', 'Surety'],
+}
 
 interface FormData {
   productName: string
@@ -88,29 +119,92 @@ interface FormData {
   blacklistConditions?: string[]
   // Step 3: Available States
   availableStates?: string[]
-  // Step 4: Compliance Documents
-  uploadedFiles?: string[]
+  // Step 4: Compliance Documents — metadata persisted server-side (POST /api/uploads)
+  documents?: ProductDocument[]
+  // Step 0: 核保配置摘要（此前在 buildDto 里硬编码，详情页只能看到写死的 Auto/Guaranteed/1）
+  underwritingMode: string
+  renewalType: string
+  policyTermYears: number | string
 }
 
-// 垂直步骤导航（左侧）：图标 + 每步完成判定（原型 STEPS_META）
-const STEP_ICONS = [' ▪ ', ' ▪ ', ' ▪ ', ' ▪ ', ' ▪ ']
+// 垂直步骤导航（左侧）：图标对齐原型 V1.5 STEPS（Package/FileText/Shield/Globe/BookOpen）
+const STEP_ICONS = [Package, FileText, Shield, Globe, BookOpen]
 
-function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+// 产品文件步骤的必传文档 key（与 docList 中 required: true 的三项保持一致）
+const REQUIRED_DOC_KEYS = ['filing', 'rates', 'guide']
+
+/** 每个步骤的必填字段名（与 FormData 键同名），驱动 stepDone / 标红 / 提交校验三处逻辑。 */
+const STEP_FIELDS: string[][] = [
+  ['productName', 'productCode', 'insurerId', 'lineOfBusiness'],
+  ['baseRate', 'minPremium', 'maxPremium'],
+  ['ageMin', 'ageMax'],
+  ['availableStates'],
+  ['documents'],
+]
+
+/** 字段 → 所属步骤，用于只在被点名的那一步上标红。 */
+const FIELD_STEP: Record<string, number> = Object.fromEntries(
+  STEP_FIELDS.flatMap((fields, step) => fields.map(f => [f, step] as [string, number]))
+)
+
+// 核保模式 / 续保类型 / 保险期间可选项（PRD 3.2.1：自动/人工/MGA 委托；保证续保/有条件续保/定期不续保）
+const UNDERWRITING_MODES = ['Auto', 'Manual', 'MGA'] as const
+const RENEWAL_TYPES = ['Guaranteed', 'Conditional', 'NonRenewable'] as const
+const TERM_YEARS = [1, 2, 3, 5, 10] as const
+
+function Field({ label, required, hint, error, children }: { label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 18 }}>
-      <label style={{ fontSize: 13, fontWeight: 600, color: '#414755', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 7 }}>
+      <label style={{ fontSize: 13, fontWeight: 600, color: error ? '#BA1A1A' : '#414755', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 7 }}>
         {label}
         {required && <span style={{ color: '#BA1A1A' }}>*</span>}
         {hint && <span title={hint} style={{ display: 'inline-flex', cursor: 'help' }}><Info size={11} style={{ color: '#C1C6D7' }} /></span>}
       </label>
       {children}
+      {error && (
+        <div style={{ fontSize: 11.5, color: '#BA1A1A', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <AlertCircle size={11} />{error}
+        </div>
+      )}
     </div>
   )
 }
 
 export default function ProductForm({ productId, onBackToList }: Props) {
   const { t } = useTranslation('product')
-  const existing = productId ? products.find((p: InsuranceProduct) => p.productId === productId) : undefined
+  const { data: apiProduct, isLoading: isLoadingProduct } = useGetProduct(productId ?? null)
+  const createProduct = useCreateProduct()
+  const updateProduct = useUpdateProduct()
+  const { data: insurersResult } = useGetInsurers({ size: 100 })
+  const insurers = insurersResult?.data ?? []
+  const existing = apiProduct ? {
+    productName: apiProduct.product_name,
+    productCode: apiProduct.product_code,
+    insurerId: apiProduct.carrier_id,
+    type: apiProduct.product_type,
+    lineOfBusiness: apiProduct.line_of_business,
+    subLine: apiProduct.sub_line,
+    description: apiProduct.description,
+    coverages: apiProduct.coverages,
+    rateType: apiProduct.rate_type,
+    baseRate: apiProduct.base_rate,
+    minPremium: apiProduct.min_premium,
+    maxPremium: apiProduct.max_premium,
+    rateFactors: apiProduct.rate_factors,
+    effectiveDate: apiProduct.effective_date,
+    expirationDate: apiProduct.expiration_date,
+    ageMin: apiProduct.age_min,
+    ageMax: apiProduct.age_max,
+    excludeDUI: apiProduct.exclude_dui,
+    referHighValue: apiProduct.refer_high_value,
+    referThreshold: apiProduct.refer_threshold,
+    blacklistConditions: apiProduct.blacklist_conditions,
+    availableStates: apiProduct.available_states,
+    documents: apiProduct.documents,
+    underwritingMode: apiProduct.underwriting_mode,
+    renewalType: apiProduct.renewal_type,
+    policyTermYears: apiProduct.policy_term_years,
+  } : undefined
 
   const [currentStep, setCurrentStep] = useState(0)
   const [saved, setSaved] = useState(false)
@@ -130,11 +224,22 @@ export default function ProductForm({ productId, onBackToList }: Props) {
     rateFactors: ['drivingRecord', 'vehicleType', 'creditScore'],
     effectiveDate: '',
     expirationDate: '',
+    underwritingMode: 'Auto',
+    renewalType: 'Guaranteed',
+    policyTermYears: 1,
   })
   const [toastMessage, setToastMessage] = useState<string>('')
   const [showToast, setShowToast] = useState<boolean>(false)
+  const [toastType, setToastType] = useState<'success' | 'error'>('success')
+  const [saveError, setSaveError] = useState<string | null>(null)
+  // 逐步骤校验状态（对齐 InsurerForm）：errorStep 点名哪一步需要标红，submitError 是顶部横幅，
+  // attemptedSubmit 让左侧步骤条对每个未完成步骤持续给出警示，录入后自动消失。
+  const [errorStep, setErrorStep] = useState<number | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false)
+  const [codeStatus, setCodeStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
 
-  // Load edit data if exists
+  // Load edit data when API data arrives (fix: depend on apiProduct, not productId)
   useEffect(() => {
     if (productId && existing) {
       setFormData(prev => ({
@@ -142,17 +247,17 @@ export default function ProductForm({ productId, onBackToList }: Props) {
         productName: existing.productName,
         productCode: existing.productCode,
         insurerId: existing.insurerId,
-        type: existing.type,
+        type: existing.type ?? 'Individual',
         lineOfBusiness: existing.lineOfBusiness,
         subLine: existing.subLine || '',
         description: existing.description || '',
-        coverages: (existing.coverages ?? []).map(c => COVERAGE_BACKFILL[c]).filter(Boolean),
+        coverages: Array.from(new Set((existing.coverages ?? []).map(toCoverageKey).filter((k): k is CoverageKey => !!k))),
         rateType: existing.rateType === 'Flat' ? 'flat' : existing.rateType === 'UsageBased' ? 'usage' : 'tiered',
         baseRate: existing.baseRate ?? '',
         minPremium: existing.minPremium ?? '',
         maxPremium: existing.maxPremium ?? '',
         rateFactors: (existing.rateFactors ?? []).map(f => f.toLowerCase()),
-        effectiveDate: existing.effectiveDate.split('T')[0],
+        effectiveDate: existing.effectiveDate?.split('T')[0] || '',
         expirationDate: existing.expirationDate?.split('T')[0] || '',
         ageMin: existing.ageMin ?? '',
         ageMax: existing.ageMax ?? '',
@@ -161,13 +266,120 @@ export default function ProductForm({ productId, onBackToList }: Props) {
         referThreshold: existing.referThreshold ?? '',
         blacklistConditions: existing.blacklistConditions ?? [],
         availableStates: existing.availableStates ?? [],
+        documents: existing.documents ?? [],
+        underwritingMode: existing.underwritingMode || 'Auto',
+        renewalType: existing.renewalType || 'Guaranteed',
+        policyTermYears: existing.policyTermYears ?? 1,
       }))
     }
-  }, [productId])
+  }, [apiProduct?.product_name])
+
+  // 产品编码实时查重（防抖 500ms，对齐 InsurerForm 的 NAIC 查重）。编辑模式下编码未变则不查，
+  // 并传 excludeId 避免自己撞自己。
+  useEffect(() => {
+    const code = formData.productCode.trim()
+    if (!code) { setCodeStatus('idle'); return }
+    if (productId && existing?.productCode === code) { setCodeStatus('idle'); return }
+    setCodeStatus('checking')
+    const timer = setTimeout(async () => {
+      try {
+        const result = await productApi.checkCode(code, productId)
+        setCodeStatus(result.available ? 'available' : 'taken')
+      } catch { setCodeStatus('idle') }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [formData.productCode])
 
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [key]: value }))
   }
+
+  /** 字段是否已录入。数值字段用 !== '' 判定，避免 0 被当成未填。 */
+  const fieldFilled = (k: string): boolean => {
+    switch (k) {
+      case 'productName': return !!formData.productName.trim()
+      case 'productCode': return !!formData.productCode.trim()
+      case 'insurerId': return !!formData.insurerId
+      case 'lineOfBusiness': return !!formData.lineOfBusiness
+      case 'baseRate': return formData.baseRate !== '' && formData.baseRate !== undefined
+      case 'minPremium': return formData.minPremium !== '' && formData.minPremium !== undefined
+      case 'maxPremium': return formData.maxPremium !== '' && formData.maxPremium !== undefined
+      case 'ageMin': return formData.ageMin !== '' && formData.ageMin !== undefined
+      case 'ageMax': return formData.ageMax !== '' && formData.ageMax !== undefined
+      case 'availableStates': return (formData.availableStates?.length ?? 0) > 0
+      case 'documents': return REQUIRED_DOC_KEYS.every(dk => (formData.documents ?? []).some(d => d.key === dk))
+      default: return true
+    }
+  }
+
+  const missingFields = (i: number) => (STEP_FIELDS[i] ?? []).filter(k => !fieldFilled(k))
+
+  /** 被点名的那一步上、仍未录入的字段才标红；录入后红框自动消失。 */
+  const hasErr = (k: string) => errorStep !== null && FIELD_STEP[k] === errorStep && !fieldFilled(k)
+
+  const errBorder = (k: string): React.CSSProperties =>
+    hasErr(k) ? { borderColor: '#BA1A1A', background: 'rgba(186,26,26,0.04)' } : {}
+
+  const onFieldFocus = (k: string) => (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.borderColor = hasErr(k) ? '#BA1A1A' : '#0058BC'
+  }
+  const onFieldBlur = (k: string) => (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.borderColor = hasErr(k) ? '#BA1A1A' : 'rgba(24,28,35,0.1)'
+  }
+
+  // ── Step 4 real file upload ──
+  // A single hidden <input type="file"> is shared by all doc slots; uploadTargetDocKey records
+  // which slot triggered it so the returned metadata is stored against the right key.
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadTargetDocKey, setUploadTargetDocKey] = useState<string | null>(null)
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null)
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null)
+
+  /** Upload the picked file to POST /api/uploads, then persist the returned metadata into formData.documents. */
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // reset so the same file can be picked again after a failure
+    if (!file || !uploadTargetDocKey) return
+    const key = uploadTargetDocKey
+    setUploadingKey(key)
+    try {
+      const meta = await productApi.uploadDocument(file)
+      // setFormData (not updateField) to avoid a stale formData.documents closure
+      setFormData(prev => ({
+        ...prev,
+        documents: [
+          ...(prev.documents ?? []).filter(d => d.key !== key),
+          { key, name: meta.originalName, size: meta.size, url: meta.url, mimetype: meta.mimetype },
+        ],
+      }))
+    } catch (err: any) {
+      const raw = err?.response?.data?.message
+      const detail = Array.isArray(raw) ? raw.join('; ') : (typeof raw === 'string' ? raw : '')
+      showToastMessage(detail || t('form.documents.uploadFailed'), 'error')
+    } finally {
+      setUploadingKey(null)
+      setUploadTargetDocKey(null)
+    }
+  }
+
+  const removeDocument = (key: string) => {
+    setFormData(prev => ({ ...prev, documents: (prev.documents ?? []).filter(d => d.key !== key) }))
+  }
+
+  const closePreviewDoc = () => setPreviewDoc(null)
+
+  /** Open the shared file picker for a slot. accept is set imperatively because setState is async
+   *  and click() runs in the same tick — otherwise the picker would use the previous slot's filter. */
+  const openFilePicker = (key: string, accept: string) => {
+    setUploadTargetDocKey(key)
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = accept
+      fileInputRef.current.click()
+    }
+  }
+
+  const fmtSize = (bytes: number) =>
+    bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
 
   const toggleCoverage = (coverage: string) => {
     setFormData(prev => {
@@ -193,24 +405,140 @@ export default function ProductForm({ productId, onBackToList }: Props) {
     })
   }
 
-  const handleSaveDraft = () => {
-    setToastMessage(t('header.saved'))
+  const showToastMessage = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(msg)
+    setToastType(type)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
   }
 
-  // Per-step completion check (原型 stepDone)
-  const stepDone = (i: number) => {
-    if (i === 0) return !!formData.productName && !!formData.productCode && !!formData.insurerId && !!formData.lineOfBusiness
-    if (i === 1) return formData.baseRate !== '' && formData.minPremium !== '' && formData.maxPremium !== ''
-    if (i === 2) return formData.ageMin !== '' && formData.ageMin !== undefined && formData.ageMax !== '' && formData.ageMax !== undefined
-    if (i === 3) return (formData.availableStates?.length ?? 0) > 0
-    return true
+  // Per-step completion check (原型 stepDone) — 完全由 STEP_FIELDS + fieldFilled 推导，
+  // 与提交校验/标红共用同一份定义，不会出现“已标红但仍算完成”的不一致。
+  const stepDone = (i: number) => missingFields(i).length === 0
+
+  /** 用户主动切步骤（上一步/下一步/点左侧步骤）时清除校验提示，对齐 InsurerForm 的 goToStep。 */
+  const goToStep = (i: number) => {
+    setCurrentStep(i)
+    setErrorStep(null)
+    setSubmitError(null)
+  }
+
+  /** 数值字段→ DTO：0 是合法值，不能用真值判定丢掉（原来 ageMin=0 / baseRate=0 会被当成未填）。 */
+  const numOrUndef = (v: number | string | undefined) =>
+    v === '' || v === undefined || v === null ? undefined : Number(v)
+
+  // Build DTO from form data (submit)
+  const buildDto = () => ({
+    carrier_id: formData.insurerId,
+    product_name: formData.productName.trim(),
+    product_code: formData.productCode.trim(),
+    line_of_business: formData.lineOfBusiness,
+    sub_line: formData.subLine || undefined,
+    product_type: formData.type,
+    description: formData.description || undefined,
+    coverages: formData.coverages,
+    rate_type: formData.rateType === 'flat' ? 'Flat' : formData.rateType === 'usage' ? 'UsageBased' : 'Tiered',
+    base_rate: numOrUndef(formData.baseRate),
+    min_premium: numOrUndef(formData.minPremium),
+    max_premium: numOrUndef(formData.maxPremium),
+    rate_factors: formData.rateFactors,
+    effective_date: formData.effectiveDate ? new Date(formData.effectiveDate).toISOString() : new Date().toISOString(),
+    expiration_date: formData.expirationDate ? new Date(formData.expirationDate).toISOString() : undefined,
+    age_min: numOrUndef(formData.ageMin),
+    age_max: numOrUndef(formData.ageMax),
+    exclude_dui: formData.excludeDUI ?? false,
+    refer_high_value: formData.referHighValue ?? false,
+    refer_threshold: numOrUndef(formData.referThreshold),
+    blacklist_conditions: formData.blacklistConditions,
+    available_states: formData.availableStates,
+    documents: formData.documents,
+    underwriting_mode: formData.underwritingMode || 'Auto',
+    renewal_type: formData.renewalType || 'Guaranteed',
+    policy_term_years: numOrUndef(formData.policyTermYears) ?? 1,
+    // 编辑时不回写上架状态：否则把一个已暂停/已停售的产品“保存修改”会静默改回 Active。
+    ...(productId ? {} : { status: 'Active', is_active: true }),
+  })
+
+  /** 校验指定步骤；缺字段就标红 + 弹横幅并返回 false。 */
+  const validateStep = (i: number, message: string) => {
+    if (missingFields(i).length === 0) return true
+    setErrorStep(i)
+    setSubmitError(message)
+    return false
+  }
+
+  const stepErrorMsg = [
+    t('form.errors.missingBasic'),
+    t('form.errors.missingRates'),
+    t('form.errors.missingUnderwriting'),
+    t('form.errors.missingStates'),
+    t('form.errors.missingDocuments'),
+  ]
+
+  /** “下一步”不再静默 disabled（原来用户以为按钮坏了）：本步未录齐就就地标红 + 提示，录齐就跳转。 */
+  const handleNext = () => {
+    if (!validateStep(currentStep, stepErrorMsg[currentStep])) return
+    // 编码已被占用时不让人带着必失败的表单往后走
+    if (currentStep === 0 && codeStatus === 'taken') {
+      setErrorStep(0)
+      setSubmitError(t('form.errors.codeDuplicate'))
+      return
+    }
+    goToStep(currentStep + 1)
   }
 
   const handleSubmit = () => {
-    setSaved(true)
-    setTimeout(onBackToList, 1200)
+    setSaveError(null)
+    // 逐步检查，定位第一个不完整的步骤并跳过去（对齐 InsurerForm）；
+    // 同时置 attemptedSubmit 让左侧步骤条对每个未完成步骤给出警示。
+    const firstIncomplete = stepLabels.findIndex((_, i) => !stepDone(i))
+    if (firstIncomplete !== -1) {
+      setAttemptedSubmit(true)
+      setCurrentStep(firstIncomplete)
+      setErrorStep(firstIncomplete)
+      setSubmitError(t('form.errors.enterData'))
+      showToastMessage(t('form.errors.enterData'), 'error')
+      return
+    }
+    if (codeStatus === 'taken') {
+      setAttemptedSubmit(true)
+      setCurrentStep(0)
+      setErrorStep(0)
+      setSubmitError(t('form.errors.codeDuplicate'))
+      showToastMessage(t('form.errors.codeDuplicate'), 'error')
+      return
+    }
+    setAttemptedSubmit(false)
+    setErrorStep(null)
+    setSubmitError(null)
+    const dto = buildDto()
+    // 成功：toast 提示并返回列表；失败：弹出后端错误信息
+    // （此前仅有 onSuccess、无 onError，导致保存失败时按钮从"提交中"恢复后静默无响应）
+    const onSuccess = () => {
+      setSaved(true)
+      showToastMessage(productId ? t('form.feedback.updated') : t('form.feedback.created'), 'success')
+      setTimeout(onBackToList, 1200)
+    }
+    const onError = (err: any) => {
+      const data = err?.response?.data
+      const raw = data?.message
+      const detail = Array.isArray(raw) ? raw.join('; ') : (typeof raw === 'string' ? raw : '')
+      // 409 产品编码重复：后端已给出 field，直接把红框打到编码输入框上
+      if (err?.response?.status === 409 && data?.field === 'product_code') {
+        setCodeStatus('taken')
+        setCurrentStep(0)
+        setErrorStep(0)
+      }
+      const msg = detail ? `${t('form.feedback.saveFailed')}：${detail}` : t('form.feedback.saveFailed')
+      setSaveError(msg)
+      setSubmitError(msg)
+      showToastMessage(msg, 'error')
+    }
+    if (productId) {
+      updateProduct.mutate({ id: productId, dto }, { onSuccess, onError })
+    } else {
+      createProduct.mutate(dto, { onSuccess, onError })
+    }
   }
 
   const stepLabels = [
@@ -220,7 +548,9 @@ export default function ProductForm({ productId, onBackToList }: Props) {
     t('steps.states.label'),
     t('steps.documents.label'),
   ]
-  const doneCount = [0, 1, 2, 3, 4].filter(stepDone).length
+
+  // 提交中状态（对齐 InsurerForm 的 isSubmitting，用于禁用提交按钮）
+  const isSubmitting = createProduct.isPending || updateProduct.isPending
 
   const coverageLabels: Record<CoverageKey, string> = Object.fromEntries(
     COVERAGE_KEYS.map(k => [k, t(COVERAGE_LABEL_KEYS[k])])
@@ -286,7 +616,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
     <div className="w-full h-full flex">
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div style={{ padding: '32px 36px', maxWidth: '1440px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
           {/* Header */}
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -314,10 +644,13 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                 {stepLabels.map((label, idx) => {
                   const isActive = idx === currentStep
                   const isDone = stepDone(idx)
+                  const StepIcon = STEP_ICONS[idx]
+                  // 提交/下一步失败后，未完成的步骤持续给出琥珀色警示；录入齐全后自动消失
+                  const warn = attemptedSubmit && !isDone
                   return (
                     <div
                       key={idx}
-                      onClick={() => setCurrentStep(idx)}
+                      onClick={() => goToStep(idx)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -337,56 +670,72 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                         width: '32px',
                         height: '32px',
                         borderRadius: '50%',
-                        background: isDone && !isActive
-                          ? 'rgba(52,199,89,0.12)'
-                          : isActive
-                            ? 'rgba(0, 88, 188, 0.15)'
-                            : 'rgba(247,248,250,0.8)',
+                        background: isActive
+                          ? 'rgba(0, 88, 188, 0.15)'
+                          : isDone
+                            ? 'rgba(52,199,89,0.12)'
+                            : warn
+                              ? 'rgba(255,149,0,0.14)'
+                              : 'rgba(247,248,250,0.8)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: isDone && !isActive ? '#34C759' : isActive ? '#0058BC' : '#9CA3AF'
+                        color: isActive ? '#0058BC' : isDone ? '#34C759' : warn ? '#a05800' : '#9CA3AF'
                       }}>
-                        {isDone && !isActive ? <CheckCircle size={16} /> : <span style={{ fontSize: 13 }}>{STEP_ICONS[idx].trim()}</span>}
+                        {/* 当前步骤只要已录齐就立即打勾——此前 isDone && !isActive 导致最后一步（产品文件）
+                            上传完也永远停在蓝色激活态，看起来像没生效 */}
+                        {isDone
+                          ? <CheckCircle size={16} style={{ color: '#34C759' }} />
+                          : warn
+                            ? <AlertCircle size={16} />
+                            : <StepIcon size={16} />}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{
                           fontSize: '14px',
                           fontWeight: isActive ? 600 : 500,
-                          color: isActive ? '#0058BC' : isDone && !isActive ? '#34C759' : '#404757'
+                          color: isActive ? '#0058BC' : isDone ? '#34C759' : warn ? '#a05800' : '#404757'
                         }}>
                           {label}
                         </div>
-                        {isDone && !isActive && (
+                        {isDone && (
                           <div style={{ fontSize: '12px', color: '#34C759', marginTop: '2px' }}>
                             {t('form.feedback.stepDone')}
+                          </div>
+                        )}
+                        {warn && (
+                          <div style={{ fontSize: '12px', color: '#a05800', marginTop: '2px' }}>
+                            {t('form.feedback.stepIncomplete')}
                           </div>
                         )}
                       </div>
                     </div>
                   )
                 })}
-
-                {/* Progress */}
-                <div style={{ marginTop: '20px', padding: '0 16px' }}>
-                  <div style={{ height: '4px', background: 'rgba(247,248,250,0.8)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${(doneCount / stepLabels.length) * 100}%`,
-                      height: '100%',
-                      background: '#34C759',
-                      transition: 'width 0.3s'
-                    }} />
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '8px', textAlign: 'center' }}>
-                    {t('form.feedback.stepsProgress', { done: doneCount, total: stepLabels.length })}
-                  </div>
-                </div>
               </div>
             </div>
 
             {/* Right: Form Content */}
             <div style={{ flex: 1 }}>
               <div className="glass-card rounded-xl" style={{ padding: '28px' }}>
+                {/* 校验/保存失败横幅（此前 saveError 只写进了 state、从未渲染，用户只能看到 3 秒就消失的 toast） */}
+                {submitError && (
+                  <div style={{
+                    marginBottom: 20, padding: '12px 16px', borderRadius: 12,
+                    background: 'rgba(186,26,26,0.06)', border: '1px solid rgba(186,26,26,0.2)',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}>
+                    <AlertCircle size={16} style={{ color: '#BA1A1A', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#BA1A1A', wordBreak: 'break-word' }}>{submitError}</span>
+                    <button
+                      onClick={() => { setSubmitError(null); setErrorStep(null) }}
+                      style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#BA1A1A', fontSize: 13, padding: 0, flexShrink: 0 }}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                )}
+
                 {currentStep === 0 && (
                   <>
                     <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#181C23', marginBottom: '24px' }}>
@@ -395,47 +744,67 @@ export default function ProductForm({ productId, onBackToList }: Props) {
 
                     {/* Row 1: 产品全称 + 产品代码 */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
-                      <Field label={t('fields.productName')} required>
+                      <Field label={t('fields.productName')} required error={hasErr('productName') ? t('form.errors.fieldRequired') : undefined}>
                         <input
                           {...INPUT}
                           className="input-glass"
                           placeholder={t('fields.productNamePlaceholder')}
                           value={formData.productName}
                           onChange={e => updateField('productName', e.target.value)}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                          style={errBorder('productName')}
+                          onFocus={onFieldFocus('productName')}
+                          onBlur={onFieldBlur('productName')}
                         />
                       </Field>
-                      <Field label={t('fields.productCode')} required hint={t('fields.productCodeHint')}>
-                        <input
-                          {...INPUT}
-                          className="input-glass"
-                          placeholder="TRV-AUTO-001"
-                          value={formData.productCode}
-                          onChange={e => updateField('productCode', e.target.value)}
-                          style={{ ...INPUT, textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace" }}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
-                        />
+                      <Field label={t('fields.productCode')} required hint={t('fields.productCodeHint')} error={hasErr('productCode') ? t('form.errors.fieldRequired') : undefined}>
+                        <div className="relative">
+                          <input
+                            {...INPUT}
+                            className="input-glass"
+                            placeholder="TRV-AUTO-001"
+                            value={formData.productCode}
+                            onChange={e => updateField('productCode', e.target.value)}
+                            style={{ ...INPUT, textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", paddingRight: codeStatus !== 'idle' ? 34 : undefined, ...errBorder('productCode'), ...(codeStatus === 'taken' ? { borderColor: '#BA1A1A', background: 'rgba(186,26,26,0.04)' } : {}), ...(codeStatus === 'available' ? { borderColor: '#34C759', background: 'rgba(52,199,89,0.04)' } : {}) }}
+                            onFocus={onFieldFocus('productCode')}
+                            onBlur={onFieldBlur('productCode')}
+                          />
+                          {codeStatus !== 'idle' && (
+                            <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}>
+                              {codeStatus === 'checking' && <Loader size={15} style={{ color: '#717786', animation: 'spin 1s linear infinite' }} />}
+                              {codeStatus === 'available' && <CheckCircle size={15} style={{ color: '#34C759' }} />}
+                              {codeStatus === 'taken' && <AlertCircle size={15} style={{ color: '#BA1A1A' }} />}
+                            </div>
+                          )}
+                        </div>
+                        {codeStatus === 'taken' && (
+                          <div style={{ fontSize: 11.5, color: '#BA1A1A', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <AlertCircle size={11} />{t('form.errors.codeDuplicate')}
+                          </div>
+                        )}
+                        {codeStatus === 'available' && (
+                          <div style={{ fontSize: 11.5, color: '#34C759', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <CheckCircle size={11} />{t('form.errors.codeAvailable')}
+                          </div>
+                        )}
                       </Field>
 
                       {/* Row 2: 承保保险公司 + 产品类型 */}
-                      <Field label={t('sections.carrierRelation')} required>
+                      <Field label={t('sections.carrierRelation')} required error={hasErr('insurerId') ? t('form.errors.fieldRequired') : undefined}>
                         <select
                           {...INPUT}
                           className="input-glass"
                           value={formData.insurerId}
                           onChange={e => updateField('insurerId', e.target.value)}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                          style={errBorder('insurerId')}
+                          onFocus={onFieldFocus('insurerId')}
+                          onBlur={onFieldBlur('insurerId')}
                         >
                           <option value="">{t('form.basic.selectInsurer')}</option>
-                          <option value="c1001">Travelers</option>
-                          <option value="c1002">Chubb</option>
-                          <option value="c1005">State Farm</option>
-                          <option value="c1006">The Hartford</option>
-                          <option value="c1007">Allstate</option>
-                          <option value="c1008">Progressive</option>
+                          {insurers.map(ins => (
+                            <option key={ins.carrier_id || ins.id} value={ins.carrier_id || ins.id}>
+                              {ins.carrier_name} ({ins.naic_code})
+                            </option>
+                          ))}
                         </select>
                       </Field>
                       <Field label={t('fields.productType')} required>
@@ -476,23 +845,21 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                         </div>
                       </Field>
 
-                      {/* Row 3: 业务线 + 业务子线 */}
-                      <Field label={t('fields.lineOfBusiness')} required>
+                      {/* Row 3: 业务线 + 业务子线 (PRD 3.2.3: 11 LOB + sub-line linkage) */}
+                      <Field label={t('fields.lineOfBusiness')} required error={hasErr('lineOfBusiness') ? t('form.errors.fieldRequired') : undefined}>
                         <select
                           {...INPUT}
                           className="input-glass"
                           value={formData.lineOfBusiness}
-                          onChange={e => updateField('lineOfBusiness', e.target.value)}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                          onChange={e => { updateField('lineOfBusiness', e.target.value); updateField('subLine', '') }}
+                          style={errBorder('lineOfBusiness')}
+                          onFocus={onFieldFocus('lineOfBusiness')}
+                          onBlur={onFieldBlur('lineOfBusiness')}
                         >
                           <option value="">{t('form.basic.selectLine')}</option>
-                          <option value="AUTO">{t('values.lobAUTO')}</option>
-                          <option value="HOME">{t('values.lobHOME')}</option>
-                          <option value="LIFE">{t('values.lobLIFE')}</option>
-                          <option value="HEALTH">{t('values.lobHEALTH')}</option>
-                          <option value="COMMERCIAL">{t('values.lobCOMMERCIAL')}</option>
-                          <option value="P&C">{t('values.lobP_C')}</option>
+                          {BUSINESS_LINES.map(lob => (
+                            <option key={lob} value={lob.toUpperCase().replace('&', '_')}>{t(`values.lob${lob.toUpperCase().replace('&', '_')}`, lob)}</option>
+                          ))}
                         </select>
                       </Field>
                       <Field label={t('fields.subLine')} required>
@@ -505,15 +872,62 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                           onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                         >
                           <option value="">{t('fields.subLinePlaceholder')}</option>
-                          <option value="Liability">{t('values.Liability')}</option>
-                          <option value="Collision">{t('values.Collision')}</option>
-                          <option value="Comprehensive">{t('values.Comprehensive')}</option>
-                          <option value="Medical Payments">{t('values.Medical Payments')}</option>
+                          {(SUB_LINE_MAP[formData.lineOfBusiness] || SUB_LINE_MAP[Object.keys(SUB_LINE_MAP).find(k => k.toUpperCase().replace('&', '_') === formData.lineOfBusiness) || ''] || []).map(sub => (
+                            // 选项文案走 values.* 查表（与详情页/列表页同一口径），缺键时降级为原始英文名
+                            <option key={sub} value={sub}>{t(`values.${sub}`, sub)}</option>
+                          ))}
                         </select>
                       </Field>
                     </div>
 
-                    {/* Row 4: 产品描述 */}
+                    {/* Row 4: 核保模式 + 续保类型 + 最长保险期间
+                        （详情页的这三个字段此前由 buildDto 硬编码写入，用户无处可改） */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 24px' }}>
+                      <Field label={t('fields.underwritingMode')} required hint={t('form.basic.uwModeHint')}>
+                        <select
+                          {...INPUT}
+                          className="input-glass"
+                          value={formData.underwritingMode}
+                          onChange={e => updateField('underwritingMode', e.target.value)}
+                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
+                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                        >
+                          {UNDERWRITING_MODES.map(m => (
+                            <option key={m} value={m}>{t(`values.underwriting${m}`, m)}</option>
+                          ))}
+                        </select>
+                      </Field>
+                      <Field label={t('fields.renewalType')} required hint={t('form.basic.renewalHint')}>
+                        <select
+                          {...INPUT}
+                          className="input-glass"
+                          value={formData.renewalType}
+                          onChange={e => updateField('renewalType', e.target.value)}
+                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
+                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                        >
+                          {RENEWAL_TYPES.map(r => (
+                            <option key={r} value={r}>{t(`values.renewal${r}`, r)}</option>
+                          ))}
+                        </select>
+                      </Field>
+                      <Field label={t('fields.policyTermYears')} required hint={t('form.basic.termHint')}>
+                        <select
+                          {...INPUT}
+                          className="input-glass"
+                          value={String(formData.policyTermYears)}
+                          onChange={e => updateField('policyTermYears', parseInt(e.target.value, 10))}
+                          onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
+                          onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                        >
+                          {TERM_YEARS.map(y => (
+                            <option key={y} value={y}>{y} {t('form.basic.termYearUnit')}</option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+
+                    {/* Row 5: 产品描述 */}
                     <Field label={t('form.basic.description')}>
                       <textarea
                         className="input-glass"
@@ -524,7 +938,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                       />
                     </Field>
 
-                    {/* Row 5: 主要承保范围 */}
+                    {/* Row 6: 主要承保范围 */}
                     <Field label={t('detail.info.coverageTitle')} hint={t('form.basic.coverageHint')}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {COVERAGE_KEYS.map(coverage => {
@@ -587,7 +1001,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
 
                     {/* Row 2: 基础费率 + 最低保费 + 最高保费 */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 20px' }}>
-                      <Field label={t('form.rates.baseRateAnnual')} required>
+                      <Field label={t('form.rates.baseRateAnnual')} required error={hasErr('baseRate') ? t('form.errors.fieldRequired') : undefined}>
                         <div className="relative">
                           <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
                           <input
@@ -596,13 +1010,13 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                             placeholder="1,200"
                             value={formData.baseRate}
                             onChange={e => updateField('baseRate', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace" }}
-                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace", ...errBorder('baseRate') }}
+                            onFocus={onFieldFocus('baseRate')}
+                            onBlur={onFieldBlur('baseRate')}
                           />
                         </div>
                       </Field>
-                      <Field label={t('detail.rates.minPremium')} required>
+                      <Field label={t('detail.rates.minPremium')} required error={hasErr('minPremium') ? t('form.errors.fieldRequired') : undefined}>
                         <div className="relative">
                           <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
                           <input
@@ -611,13 +1025,13 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                             placeholder="480"
                             value={formData.minPremium}
                             onChange={e => updateField('minPremium', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace" }}
-                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace", ...errBorder('minPremium') }}
+                            onFocus={onFieldFocus('minPremium')}
+                            onBlur={onFieldBlur('minPremium')}
                           />
                         </div>
                       </Field>
-                      <Field label={t('detail.rates.maxPremium')} required>
+                      <Field label={t('detail.rates.maxPremium')} required error={hasErr('maxPremium') ? t('form.errors.fieldRequired') : undefined}>
                         <div className="relative">
                           <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786', fontSize: 14 }}>$</span>
                           <input
@@ -626,9 +1040,9 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                             placeholder="4,200"
                             value={formData.maxPremium}
                             onChange={e => updateField('maxPremium', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace" }}
-                            onFocus={(e) => e.currentTarget.style.borderColor = '#0058BC'}
-                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
+                            style={{ ...INPUT, paddingLeft: 22, fontFamily: "'JetBrains Mono', monospace", ...errBorder('maxPremium') }}
+                            onFocus={onFieldFocus('maxPremium')}
+                            onBlur={onFieldBlur('maxPremium')}
                           />
                         </div>
                       </Field>
@@ -678,7 +1092,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                     </div>
 
                     {/* 年龄范围 */}
-                    <Field label={t('underwriting.ageRange')}>
+                    <Field label={t('underwriting.ageRange')} error={(hasErr('ageMin') || hasErr('ageMax')) ? t('form.errors.fieldRequired') : undefined}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <span style={{ fontSize: 13, color: '#414755' }}>{t('underwriting.minAge')}</span>
@@ -690,7 +1104,9 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                             max={120}
                             value={formData.ageMin ?? ''}
                             onChange={e => updateField('ageMin', e.target.value === '' ? '' : parseInt(e.target.value))}
-                            style={{ ...INPUT, width: 80, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace" }}
+                            style={{ ...INPUT, width: 80, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", ...errBorder('ageMin') }}
+                            onFocus={onFieldFocus('ageMin')}
+                            onBlur={onFieldBlur('ageMin')}
                           />
                           <span style={{ fontSize: 13, color: '#717786' }}>{t('form.underwriting.years')}</span>
                         </div>
@@ -704,7 +1120,9 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                             max={120}
                             value={formData.ageMax ?? ''}
                             onChange={e => updateField('ageMax', e.target.value === '' ? '' : parseInt(e.target.value))}
-                            style={{ ...INPUT, width: 80, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace" }}
+                            style={{ ...INPUT, width: 80, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", ...errBorder('ageMax') }}
+                            onFocus={onFieldFocus('ageMax')}
+                            onBlur={onFieldBlur('ageMax')}
                           />
                           <span style={{ fontSize: 13, color: '#717786' }}>{t('form.underwriting.years')}</span>
                         </div>
@@ -790,6 +1208,14 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                       {t('form.states.configTitle')}
                     </h2>
 
+                    {/* 未选任何可售州时的就地警示（对齐其他步骤的标红行为） */}
+                    {hasErr('availableStates') && (
+                      <div style={{ marginBottom: 14, padding: '10px 14px', borderRadius: 10, background: 'rgba(186,26,26,0.06)', border: '1px solid rgba(186,26,26,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <AlertCircle size={14} style={{ color: '#BA1A1A', flexShrink: 0 }} />
+                        <span style={{ fontSize: 12.5, color: '#BA1A1A' }}>{t('form.errors.missingStates')}</span>
+                      </div>
+                    )}
+
                     {/* Toolbar */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
                       <p style={{ fontSize: 13, color: '#717786', margin: 0 }}>
@@ -846,12 +1272,12 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                       })}
                     </div>
 
-                    {/* Info Note */}
+                    {/* Info Note —— 原文案「每个州均需单独获得监管批准」属于审批语义，本系统无审批流程，改为纯销售范围说明 */}
                     <div style={{ marginTop: 24, padding: 16, background: 'rgba(0, 88, 188, 0.08)', borderRadius: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'start', gap: 10 }}>
                         <AlertTriangle size={18} style={{ color: '#0058BC', marginTop: 2, flexShrink: 0 }} />
                         <div style={{ fontSize: 13, color: '#0058BC' }}>
-                          {t('warnings.stateApprovalRequired')}
+                          {t('warnings.stateScopeNote')}
                         </div>
                       </div>
                     </div>
@@ -864,81 +1290,104 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                       {t('form.documents.title')}
                     </h2>
                     <p style={{ fontSize: '13px', color: '#717786', marginBottom: '24px' }}>{t('form.documents.subtitle')}</p>
+
+                    {/* 必传材料缺失时的就地警示（问题1：编辑页保存修改也要给出提示并标红） */}
+                    {hasErr('documents') && (
+                      <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, background: 'rgba(186,26,26,0.06)', border: '1px solid rgba(186,26,26,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <AlertCircle size={14} style={{ color: '#BA1A1A', flexShrink: 0 }} />
+                        <span style={{ fontSize: 12.5, color: '#BA1A1A' }}>{t('form.errors.missingDocuments')}</span>
+                      </div>
+                    )}
+
+                    {/* Shared hidden real file input — accept is set imperatively per slot before click() */}
+                    <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileSelected} />
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {docList.map(doc => {
-                        const uploaded = formData.uploadedFiles?.includes(doc.key)
+                        const uploadedDoc = (formData.documents ?? []).find(d => d.key === doc.key)
+                        const isUploading = uploadingKey === doc.key
+                        // 提交/下一步被挡下后，仍缺文件的必传项标红；上传完红框自动消失
+                        const missing = errorStep === 4 && doc.required && !uploadedDoc
                         return (
                           <div key={doc.key} style={{
                             display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12,
-                            background: uploaded ? 'rgba(52,199,89,0.06)' : 'rgba(255,255,255,0.6)',
-                            border: `0.5px solid ${uploaded ? 'rgba(52,199,89,0.25)' : 'rgba(193,198,215,0.4)'}`,
+                            background: uploadedDoc ? 'rgba(52,199,89,0.06)' : missing ? 'rgba(186,26,26,0.04)' : 'rgba(255,255,255,0.6)',
+                            border: `0.5px solid ${uploadedDoc ? 'rgba(52,199,89,0.25)' : missing ? 'rgba(186,26,26,0.45)' : 'rgba(193,198,215,0.4)'}`,
                           }}>
-                            <div style={{ width: 36, height: 36, borderRadius: 9, background: uploaded ? 'rgba(52,199,89,0.12)' : 'rgba(241,243,254,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {uploaded ? <CheckCircle size={16} style={{ color: '#34C759' }} /> : <FileText size={16} style={{ color: '#717786' }} />}
+                            <div style={{ width: 36, height: 36, borderRadius: 9, background: uploadedDoc ? 'rgba(52,199,89,0.12)' : missing ? 'rgba(186,26,26,0.10)' : 'rgba(241,243,254,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {uploadedDoc ? <CheckCircle size={16} style={{ color: '#34C759' }} /> : missing ? <AlertCircle size={16} style={{ color: '#BA1A1A' }} /> : <FileText size={16} style={{ color: '#717786' }} />}
                             </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 13.5, fontWeight: 500, color: '#181C23' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13.5, fontWeight: 500, color: missing ? '#BA1A1A' : '#181C23' }}>
                                 {doc.label} {doc.required && <span style={{ color: '#BA1A1A' }}>*</span>}
                               </div>
                               <div style={{ fontSize: 12, color: '#717786', marginTop: 2 }}>{doc.hint} · {t('form.documents.supports', { accept: doc.accept })}</div>
-                              {uploaded && <div style={{ fontSize: 12, color: '#34C759', marginTop: 2 }}>{t('form.documents.justUploaded', { name: doc.label })}</div>}
+                              {isUploading && <div style={{ fontSize: 12, color: '#0058BC', marginTop: 2 }}>{t('form.documents.uploading')}</div>}
+                              {missing && !isUploading && (
+                                <div style={{ fontSize: 12, color: '#BA1A1A', marginTop: 2 }}>{t('form.errors.fieldRequired')}</div>
+                              )}
+                              {uploadedDoc && !isUploading && (
+                                <div style={{ fontSize: 12, color: '#34C759', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {uploadedDoc.name} · {fmtSize(uploadedDoc.size)}
+                                </div>
+                              )}
                             </div>
-                            {uploaded
-                              ? <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => updateField('uploadedFiles', (formData.uploadedFiles ?? []).filter(f => f !== doc.key))}>
+                            {uploadedDoc ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                                <button className="btn-ghost" style={{ fontSize: 12.5, color: '#0058BC' }} onClick={() => setPreviewDoc({ url: uploadedDoc.url, name: uploadedDoc.name })}>
+                                  <Eye size={13} />{t('form.documents.preview')}
+                                </button>
+                                <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => removeDocument(doc.key)}>
                                   <X size={13} />{t('form.documents.remove')}
                                 </button>
-                              : <button className="btn-secondary" style={{ fontSize: 12.5 }} onClick={() => updateField('uploadedFiles', [...(formData.uploadedFiles ?? []), doc.key])}>
-                                  <Upload size={13} />{t('form.documents.upload')}
-                                </button>
-                            }
+                              </div>
+                            ) : (
+                              <button className="btn-secondary" style={{ fontSize: 12.5, flexShrink: 0, opacity: isUploading ? 0.6 : 1 }} disabled={isUploading} onClick={() => openFilePicker(doc.key, doc.accept)}>
+                                <Upload size={13} />{isUploading ? t('form.documents.uploading') : t('form.documents.upload')}
+                              </button>
+                            )}
                           </div>
                         )
                       })}
                     </div>
                   </>
                 )}
-              </div>
 
-              {/* Footer Actions */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.3)' }}>
+              {/* Footer Actions — 置于白色卡片内部（对齐原型/InsurerForm）：上一步 btn-secondary、下一步/提交上架 btn-primary */}
+              <div className="flex items-center justify-between" style={{ marginTop: 32, paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.4)' }}>
                 <button
-                  className="icon-btn"
-                  onClick={currentStep > 0 ? () => setCurrentStep(s => s - 1) : onBackToList}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: 'none', color: '#404757' }}
+                  className="btn-secondary"
+                  disabled={currentStep === 0}
+                  onClick={() => goToStep(currentStep - 1)}
+                  style={{ fontSize: 13, opacity: currentStep === 0 ? 0.4 : 1 }}
                 >
-                  <ChevronLeft size={16} />
-                  <span>{currentStep > 0 ? t('navigation.previousStep') : t('actions.cancel')}</span>
+                  <ArrowLeft size={14} />{t('navigation.previousStep')}
                 </button>
 
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button
-                    className="action-btn"
-                    onClick={handleSaveDraft}
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <Check size={16} />
-                    <span>{t('header.saveDraft')}</span>
-                  </button>
-                  {currentStep < stepLabels.length - 1
-                    ? <button
-                        className="action-btn-primary"
-                        onClick={() => setCurrentStep(s => s + 1)}
-                        disabled={!stepDone(currentStep)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: stepDone(currentStep) ? 1 : 0.5, cursor: stepDone(currentStep) ? 'pointer' : 'not-allowed' }}
-                      >
-                        <span>{t('navigation.nextStep')}</span>
-                        <ChevronRight size={16} />
-                      </button>
-                    : <button
-                        className="action-btn-primary"
-                        onClick={handleSubmit}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#1a7a2e' }}
-                      >
-                        <CheckCircle size={16} />
-                        <span>{productId ? t('header.saveChanges') : t('form.submitListing')}</span>
-                      </button>
-                  }
+                <div style={{ fontSize: 12.5, color: '#717786' }}>
+                  {t('navigation.stepCount', { current: currentStep + 1, total: stepLabels.length })}
                 </div>
+
+                {currentStep < stepLabels.length - 1
+                  ? <button
+                      className="btn-primary"
+                      style={{ fontSize: 13 }}
+                      onClick={handleNext}
+                    >
+                      {t('navigation.nextStep')} <ArrowRight size={14} />
+                    </button>
+                  : <button
+                      className="btn-primary"
+                      disabled={isSubmitting}
+                      style={{ fontSize: 13, opacity: isSubmitting ? 0.6 : 1 }}
+                      onClick={handleSubmit}
+                    >
+                      {isSubmitting
+                        ? <>{t('navigation.submitting')}</>
+                        : <><Send size={14} />{productId ? t('header.saveChanges') : t('form.submitListing')}</>}
+                    </button>
+                }
+              </div>
               </div>
             </div>
           </div>
@@ -958,11 +1407,34 @@ export default function ProductForm({ productId, onBackToList }: Props) {
             display: 'flex', alignItems: 'center', gap: '12px',
             minWidth: '300px'
           }}>
-            <CheckCircle size={20} style={{ color: '#34C759' }} />
-            <div style={{ fontSize: '14px', color: '#181C23', fontWeight: 500 }}>{toastMessage}</div>
+            {toastType === 'success'
+              ? <CheckCircle size={20} style={{ color: '#34C759' }} />
+              : <AlertCircle size={20} style={{ color: '#BA1A1A' }} />}
+            <div style={{ fontSize: '14px', color: toastType === 'success' ? '#181C23' : '#BA1A1A', fontWeight: 500 }}>{toastMessage}</div>
             <button onClick={() => setShowToast(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: '0' }}>
               <XCircle size={16} style={{ color: '#9CA3AF' }} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Uploaded document preview modal — served statically from the backend at /uploads/<storedName> */}
+      {previewDoc && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.55)' }}>
+          <div style={{ width: '85vw', height: '85vh', background: '#fff', borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid rgba(193,198,215,0.4)', background: 'rgba(246,248,255,0.9)' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{previewDoc.name}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                {/* Non-inline types (xlsx/pptx) cannot render in an iframe — offer a direct open/download */}
+                <a href={previewDoc.url} target="_blank" rel="noreferrer" className="btn-ghost" style={{ fontSize: 12.5, color: '#0058BC' }}>
+                  <Upload size={13} style={{ transform: 'rotate(180deg)' }} />{t('form.documents.download')}
+                </a>
+                <button onClick={closePreviewDoc} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+                  <X size={18} style={{ color: '#717786' }} />
+                </button>
+              </div>
+            </div>
+            <iframe src={previewDoc.url} style={{ flex: 1, border: 'none' }} title={previewDoc.name} />
           </div>
         </div>
       )}
@@ -971,6 +1443,10 @@ export default function ProductForm({ productId, onBackToList }: Props) {
         @keyframes slideIn {
           from { opacity: 0; transform: translateX(20px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
         .glass-card {
           background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(247,248,250,0.7) 100%);
@@ -986,21 +1462,6 @@ export default function ProductForm({ productId, onBackToList }: Props) {
         }
         .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,1); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .action-btn {
-          display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 8px 14px; border-radius: 8px; border: none;
-          background: rgba(240,242,245,0.9); color: #404757; font-size: 13px; font-weight: 500;
-          cursor: pointer; transition: all 0.2s;
-        }
-        .action-btn:hover { background: rgba(240,242,245,1); transform: translateY(-1px); }
-        .action-btn-primary {
-          display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 8px 16px; border-radius: 8px; border: none;
-          background: #0058BC; color: #FFFFFF; font-size: 14px; font-weight: 500;
-          cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0, 88, 188, 0.25);
-        }
-        .action-btn-primary:hover { background: #00489B; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 88, 188, 0.35); }
-        .action-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>
   )

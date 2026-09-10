@@ -48,18 +48,15 @@ export interface InsuranceProduct {
   referThreshold?: number
   blacklistConditions?: string[]
   
-  // Regulatory approval status
-  regulatoryApprovalStatus?: 'Approved' | 'Pending' | 'Rejected'
-  lastAuditDate?: string
-  complianceOfficer?: string
-  
   // Geographic scope
   availableStates: string[]
   effectiveDate: string
   expirationDate?: string
   
   // Status management
-  status: 'Active' | 'Paused' | 'Inactive' | 'Pending'
+  // 与后端 CreateProductDto 的枚举保持一致。本系统没有审批流程，所以没有 'Pending'（待审批）态；
+  // 未填写完整的产品用 'Incomplete'（前端渲染为「草稿」）。
+  status: 'Active' | 'Paused' | 'Inactive' | 'Incomplete'
   isActive: boolean
   
   // Performance metrics (YTD)
@@ -135,10 +132,6 @@ export const products: InsuranceProduct[] = [
     referHighValue: true,
     referThreshold: 1000000,
     blacklistConditions: ['poorCredit', 'fraudHistory'],
-    // Regulatory approval
-    regulatoryApprovalStatus: 'Approved',
-    lastAuditDate: '2026-06-15T00:00:00Z',
-    complianceOfficer: 'John Smith',
     premiumYTD: 12500000,
     policyCount: 8500,
     avgPremium: 1470,
@@ -185,10 +178,6 @@ export const products: InsuranceProduct[] = [
     excludeDUI: true,
     referHighValue: false,
     blacklistConditions: ['mispresentation'],
-    // Regulatory approval
-    regulatoryApprovalStatus: 'Approved',
-    lastAuditDate: '2026-05-20T00:00:00Z',
-    complianceOfficer: 'Emily Johnson',
     premiumYTD: 8900000,
     policyCount: 6200,
     avgPremium: 1435,
@@ -252,8 +241,8 @@ export const products: InsuranceProduct[] = [
     productCode: 'FL-MED-2026',
     naicFormNumber: 'FL-44556',
     // Product description & rate configuration
-    description: '佛罗里达州医疗赔付补充保障，承担事故后乘客与驾驶人的必要医疗费用，目前处于待审核状态。',
-    descriptionEn: 'Florida medical payments supplement covering necessary medical expenses for drivers and passengers after an accident; currently pending review.',
+    description: '佛罗里达州医疗赔付补充保障，承担事故后乘客与驾驶人的必要医疗费用。',
+    descriptionEn: 'Florida medical payments supplement covering necessary medical expenses for drivers and passengers after an accident.',
     coverages: ['MedicalPayments'],
     rateType: 'Flat',
     baseRate: 1400,
@@ -273,7 +262,7 @@ export const products: InsuranceProduct[] = [
     availableStates: ['FL', 'GA', 'AL'],
     effectiveDate: '2025-01-10T00:00:00Z',
     expirationDate: '2028-12-31T00:00:00Z',
-    status: 'Pending',
+    status: 'Incomplete',
     isActive: false,
     // Underwriting config
     ageMin: 18,

@@ -43,11 +43,12 @@ export interface ChannelOrg {
 
 export const ORG_TYPE_LABEL: Record<OrgType, string>   = { agency: '代理机构', ga: 'GA', branch: '分支机构', 'sub-agency': '子代理' }
 export const ORG_TYPE_COLOR: Record<OrgType, string>   = { agency: '#0058BC', ga: '#7B3FCA', branch: '#1E8033', 'sub-agency': '#B06000' }
+// 本系统没有任何审批流程：pending 指「资料已录入但尚未开通/生效」，不是「待审批」。
 export const ORG_STATUS_STYLE: Record<OrgStatus, { label: string; bg: string; color: string }> = {
   active:    { label: '正常',   bg: 'rgba(52,199,89,0.12)',  color: '#1E8033' },
   inactive:  { label: '未激活', bg: 'rgba(180,180,180,0.15)', color: '#717786' },
   suspended: { label: '已暂停', bg: 'rgba(255,59,48,0.12)',  color: '#C0392B' },
-  pending:   { label: '待审批', bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
+  pending:   { label: '待生效', bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
 }
 
 export const channelOrgs: ChannelOrg[] = [
@@ -195,7 +196,7 @@ export const AGENT_STATUS_STYLE: Record<AgentStatus, { label: string; bg: string
   active:     { label: '在职',   bg: 'rgba(52,199,89,0.12)',   color: '#1E8033' },
   inactive:   { label: '未激活', bg: 'rgba(180,180,180,0.15)', color: '#717786' },
   suspended:  { label: '已暂停', bg: 'rgba(255,59,48,0.12)',   color: '#C0392B' },
-  pending:    { label: '待审批', bg: 'rgba(255,159,10,0.12)',  color: '#B06000' },
+  pending:    { label: '待生效', bg: 'rgba(255,159,10,0.12)',  color: '#B06000' },
   terminated: { label: '已离职', bg: 'rgba(120,120,120,0.12)', color: '#555' },
 }
 
@@ -303,7 +304,7 @@ export const channelAgents: ChannelAgent[] = [
     status: 'inactive', role: 'agent',
     joinDate: '2026-08-18', lastActiveDate: '2026-08-18',
     ytdPremium: 0, ytdCommission: 0, lossRatio: 0, renewalRate: 0,
-    policyCount: 0, clientCount: 0, notes: '入驻材料审核中（补充中）',
+    policyCount: 0, clientCount: 0, notes: '入驻材料核验中（补充中）',
   },
   {
     id: 'agt-011', firstName: 'Carlos', lastName: 'Martinez', displayName: 'Carlos Martinez',
@@ -352,7 +353,7 @@ export const DOC_STATUS_STYLE: Record<DocStatus, { label: string; bg: string; co
   expired:         { label: '已过期',   bg: 'rgba(255,59,48,0.12)',   color: '#C0392B' },
   'expiring-soon': { label: '即将到期', bg: 'rgba(255,159,10,0.12)',  color: '#B06000' },
   missing:         { label: '缺失',     bg: 'rgba(255,59,48,0.08)',   color: '#C0392B' },
-  'pending-review':{ label: '待审核',   bg: 'rgba(0,88,188,0.10)',    color: '#0058BC' },
+  'pending-review':{ label: '待核验',   bg: 'rgba(0,88,188,0.10)',    color: '#0058BC' },
 }
 
 export const DOC_CATEGORY_LABEL: Record<DocCategory, string> = {
@@ -410,9 +411,9 @@ export const changeHistory: ChangeRecord[] = [
   { id: 'ch-004', entityId: 'agt-008', entityType: 'agent', entityName: 'Bobby Tran', changeType: 'status-change', field: '代理人状态', oldValue: 'active', newValue: 'suspended', operator: 'Zhang Wei', operatorRole: '合规管理员', timestamp: '2026-06-10 14:35:02', note: '随 Gulf South Insurance Partners 机构暂停。' },
   { id: 'ch-005', entityId: 'org-008', entityType: 'org', entityName: 'North Star Benefits LLC', changeType: 'create', operator: 'Sarah Chen', operatorRole: '运营管理员', timestamp: '2023-02-28 10:22:00', note: '新机构入驻，GA合作模式，上级：Great Lakes Insurance Partners。' },
   { id: 'ch-006', entityId: 'agt-001', entityType: 'agent', entityName: 'Alex Kim', changeType: 'edit', field: '执照州', oldValue: 'CA', newValue: 'CA, NV, AZ', operator: 'Sarah Chen', operatorRole: '运营管理员', timestamp: '2026-03-15 11:05:33', note: '新增 NV、AZ 州执照经NIPR验证通过。' },
-  { id: 'ch-007', entityId: 'agt-012', entityType: 'agent', entityName: 'Derek Coleman', changeType: 'status-change', field: '代理人状态', oldValue: 'pending', newValue: 'terminated', operator: 'Marcus Lee', operatorRole: '合规管理员', timestamp: '2026-08-16 16:00:00', note: '入驻申请被拒，背景调查发现重大合规违规记录（FL DOI 2024年吊销执照）。' },
+  { id: 'ch-007', entityId: 'agt-012', entityType: 'agent', entityName: 'Derek Coleman', changeType: 'status-change', field: '代理人状态', oldValue: 'pending', newValue: 'terminated', operator: 'Marcus Lee', operatorRole: '合规管理员', timestamp: '2026-08-16 16:00:00', note: '入驻核验未通过，背景调查发现重大合规违规记录（FL DOI 2024年吊销执照）。' },
   { id: 'ch-008', entityId: 'org-001', entityType: 'org', entityName: 'Pacific Coast Insurance Group', changeType: 'edit', field: '管理员联系方式', oldValue: 'info@pacificcoast.com', newValue: 'contact@pacificcoastins.com', operator: 'Sarah Chen', operatorRole: '渠道负责人', timestamp: '2026-07-01 09:30:11' },
-  { id: 'ch-009', entityId: 'agt-009', entityType: 'agent', entityName: 'Jennifer Walsh', changeType: 'create', operator: 'Zhang Wei', operatorRole: '运营管理员', timestamp: '2026-08-10 14:00:00', note: '代理人入驻流程启动，状态：待审批。' },
+  { id: 'ch-009', entityId: 'agt-009', entityType: 'agent', entityName: 'Jennifer Walsh', changeType: 'create', operator: 'Zhang Wei', operatorRole: '运营管理员', timestamp: '2026-08-10 14:00:00', note: '代理人入驻流程启动，状态：待生效。' },
   { id: 'ch-010', entityId: 'org-001', entityType: 'org', entityName: 'Pacific Coast Insurance Group', changeType: 'import', field: '批量代理人导入', oldValue: undefined, newValue: '3名代理人（Alex Kim、Jessica Park、Ryan Chen）', operator: 'Admin', operatorRole: '系统管理员', timestamp: '2023-01-10 08:00:00' },
 ]
 

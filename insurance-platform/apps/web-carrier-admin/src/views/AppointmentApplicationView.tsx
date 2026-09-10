@@ -187,13 +187,15 @@ function StatusTrackingTab() {
     { date: '2026-08-22', event: t('app.timeline.event1'), type: 'block', detail: t('app.timeline.detail1') },
     { date: '2026-08-22', event: t('app.timeline.event2'), type: 'submit', detail: t('app.timeline.detail2') },
     { date: '2026-08-10', event: t('app.timeline.event3'), type: 'submit', detail: t('app.timeline.detail3') },
-    { date: '2026-08-01', event: t('app.timeline.event4'), type: 'review', detail: t('app.timeline.detail4') },
+    { date: '2026-08-01', event: t('app.timeline.event4'), type: 'process', detail: t('app.timeline.detail4') },
     { date: '2026-07-20', event: t('app.timeline.event5'), type: 'submit', detail: t('app.timeline.detail5') },
     { date: '2026-07-14', event: t('app.timeline.event6'), type: 'expire', detail: t('app.timeline.detail6') },
-    { date: '2026-06-01', event: t('app.timeline.event7'), type: 'reject', detail: t('app.timeline.detail7') },
+    { date: '2026-06-01', event: t('app.timeline.event7'), type: 'void', detail: t('app.timeline.detail7') },
   ]
+  // 时间轴节点类型只用于取颜色。本系统没有任何审批流程，所以类型里没有 approve/review，
+  // 只有「提交 / 处理中 / 合规拦截 / 到期 / 失效」五种中性事件。
   const typeStyle: Record<string, { color: string }> = {
-    submit: { color: '#0058BC' }, review: { color: '#B06000' }, block: { color: '#C0392B' }, expire: { color: '#666' }, reject: { color: '#C0392B' }, approve: { color: '#1E8033' },
+    submit: { color: '#0058BC' }, process: { color: '#B06000' }, block: { color: '#C0392B' }, expire: { color: '#666' }, void: { color: '#C0392B' },
   }
 
   return (

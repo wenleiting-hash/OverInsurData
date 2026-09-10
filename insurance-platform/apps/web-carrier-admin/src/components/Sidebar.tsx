@@ -49,6 +49,7 @@ const navGroups: NavGroup[] = [
     label: 'menu.settings',
     items: [
       { id: 'user-list', label: 'menu.userManagement', icon: <UserCog size={15} /> },
+      { id: 'department-management', label: 'menu.departmentManagement', icon: <Building2 size={15} /> },
       { id: 'permission-management', label: 'menu.permissionManagement', icon: <ShieldCheck size={15} /> },
       { id: 'i18n-management', label: 'menu.i18nManagement', icon: <Languages size={15} /> },
     ],

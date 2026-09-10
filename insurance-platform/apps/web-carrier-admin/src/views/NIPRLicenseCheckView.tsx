@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ArrowLeft, Search, AlertCircle, CheckCircle, X, RefreshCw } from 'lucide-react';
 import type { ViewId } from '@/App';
-import { generateMockNIPRLicenses, type VerificationStatus } from './data/mockComplianceData';
 import { useTranslation } from 'react-i18next';
+import { useLicenses, useVerifyLicenses } from '@/services/complianceService';
+
+type VerificationStatus = 'verified' | 'mismatch' | 'not-found' | 'pending'
 
 interface Props {
   navigateTo: (view: ViewId) => void;
@@ -17,14 +19,16 @@ export default function NIPRLicenseCheckView({ navigateTo }: Props) {
   const [verificationResult, setVerificationResult] = useState<null | 'success' | 'error'>('success');
   const [verifyMessage, setVerifyMessage] = useState('');
 
-  // Get all licenses data
-  const allLicenses = generateMockNIPRLicenses();
+  // Get all licenses data from API
+  const { data: licRes, isLoading: licLoading } = useLicenses();
+  const verifyMut = useVerifyLicenses();
+  const allLicenses = licRes?.data ?? [];
   
   // Filter by search key
-  const filteredLicenses = allLicenses.filter(license => 
-    license.channelName.toLowerCase().includes(searchKey.toLowerCase()) ||
-    license.npnNumber.toLowerCase().includes(searchKey.toLowerCase()) ||
-    license.licenseNumber.toLowerCase().includes(searchKey.toLowerCase())
+  const filteredLicenses = allLicenses.filter((license: any) => 
+    (license.channel_name || '').toLowerCase().includes(searchKey.toLowerCase()) ||
+    (license.npn_number || '').toLowerCase().includes(searchKey.toLowerCase()) ||
+    (license.license_number || '').toLowerCase().includes(searchKey.toLowerCase())
   );
 
   const handleSearch = () => {
@@ -99,7 +103,7 @@ export default function NIPRLicenseCheckView({ navigateTo }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -162,7 +166,7 @@ export default function NIPRLicenseCheckView({ navigateTo }: Props) {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-[rgba(246,248,255,0.9)]">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('columns.channel')}</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('columns.npn')}</th>
@@ -174,9 +178,9 @@ export default function NIPRLicenseCheckView({ navigateTo }: Props) {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('columns.actions')}</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredLicenses.map(license => (
-                <tr key={license.id} className="hover:bg-gray-50 transition-colors">
+            <tbody className="bg-[rgba(255,255,255,0.95)] divide-y divide-[rgba(193,198,215,0.25)]">
+              {filteredLicenses.map((license: any, idx: number) => (
+                <tr key={license.id} className="hover:bg-[rgba(246,248,255,0.55)] transition-colors" style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{license.channelName}</div>
                     <div className="text-xs text-gray-500 mt-1">{t('residency')}: {license.residencyState}</div>
@@ -190,7 +194,7 @@ export default function NIPRLicenseCheckView({ navigateTo }: Props) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex gap-1 flex-wrap">
-                      {license.lines.slice(0, 3).map(line => (
+                      {(license.lines || []).slice(0, 3).map((line: any) => (
                         <span key={line} className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium">
                           {line}
                         </span>
@@ -291,19 +295,19 @@ export default function NIPRLicenseCheckView({ navigateTo }: Props) {
             <div className="glass-strong p-4 rounded-lg">
               <div className="text-sm text-gray-600 mb-1">{t('summary.active')}</div>
               <div className="text-2xl font-bold text-green-600">
-                {allLicenses.filter(l => l.status === 'active').length}
+                {allLicenses.filter((l: any) => l.status === 'active').length}
               </div>
             </div>
             <div className="glass-strong p-4 rounded-lg">
               <div className="text-sm text-gray-600 mb-1">{t('summary.expiredOrSuspended')}</div>
               <div className="text-2xl font-bold text-red-600">
-                {allLicenses.filter(l => l.status === 'expired' || l.status === 'suspended').length}
+                {allLicenses.filter((l: any) => l.status === 'expired' || l.status === 'suspended').length}
               </div>
             </div>
             <div className="glass-strong p-4 rounded-lg">
               <div className="text-sm text-gray-600 mb-1">{t('summary.ceIncomplete')}</div>
               <div className="text-2xl font-bold text-orange-600">
-                {allLicenses.filter(l => !l.ceCompleted).length}
+                {allLicenses.filter((l: any) => !l.ceCompleted).length}
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
-export type InsurerStatus = 'active' | 'inactive' | 'pending';
+export type InsurerStatus = 'active' | 'inactive';
 export type InsurerType = 'Admitted' | 'Non-Admitted';
-export type CoopStatus = 'active' | 'negotiating' | 'expiring' | 'terminated';
+export type CoopStatus = 'active' | 'expiring' | 'terminated';
 export type Region = 'Northeast' | 'Southeast' | 'Midwest' | 'West';
 
 export interface InsuranceCarrier {
@@ -38,7 +38,7 @@ export interface Product {
   line: string;
   subLine: string;
   type: 'Individual' | 'Group' | 'Voluntary';
-  status: 'on-sale' | 'off-sale' | 'paused' | 'pending';
+  status: 'on-sale' | 'off-sale' | 'paused';
   states: string[];
   premium: number;
   policyCount: number;
@@ -210,7 +210,7 @@ export const INSURERS: InsuranceCarrier[] = [
     shortName: 'BHSI',
     naicCode: '22276',
     type: 'Non-Admitted',
-    status: 'pending',
+    status: 'active',
     amBestRating: 'A++',
     spRating: 'AA+',
     headquarters: 'Omaha, NE',
@@ -225,7 +225,7 @@ export const INSURERS: InsuranceCarrier[] = [
     channelCount: 41,
     productCount: 7,
     settlementCycle: 'Quarterly',
-    coopStatus: 'negotiating',
+    coopStatus: 'active',
     contractExpiry: '2026-12-31',
     lines: ['E&O', 'D&O', 'Cyber', 'Professional'],
     commissionIncome: 2380000,
@@ -427,7 +427,7 @@ export const PRODUCTS: Product[] = [
     line: 'D_O',
     subLine: 'Directors & Officers',
     type: 'Group',
-    status: 'pending',
+    status: 'on-sale',
     states: ['NY', 'DE', 'CA'],
     premium: 180000000,
     policyCount: 3200,

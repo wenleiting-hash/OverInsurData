@@ -40,7 +40,7 @@
   "createChannel": "Create Channel",
   "totalChannels": "Total Channels",
   "activeChannels": "Active Channels",
-  "pendingApproval": "Pending Approval",
+  "pendingApproval": "Pending Effective",
   "expiringLicenses": "Expiring Licenses",
   "searchPlaceholder": "Search by name or code...",
   "name": "Channel Name",
@@ -56,7 +56,7 @@
   "phone": "Phone",
   "status.active": "Active",
   "status.inactive": "Inactive",
-  "status.pending": "Pending",
+  "status.pending": "Pending Effective",
   "type.MGA": "MGA",
   "type.MG": "MG",
   "type.Agent": "Agent",
@@ -109,7 +109,7 @@
   "contactPerson": "Contact Person",
   "enterContactPerson": "Enter contact person name",
   "enterAddress": "Enter address",
-  "kycReviewInProgress": "KYC Review in Progress",
+  "kycReviewInProgress": "KYC Verification in Progress",
   "kycReviewDescription": "The system is verifying your submitted documents, expected 1-3 business days",
   "businessLicenseVerified": "Business License Verified",
   "licenseVerification": "License Verification",
@@ -122,16 +122,16 @@
   "completeOnboarding": "Complete Onboarding",
   "onboardingView": {
     "title": "Channel Onboarding & Admissions",
-    "subtitle": "Online Application · Document Review · NIPR / Background / E&O Verification · Contract Signing · Account Setup · Training & Certification",
+    "subtitle": "Online Application · Document Verification · NIPR / Background / E&O Verification · Contract Signing · Account Setup · Training & Certification",
     "badgePendingInfo": "{n} pending supplements",
     "badgeBackgroundCheck": "{n} background checks in progress",
     "tabs": {
       "overview": "Applications",
-      "documents": "Document Review",
+      "documents": "Document Verification",
       "compliance": "Compliance Verification",
       "contract": "Contract Signing",
       "accountTraining": "Account & Training",
-      "rejection": "Rejections & Supplements"
+      "rejection": "Returns & Supplements"
     },
     "stats": {
       "total": "Total Applications",
@@ -145,7 +145,7 @@
       "applicant": "Applicant",
       "status": "Status",
       "progress": "Progress",
-      "reviewer": "Review"
+      "reviewer": "Verification"
     },
     "applicantType": {
       "individual": "Individual Agent",
@@ -155,20 +155,20 @@
     },
     "status": {
       "training": "In Training",
-      "docReview": "Under Review",
+      "docReview": "Verifying Documents",
       "onboarded": "Onboarded",
       "pendingInfo": "Info Needed",
       "backgroundCheck": "Background Check",
       "signing": "Signing",
-      "pendingApproval": "Pending Approval"
+      "pendingApproval": "Pending Effective"
     },
-    "reviewerRole": "Onboarding Review · Compliance",
+    "reviewerRole": "Onboarding Verification · Compliance",
     "actions": {
       "newApplication": "New Application"
     },
     "docReview": {
       "selectApplication": "Select Application",
-      "approve": "Approve Documents",
+      "approve": "Documents Verified",
       "requestSupplement": "Request Supplement",
       "validUntil": "Valid until",
       "preview": "Preview",
@@ -211,7 +211,7 @@
     },
     "rejection": {
       "pendingBadge": "Pending Supplement",
-      "rejectedAtLabel": "Rejected on:",
+      "rejectedAtLabel": "Returned on:",
       "supplementRequiredLabel": "Supplement required:",
       "dueDateLabel": "Due date:",
       "supplementNow": "Supplement Now",
@@ -229,7 +229,7 @@
       "active": "Active",
       "expiring": "Expiring Soon",
       "expired": "Expired",
-      "pending": "Pending Approval"
+      "pending": "Pending Effective"
     },
     "warningExpiring": "{n} product authorization(s) are expiring soon. Renew in time to avoid channel binding interruption.",
     "searchPlaceholder": "Search channel name",
@@ -281,7 +281,7 @@
       "active": "Active",
       "expiring": "Expiring Soon",
       "expired": "Expired",
-      "pending": "Pending",
+      "pending": "Not Yet Effective",
       "withdrawn": "Withdrawn"
     },
     "tab2": {
@@ -298,9 +298,7 @@
       "overLimit": "Over-Limit Rule",
       "ruleEscalate": "Escalate to UW",
       "ruleBlock": "Block Binding",
-      "ruleApprove": "Supervisor Approval",
       "btnSave": "Save Config",
-      "btnSubmit": "Submit for Approval",
       "selectHint": "Channel / Product Selection",
       "noLimit": "No Limit"
     },
@@ -456,7 +454,7 @@
     },
     "footer": {
       "orgs": "{n} organizations · Active {a} · Suspended {s}",
-      "agents": "{n} agents · Active {a} · Pending {p}",
+      "agents": "{n} agents · Active {a} · Pending Effective {p}",
       "docs": "Showing {n} of {total} documents",
       "history": "{n} change records"
     },
@@ -500,8 +498,8 @@
       "reason": "Reason",
       "reasonHint": "(required, recorded in audit log)",
       "reasonPlaceholder": "Explain the reason for this change (recorded in change history)…",
-      "submitApproval": "Submit for Approval",
-      "approvalNote": "Suspend/terminate operations require supervisor approval to take effect"
+      "submitApproval": "Confirm",
+      "approvalNote": "Suspend/terminate operations take effect immediately after saving"
     },
     "reason": {
       "terminate": "Business Termination",
@@ -510,7 +508,7 @@
       "voluntaryExit": "Voluntary Exit",
       "violation": "Violation",
       "infoComplete": "Info Completed",
-      "approved": "Approved",
+      "approved": "Effective",
       "licenseUpdated": "License Updated",
       "backFromLeave": "Returned from Leave"
     },
@@ -535,7 +533,7 @@
       "saveDraft": "Save Draft",
       "next": "Next →",
       "saving": "Saving…",
-      "submitReview": "Submit for Review",
+      "submitReview": "Submit",
       "newAgent": "Add Agent",
       "editAgent": "Edit · {name}",
       "firstName": "First Name *",
@@ -567,7 +565,7 @@
       "step3Label": "Business Setup",
       "step3Sub": "Lines · States",
       "step4Label": "Documents & Submit",
-      "step4Sub": "Files · Review",
+      "step4Sub": "Files · Verification",
       "orgType": "Organization Type",
       "fullName": "Legal Name",
       "shortName": "Short Name",
@@ -592,14 +590,14 @@
       "portalBrand": "Portal Brand Name",
       "primaryColor": "Primary Color (Hex)",
       "secondaryColor": "Secondary Color (Hex)",
-      "uploadNote": "Upload the required documents below to pass compliance review. The channel can only be activated after all required documents are approved.",
+      "uploadNote": "Upload the required documents below to meet compliance requirements. The channel can only be activated after all required documents are in place.",
       "docBizLicense": "Business License",
       "docLicense": "Insurance License Certificate",
       "docEo": "E&O Certificate",
       "docW9": "IRS Form W-9",
       "required": "Required",
       "optional": "Optional",
-      "reviewNote": "After submission, the operational review usually takes 1–3 business days. The channel stays in \"Pending\" status during review.",
+      "reviewNote": "After submission the channel enters \"Pending Effective\" status; activation usually completes within 1–3 business days.",
       "bizLinePc": "P&C (Property)",
       "bizLineLife": "Life",
       "bizLineHealth": "Health",
@@ -631,7 +629,7 @@
       "planStandard": "2026 Standard Personal Plan",
       "planPremium": "Premium Agent Accelerator",
       "planNewbie": "New Agent Development Plan",
-      "niprNote": "NIPR verification is triggered automatically after submission. Once verified, the agent profile enters the review process."
+      "niprNote": "NIPR verification is triggered automatically after submission. Once verified, the agent profile becomes effective."
     },
     "detail": {
       "subTabInfo": "Details",
@@ -644,7 +642,7 @@
       "fieldTaxId": "Tax ID (EIN)",
       "fieldContractId": "Contract ID",
       "fieldJoinDate": "Join Date",
-      "fieldLastReview": "Last Review",
+      "fieldLastReview": "Last Verified",
       "fieldManager": "Manager",
       "fieldAgentCount": "Agent Count",
       "secContact": "Contact",
@@ -659,7 +657,7 @@
       "commissionPlans": "Commission Plans",
       "apptStatus": "Appointment Status",
       "appted": "Appointed",
-      "apptPending": "Pending",
+      "apptPending": "Pending Effective",
       "apptTerminated": "Terminated",
       "noDocs": "No documents",
       "btnEdit": "Edit",
@@ -733,7 +731,7 @@
       "valid": "Valid Documents",
       "expiringSoon": "Expiring Soon",
       "expired": "Expired",
-      "pendingReview": "Pending Review",
+      "pendingReview": "Pending Verification",
       "alertTitle": "Requires Attention ({n})",
       "searchDocs": "Search document name or owner…",
       "allTypes": "All Types",
@@ -765,13 +763,13 @@
       "active": "Active",
       "inactive": "Inactive",
       "suspended": "Suspended",
-      "pending": "Pending"
+      "pending": "Pending Effective"
     },
     "agentStatus": {
       "active": "Active",
       "inactive": "Inactive",
       "suspended": "Suspended",
-      "pending": "Pending",
+      "pending": "Pending Effective",
       "terminated": "Terminated"
     },
     "orgType": {
@@ -801,7 +799,7 @@
       "expired": "Expired",
       "expiring-soon": "Expiring Soon",
       "missing": "Missing",
-      "pending-review": "Pending Review"
+      "pending-review": "Pending Verification"
     },
     "changeType": {
       "create": "Created",
@@ -932,7 +930,7 @@
     "sectionNotes": "Notes",
     "phNotes": "Other notes…",
     "sectionDocs": "Document Upload",
-    "docsWarning": "Please upload the latest valid versions. Expired documents will delay the onboarding review.",
+    "docsWarning": "Please upload the latest valid versions. Expired documents will delay channel onboarding.",
     "doc1": "Business License / E&O Certificate",
     "doc1Hint": "Valid insurance broker license",
     "doc2": "Channel Cooperation Agreement",
@@ -1149,15 +1147,15 @@
     "subtitle": "Design commission rate structures, tier rules, overrides and clawback configuration",
     "tabList": "Scheme List",
     "tabTiers": "Tiers & Overrides",
-    "tabApprovals": "Pending Approval",
+    "tabApprovals": "Pending Effective",
     "statActive": "Active Schemes",
-    "statPending": "Pending Approval",
+    "statPending": "Pending Effective",
     "statChannels": "Bound Channels",
     "statExpired": "Expired Schemes",
     "searchPlaceholder": "Search scheme name or code…",
     "allStatuses": "All Statuses",
     "statusDraft": "Draft",
-    "statusPending": "Pending",
+    "statusPending": "Pending Effective",
     "statusActive": "Active",
     "statusDisabled": "Disabled",
     "statusExpired": "Expired",
@@ -1189,13 +1187,13 @@
     "dMinComm": "Min Commission",
     "dMaxComm": "Max Commission",
     "dCreatedBy": "Created By",
-    "dApprovedBy": "Approved By",
+    "dApprovedBy": "Confirmed By",
     "btnEdit": "Edit",
     "btnImpact": "Impact Analysis",
     "emptyTitle": "No Matching Schemes",
     "emptyDesc": "Adjust filters or create a new commission scheme",
     "footerCount": "{n} commission plans",
-    "dApprovedPending": "Pending Approval",
+    "dApprovedPending": "Pending Effective",
     "ladder": {
       "title": "Tiered Commission Rules",
       "mode": "Tier Mode",
@@ -1228,14 +1226,14 @@
       "addLevel": "Add Level"
     },
     "approval": {
-      "title": "Pending Approval Plans",
-      "batchRecords": "Batch Approval Records",
+      "title": "Pending Effective Plans",
+      "batchRecords": "Batch Records",
       "empty": "No pending plans",
       "firstYearRate": "First-Year Rate",
       "renewalY2": "Renewal Rate Y2",
       "boundChannels": "Bound Channels",
-      "approve": "Approve",
-      "reject": "Reject",
+      "approve": "Activate",
+      "reject": "Void",
       "viewDetails": "View Details",
       "impact": "Impact Analysis"
     },
@@ -1274,10 +1272,10 @@
       "ruleClawbackDesc": "Claw back paid commission per rules when policies cancel",
       "ruleBonus": "Enable Bonus Rules",
       "ruleBonusDesc": "Earn extra incentive bonus upon hitting targets",
-      "warnApproval": "⚠ New plans enter the approval workflow and can only be bound to channels after approval.",
+      "warnApproval": "⚠ New plans can be bound to channels immediately after saving.",
       "back": "← Back",
       "next": "Next →",
-      "submit": "Submit for Approval"
+      "submit": "Submit"
     },
     "impact": {
       "title": "Plan Impact Analysis",
@@ -1301,13 +1299,13 @@
   },
   "settle2": {
     "title": "Commission Calculation & Settlement",
-    "subtitle": "Automated commission calculation, settlement approval, payment processing and statement reconciliation",
+    "subtitle": "Automated commission calculation, settlement confirmation, payment processing and statement reconciliation",
     "tabSettlements": "Settlements",
     "tabDetails": "Commission Details",
     "tabRecon": "Reconciliation",
     "statPayable": "Commission Payable",
     "statPendingCount": "Pending Settlements",
-    "statApprovedUnpaid": "Approved Unpaid",
+    "statApprovedUnpaid": "Ready to Pay",
     "statPolicies": "Period Policies",
     "periodLabel": "Settlement Period",
     "btnCalculate": "Run Calculation",
@@ -1321,17 +1319,17 @@
     "colStatus": "Status",
     "colAction": "Actions",
     "policiesUnit": "policies",
-    "statusPending": "Pending",
-    "statusApproved": "Approved",
+    "statusPending": "Pending Settlement",
+    "statusApproved": "Ready to Pay",
     "statusPaid": "Paid",
     "detailBase": "Base Commission",
     "detailBonus": "Bonus",
     "detailOverride": "Override",
     "detailTotal": "Total",
-    "btnApprove": "Approve",
+    "btnApprove": "Confirm Settlement",
     "btnExportBill": "Export Statement",
-    "approveTitle": "Settlement Approval",
-    "approveTip": "Approve this settlement? It will enter the payment queue.",
+    "approveTitle": "Settlement Confirmation",
+    "approveTip": "Confirm this settlement? It will enter the payment queue.",
     "btnCancel": "Cancel",
     "emptyTitle": "No Settlements",
     "emptyDesc": "No settlement records for this period. Adjust the period or run a calculation.",
@@ -1340,12 +1338,12 @@
     "colChargeback": "Clawback",
     "colAdjustment": "Adjustment",
     "colPayMethod": "Payment Method",
-    "btnApproveShort": "Approve",
+    "btnApproveShort": "Confirm",
     "detailChargeback": "Cancellation Clawback",
     "detailAdjustment": "Manual Adjustment",
     "dPayMethod": "Payment Method",
     "dBankLast4": "Bank Account (Last 4)",
-    "dApprovedBy": "Approved By",
+    "dApprovedBy": "Confirmed By",
     "dPaidDate": "Payment Date",
     "btnInitiatePayment": "Initiate Payment",
     "btnDownloadStatement": "Download Statement",
@@ -1425,7 +1423,7 @@
     "pageTitle": "Channel Hierarchy & Organization Management",
     "pageDesc": "Org tree · Hierarchy relations · Multi-parent · White-label · Change history · Team performance",
     "suspendedAlert": "{n} nodes suspended",
-    "pendingAlert": "{n} pending approvals",
+    "pendingAlert": "{n} pending activation",
     "tab": {
       "tree": "Org Tree",
       "relation": "Hierarchy Relations",
@@ -1446,11 +1444,11 @@
       "active": "Active",
       "inactive": "Inactive",
       "suspended": "Suspended",
-      "pending": "Pending Review",
+      "pending": "Pending Effective",
       "activeRel": "Active",
-      "pendingApproval": "Pending Approval",
-      "approved": "Approved",
-      "rejected": "Rejected"
+      "pendingApproval": "Pending Effective",
+      "approved": "Effective",
+      "rejected": "Void"
     },
     "changeType": {
       "add-relation": "New Relation",
@@ -1526,10 +1524,10 @@
     "adjustReason": "Reason for Adjustment *",
     "adjustReasonPlaceholder": "Explain the reason for this adjustment (recorded in change history)…",
     "submitAdjust": "Submit Adjustment",
-    "pendingChanges": "Pending Change Requests",
-    "requestInfo": "Requested by: {name} · Effective: {date}",
-    "approve": "Approve",
-    "reject": "Reject",
+    "pendingChanges": "Pending Changes",
+    "requestInfo": "Submitted by: {name} · Effective: {date}",
+    "approve": "Activate",
+    "reject": "Void",
     "terminateNoticeTitle": "Termination Notice",
     "terminateNoticeBody": "After terminating the relation, the child node will be detached from this parent, and the associated revenue split and product authorization will stop. If this is the child's only parent, a new parent must be assigned before writing authority can be restored.",
     "th": {

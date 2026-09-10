@@ -2,12 +2,29 @@ import { useState } from 'react';
 import { X, Download, FileText, Table, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+/** 导出字段选项（label 需由调用方完成翻译） */
+export interface ExportFieldOption {
+  key: string;
+  label: string;
+  selected: boolean;
+}
+
+/** 导出关联数据选项 */
+export interface ExportRelatedOption {
+  key: string;
+  label: string;
+}
+
 interface Props {
   totalCount: number;
   selectedCount: number;
   filteredCount: number;
   onClose: () => void;
   onExport: () => void;
+  /** 可选：自定义导出字段（如产品模块）；缺省使用保险公司字段 */
+  customFields?: ExportFieldOption[];
+  /** 可选：自定义关联数据项；传空数组则隐藏该区域；缺省使用保险公司关联项 */
+  customRelated?: ExportRelatedOption[];
 }
 
 const FIELDS = [
@@ -40,7 +57,7 @@ const RELATED_DATA = [
   { key: 'contacts' },
 ];
 
-export default function BatchExportModal({ totalCount, selectedCount, filteredCount, onClose, onExport }: Props) {
+export default function BatchExportModal({ totalCount, selectedCount, filteredCount, onClose, onExport, customFields, customRelated }: Props) {
   const { t } = useTranslation(['insurer', 'common']);
   const fieldLabel: Record<string, string> = {
     name: t('modals.batchExport.fName'),
@@ -70,19 +87,29 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
     performance: t('modals.batchExport.relPerformance'),
     contacts: t('modals.batchExport.relContacts'),
   };
-  const [scope, setScope] = useState<'filtered' | 'selected' | 'all'>('filtered');
+  // 字段 / 关联项：调用方可传入自定义列表（如产品模块），缺省用保险公司字段
+  const activeFields: ExportFieldOption[] = customFields ?? FIELDS.map(f => ({ key: f.key, label: fieldLabel[f.key], selected: f.selected }));
+  const activeRelated: ExportRelatedOption[] = customRelated ?? RELATED_DATA.map(r => ({ key: r.key, label: relatedLabel[r.key] }));
   const [format, setFormat] = useState<'xlsx' | 'csv'>('xlsx');
-  const [fields, setFields] = useState<Record<string, boolean>>(() => Object.fromEntries(FIELDS.map(f => [f.key, f.selected])));
-  const [related, setRelated] = useState<Record<string, boolean>>(() => Object.fromEntries(RELATED_DATA.map(r => [r.key, false])));
+  const [scope, setScope] = useState<'filtered' | 'selected' | 'all'>('filtered');
+  const [fields, setFields] = useState<Record<string, boolean>>(() => Object.fromEntries(activeFields.map(f => [f.key, f.selected])));
+  const [related, setRelated] = useState<Record<string, boolean>>(() => Object.fromEntries(activeRelated.map(r => [r.key, false])));
   const [exporting, setExporting] = useState(false);
 
   const selectedFieldCount = Object.values(fields).filter(Boolean).length;
-  const scopeCount = scope === 'all' ? totalCount : scope === 'selected' ? selectedCount : filteredCount;
 
   const handleExport = () => {
     setExporting(true);
     setTimeout(() => { setExporting(false); onExport(); onClose(); }, 1200);
   };
+
+  const scopeOptions = [
+    { val: 'filtered' as const, label: t('modals.batchExport.scopeFiltered'), desc: t('modals.batchExport.scopeFilteredDesc', { count: filteredCount }) },
+    { val: 'selected' as const, label: t('modals.batchExport.scopeSelected'), desc: t('modals.batchExport.scopeSelectedDesc', { count: selectedCount }), disabled: selectedCount === 0 },
+    { val: 'all' as const, label: t('modals.batchExport.scopeAll'), desc: t('modals.batchExport.scopeAllDesc', { count: totalCount }) },
+  ];
+
+  const scopeCount = scope === 'filtered' ? filteredCount : scope === 'selected' ? selectedCount : totalCount;
 
   return (
     <div
@@ -105,22 +132,22 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
           {/* Scope */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>{t('modals.batchExport.scopeTitle')}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {[
-                { val: 'filtered', label: t('modals.batchExport.scopeFiltered'), count: filteredCount, disabled: false },
-                { val: 'selected', label: t('modals.batchExport.scopeSelected'), count: selectedCount, disabled: selectedCount === 0 },
-                { val: 'all', label: t('modals.batchExport.scopeAll'), count: totalCount, disabled: false },
-              ].map(opt => (
-                <label
-                  key={opt.val}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 9, cursor: opt.disabled ? 'not-allowed' : 'pointer', opacity: opt.disabled ? 0.4 : 1,
-                    background: scope === opt.val ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
-                    border: `0.5px solid ${scope === opt.val ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
-                  }}
-                >
-                  <input type="radio" name="scope" checked={scope === opt.val} disabled={opt.disabled} onChange={() => !opt.disabled && setScope(opt.val as 'filtered' | 'selected' | 'all')} style={{ accentColor: '#0058BC' }} />
-                  <span style={{ fontSize: 13.5, flex: 1 }}>{opt.label}</span>
-                  <span className="badge badge-blue" style={{ fontSize: 11 }}>{t('modals.batchExport.count', { count: opt.count })}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {scopeOptions.map(opt => (
+                <label key={opt.val} style={{
+                  display: 'flex', gap: 12, padding: '10px 16px', borderRadius: 10, cursor: opt.disabled ? 'not-allowed' : 'pointer',
+                  background: scope === opt.val ? 'rgba(0,88,188,0.08)' : 'rgba(255,255,255,0.6)',
+                  border: `0.5px solid ${scope === opt.val ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
+                  opacity: opt.disabled ? 0.45 : 1,
+                }}>
+                  <input type="radio" name="scope" checked={scope === opt.val} onChange={() => !opt.disabled && setScope(opt.val)} disabled={opt.disabled} style={{ display: 'none' }} />
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${scope === opt.val ? '#0058BC' : '#C1C6D7'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    {scope === opt.val && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#0058BC' }} />}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: '#181C23' }}>{opt.label}</div>
+                    <div style={{ fontSize: 12, color: '#717786' }}>{opt.desc}</div>
+                  </div>
                 </label>
               ))}
             </div>
@@ -154,38 +181,40 @@ export default function BatchExportModal({ totalCount, selectedCount, filteredCo
           <div style={{ marginBottom: 18 }}>
             <div className="flex items-center justify-between mb-2">
               <div style={{ fontSize: 13, fontWeight: 600, color: '#414755' }}>
-                {t('modals.batchExport.fieldsTitle')} <span style={{ color: '#717786', fontWeight: 400 }}>{t('modals.batchExport.fieldsSelected', { count: selectedFieldCount, total: FIELDS.length })}</span>
+                {t('modals.batchExport.fieldsTitle')} <span style={{ color: '#717786', fontWeight: 400 }}>{t('modals.batchExport.fieldsSelected', { count: selectedFieldCount, total: activeFields.length })}</span>
               </div>
               <div className="flex gap-2">
-                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(FIELDS.map(f => [f.key, true])))}>{t('modals.batchExport.selectAll')}</button>
-                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(FIELDS.map(f => [f.key, false])))}>{t('modals.batchExport.clearAll')}</button>
+                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(activeFields.map(f => [f.key, true])))}>{t('modals.batchExport.selectAll')}</button>
+                <button className="btn-ghost" style={{ fontSize: 11.5, padding: '3px 8px' }} onClick={() => setFields(Object.fromEntries(activeFields.map(f => [f.key, false])))}>{t('modals.batchExport.clearAll')}</button>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, background: 'rgba(241,243,254,0.6)', borderRadius: 12, padding: '12px 14px' }}>
-              {FIELDS.map(f => (
+              {activeFields.map(f => (
                 <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', padding: '4px 0' }}>
                   <input type="checkbox" checked={fields[f.key]} onChange={e => setFields(p => ({ ...p, [f.key]: e.target.checked }))} style={{ accentColor: '#0058BC', width: 13, height: 13 }} />
-                  <span style={{ fontSize: 12.5, color: '#181C23' }}>{fieldLabel[f.key]}</span>
+                  <span style={{ fontSize: 12.5, color: '#181C23' }}>{f.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
           {/* Related data */}
+          {activeRelated.length > 0 && (
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#414755', marginBottom: 10 }}>{t('modals.batchExport.relatedTitle')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {RELATED_DATA.map(r => (
+              {activeRelated.map(r => (
                 <label key={r.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 9, cursor: 'pointer',
                   background: related[r.key] ? 'rgba(0,88,188,0.07)' : 'rgba(255,255,255,0.6)',
                   border: `0.5px solid ${related[r.key] ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
                 }}>
                   <input type="checkbox" checked={related[r.key]} onChange={e => setRelated(p => ({ ...p, [r.key]: e.target.checked }))} style={{ accentColor: '#0058BC' }} />
-                  <span style={{ fontSize: 13, color: '#181C23' }}>{relatedLabel[r.key]}</span>
+                  <span style={{ fontSize: 13, color: '#181C23' }}>{r.label}</span>
                 </label>
               ))}
             </div>
           </div>
+          )}
         </div>
 
         {/* Footer */}

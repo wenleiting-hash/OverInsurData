@@ -6,6 +6,9 @@ import type { ViewId } from '@/App'
 /**
  * Dispute Management View (功能点 5.4)
  * Handle and track commission reconciliation disputes
+ *
+ * 本系统没有任何审批流程。争议处理只是「发起 → 与保司沟通核对 → 解决/关闭」的事务流转，
+ * 不存在审批门禁；IN_REVIEW 表示争议正在处理中，而非等待审核。
  */
 interface Props {
   navigateTo: (view: ViewId) => void
@@ -138,6 +141,8 @@ export default function DisputeManagementView({ navigateTo }: Props) {
     alert(`Marking ${selectedDisputes.size} dispute(s) as resolved...`)
   }
 
+  // 争议处理状态。本系统没有任何审批流程，IN_REVIEW 只是「争议正在处理中」（与保司沟通、
+  // 核对证据），不是「审核中」。枚举值沿用历史命名以兼容筛选逻辑，展示文案统一走下方 labels。
   const getStatusBadge = (status: string) => {
     const badges = {
       'PENDING': 'bg-orange-100 text-orange-800',
@@ -145,7 +150,13 @@ export default function DisputeManagementView({ navigateTo }: Props) {
       'RESOLVED': 'bg-green-100 text-green-800',
       'CLOSED': 'bg-gray-100 text-gray-800'
     }
-    return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badges[status as keyof typeof badges]}`}>{status}</span>
+    const labels: Record<string, string> = {
+      'PENDING': 'Pending',
+      'IN_REVIEW': 'In Progress',
+      'RESOLVED': 'Resolved',
+      'CLOSED': 'Closed',
+    }
+    return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badges[status as keyof typeof badges]}`}>{labels[status] ?? status}</span>
   }
 
   const getRecoveryBadge = (recoveryStatus: string | null) => {
@@ -217,7 +228,7 @@ export default function DisputeManagementView({ navigateTo }: Props) {
         <div className="card p-4 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-600 mb-1">In Review</div>
+              <div className="text-sm text-gray-600 mb-1">In Progress</div>
               <div className="text-2xl font-bold text-gray-900">{disputeStats.inReview}</div>
             </div>
             <FileText className="text-blue-600" size={28} />
@@ -275,7 +286,7 @@ export default function DisputeManagementView({ navigateTo }: Props) {
             >
               <option value="ALL">All Status</option>
               <option value="PENDING">Pending</option>
-              <option value="IN_REVIEW">In Review</option>
+              <option value="IN_REVIEW">In Progress</option>
               <option value="RESOLVED">Resolved</option>
               <option value="CLOSED">Closed</option>
             </select>
@@ -412,7 +423,7 @@ export default function DisputeManagementView({ navigateTo }: Props) {
                   </button>
                   {(dispute.status === 'PENDING' || dispute.status === 'IN_REVIEW') && (
                     <button className="text-sm text-orange-600 hover:text-orange-800 font-medium ml-auto">
-                      Escalate to Manager
+                      Escalate
                     </button>
                   )}
                 </div>

@@ -8,6 +8,9 @@ import {
   UserCheck, UserX, Crown, ShieldCheck, ShieldOff, Layers,
 } from 'lucide-react'
 import type { ViewId } from '@/App'
+import { useGetRoles, useUpdateRole, useCreateRole, useDeleteRole } from '@/services/userService'
+import type { RoleInfo } from '@/lib/user-api-client'
+import { useEffect, useMemo } from 'react'
 
 interface Props { navigateTo: (view: ViewId) => void }
 
@@ -546,34 +549,194 @@ const TABS = [
   { id: 'compare', label: 'view.tabs.compare', icon: <BarChart3 size={13} /> },
 ]
 
+const ROLE_COLORS = ['#7c3aed', '#0058BC', '#006687', '#059669', '#717786', '#d97706', '#BA1A1A']
+const ROLE_ICONS = [<Crown size={14} />, <ShieldCheck size={14} />, <UserCheck size={14} />, <Shield size={14} />, <Eye size={14} />]
+
+/** Map RoleInfo from API to internal Role interface */
+function mapApiRole(apiRole: RoleInfo, index: number): Role {
+  const color = ROLE_COLORS[index % ROLE_COLORS.length]
+  const icon = ROLE_ICONS[index % ROLE_ICONS.length]
+  const presets = getRolePresets(apiRole.role_key)
+  return {
+    id: apiRole.role_key,
+    name: apiRole.role_name_zh,
+    nameEn: apiRole.role_name_en || apiRole.role_key,
+    color, icon,
+    desc: apiRole.description || '',
+    userCount: apiRole.userCount,
+    isSystem: apiRole.is_system,
+    funcPerms: presets.funcPerms,
+    dataPerms: presets.dataPerms,
+    opPerms: presets.opPerms,
+  }
+}
+
+function getRolePresets(roleKey: string): { funcPerms: Record<string, PermLevel>; dataPerms: Record<string, PermLevel>; opPerms: Record<string, OpPerm> } {
+  const allFuncIds = FUNC_TREE.flatMap(g => [g.id, ...(g.children?.map(c => c.id) ?? [])])
+  switch (roleKey) {
+    case 'super_admin':
+      return {
+        funcPerms: Object.fromEntries(allFuncIds.map(id => [id, 'full' as PermLevel])),
+        dataPerms: Object.fromEntries(DATA_SCOPES.map(d => [d.id, 'full' as PermLevel])),
+        opPerms: Object.fromEntries(OP_PERMS.map(o => [o.id, 'allow' as OpPerm])),
+      }
+    case 'ops_manager':
+      return {
+        funcPerms: Object.fromEntries([
+          ...['insurer','insurer.list','insurer.detail','insurer.create','insurer.edit','insurer.product','insurer.finance','insurer.analytics'].map(id => [id, 'full' as PermLevel]),
+          ...['channel','channel.list','channel.create','channel.hierarchy','channel.onboarding','channel.analytics'].map(id => [id, 'full' as PermLevel]),
+          ...['commission','commission.scheme','commission.settlement','commission.auth'].map(id => [id, 'full' as PermLevel]),
+          ...['report','report.dashboard','report.performance','report.export'].map(id => [id, 'full' as PermLevel]),
+          ...['system','system.audit'].map(id => [id, 'view' as PermLevel]),
+          ...['system.users','system.roles','system.i18n'].map(id => [id, 'none' as PermLevel]),
+        ]),
+        dataPerms: { insurer_data:'full', channel_data:'full', commission_data:'full', policy_data:'full', finance_data:'full', report_data:'full', user_data:'view' },
+        opPerms: { 'op.insurer.disable':'allow','op.insurer.delete':'deny','op.channel.delete':'deny','op.channel.suspend':'allow','op.channel.approve':'allow','op.commission.approve':'allow','op.commission.pay':'conditional','op.product.publish':'allow','op.report.export':'allow','op.user.resetpwd':'deny','op.user.deactivate':'deny','op.role.edit':'deny' },
+      }
+    case 'channel_manager':
+      return {
+        funcPerms: Object.fromEntries([
+          ...['channel','channel.list','channel.hierarchy','channel.onboarding','channel.portal','channel.analytics'].map(id => [id, 'full' as PermLevel]),
+          ...['channel.create'].map(id => [id, 'view' as PermLevel]),
+          ...['insurer','insurer.list','insurer.detail'].map(id => [id, 'view' as PermLevel]),
+          ...['insurer.create','insurer.edit','insurer.finance','insurer.analytics'].map(id => [id, 'none' as PermLevel]),
+          ...['commission','commission.scheme'].map(id => [id, 'view' as PermLevel]),
+          ...['commission.settlement','commission.auth'].map(id => [id, 'none' as PermLevel]),
+          ...['report','report.dashboard','report.performance'].map(id => [id, 'view' as PermLevel]),
+          ...['report.export','system','system.users','system.roles','system.i18n','system.audit'].map(id => [id, 'none' as PermLevel]),
+        ]),
+        dataPerms: { insurer_data:'view', channel_data:'region', commission_data:'none', policy_data:'region', finance_data:'none', report_data:'region', user_data:'none' },
+        opPerms: { 'op.insurer.disable':'deny','op.insurer.delete':'deny','op.channel.delete':'deny','op.channel.suspend':'conditional','op.channel.approve':'allow','op.commission.approve':'deny','op.commission.pay':'deny','op.product.publish':'deny','op.report.export':'deny','op.user.resetpwd':'deny','op.user.deactivate':'deny','op.role.edit':'deny' },
+      }
+    case 'finance_staff':
+      return {
+        funcPerms: Object.fromEntries([
+          ...['insurer','insurer.list','insurer.detail'].map(id => [id, 'view' as PermLevel]),
+          ...['insurer.create','insurer.edit','insurer.product'].map(id => [id, 'none' as PermLevel]),
+          ...['insurer.finance','insurer.analytics'].map(id => [id, 'view' as PermLevel]),
+          ...['channel','channel.list'].map(id => [id, 'view' as PermLevel]),
+          ...['channel.create','channel.hierarchy','channel.onboarding','channel.portal','channel.analytics'].map(id => [id, 'none' as PermLevel]),
+          ...['commission','commission.scheme','commission.settlement'].map(id => [id, 'view' as PermLevel]),
+          ...['commission.auth'].map(id => [id, 'none' as PermLevel]),
+          ...['report','report.dashboard','report.performance','report.export'].map(id => [id, 'full' as PermLevel]),
+          ...['system','system.users','system.roles','system.i18n','system.audit'].map(id => [id, 'none' as PermLevel]),
+        ]),
+        dataPerms: { insurer_data:'view', channel_data:'view', commission_data:'full', policy_data:'view', finance_data:'full', report_data:'full', user_data:'none' },
+        opPerms: Object.fromEntries(OP_PERMS.map(o => [o.id, 'deny' as OpPerm])),
+      }
+    default:
+      return {
+        funcPerms: Object.fromEntries([
+          ...['insurer','insurer.list','insurer.detail','channel','channel.list','report','report.dashboard'].map(id => [id, 'view' as PermLevel]),
+          ...allFuncIds.filter(id => !['insurer.list','insurer.detail','channel.list','report.dashboard','insurer','channel','report'].includes(id)).map(id => [id, 'none' as PermLevel]),
+        ]),
+        dataPerms: { insurer_data:'view', channel_data:'own', commission_data:'none', policy_data:'none', finance_data:'none', report_data:'none', user_data:'none' },
+        opPerms: Object.fromEntries(OP_PERMS.map(o => [o.id, 'deny' as OpPerm])),
+      }
+  }
+}
+
 export default function PermissionView({ navigateTo }: Props) {
   const { t } = useTranslation('permission')
-  const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES)
-  const [selectedRoleId, setSelectedRoleId] = useState('ops_manager')
+  const { data: apiRoles = [], isLoading, refetch } = useGetRoles()
+  const updateRoleMutation = useUpdateRole()
+  const createRoleMutation = useCreateRole()
+  const deleteRoleMutation = useDeleteRole()
+  const roles = useMemo(() => apiRoles.map((r, i) => mapApiRole(r, i)), [apiRoles])
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('func')
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [localRoles, setLocalRoles] = useState<Role[]>([])
 
-  const selectedRole = roles.find(r => r.id === selectedRoleId)!
+  // Sync API data to local state
+  useEffect(() => {
+    setLocalRoles(roles)
+    if (!selectedRoleId && roles.length > 0) {
+      setSelectedRoleId(roles[0].id)
+    }
+  }, [roles])
+
+  const selectedRole = localRoles.find(r => r.id === selectedRoleId) ?? localRoles[0]
+
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false)
+
+  const handleCreateRole = () => {
+    navigateTo('role-create')
+  }
+
+  const handleCloneRole = async () => {
+    if (!selectedRole) return
+    try {
+      const suffix = Date.now().toString(36)
+      const newKey = `${selectedRole.id}_copy_${suffix}`
+      const permissionKeys: string[] = [
+        ...Object.entries(selectedRole.funcPerms).filter(([, v]) => v !== 'none').map(([k, v]) => `func:${k}:${v}`),
+        ...Object.entries(selectedRole.dataPerms).filter(([, v]) => v !== 'none').map(([k, v]) => `data:${k}:${v}`),
+        ...Object.entries(selectedRole.opPerms).filter(([, v]) => v !== 'deny').map(([k, v]) => `op:${k}:${v}`),
+      ]
+      await createRoleMutation.mutateAsync({
+        roleKey: newKey,
+        roleNameZh: `${selectedRole.name}（副本）`,
+        roleNameEn: `${selectedRole.nameEn || selectedRole.name} (Copy)`,
+        roleCode: newKey,
+        description: selectedRole.desc || '',
+        isSystem: false,
+        permissionKeys,
+      })
+      refetch()
+    } catch (err) {
+      console.error('Clone role failed:', err)
+    }
+  }
+
+  const handleDeleteRole = async () => {
+    if (!selectedRole || selectedRole.isSystem) return
+    if (!confirm(t('view.deleteRoleConfirm', { name: selectedRole.name }))) return
+    try {
+      await deleteRoleMutation.mutateAsync(selectedRole.id)
+      setSelectedRoleId(null)
+      refetch()
+    } catch (err) {
+      console.error('Delete role failed:', err)
+    }
+    setRoleMenuOpen(false)
+  }
 
   const updateFuncPerm = (id: string, val: PermLevel) => {
-    setRoles(prev => prev.map(r => r.id === selectedRoleId
+    setLocalRoles(prev => prev.map(r => r.id === selectedRoleId
       ? { ...r, funcPerms: { ...r.funcPerms, [id]: val } } : r))
     setDirty(true)
   }
   const updateDataPerm = (id: string, val: PermLevel) => {
-    setRoles(prev => prev.map(r => r.id === selectedRoleId
+    setLocalRoles(prev => prev.map(r => r.id === selectedRoleId
       ? { ...r, dataPerms: { ...r.dataPerms, [id]: val } } : r))
     setDirty(true)
   }
   const updateOpPerm = (id: string, val: OpPerm) => {
-    setRoles(prev => prev.map(r => r.id === selectedRoleId
+    setLocalRoles(prev => prev.map(r => r.id === selectedRoleId
       ? { ...r, opPerms: { ...r.opPerms, [id]: val } } : r))
     setDirty(true)
   }
-  const handleSave = () => {
-    setDirty(false); setSaved(true)
-    setTimeout(() => setSaved(false), 2400)
+
+  const handleSave = async () => {
+    if (!selectedRole) return
+    const permissionKeys: string[] = [
+      ...Object.entries(selectedRole.funcPerms).filter(([, v]) => v !== 'none').map(([k, v]) => `func:${k}:${v}`),
+      ...Object.entries(selectedRole.dataPerms).filter(([, v]) => v !== 'none').map(([k, v]) => `data:${k}:${v}`),
+      ...Object.entries(selectedRole.opPerms).filter(([, v]) => v !== 'deny').map(([k, v]) => `op:${k}:${v}`),
+    ]
+    try {
+      await updateRoleMutation.mutateAsync({
+        roleKey: selectedRole.id,
+        dto: { permissionKeys },
+      })
+      setDirty(false); setSaved(true)
+      setTimeout(() => setSaved(false), 2400)
+      refetch()
+    } catch (err) {
+      console.error('Failed to save permissions:', err)
+    }
   }
 
   return (
@@ -595,13 +758,13 @@ export default function PermissionView({ navigateTo }: Props) {
           <div>
             <h1 style={{ fontSize:19, fontWeight:700, color:C.text }}>{t('view.title')}</h1>
             <p style={{ fontSize:12.5, color:C.muted, marginTop:1 }}>
-              {t('view.subtitle', { roles: roles.length, users: roles.reduce((s, r) => s + r.userCount, 0) })}
+              {t('view.subtitle', { roles: localRoles.length, users: localRoles.reduce((s, r) => s + r.userCount, 0) })}
             </p>
           </div>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <button className="btn-secondary" style={{ fontSize:12.5 }}><Copy size={13} />{t('view.copyRole')}</button>
-          <button className="btn-secondary" style={{ fontSize:12.5 }}><Plus size={13} />{t('view.createRole')}</button>
+          <button className="btn-primary" style={{ fontSize:12.5 }} onClick={handleCloneRole}><Copy size={13} />{t('view.copyRole')}</button>
+          <button className="btn-primary" style={{ fontSize:12.5 }} onClick={handleCreateRole}><Plus size={13} />{t('view.createRole')}</button>
           {dirty && (
             <button className="btn-primary" style={{ fontSize:12.5 }} onClick={handleSave}>
               <Save size={13} />{t('view.saveChanges')}
@@ -610,12 +773,13 @@ export default function PermissionView({ navigateTo }: Props) {
         </div>
       </div>
 
+      {selectedRole ? (
       <div style={{ display:'grid', gridTemplateColumns:'210px 1fr', gap:14, alignItems:'start' }}>
-
+      
         {/* Left: role list */}
         <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
           <div style={{ fontSize:11.5, fontWeight:700, color:C.faint, textTransform:'uppercase', letterSpacing:'0.06em', padding:'0 4px', marginBottom:2 }}>{t('view.roleList')}</div>
-          {roles.map(role => (
+          {localRoles.map(role => (
             <RoleCard
               key={role.id}
               role={role}
@@ -658,9 +822,28 @@ export default function PermissionView({ navigateTo }: Props) {
                 <div style={{ fontSize:11, color:C.muted }}>{t('view.assignedUsers')}</div>
               </div>
             </div>
-            <div style={{ display:'flex', gap:5 }}>
+            <div style={{ display:'flex', gap:5, position:'relative' }}>
               {!selectedRole.isSystem && <button className="btn-ghost" style={{ padding:7 }}><Edit2 size={14} /></button>}
-              <button className="btn-ghost" style={{ padding:7 }}><MoreHorizontal size={14} /></button>
+              <div style={{ position:'relative' }}>
+                <button className="btn-ghost" style={{ padding:7 }} onClick={(e) => { e.stopPropagation(); setRoleMenuOpen(v => !v) }}><MoreHorizontal size={14} /></button>
+                {roleMenuOpen && (
+                  <>
+                    <div style={{ position:'fixed', inset:0, zIndex:40 }} onClick={() => setRoleMenuOpen(false)} />
+                    <div style={{ position:'absolute', right:0, top:'100%', zIndex:50, background:'#fff', borderRadius:10, boxShadow:'0 4px 20px rgba(0,0,0,0.12)', border:'1px solid rgba(0,0,0,0.06)', minWidth:140, padding:4 }}>
+                      {!selectedRole.isSystem && (
+                        <button onClick={handleDeleteRole} style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'8px 12px', border:'none', background:'none', cursor:'pointer', fontSize:13, color:'#DC2626', borderRadius:6 }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(220,38,38,0.06)'}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+                          <Trash2 size={14} />{t('view.deleteRole')}
+                        </button>
+                      )}
+                      {selectedRole.isSystem && (
+                        <div style={{ padding:'8px 12px', fontSize:12, color:'#9CA3AF' }}>{t('view.systemRoleNoActions')}</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -685,10 +868,19 @@ export default function PermissionView({ navigateTo }: Props) {
             {activeTab === 'func'    && <FuncPermPanel   role={selectedRole} onChange={updateFuncPerm} />}
             {activeTab === 'data'    && <DataPermPanel   role={selectedRole} onChange={updateDataPerm} />}
             {activeTab === 'op'      && <OpPermPanel     role={selectedRole} onChange={updateOpPerm} />}
-            {activeTab === 'compare' && <ComparePanel    roles={roles} />}
+            {activeTab === 'compare' && <ComparePanel    roles={localRoles} />}
           </div>
         </div>
       </div>
+      ) : (
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'80px 0', color:C.muted }}>
+        {isLoading ? (
+          <><div className="animate-spin" style={{ width:32, height:32, border:'3px solid rgba(79,70,229,0.15)', borderTopColor:C.indigo, borderRadius:'50%' }} /><div style={{ marginTop:12, fontSize:13 }}>{t('view.loading', '加载角色数据中…')}</div></>
+        ) : (
+          <><AlertCircle size={32} style={{ color:C.faint, marginBottom:8 }} /><div style={{ fontSize:14, fontWeight:600 }}>{t('view.noRoles', '暂无角色数据')}</div><div style={{ fontSize:12, marginTop:4 }}>{t('view.noRolesHint', '请确保后端服务已启动并包含角色种子数据')}</div></>
+        )}
+      </div>
+      )}
     </div>
   )
 }

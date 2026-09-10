@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: ""
-title: 海外保险数字化平台 V1.0 产品设计与需求根模块
-scope:
-    - 产品设计/
-    - 产品需求/
-source_files: []
-depends_on: []
-related_to: []

@@ -9,6 +9,9 @@
     "build:carrier": "pnpm --filter web-carrier-admin build",
     "build:channel": "pnpm --filter web-channel-admin build",
     "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"apps/**/src/**/*.{ts,tsx}\" \"packages/**/src/**/*.ts\"",
+    "format:check": "prettier --check \"apps/**/src/**/*.{ts,tsx}\" \"packages/**/src/**/*.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -21,7 +24,7 @@
   },
   "engines": {
     "node": ">=20.0.0",
-    "pnpm": ">=8.0.0"
+    "pnpm": ">=8.15.0"
   },
   "packageManager": "pnpm@8.15.0",
   "dependencies": {

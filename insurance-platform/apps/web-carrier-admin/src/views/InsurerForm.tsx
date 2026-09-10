@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
-  ArrowLeft, ArrowRight, Save, Send, Check, Building2, MapPin, Star,
-  DollarSign, FileText, Upload, X, AlertCircle, Info, Plus, Trash2,
+  ArrowLeft, ArrowRight, Send, Check, Building2, MapPin, Star,
+  DollarSign, FileText, X, AlertCircle, Info, Eye, CheckCircle, Loader,
 } from 'lucide-react'
-import { insurers } from './data/mockDashboardData'
+import { useGetInsurer, useCreateInsurer, useUpdateInsurer } from '@/services/insurerService'
+import { insurerApi } from '@/lib/user-api-client'
 import type { ViewId } from '@/App'
 import { useTranslation } from 'react-i18next'
 
@@ -22,7 +23,7 @@ const STEPS = [
 ]
 
 const REGIONS = ['Northeast', 'Southeast', 'Midwest', 'West']
-const LINES_OF_BUSINESS = ['Auto', 'Home', 'Life', 'Health', 'Commercial', 'P&C', 'Cyber', 'Specialty', 'D&O', 'E&O', 'E&S', 'Marine', 'Workers Comp']
+const LINES_OF_BUSINESS = ['Auto', 'Home', 'Life', 'Health', 'Commercial', 'Cyber', 'Travel', 'Professional', 'D&O', 'E&O', 'Marine', 'Specialty', 'Workers Comp']
 const COOP_TYPES = ['direct', 'mga', 'wholesale', 'independent', 'platform']
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
 const AM_BEST_RATINGS = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'B++', 'B+', 'B', 'C++', 'C', 'D', 'E', 'F', 'NR']
@@ -69,9 +70,33 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
     independent: t('values.coopIndependent'),
     platform: t('values.coopPlatform'),
   }
-  const existing = carrierId ? insurers.find(i => i.carrierId === carrierId) : undefined
+  const { data: apiInsurer, isLoading: isLoadingInsurer } = useGetInsurer(mode === 'edit' ? carrierId ?? null : null)
+  const createInsurer = useCreateInsurer()
+  const updateInsurer = useUpdateInsurer()
+  const existing = apiInsurer ? {
+    carrierName: apiInsurer.carrier_name,
+    shortName: apiInsurer.carrier_name_short || apiInsurer.short_name || '',
+    naicCode: apiInsurer.naic_code,
+    website: apiInsurer.website,
+    founded: (apiInsurer.founded_year || apiInsurer.founded)?.toString() ?? '',
+    type: apiInsurer.carrier_type || apiInsurer.type,
+    coopType: apiInsurer.coop_type,
+    state: apiInsurer.state,
+    region: apiInsurer.region,
+    lines: apiInsurer.lines,
+    amBestRating: apiInsurer.am_best_rating,
+    spRating: apiInsurer.sp_rating,
+    moodysRating: apiInsurer.moodys_rating,
+    fitchRating: apiInsurer.fitch_rating,
+    settlementCycle: apiInsurer.settlement_cycle,
+  } : undefined
   const [step, setStep] = useState(0)
-  const [saved, setSaved] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [naicError, setNaicError] = useState(false)
+  const [naicStatus, setNaicStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+  const [uploadTargetDocType, setUploadTargetDocType] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -89,20 +114,78 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
     amBestDate: '2026-07-15',
     sp: existing?.spRating ?? '',
     spDate: '2026-01-10',
-    moodys: 'Aa3',
+    moodys: existing?.moodysRating ?? '',
     moodysDate: '2025-12-01',
-    fitch: 'A+',
+    fitch: existing?.fitchRating ?? '',
     fitchDate: '2025-11-15',
-    settlementCycle: existing?.settlementCycle ?? 'Monthly',
-    billingFormat: 'API',
+    settlementCycle: existing?.settlementCycle ?? '',
+    billingFormat: '',
     billCutoffDay: '25',
     paymentDays: '30',
     currency: 'USD',
     premiumCollection: 'aggregate',
-    uploadedFiles: [] as { name: string; type: string; size: string }[],
+    uploadedFiles: [] as { name: string; type: string; size: string; file?: File }[],
   })
 
   const set = (k: string, v: any) => setForm(p => ({ ...p, [k]: v }))
+
+  // 必填字段红色标记 helper（函数返回 JSX，避免在函数体内定义组件导致输入框重挂载/焦点丢失）
+  const errBorder = (k: string) => (fieldErrors[k] ? { borderColor: '#BA1A1A', background: 'rgba(186,26,26,0.04)' } : {})
+  const renderFieldError = (k: string) => fieldErrors[k] ? (
+    <div style={{ fontSize: 11.5, color: '#BA1A1A', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+      <AlertCircle size={11} />{fieldErrors[k]}
+    </div>
+  ) : null
+
+  // 用户主动切换步骤（下一步/上一步/点其他步骤）时清除提交校验提示
+  const goToStep = (i: number) => {
+    setStep(i)
+    setSubmitError(null)
+    setFieldErrors({})
+  }
+
+  // Populate form when API data arrives (edit mode)
+  const [dataLoaded, setDataLoaded] = useState(false)
+  useEffect(() => {
+    if (existing && !dataLoaded) {
+      setForm(p => ({
+        ...p,
+        name: existing.carrierName ?? '',
+        shortName: existing.shortName ?? '',
+        naicCode: existing.naicCode ?? '',
+        website: existing.website ?? '',
+        founded: existing.founded?.toString() ?? '',
+        type: existing.type ?? 'Admitted',
+        coopType: existing.coopType ?? COOP_TYPES[0],
+        state: existing.state ?? '',
+        region: existing.region ?? 'Northeast',
+        lines: existing.lines ?? [],
+        amBest: existing.amBestRating ?? '',
+        sp: existing.spRating ?? '',
+        moodys: existing.moodysRating ?? '',
+        fitch: existing.fitchRating ?? '',
+        settlementCycle: existing.settlementCycle ?? '',
+      }))
+      setDataLoaded(true)
+    }
+  }, [existing])
+
+  // Debounced NAIC availability check
+  useEffect(() => {
+    const code = form.naicCode.trim()
+    if (!/^\d{5}$/.test(code)) { setNaicStatus('idle'); return }
+    // Skip check in edit mode if code hasn't changed
+    if (mode === 'edit' && existing?.naicCode === code) { setNaicStatus('idle'); return }
+    setNaicStatus('checking')
+    const timer = setTimeout(async () => {
+      try {
+        const result = await insurerApi.checkNaic(code, mode === 'edit' ? carrierId : undefined)
+        setNaicStatus(result.available ? 'available' : 'taken')
+        if (!result.available) setNaicError(true)
+      } catch { setNaicStatus('idle') }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [form.naicCode])
 
   const toggleLine = (line: string) => {
     set('lines', form.lines.includes(line) ? form.lines.filter(l => l !== line) : [...form.lines, line])
@@ -113,15 +196,126 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
     if (i === 1) return form.type && form.state && form.region
     if (i === 2) return form.amBest
     if (i === 3) return form.settlementCycle && form.billingFormat
-    return true
+    return form.uploadedFiles.filter(f =>
+      [t('documents.docs.businessLicense'), t('documents.docs.mainAgreement'), t('documents.docs.nda')].includes(f.type)
+    ).length === 3
   })
 
-  const handleSaveDraft = () => { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1)
+    const docType = uploadTargetDocType || t('documents.docs.mainAgreement')
+    set('uploadedFiles', [...form.uploadedFiles, { name: file.name, type: docType, size: `${sizeMB} MB`, file }])
+    e.target.value = '' // reset so same file can be re-selected
+  }
 
-  const handleSubmit = () => { navigateTo('insurer-list') }
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null)
+
+  const handlePreview = (f: { name: string; file?: File }) => {
+    if (f.file) {
+      const url = URL.createObjectURL(f.file)
+      setPreviewFile({ url, name: f.name })
+    }
+  }
+
+  const closePreview = () => {
+    if (previewFile?.url) URL.revokeObjectURL(previewFile.url)
+    setPreviewFile(null)
+  }
+
+  const isSubmitting = createInsurer.isPending || updateInsurer.isPending
+
+  const handleSubmit = () => {
+    setSubmitError(null)
+    // 逐步骤校验必填字段：跳到第一个缺失步骤并红色标记该步骤缺失字段
+    const requiredDocs = [t('documents.docs.businessLicense'), t('documents.docs.mainAgreement'), t('documents.docs.nda')]
+    const docsOk = requiredDocs.every(d => form.uploadedFiles.some(f => f.type === d))
+    const missingByStep: string[][] = [
+      [!form.name.trim() ? 'name' : '', !form.shortName.trim() ? 'shortName' : '', !form.naicCode.trim() ? 'naicCode' : ''].filter(Boolean),
+      [!form.state ? 'state' : ''].filter(Boolean),
+      [!form.amBest ? 'amBest' : ''].filter(Boolean),
+      [!form.settlementCycle ? 'settlementCycle' : '', !form.billingFormat ? 'billingFormat' : ''].filter(Boolean),
+      [docsOk ? '' : 'documents'].filter(Boolean),
+    ]
+    const stepErrorMsg = [
+      t('errors.requiredFields'),
+      t('errors.missingRegulatory'),
+      t('errors.missingRatings'),
+      t('errors.missingSettlement'),
+      t('errors.missingDocuments'),
+    ]
+    const firstIncomplete = missingByStep.findIndex(arr => arr.length > 0)
+    if (firstIncomplete !== -1) {
+      setStep(firstIncomplete)
+      setFieldErrors(Object.fromEntries(missingByStep[firstIncomplete].map(k => [k, t('errors.fieldRequired')])))
+      setSubmitError(stepErrorMsg[firstIncomplete])
+      return
+    }
+    setFieldErrors({})
+    // Sanitize DTO: strip empty strings and NaN for optional fields
+    const dto: any = {
+      naic_code: form.naicCode.trim(),
+      carrier_name: form.name.trim(),
+    }
+    // Optional string fields — only include if non-empty
+    const optStrings: Record<string, string> = {
+      carrier_name_short: form.shortName,
+      carrier_type: form.type,
+      status: 'active',
+      region: form.region,
+      state: form.state,
+      coop_type: form.coopType,
+      am_best_rating: form.amBest,
+      sp_rating: form.sp,
+      moodys_rating: form.moodys,
+      fitch_rating: form.fitch,
+      settlement_cycle: form.settlementCycle,
+      website: form.website,
+    }
+    for (const [key, val] of Object.entries(optStrings)) {
+      if (val && val.trim()) dto[key] = val.trim()
+    }
+    // Optional number field — only include if valid number
+    if (form.founded) {
+      const yr = parseInt(form.founded, 10)
+      if (!isNaN(yr) && yr > 0) dto.founded_year = yr
+    }
+    // Lines array — only include if non-empty
+    if (form.lines.length > 0) dto.lines = form.lines
+
+    const onSuccess = () => navigateTo('insurer-list')
+    const onError = (err: any) => {
+      const status = err?.response?.status
+      const data = err?.response?.data
+      const error = data?.error || ''
+      // Extract message: handle both string and string[] (NestJS validation)
+      const rawMsg = data?.message || err?.message || 'Unknown error'
+      const displayMsg = Array.isArray(rawMsg) ? rawMsg.join('; ') : (typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg))
+      console.error('[InsurerForm] Submit error:', { status, error, message: displayMsg })
+      setSubmitError(displayMsg)
+      // Detect NAIC duplicate (409 or error code) → highlight field + jump to step 0
+      if (status === 409 || error === 'NAIC_DUPLICATE' || (typeof rawMsg === 'string' && rawMsg.toLowerCase().includes('naic'))) {
+        setNaicError(true)
+        setNaicStatus('taken')
+        setStep(0)
+      }
+    }
+    try {
+      if (mode === 'edit' && carrierId) {
+        updateInsurer.mutate({ id: carrierId, dto }, { onSuccess, onError })
+      } else {
+        createInsurer.mutate(dto, { onSuccess, onError })
+      }
+    } catch (e: any) {
+      console.error('[InsurerForm] Unexpected error during submit:', e)
+      setSubmitError(e?.message || 'Unexpected error')
+    }
+  }
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -142,16 +336,38 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary" style={{ fontSize: 13 }} onClick={handleSaveDraft}>
-            {saved ? <><Check size={14} />{t('header.saved')}</> : <><Save size={14} />{t('header.saveDraft')}</>}
-          </button>
           {step === STEPS.length - 1 && (
-            <button className="btn-primary" style={{ fontSize: 13 }} onClick={handleSubmit}>
-              <Send size={14} />{mode === 'create' ? t('header.submitAudit') : t('header.saveChanges')}
+            <button
+              className="btn-primary"
+              style={{ fontSize: 13, opacity: isSubmitting ? 0.6 : 1 }}
+              disabled={isSubmitting}
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? (
+                <>{t('navigation.submitting')}</>
+              ) : (
+                <><Send size={14} />{mode === 'create' ? t('header.createInsurer') : t('header.saveChanges')}</>
+              )}
             </button>
           )}
         </div>
       </div>
+
+      {/* Error banner — TOP position (visible after submit) */}
+      {submitError && (
+        <div style={{
+          marginBottom: 16, padding: '12px 16px', borderRadius: 12,
+          background: 'rgba(186,26,26,0.06)', border: '1px solid rgba(186,26,26,0.2)',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <AlertCircle size={16} style={{ color: '#BA1A1A', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#BA1A1A' }}>{t('errors.submitFailed') || '提交失败'}</div>
+            <div style={{ fontSize: 12.5, color: '#BA1A1A', marginTop: 2, wordBreak: 'break-all' }}>{submitError}</div>
+          </div>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#BA1A1A', fontSize: 14, padding: 4 }} onClick={() => setSubmitError(null)}>✕</button>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, alignItems: 'start' }}>
         {/* Step nav */}
@@ -166,7 +382,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
             return (
               <button
                 key={s.id}
-                onClick={() => setStep(i)}
+                onClick={() => goToStep(i)}
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -187,8 +403,10 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                   background: isActive ? '#0058BC' : isDone ? 'rgba(52,199,89,0.12)' : 'rgba(193,198,215,0.3)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  {isDone && !isActive
-                    ? <Check size={13} style={{ color: '#34C759' }} />
+                  {/* 当前步骤已录齐就打勾——此前 isDone && !isActive 让最后一步（资质文件）
+                      上传完也永远停在蓝色激活态，看起来像没生效 */}
+                  {isDone
+                    ? <Check size={13} style={{ color: isActive ? '#fff' : '#34C759' }} />
                     : <Icon size={13} style={{ color: isActive ? '#fff' : '#717786' }} />
                   }
                 </div>
@@ -200,16 +418,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
             )
           })}
 
-          {/* Progress */}
-          <div style={{ margin: '16px 12px 0', padding: '12px 0 0', borderTop: '0.5px solid rgba(193,198,215,0.4)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#717786', marginBottom: 6 }}>
-              <span>{t('navigation.progressLabel')}</span>
-              <span>{completedSteps.filter(Boolean).length} / {STEPS.length}</span>
-            </div>
-            <div style={{ height: 4, background: 'rgba(193,198,215,0.4)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${completedSteps.filter(Boolean).length / STEPS.length * 100}%`, background: '#0058BC', borderRadius: 2, transition: 'width 200ms ease' }} />
-            </div>
-          </div>
+
         </div>
 
         {/* Form content */}
@@ -222,21 +431,51 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                 <Grid>
                   <div>
                     <FieldLabel label={t('fields.fullName')} required hint={t('fields.fullNameHint')} />
-                    <input {...INPUT} placeholder="e.g. Travelers Insurance Company" value={form.name} onChange={e => set('name', e.target.value)} />
+                    <input {...INPUT} placeholder="e.g. Travelers Insurance Company" value={form.name} onChange={e => set('name', e.target.value)} style={{ ...INPUT.style, ...errBorder('name') }} />
+                    {renderFieldError('name')}
                   </div>
                   <div>
                     <FieldLabel label={t('fields.shortName')} required />
-                    <input {...INPUT} placeholder="e.g. Travelers" value={form.shortName} onChange={e => set('shortName', e.target.value)} />
+                    <input {...INPUT} placeholder="e.g. Travelers" value={form.shortName} onChange={e => set('shortName', e.target.value)} style={{ ...INPUT.style, ...errBorder('shortName') }} />
+                    {renderFieldError('shortName')}
                   </div>
                   <div>
                     <FieldLabel label={t('fields.naicCode')} required hint={t('fields.naicCodeHint')} />
-                    <input {...INPUT} placeholder="e.g. 25658" value={form.naicCode} onChange={e => set('naicCode', e.target.value)}
-                      style={{ ...INPUT.style, fontFamily: "'JetBrains Mono', monospace" }} />
+                    <div style={{ position: 'relative' }}>
+                      <input {...INPUT} placeholder="e.g. 25658" value={form.naicCode}
+                        onChange={e => { set('naicCode', e.target.value); setNaicError(false); setNaicStatus('idle') }}
+                        style={{
+                          ...INPUT.style,
+                          fontFamily: "'JetBrains Mono', monospace",
+                          ...errBorder('naicCode'),
+                          paddingRight: naicStatus !== 'idle' ? 32 : undefined,
+                          ...(naicError || naicStatus === 'taken' ? { borderColor: '#BA1A1A', background: 'rgba(186,26,26,0.04)' } : {}),
+                          ...(naicStatus === 'available' ? { borderColor: '#34C759', background: 'rgba(52,199,89,0.04)' } : {}),
+                        }} />
+                      {naicStatus !== 'idle' && (
+                        <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}>
+                          {naicStatus === 'checking' && <Loader size={16} style={{ color: '#717786', animation: 'spin 1s linear infinite' }} />}
+                          {naicStatus === 'available' && <CheckCircle size={16} style={{ color: '#34C759' }} />}
+                          {naicStatus === 'taken' && <AlertCircle size={16} style={{ color: '#BA1A1A' }} />}
+                        </div>
+                      )}
+                    </div>
                     {form.naicCode && !/^\d{5}$/.test(form.naicCode) && (
                       <div style={{ fontSize: 11.5, color: '#BA1A1A', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                         <AlertCircle size={11} />{t('fields.naicCodeError')}
                       </div>
                     )}
+                    {naicStatus === 'taken' && (
+                      <div style={{ fontSize: 11.5, color: '#BA1A1A', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <AlertCircle size={11} />{t('errors.naicDuplicate') || 'This NAIC Code already exists'}
+                      </div>
+                    )}
+                    {naicStatus === 'available' && (
+                      <div style={{ fontSize: 11.5, color: '#34C759', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <CheckCircle size={11} />{t('errors.naicAvailable') || 'NAIC Code is available'}
+                      </div>
+                    )}
+                    {renderFieldError('naicCode')}
                   </div>
                   <div>
                     <FieldLabel label={t('fields.foundedYear')} />
@@ -308,10 +547,11 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                 <Grid cols={3}>
                   <div>
                     <FieldLabel label={t('fields.state')} required />
-                    <select {...INPUT} value={form.state} onChange={e => set('state', e.target.value)}>
+                    <select {...INPUT} style={{ ...INPUT.style, ...errBorder('state') }} value={form.state} onChange={e => set('state', e.target.value)}>
                       <option value="">{t('fields.selectState')}</option>
                       {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
+                    {renderFieldError('state')}
                   </div>
                   <div>
                     <FieldLabel label={t('fields.region')} required />
@@ -349,13 +589,14 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                     <FieldLabel label={t('ratings.rating')} />
                     <select
                       className="input-glass"
-                      style={{ fontSize: 13.5, width: '100%', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}
+                      style={{ fontSize: 13.5, width: '100%', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, ...errBorder(r.key) }}
                       value={(form as any)[r.key]}
                       onChange={e => set(r.key, e.target.value)}
                     >
                       <option value="">{t('ratings.notRated')}</option>
                       {r.ratings.map(v => <option key={v}>{v}</option>)}
                     </select>
+                    {renderFieldError(r.key)}
                   </div>
                   <div style={{ flex: 1 }}>
                     <FieldLabel label={t('ratings.ratingDate')} />
@@ -384,22 +625,26 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                 <Grid>
                   <div>
                     <FieldLabel label={t('settlementFields.settlementCycle')} required />
-                    <select {...INPUT} value={form.settlementCycle} onChange={e => set('settlementCycle', e.target.value)}>
+                    <select {...INPUT} style={{ ...INPUT.style, ...errBorder('settlementCycle') }} value={form.settlementCycle} onChange={e => set('settlementCycle', e.target.value)}>
+                      <option value="" disabled>{t('settlementFields.selectPlaceholder')}</option>
                       <option value="Monthly">{t('settlementFields.monthly')}</option>
                       <option value="Quarterly">{t('settlementFields.quarterly')}</option>
                       <option value="SemiAnnual">{t('settlementFields.semiAnnual')}</option>
                       <option value="Annual">{t('settlementFields.annual')}</option>
                     </select>
+                    {renderFieldError('settlementCycle')}
                   </div>
                   <div>
                     <FieldLabel label={t('settlementFields.billingFormat')} required />
-                    <select {...INPUT} value={form.billingFormat} onChange={e => set('billingFormat', e.target.value)}>
+                    <select {...INPUT} style={{ ...INPUT.style, ...errBorder('billingFormat') }} value={form.billingFormat} onChange={e => set('billingFormat', e.target.value)}>
+                      <option value="" disabled>{t('settlementFields.selectPlaceholder')}</option>
                       <option value="API">{t('settlementFields.apiPull')}</option>
                       <option value="CSV">{t('settlementFields.csvFile')}</option>
                       <option value="Excel">{t('settlementFields.excelFile')}</option>
                       <option value="EDI">{t('settlementFields.edi835')}</option>
                       <option value="Manual">{t('settlementFields.manualEntry')}</option>
                     </select>
+                    {renderFieldError('billingFormat')}
                   </div>
                   <div>
                     <FieldLabel label={t('settlementFields.billCutoffDay')} hint={t('settlementFields.cutoffDayHint')} />
@@ -421,7 +666,8 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                     <FieldLabel label={t('settlementFields.currency')} />
                     <select {...INPUT} value={form.currency} onChange={e => set('currency', e.target.value)}>
                       <option value="USD">{t('settlementFields.usd')}</option>
-                      <option value="CAD">{t('settlementFields.cad')}</option>
+                      <option value="EUR">EUR — Euro</option>
+                      <option value="GBP">GBP — British Pound</option>
                     </select>
                   </div>
                   <div>
@@ -443,28 +689,16 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
               <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 16 }}>
                 {t('documents.uploadHint')}
               </div>
+              {renderFieldError('documents')}
 
-              {/* Upload zone */}
-              <div
-                style={{
-                  border: '1.5px dashed rgba(0,88,188,0.35)',
-                  borderRadius: 14,
-                  padding: '32px 24px',
-                  textAlign: 'center',
-                  background: 'rgba(0,88,188,0.03)',
-                  cursor: 'pointer',
-                  marginBottom: 20,
-                  transition: 'border-color 120ms, background 120ms',
-                }}
-                onClick={() => {
-                  const fake = { name: t('documents.fakeFileName', { ts: Date.now() }), type: t('documents.docs.mainAgreement'), size: '2.1 MB' }
-                  set('uploadedFiles', [...form.uploadedFiles, fake])
-                }}
-              >
-                <Upload size={28} style={{ color: '#0058BC', marginBottom: 10 }} />
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', marginBottom: 4 }}>{t('documents.clickUpload')}</div>
-                <div style={{ fontSize: 12.5, color: '#717786' }}>{t('documents.supportedFormats')}</div>
-              </div>
+              {/* Hidden real file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                style={{ display: 'none' }}
+                onChange={handleFileSelected}
+              />
 
               {/* Required doc list */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -492,10 +726,15 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                         }
                       </div>
                       {uploaded
-                        ? <button className="btn-ghost" style={{ padding: 5, color: '#BA1A1A' }} onClick={() => set('uploadedFiles', form.uploadedFiles.filter(f => f.type !== doc.type))}><X size={14} /></button>
+                        ? <>
+                            {uploaded.file && (
+                              <button className="btn-ghost" style={{ padding: 5, color: '#0058BC' }} onClick={() => handlePreview(uploaded)} title={t('documents.previewBtn')}><Eye size={14} /></button>
+                            )}
+                            <button className="btn-ghost" style={{ padding: 5, color: '#BA1A1A' }} onClick={() => set('uploadedFiles', form.uploadedFiles.filter(f => f.type !== doc.type))}><X size={14} /></button>
+                          </>
                         : <button className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => {
-                            const fake = { name: `${doc.type}_${Date.now()}.pdf`, type: doc.type, size: '1.2 MB' }
-                            set('uploadedFiles', [...form.uploadedFiles, fake])
+                            setUploadTargetDocType(doc.type)
+                            fileInputRef.current?.click()
                           }}>{t('documents.uploadBtn')}</button>
                       }
                     </div>
@@ -505,28 +744,59 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
             </Section>
           )}
 
+          {/* Bottom Error message (duplicate for visibility at bottom) */}
+          {submitError && (
+            <div style={{ marginTop: 16, padding: '10px 14px', borderRadius: 10, background: 'rgba(186,26,26,0.06)', border: '1px solid rgba(186,26,26,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <AlertCircle size={14} style={{ color: '#BA1A1A', flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5, color: '#BA1A1A', wordBreak: 'break-all' }}>{submitError}</span>
+              <button style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#BA1A1A', fontSize: 12 }} onClick={() => setSubmitError(null)}>✕</button>
+            </div>
+          )}
+
           {/* Navigation buttons */}
           <div className="flex items-center justify-between" style={{ marginTop: 32, paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.4)' }}>
             <button
               className="btn-secondary"
               disabled={step === 0}
-              onClick={() => setStep(s => s - 1)}
+              onClick={() => goToStep(step - 1)}
               style={{ fontSize: 13, opacity: step === 0 ? 0.4 : 1 }}
             >
               <ArrowLeft size={14} />{t('navigation.previousStep')}
             </button>
             <div style={{ fontSize: 12.5, color: '#717786' }}>{t('navigation.stepCount', { current: step + 1, total: STEPS.length })}</div>
             {step < STEPS.length - 1
-              ? <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => setStep(s => s + 1)}>
+              ? <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => goToStep(step + 1)}>
                   {t('navigation.nextStep')} <ArrowRight size={14} />
                 </button>
-              : <button className="btn-primary" style={{ fontSize: 13 }} onClick={handleSubmit}>
-                  <Send size={14} />{mode === 'create' ? t('header.submitAudit') : t('header.saveChanges')}
+              : <button
+                  className="btn-primary"
+                  disabled={isSubmitting}
+                  style={{ fontSize: 13, opacity: isSubmitting ? 0.6 : 1 }}
+                  onClick={handleSubmit}
+                >
+                  {isSubmitting ? (
+                    <>{t('navigation.submitting')}</>
+                  ) : (
+                    <><Send size={14} />{mode === 'create' ? t('header.createInsurer') : t('header.saveChanges')}</>
+                  )}
                 </button>
             }
           </div>
         </div>
       </div>
+
+      {/* File preview modal */}
+      {previewFile && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.55)' }}>
+          <div style={{ width: '85vw', height: '85vh', background: '#fff', borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid rgba(193,198,215,0.4)', background: 'rgba(246,248,255,0.9)' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23' }}>{previewFile.name}</div>
+              <button onClick={closePreview} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}><X size={18} style={{ color: '#717786' }} /></button>
+            </div>
+            <iframe src={previewFile.url} style={{ flex: 1, border: 'none' }} title={previewFile.name} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

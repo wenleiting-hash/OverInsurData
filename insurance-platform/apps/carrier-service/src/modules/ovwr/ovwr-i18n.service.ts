@@ -109,8 +109,8 @@ export class OvwrI18nService {
     const sql = `
       INSERT INTO ovwr_auth_i18n_translation (
         ovwr_translation_id, ovwr_namespace, ovwr_key, ovwr_en_us, ovwr_zh_cn,
-        ovwr_type, ovwr_status, ovwr_metadata, ovwr_created_at, ovwr_updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ovwr_type, ovwr_module, ovwr_section, ovwr_status, ovwr_metadata, ovwr_created_at, ovwr_updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
     
@@ -121,6 +121,8 @@ export class OvwrI18nService {
       data.ovwrEnUs,
       data.ovwrZhCn || null,
       data.ovwrType || 'label',
+      data.ovwrModule || null,
+      data.ovwrSection || null,
       data.ovwrStatus || '1',
       data.ovwrMetadata || null,
       now,
@@ -143,13 +145,13 @@ export class OvwrI18nService {
     let paramIndex = 1;
     
     const fields = [
-      { key: 'ovwrNamespace', value: data.ovwrNamespace },
-      { key: 'ovwrKey', value: data.ovwrKey },
-      { key: 'ovwrEnUs', value: data.ovwrEnUs },
-      { key: 'ovwrZhCn', value: data.ovwrZhCn },
-      { key: 'ovwrType', value: data.ovwrType },
-      { key: 'ovwrStatus', value: data.ovwrStatus },
-      { key: 'ovwrMetadata', value: data.ovwrMetadata },
+      { key: 'ovwr_namespace', value: data.ovwrNamespace },
+      { key: 'ovwr_key', value: data.ovwrKey },
+      { key: 'ovwr_en_us', value: data.ovwrEnUS ?? data.ovwrEnUs },
+      { key: 'ovwr_zh_cn', value: data.ovwrZhCN ?? data.ovwrZhCn },
+      { key: 'ovwr_type', value: data.ovwrType },
+      { key: 'ovwr_status', value: data.ovwrStatus },
+      { key: 'ovwr_metadata', value: data.ovwrMetadata },
     ];
     
     fields.forEach(({ key, value }) => {
@@ -162,10 +164,13 @@ export class OvwrI18nService {
     updates.push(`ovwr_updated_at = $${paramIndex++}`);
     values.push(now);
     
+    // Push the WHERE clause id parameter
+    values.push(id);
+    
     const sql = `
       UPDATE ovwr_auth_i18n_translation 
       SET ${updates.join(', ')}
-      WHERE ovwr_translation_id = $${paramIndex++}
+      WHERE ovwr_translation_id = $${paramIndex}
       RETURNING *
     `;
     

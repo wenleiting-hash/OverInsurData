@@ -6,6 +6,8 @@ import {
   Layers, Zap, Clock, CheckCircle2, Download,
 } from 'lucide-react';
 
+// 佣金方案状态。本系统没有任何审批流程：pending = 待生效（方案已保存、尚未绑定渠道生效），
+// 不存在「待审批」。UI 文案取 scheme2.status* 系列键。
 type SchemeStatus = 'active' | 'pending' | 'draft' | 'disabled' | 'expired';
 type SchemeFeature = 'tier' | 'override' | 'clawback';
 type ChannelTypeKey = 'agency' | 'mga' | 'fmo' | 'broker';
@@ -27,7 +29,7 @@ interface CommissionScheme {
   minCommission: number;
   maxCommission: number;
   createdBy: string;
-  approvedBy: string;
+  approvedBy: string;        // 确认人（UI 显示为「确认人 / Confirmed By」），不是审批人
 }
 
 interface LadderTier {
@@ -471,7 +473,7 @@ export default function CommissionSchemeView(_: Props) {
         )}
 
         {activeTab === 'tiers' && <LadderConfigTab />}
-        {activeTab === 'approvals' && <ApprovalTab schemes={mockSchemes} />}
+        {activeTab === 'approvals' && <PendingEffectiveTab schemes={mockSchemes} />}
       </div>
 
       {/* New scheme modal — aligned to prototype SchemeFormModal */}
@@ -641,8 +643,9 @@ function LadderConfigTab() {
   );
 }
 
-// ─── Tab3: pending approvals — aligned to prototype ApprovalTab ─────────────────────────────────────
-function ApprovalTab({ schemes }: { schemes: CommissionScheme[] }) {
+// ─── Tab3: pending-effective plans — 本系统没有任何审批流程，这里不是「待审批队列」，而是已保存但尚未绑定生效的方案列表 ─────────────────────────────────────
+// 列表里的两个操作按钮是「设为生效」与「作废」（行政处置），不是「审批通过 / 驳回」。
+function PendingEffectiveTab({ schemes }: { schemes: CommissionScheme[] }) {
   const { t } = useTranslation('channel');
   const pending = schemes.filter((s) => s.status === 'pending');
 

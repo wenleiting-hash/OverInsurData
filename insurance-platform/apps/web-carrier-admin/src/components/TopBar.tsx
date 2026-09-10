@@ -3,6 +3,7 @@ import { Search, Bell, ChevronRight, User as UserIcon, LogOut, Settings, Cog } f
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n/config';
 import { useAuth } from '../contexts/AuthContext';
+import { userApiClient } from '../lib/user-api-client';
 import { VIEW_LABELS } from '../navigation/viewMeta';
 import type { ViewId } from '../navigation/viewMeta';
 
@@ -13,7 +14,7 @@ interface Props {
 
 export default function TopBar({ currentView, navigateTo }: Props) {
   const { t } = useTranslation('common');
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Close dropdown when clicking outside
@@ -33,7 +34,10 @@ export default function TopBar({ currentView, navigateTo }: Props) {
   }, [isProfileOpen]);
 
   const info = VIEW_LABELS[currentView as string] ?? { crumbs: [], title: currentView as string };
-  const adminName = t('common.admin');
+  const displayName = user?.username || t('common.admin');
+  const displayRole = user?.roles?.length
+    ? user.roles.map(r => r.replace(/_/g, ' ')).join(', ')
+    : t('common.adminRole');
 
   return (
     <>
@@ -128,8 +132,8 @@ export default function TopBar({ currentView, navigateTo }: Props) {
                 <Settings size={16} color="#6B7280" />
               </div>
               <div style={{ textAlign: 'left', marginLeft: 8, whiteSpace: 'nowrap' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#1D2939', lineHeight: 1.15 }}>{adminName}</div>
-                <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.2 }}>Platform Admin</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1D2939', lineHeight: 1.15 }}>{displayName}</div>
+                <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.2 }}>{displayRole}</div>
               </div>
               <Cog size={16} color="#6B7280" />
             </button>
@@ -157,21 +161,35 @@ function ProfileDropdown({ isProfileOpen, setProfileOpen, onClose, navigateTo }:
   navigateTo: (view: ViewId) => void;
 }) {
   const { t } = useTranslation('common');
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   // Sync with i18n language
   const currentLang = (i18n as any).language || 'zh-CN';
-  const fullLangCode = currentLang === 'en' ? 'en-US' : 'zh-CN';
+  const fullLangCode = currentLang.startsWith('en') ? 'en-US' : 'zh-CN';
 
   const handleLanguageChange = (langCode: string) => {
     setProfileOpen(false);
     (i18n as any).changeLanguage(langCode);
     localStorage.setItem('user_language', langCode);
+    // Per-user localStorage cache
+    if (user?.userId) {
+      localStorage.setItem(`user_language_${user.userId}`, langCode);
+    }
+    // Persist to backend user preferences
+    userApiClient.put('/users/preferences/current', { languageCode: langCode }).catch((err: any) => {
+      console.warn('Failed to save language to backend:', err?.message);
+    });
   };
 
   const handleLogout = () => {
-    logout();
+    // Clear all auth state synchronously BEFORE redirect
+    localStorage.removeItem('auth.access_token');
+    localStorage.removeItem('auth.refresh_token');
+    localStorage.removeItem('auth.user_info');
     localStorage.removeItem('jwt');
+    // Fire-and-forget server-side logout, don't await
+    logout();
+    // Redirect immediately with clean state
     window.location.replace('/');
   };
 

@@ -16,7 +16,7 @@ export default defineConfig({
   },
   server: {
     host: 'localhost',
-    port: 3001, // 强制固定使用 3001 端口，禁止自动切换
+    port: 3001, // 前端开发服务器端口
     strictPort: true, // 严格模式：如果端口被占用直接报错，不尝试下一个端口
     cors: true,
     warmup: {
@@ -25,7 +25,12 @@ export default defineConfig({
     // open: true, // 注释掉自动打开浏览器，避免多次启动
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // ✅ Carrier Service API 端口
+        target: 'http://localhost:8080', // Carrier Service API 端口
+        changeOrigin: true,
+      },
+      // 上传文件的静态服务（产品合规文件 / 培训材料），与后端 useStaticAssets 前缀一致
+      '/uploads': {
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
     },

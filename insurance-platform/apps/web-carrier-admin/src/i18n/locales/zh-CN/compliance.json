@@ -114,10 +114,10 @@
     "riskAssessment": "风险评估"
   },
   "statuses": {
-    "approved": "已批准",
-    "pending": "待审核",
-    "underReview": "审核中",
-    "rejected": "已拒绝",
+    "approved": "已生效",
+    "pending": "待生效",
+    "underReview": "处理中",
+    "rejected": "已失效",
     "expired": "已过期",
     "terminated": "已终止",
     "active": "有效",
@@ -126,7 +126,7 @@
   },
   "notifications": {
     "certificateExpiring": "证书即将过期",
-    "appointmentPending": "Appointment 审批中",
+    "appointmentPending": "Appointment 处理中",
     "ofacMatch": "发现潜在 OFAC 匹配",
     "regulatoryUpdate": "发布监管更新",
     "auditComplete": "审计成功完成"
@@ -252,7 +252,7 @@
     "actions": {
       "block": "拦截 Block",
       "warn": "警告 Warn",
-      "requireReview": "需要审核 Require Review"
+      "requireReview": "转人工复核 Manual Review"
     },
     "stats": {
       "total": "总规则数",
@@ -267,14 +267,102 @@
       "action": "执行动作 *",
       "actionBlock": "拦截 (Block)",
       "actionWarn": "警告 (Warn)",
-      "actionRequireReview": "需要审核 (Require Review)",
+      "actionRequireReview": "转人工复核 (Manual Review)",
       "condition": "触发条件 *",
-      "conditionPlaceholder": "用中文描述触发条件，例如：出单时检查 Appointment 状态 = approved",
+      "conditionPlaceholder": "用中文描述触发条件，例如：出单时检查 Appointment 状态 = approved（已生效）",
       "priority": "优先级 (数字越小优先级越高) *",
       "priorityHint": "重要规则应设置高优先级（如 1-10），次要规则可设置较低优先级（如 50-100）",
       "enabled": "激活此规则",
       "cancel": "取消",
       "save": "保存规则"
+    }
+  },
+  "licenseExpiry": {
+    "title": "牌照到期提醒",
+    "description": "监控 NIPR 牌照到期状态，及时发起续期流程，避免业务中断",
+    "refreshLog": "刷新牌照到期数据",
+    "status": {
+      "notified": "已通知",
+      "reminded": "已提醒",
+      "expired": "已过期",
+      "renewed": "已续期"
+    },
+    "daysRemaining": {
+      "expired": "已过期",
+      "within": "{days}天内",
+      "days": "{days}天"
+    },
+    "renewalStatus": {
+      "pending": "待处理",
+      "inProgress": "续期中",
+      "completed": "已完成"
+    },
+    "stats": {
+      "totalAlerts": "总提醒数",
+      "totalAlertsSub": "所有牌照到期提醒",
+      "criticalAlerts": "紧急提醒",
+      "criticalAlertsSub": "需要立即处理",
+      "expired": "已过期",
+      "expiredSub": "牌照已失效",
+      "inProgress": "续期中",
+      "inProgressSub": "正在办理续期",
+      "complianceRate": "合规率",
+      "complianceRateSub": "当前牌照合规比例",
+      "avgCycle": "平均周期",
+      "avgProcessingDays": "{n}天",
+      "avgCycleSub": "续期平均处理天数"
+    },
+    "filter": {
+      "allSeverities": "所有严重程度",
+      "severityCritical": "紧急",
+      "severityHigh": "高",
+      "severityMedium": "中",
+      "severityLow": "低",
+      "allStatuses": "所有状态",
+      "statusNotified": "已通知",
+      "statusReminded": "已提醒",
+      "statusExpired": "已过期",
+      "statusRenewed": "已续期"
+    },
+    "severity": {
+      "critical": "紧急",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "action": {
+      "refreshData": "刷新数据",
+      "exportList": "导出列表",
+      "viewDetail": "查看详情",
+      "startRenewal": "发起续期"
+    },
+    "table": {
+      "colChannel": "渠道",
+      "colLicenseType": "牌照类型",
+      "colCountdown": "倒计时",
+      "colSeverity": "严重程度",
+      "colStatus": "状态",
+      "colRenewalProgress": "续期进度",
+      "colActions": "操作",
+      "licenseNumberLabel": "牌照号: ",
+      "lastNotifiedLabel": "上次通知: ",
+      "expiryLabel": "到期日: "
+    },
+    "empty": {
+      "title": "暂无牌照到期提醒",
+      "desc": "当前没有需要关注的牌照到期情况"
+    },
+    "quickAction": {
+      "title": "快速操作摘要",
+      "immediateTitle": "需立即处理",
+      "immediateCount": "{n} 个",
+      "immediateDesc": "紧急级别的牌照到期提醒",
+      "expiredTitle": "已过期牌照",
+      "expiredCount": "{n} 个",
+      "expiredDesc": "需要立即续期以避免业务中断",
+      "batchTitle": "批量续期",
+      "batchRange": "30天内",
+      "batchDesc": "可批量发起续期流程的牌照"
     }
   }
 }

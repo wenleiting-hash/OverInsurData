@@ -5,7 +5,10 @@ export const insuranceCarrier = pgTable('insurance_carrier', {
   carrierId: varchar('carrier_id', { length: 32 }).primaryKey(),
   carrierName: varchar('carrier_name', { length: 128 }).notNull(),
   carrierNameShort: varchar('carrier_name_short', { length: 64 }),
-  naicCode: varchar('naic_code', { length: 8 }).unique().notNull(),
+  // NOTE: naic_code uniqueness is enforced at DB level by a PARTIAL unique index
+  // (insurance_carrier_naic_code_active_key ... WHERE deleted = FALSE), so soft-deleted
+  // records do not block reusing a NAIC code. See migration V2.0.3. Do NOT use .unique() here.
+  naicCode: varchar('naic_code', { length: 8 }).notNull(),
   
   // Type and Region
   carrierType: varchar('carrier_type', { length: 50 }), // Admitted, Non-Admitted

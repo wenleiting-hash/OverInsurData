@@ -31,51 +31,42 @@ authApiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Shared refresh lock — dynamic import to avoid circular dependency
+let _refreshMod: typeof import('./token-refresh') | null = null;
+let _refreshLoadP: Promise<typeof import('./token-refresh')> | null = null;
+function getRefreshModule(): Promise<typeof import('./token-refresh')> {
+  if (_refreshMod) return Promise.resolve(_refreshMod);
+  if (!_refreshLoadP) {
+    _refreshLoadP = import('./token-refresh').then(m => { _refreshMod = m; return m; });
+  }
+  return _refreshLoadP;
+}
+
 // Response interceptor for error handling and auto-refresh token
 authApiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 Unauthorized and not already retrying
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // The /refresh endpoint must NEVER trigger auto-refresh again: doing so would await the
+    // in-flight refresh lock from inside the refresh request itself → deadlock (submit stuck).
+    const isRefreshRequest = (originalRequest?.url || '').includes('/refresh');
+
+    // If 401 Unauthorized and not already retrying and not the refresh call itself
+    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true; // Prevent infinite loop
 
       try {
-        // Attempt to refresh token using refresh token stored in localStorage
-        const refreshToken = localStorage.getItem('auth.refresh_token');
-        
-        if (!refreshToken) {
-          // No refresh token available - force logout
-          console.error('No refresh token available, forcing logout');
-          localStorage.removeItem('auth.access_token');
-          localStorage.removeItem('auth.refresh_token');
-          localStorage.removeItem('auth.user_info');
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
-
-        // Call refresh endpoint
-        const refreshResponse = await authApiClient.post('/refresh', {
-          refreshToken,
-        });
-
-        const { accessToken } = refreshResponse.data.data;
-
-        // Save new access token
-        localStorage.setItem('auth.access_token', accessToken);
+        // Use shared refresh lock to prevent concurrent refresh race conditions
+        const mod = await getRefreshModule();
+        const newAccessToken = await mod.refreshAccessToken();
 
         // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return authApiClient(originalRequest);
 
       } catch (refreshError: any) {
-        // Refresh failed → force logout
         console.error('Token refresh failed:', refreshError);
-        localStorage.removeItem('auth.access_token');
-        localStorage.removeItem('auth.refresh_token');
-        localStorage.removeItem('auth.user_info');
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

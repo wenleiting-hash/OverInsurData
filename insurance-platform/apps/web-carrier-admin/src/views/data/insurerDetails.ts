@@ -334,6 +334,9 @@ export interface ChangeHistory {
   changedAt: string;
   reason: string;
   reasonEn: string;
+  // 本系统没有任何审批流程。以下三个字段记录的是「保司信息变更历史」的落地情况：
+  //   approvedBy / approvedAt → 使变更生效的操作人与时间（UI 文案为「处理人 / Handled by」）
+  //   status: approved → 变更已生效；pending → 待生效（生效日未到）；auto → 系统自动同步写入
   approvedBy?: string;
   approvedAt?: string;
   status: 'approved' | 'pending' | 'auto';

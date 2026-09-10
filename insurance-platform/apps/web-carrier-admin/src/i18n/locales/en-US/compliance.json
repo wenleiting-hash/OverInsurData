@@ -114,10 +114,10 @@
     "riskAssessment": "Risk Assessment"
   },
   "statuses": {
-    "approved": "Approved",
-    "pending": "Pending",
-    "underReview": "Under Review",
-    "rejected": "Rejected",
+    "approved": "Effective",
+    "pending": "Pending Effective",
+    "underReview": "Processing",
+    "rejected": "Void",
     "expired": "Expired",
     "terminated": "Terminated",
     "active": "Active",
@@ -126,7 +126,7 @@
   },
   "notifications": {
     "certificateExpiring": "Certificate expiring soon",
-    "appointmentPending": "Appointment under review",
+    "appointmentPending": "Appointment processing",
     "ofacMatch": "Potential OFAC match detected",
     "regulatoryUpdate": "Regulatory update published",
     "auditComplete": "Audit completed successfully"
@@ -252,7 +252,7 @@
     "actions": {
       "block": "Block",
       "warn": "Warn",
-      "requireReview": "Require Review"
+      "requireReview": "Manual Review"
     },
     "stats": {
       "total": "Total Rules",
@@ -267,14 +267,102 @@
       "action": "Action *",
       "actionBlock": "Block",
       "actionWarn": "Warn",
-      "actionRequireReview": "Require Review",
+      "actionRequireReview": "Manual Review",
       "condition": "Trigger Condition *",
-      "conditionPlaceholder": "Describe the trigger condition, e.g., At bind time, verify Appointment status = approved",
+      "conditionPlaceholder": "Describe the trigger condition, e.g., At bind time, verify Appointment status = approved (effective)",
       "priority": "Priority (lower number = higher priority) *",
       "priorityHint": "Critical rules should use high priority (e.g., 1-10); secondary rules can use lower priority (e.g., 50-100)",
       "enabled": "Enable this rule",
       "cancel": "Cancel",
       "save": "Save Rule"
+    }
+  },
+  "licenseExpiry": {
+    "title": "License Expiry Reminder",
+    "description": "Monitor NIPR license expiry status, initiate renewal processes timely to avoid business interruption",
+    "refreshLog": "Refreshing license expiry data",
+    "status": {
+      "notified": "Notified",
+      "reminded": "Reminded",
+      "expired": "Expired",
+      "renewed": "Renewed"
+    },
+    "daysRemaining": {
+      "expired": "Expired",
+      "within": "Within {days} days",
+      "days": "{days} days"
+    },
+    "renewalStatus": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "stats": {
+      "totalAlerts": "Total Alerts",
+      "totalAlertsSub": "All license expiry reminders",
+      "criticalAlerts": "Critical Alerts",
+      "criticalAlertsSub": "Requires immediate action",
+      "expired": "Expired",
+      "expiredSub": "License no longer valid",
+      "inProgress": "In Progress",
+      "inProgressSub": "Renewal underway",
+      "complianceRate": "Compliance Rate",
+      "complianceRateSub": "Current license compliance ratio",
+      "avgCycle": "Avg. Cycle",
+      "avgProcessingDays": "{n} days",
+      "avgCycleSub": "Average renewal processing days"
+    },
+    "filter": {
+      "allSeverities": "All Severities",
+      "severityCritical": "Critical",
+      "severityHigh": "High",
+      "severityMedium": "Medium",
+      "severityLow": "Low",
+      "allStatuses": "All Statuses",
+      "statusNotified": "Notified",
+      "statusReminded": "Reminded",
+      "statusExpired": "Expired",
+      "statusRenewed": "Renewed"
+    },
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "action": {
+      "refreshData": "Refresh Data",
+      "exportList": "Export List",
+      "viewDetail": "View Details",
+      "startRenewal": "Start Renewal"
+    },
+    "table": {
+      "colChannel": "Channel",
+      "colLicenseType": "License Type",
+      "colCountdown": "Countdown",
+      "colSeverity": "Severity",
+      "colStatus": "Status",
+      "colRenewalProgress": "Renewal Progress",
+      "colActions": "Actions",
+      "licenseNumberLabel": "License #: ",
+      "lastNotifiedLabel": "Last notified: ",
+      "expiryLabel": "Expiry: "
+    },
+    "empty": {
+      "title": "No License Expiry Reminders",
+      "desc": "No license expiry issues to address at this time"
+    },
+    "quickAction": {
+      "title": "Quick Action Summary",
+      "immediateTitle": "Immediate Action Required",
+      "immediateCount": "{n} items",
+      "immediateDesc": "Critical-level license expiry reminders",
+      "expiredTitle": "Expired Licenses",
+      "expiredCount": "{n} items",
+      "expiredDesc": "Requires immediate renewal to avoid business interruption",
+      "batchTitle": "Batch Renewal",
+      "batchRange": "Within 30 days",
+      "batchDesc": "Licenses eligible for batch renewal process"
     }
   }
 }

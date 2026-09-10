@@ -13,26 +13,26 @@
   "complianceIssues": "Compliance Issues",
   "searchPlaceholder": "Search by agent/product/license...",
   "backToDashboard": "Back to Dashboard",
-  "appointmentStatus.approved": "Approved",
-  "appointmentStatus.pending": "Pending",
-  "appointmentStatus.rejected": "Rejected",
+  "appointmentStatus.approved": "Effective",
+  "appointmentStatus.pending": "Pending Effective",
+  "appointmentStatus.rejected": "Void",
   "appointmentStatus.expired": "Expired",
   "appointmentStatus.terminated": "Terminated",
   "appointmentStatus.pendingSupplement": "Pending Supplement",
   "common": {
     "status": {
-      "approved": "Approved",
-      "pending": "Pending",
-      "underReview": "Under Review",
-      "rejected": "Rejected",
+      "approved": "Effective",
+      "pending": "Pending Effective",
+      "underReview": "Processing",
+      "rejected": "Void",
       "expired": "Expired",
       "terminated": "Terminated"
     }
   },
   "stats": {
     "totalApplications": "Total Appointments",
-    "approved": "Approved",
-    "pendingOrUnderReview": "Pending / Under Review",
+    "approved": "Effective",
+    "pendingOrUnderReview": "Pending Effective / Processing",
     "nearExpiry30Days": "Expiring within 30 days"
   },
   "tab": {
@@ -49,12 +49,12 @@
     "expiredLicensesCount": "{n} expired licenses",
     "expiringSoonCount": "{n} expiring soon",
     "status": {
-      "approved": "Approved",
-      "pending": "Pending",
-      "rejected": "Rejected",
+      "approved": "Effective",
+      "pending": "Pending Effective",
+      "rejected": "Void",
       "expired": "Expired",
       "terminated": "Terminated",
-      "underReview": "Under Review"
+      "underReview": "Processing"
     },
     "licStatus": {
       "active": "Active",
@@ -87,8 +87,8 @@
     },
     "stats": {
       "total": "Total Appointments",
-      "approved": "Approved",
-      "pendingOrReview": "Pending / Under Review",
+      "approved": "Effective",
+      "pendingOrReview": "Pending Effective / Processing",
       "expiring30": "Expiring in 30 Days"
     },
     "filterAll": "All ({n})",
@@ -100,7 +100,7 @@
       "stateLine": "State / Line",
       "status": "Status",
       "submittedDate": "Submitted",
-      "approvedDate": "Approved",
+      "approvedDate": "Effective Date",
       "expiryDate": "Expiry Date",
       "actions": "Actions"
     },
@@ -119,13 +119,13 @@
       "detail2": "Application sent to NIPR, awaiting state insurance department acceptance",
       "event3": "ap8 application submitted",
       "detail3": "Submitted by channel Lisa Wang, NPN auto-prefilled",
-      "event4": "ap5 AIG FL Professional entered manual review",
-      "detail4": "Insurer internal compliance review, estimated 5 business days",
+      "event4": "ap5 AIG FL Professional entered NIPR processing",
+      "detail4": "Insurer records the appointment and syncs it to NIPR, estimated 5 business days",
       "event5": "ap4 Liberty Mutual NY Auto application submitted",
       "detail5": "Awaiting NIPR acceptance confirmation",
       "event6": "ap6 Hartford CT Commercial appointment expired",
       "detail6": "Channel Northeast Professional — expiry reminder sent 60 days ago, renewal not completed",
-      "event7": "ap10 Travelers CA Auto WA application rejected",
+      "event7": "ap10 Travelers CA Auto WA appointment voided",
       "detail7": "WA state license not activated"
     },
     "processingAppointments": "Appointments in Progress ({n})",
@@ -137,7 +137,7 @@
     "trackSteps": {
       "niprSubmit": "NIPR Submission",
       "stateAccept": "State Acceptance",
-      "insurerReview": "Insurer Review",
+      "insurerReview": "Insurer Filing",
       "done": "Done"
     },
     "subtabs": {
@@ -327,7 +327,7 @@
     "reasonPlaceholder": "Enter the reason, business background or other notes...",
     "urgent": {
       "title": "Mark as Urgent",
-      "desc": "Enable expedited processing; approval expected within 3 business days"
+      "desc": "Enable expedited processing; expected to complete within 3 business days"
     },
     "step3": {
       "title": "Confirm Application Info",
@@ -415,14 +415,14 @@
     },
     "step3Title": "Step 3: Track Progress",
     "step3": {
-      "item1": "Awaiting carrier approval (7-14 days)",
+      "item1": "Awaiting NIPR processing (7-14 days)",
       "item2": "NIPR processing (5-7 business days)",
       "item3": "Receive authorization certificate",
       "item4": "Update internal system records"
     },
     "alert": {
-      "batchRenew": "Initiating batch renewal for {count} appointment(s)\n\nPlease review:\n1. Channel organization eligibility\n2. Outstanding compliance requirements\n3. State-specific filing fees",
-      "startRenewal": "Starting renewal process for:\n\nID: {id}\nChannel: {channelName}\nNPN: {channelNpn}\nInsurer: {insurerShort}\nState: {state}\nLine of Authority: {line}\n\nExpiring in: {daysUntilExp} day(s)\n\nNext Steps:\n1. Verify current NIPR license status\n2. Submit renewal application via NIPR portal\n3. Pay state-specific filing fees\n4. Await carrier approval confirmation"
+      "batchRenew": "Initiating batch renewal for {count} appointment(s)\n\nPlease verify:\n1. Channel organization eligibility\n2. Outstanding compliance requirements\n3. State-specific filing fees",
+      "startRenewal": "Starting renewal process for:\n\nID: {id}\nChannel: {channelName}\nNPN: {channelNpn}\nInsurer: {insurerShort}\nState: {state}\nLine of Authority: {line}\n\nExpiring in: {daysUntilExp} day(s)\n\nNext Steps:\n1. Verify current NIPR license status\n2. Submit renewal application via NIPR portal\n3. Pay state-specific filing fees\n4. Await NIPR processing confirmation"
     }
   },
   "tracking": {
@@ -431,16 +431,16 @@
     "subtitle": "Real-time tracking of all NIPR appointment authorizations",
     "stats": {
       "total": "Total Appointments",
-      "underReview": "Under Review",
-      "approved": "Approved",
+      "underReview": "Processing",
+      "approved": "Effective",
       "expiringSoon": "Expiring Soon"
     },
     "searchPlaceholder": "Search by channel, insurer, or ID...",
     "filterAllStatuses": "All Statuses",
-    "filterApproved": "Approved",
-    "filterPending": "Pending",
-    "filterUnderReview": "Under Review",
-    "filterRejected": "Rejected",
+    "filterApproved": "Effective",
+    "filterPending": "Pending Effective",
+    "filterUnderReview": "Processing",
+    "filterRejected": "Void",
     "filterExpired": "Expired",
     "filterTerminated": "Terminated",
     "filterAllStates": "All States",
@@ -458,10 +458,10 @@
     "expiresPrefix": "Expires: ",
     "processedIn": "Processed in {days}d",
     "statusLabels": {
-      "approved": "Approved",
-      "pending": "Pending",
-      "underReview": "Under Review",
-      "rejected": "Rejected",
+      "approved": "Effective",
+      "pending": "Pending Effective",
+      "underReview": "Processing",
+      "rejected": "Void",
       "expired": "Expired",
       "terminated": "Terminated"
     },
@@ -486,7 +486,7 @@
       "channel": "Channel",
       "insurer": "Insurer",
       "stateLine": "State/Line",
-      "approvedDate": "Approved Date",
+      "approvedDate": "Effective Date",
       "expiryDate": "Expiry Date",
       "daysRemaining": "Days Remaining",
       "actions": "Actions"
@@ -497,10 +497,10 @@
     "summaryPrefix": "",
     "summarySuffix": " terminable records in total",
     "status": {
-      "approved": "Approved",
-      "pending": "Pending",
-      "underReview": "Under Review",
-      "rejected": "Rejected",
+      "approved": "Effective",
+      "pending": "Pending Effective",
+      "underReview": "Processing",
+      "rejected": "Void",
       "expired": "Expired",
       "terminated": "Terminated"
     },

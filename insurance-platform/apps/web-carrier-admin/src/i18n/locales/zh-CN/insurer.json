@@ -5,7 +5,8 @@
     "duplicateCheck": "重复检测",
     "batchImport": "批量导入",
     "export": "导出",
-    "addInsurer": "新增保险公司"
+    "addInsurer": "新增保险公司",
+    "selectBeforeExport": "请先选择要导出的数据"
   },
   "filters": {
     "searchPlaceholder": "搜索公司名、简称、NAIC 编码…",
@@ -16,7 +17,6 @@
     "status": "合作状态",
     "allStatuses": "全部状态",
     "active": "合作中",
-    "pending": "待审核",
     "inactive": "已停用",
     "region": "总部大区",
     "allRegions": "全部区域",
@@ -38,6 +38,7 @@
     "selectedCount": "已选 {count} 项",
     "batchEnable": "批量启用",
     "batchDisable": "批量停用",
+    "batchDelete": "批量删除",
     "cancelSelection": "取消选择",
     "exportSelected": "导出选中"
   },
@@ -62,15 +63,15 @@
     "monthly": "月结",
     "quarterly": "季结",
     "active": "合作中",
-    "pending": "待审核",
     "inactive": "已停用"
   },
   "emptyState": "暂无数据",
   "pagination": {
     "totalCount": "共 {count} 条 · 第 {page} / {pages} 页",
-    "pageSize": "每页 8 条",
+    "pageSize": "每页 10 条",
     "pageSize20": "每页 20 条",
-    "pageSize50": "每页 50 条"
+    "pageSize50": "每页 50 条",
+    "pageSize100": "每页 100 条"
   },
   "form": {
     "title": "职位",
@@ -154,14 +155,13 @@
     "exportPdf": "导出 PDF",
     "edit": "编辑",
     "saveDraft": "保存草稿",
-    "submitReview": "提交审核",
+    "submitReview": "保存",
     "comingSoon": "此功能模块正在开发中...",
     "basicInfo": "基本资料",
     "contactInfoTitle": "联系方式",
     "amBestPrefix": "AM Best",
     "status": {
       "active": "合作中",
-      "pending": "待审核",
       "inactive": "已停用"
     },
     "kpi": {
@@ -189,7 +189,6 @@
     "coop": {
       "active": "正常",
       "expiring": "即将到期",
-      "negotiating": "洽谈中",
       "terminated": "已终止"
     },
     "contractExpiry": "合同到期",
@@ -278,7 +277,8 @@
       "independent": "独立代理",
       "tierPlatinum": "铂金",
       "tierGold": "金级",
-      "tierSilver": "银级"
+      "tierSilver": "银级",
+      "emptyData": "暂无合作渠道数据"
     },
     "channelTypes": {
       "direct": "直接合作",
@@ -288,7 +288,7 @@
     },
     "channelStatus": {
       "active": "活跃",
-      "pending": "审核中",
+      "pending": "待处理",
       "inactive": "停用"
     },
     "documents": {
@@ -334,13 +334,14 @@
       "changedAt": "变更日期"
     },
     "history": {
-      "count": "共 {{count}} 条变更记录",
+      "count": "共 {count} 条变更记录",
       "allFields": "全部字段",
       "allOperators": "全部操作人",
       "exportLog": "导出日志",
       "changeBefore": "变更前",
       "changeAfter": "变更后",
-      "approvedByPrefix": "· 审批人: ",
+      "approvedByPrefix": "· 处理人: ",
+      "emptyData": "暂无变更记录",
       "sections": {
         "basic": "基本信息",
         "rating": "财务评级",
@@ -357,7 +358,8 @@
       "premium": "保费",
       "status": "状态",
       "effectiveDate": "生效日期",
-      "actions": "操作"
+      "actions": "操作",
+      "lossRatio": "赔付率"
     },
     "products": {
       "countPre": "该保险公司下共 ",
@@ -365,7 +367,8 @@
       "addProduct": "新增产品",
       "typeIndividual": "个人险",
       "typeGroup": "团体险",
-      "typeVoluntary": "自愿险"
+      "typeVoluntary": "自愿险",
+      "emptyData": "暂无关联产品数据"
     },
     "productStatus": {
       "active": "启用",
@@ -390,7 +393,8 @@
         "avgPolicyValue": "平均保单价值",
         "retentionRate": "客户留存率",
         "cac": "获客成本"
-      }
+      },
+      "emptyData": "暂无业绩数据"
     },
     "lossTable": {
       "name": "产品名称",
@@ -435,6 +439,7 @@
     "actions": {
       "disable": "停用",
       "enable": "启用",
+      "delete": "删除",
       "featurePending": "功能待实现"
     }
   },
@@ -531,8 +536,8 @@
       "skippedValue": "{n} 行（校验失败）",
       "mode": "导入模式",
       "modeValue": "新增（不覆盖已有数据）",
-      "review": "审核要求",
-      "reviewValue": "导入后进入待审核状态，需管理员审批",
+      "review": "导入说明",
+      "reviewValue": "导入后直接进入系统，数据立即生效",
       "reupload": "重新上传",
       "submit": "确认导入 {n} 条记录"
     },
@@ -541,7 +546,7 @@
       "desc": "已成功导入 {ok} 家保险公司，{fail} 行因校验失败已跳过",
       "success": "成功导入",
       "skipped": "已跳过",
-      "pendingReview": "待审核",
+      "pendingReview": "待处理",
       "count": "{n} 条",
       "viewRecords": "查看导入记录",
       "backToList": "返回保险公司列表"
@@ -577,7 +582,7 @@
     },
     "recordStatus": {
       "active": "合作中",
-      "pending": "待审核"
+      "pending": "待处理"
     },
     "field": {
       "naicCode": "NAIC 编码",
@@ -653,22 +658,32 @@
       "scheduledNote": "定时停用：该日期前渠道可继续处理在途业务（过渡期），到期后自动停用",
       "confirmDisablePre": "我已了解此操作的影响范围，确认停用",
       "confirmEnablePre": "我已了解此操作的影响范围，确认启用",
-      "confirmPost": "，并已告知相关团队成员。本操作将记录至审计日志并需主管审批后生效。",
-      "btnDisable": "提交停用申请",
+      "confirmPost": "。本操作将记录至审计日志。",
+      "btnDisable": "确认停用",
       "btnEnable": "确认启用"
+    },
+    "deleteConfirm": {
+      "title": "确认删除",
+      "subtitle": "此操作不可撤销",
+      "warningPre": "即将删除保险公司 ",
+      "warningPost": "，删除后相关配置、合作记录将一并移除，且无法恢复。",
+      "confirmBtn": "确认删除",
+      "deleting": "删除中…"
     },
     "batchExport": {
       "title": "批量导出",
       "scopeTitle": "导出范围",
       "scopeFiltered": "当前筛选结果",
+      "scopeFilteredDesc": "符合当前筛选条件的 {count} 条记录",
       "scopeSelected": "已勾选记录",
+      "scopeSelectedDesc": "列表中已勾选的 {count} 条记录",
       "scopeAll": "全部数据",
-      "count": "{{count}} 条",
+      "scopeAllDesc": "数据库中的全部 {count} 条记录",
       "formatTitle": "导出格式",
       "fmtXlsxDesc": "推荐，支持格式化",
       "fmtCsvDesc": "通用，纯文本",
       "fieldsTitle": "导出字段",
-      "fieldsSelected": "（已选 {{count}} / {{total}} 个）",
+      "fieldsSelected": "（已选 {count} / {total} 个）",
       "selectAll": "全选",
       "clearAll": "清空",
       "relatedTitle": "关联数据",
@@ -697,11 +712,11 @@
       "relPerformance": "业绩数据摘要",
       "relContacts": "对接人信息",
       "footerPrefix": "将导出 ",
-      "footerRecords": "{{count}} 条",
-      "footerFields": "{{count}} 个字段",
+      "footerRecords": "{count} 条",
+      "footerFields": "{count} 个字段",
       "footerRelated": " + 关联数据",
       "exporting": "导出中…",
-      "exportBtn": "导出 {{format}}"
+      "exportBtn": "导出 {format}"
     }
   }
 }

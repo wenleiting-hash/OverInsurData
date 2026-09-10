@@ -13,26 +13,26 @@
   "complianceIssues": "合规问题",
   "searchPlaceholder": "搜索代理人/产品/牌照...",
   "backToDashboard": "返回首页",
-  "appointmentStatus.approved": "已批准",
-  "appointmentStatus.pending": "待审核",
-  "appointmentStatus.rejected": "已拒绝",
+  "appointmentStatus.approved": "已生效",
+  "appointmentStatus.pending": "待生效",
+  "appointmentStatus.rejected": "已失效",
   "appointmentStatus.expired": "已过期",
   "appointmentStatus.terminated": "已终止",
   "appointmentStatus.pendingSupplement": "待补充材料",
   "common": {
     "status": {
-      "approved": "已批准",
-      "pending": "待审核",
-      "underReview": "审核中",
-      "rejected": "已拒绝",
+      "approved": "已生效",
+      "pending": "待生效",
+      "underReview": "处理中",
+      "rejected": "已失效",
       "expired": "已过期",
       "terminated": "已终止"
     }
   },
   "stats": {
     "totalApplications": "总 Appointment 数",
-    "approved": "已批准",
-    "pendingOrUnderReview": "待审核 / 审核中",
+    "approved": "已生效",
+    "pendingOrUnderReview": "待生效 / 处理中",
     "nearExpiry30Days": "近 30 天到期"
   },
   "tab": {
@@ -49,12 +49,12 @@
     "expiredLicensesCount": "{n} 个牌照已过期",
     "expiringSoonCount": "{n} 个即将到期",
     "status": {
-      "approved": "已批准",
-      "pending": "待审核",
-      "rejected": "已拒绝",
+      "approved": "已生效",
+      "pending": "待生效",
+      "rejected": "已失效",
       "expired": "已过期",
       "terminated": "已终止",
-      "underReview": "审核中"
+      "underReview": "处理中"
     },
     "licStatus": {
       "active": "有效",
@@ -68,7 +68,7 @@
       "blocked": "已拦截",
       "warned": "已警告",
       "passed": "已通过",
-      "manualReview": "人工审核"
+      "manualReview": "人工复核"
     },
     "ofacResult": {
       "clear": "清单无记录",
@@ -87,8 +87,8 @@
     },
     "stats": {
       "total": "总 Appointment 数",
-      "approved": "已批准",
-      "pendingOrReview": "待审核 / 审核中",
+      "approved": "已生效",
+      "pendingOrReview": "待生效 / 处理中",
       "expiring30": "近 30 天到期"
     },
     "filterAll": "全部 ({n})",
@@ -100,7 +100,7 @@
       "stateLine": "州 / 业务线",
       "status": "状态",
       "submittedDate": "提交日期",
-      "approvedDate": "批准日期",
+      "approvedDate": "生效日期",
       "expiryDate": "到期日",
       "actions": "操作"
     },
@@ -119,13 +119,13 @@
       "detail2": "申请已发至 NIPR，等待州保险局受理",
       "event3": "ap8 申请提交",
       "detail3": "渠道 Lisa Wang 提交，系统自动预填 NPN",
-      "event4": "ap5 AIG FL Professional 进入人工审核",
-      "detail4": "保险公司内部合规审查，预计 5 工作日",
+      "event4": "ap5 AIG FL Professional 进入 NIPR 处理",
+      "detail4": "保险公司录入委任信息并同步 NIPR，预计 5 工作日",
       "event5": "ap4 Liberty Mutual NY Auto 申请提交",
       "detail5": "待 NIPR 受理确认",
       "event6": "ap6 Hartford CT Commercial Appointment 到期",
       "detail6": "渠道 Northeast Professional — 60 天前已发送到期提醒，未完成续期",
-      "event7": "ap10 Travelers CA Auto WA 申请被拒",
+      "event7": "ap10 Travelers CA Auto WA 委任失效",
       "detail7": "WA 州牌照未激活"
     },
     "processingAppointments": "处理中的 Appointment ({n})",
@@ -137,7 +137,7 @@
     "trackSteps": {
       "niprSubmit": "NIPR 提交",
       "stateAccept": "州保险局受理",
-      "insurerReview": "保险公司审核",
+      "insurerReview": "保险公司录入",
       "done": "完成"
     },
     "subtabs": {
@@ -327,7 +327,7 @@
     "reasonPlaceholder": "请输入申请原因、业务背景等补充说明…",
     "urgent": {
       "title": "标记为紧急申请",
-      "desc": "启用加急处理通道，预计 3 个工作日内完成审批"
+      "desc": "启用加急处理通道，预计 3 个工作日内完成处理"
     },
     "step3": {
       "title": "确认申请信息",
@@ -415,14 +415,14 @@
     },
     "step3Title": "步骤 3：跟踪进度",
     "step3": {
-      "item1": "等待保险公司审批（7-14 天）",
+      "item1": "等待 NIPR 处理（7-14 天）",
       "item2": "NIPR 处理（5-7 个工作日）",
       "item3": "接收授权证书",
       "item4": "更新内部系统记录"
     },
     "alert": {
-      "batchRenew": "正在为 {count} 个 Appointment 发起批量续期\n\n请审查：\n1. 渠道组织资格\n2. 未完成的合规要求\n3. 各州申报费用",
-      "startRenewal": "正在为以下对象发起续期流程：\n\nID：{id}\n渠道：{channelName}\nNPN：{channelNpn}\n保险公司：{insurerShort}\n州：{state}\n业务线：{line}\n\n将在 {daysUntilExp} 天后到期\n\n后续步骤：\n1. 验证当前 NIPR 牌照状态\n2. 通过 NIPR 门户提交续期申请\n3. 缴纳各州申报费用\n4. 等待保险公司审批确认"
+      "batchRenew": "正在为 {count} 个 Appointment 发起批量续期\n\n请核对：\n1. 渠道组织资格\n2. 未完成的合规要求\n3. 各州申报费用",
+      "startRenewal": "正在为以下对象发起续期流程：\n\nID：{id}\n渠道：{channelName}\nNPN：{channelNpn}\n保险公司：{insurerShort}\n州：{state}\n业务线：{line}\n\n将在 {daysUntilExp} 天后到期\n\n后续步骤：\n1. 验证当前 NIPR 牌照状态\n2. 通过 NIPR 门户提交续期申请\n3. 缴纳各州申报费用\n4. 等待 NIPR 处理确认"
     }
   },
   "tracking": {
@@ -431,16 +431,16 @@
     "subtitle": "实时跟踪所有 NIPR 任命授权",
     "stats": {
       "total": "Appointment 总数",
-      "underReview": "审核中",
-      "approved": "已批准",
+      "underReview": "处理中",
+      "approved": "已生效",
       "expiringSoon": "即将到期"
     },
     "searchPlaceholder": "按渠道、保险公司或 ID 搜索...",
     "filterAllStatuses": "全部状态",
-    "filterApproved": "已批准",
-    "filterPending": "待审核",
-    "filterUnderReview": "审核中",
-    "filterRejected": "已拒绝",
+    "filterApproved": "已生效",
+    "filterPending": "待生效",
+    "filterUnderReview": "处理中",
+    "filterRejected": "已失效",
     "filterExpired": "已过期",
     "filterTerminated": "已终止",
     "filterAllStates": "全部州",
@@ -458,10 +458,10 @@
     "expiresPrefix": "到期：",
     "processedIn": "处理耗时 {days}d",
     "statusLabels": {
-      "approved": "已批准",
-      "pending": "待审核",
-      "underReview": "审核中",
-      "rejected": "已拒绝",
+      "approved": "已生效",
+      "pending": "待生效",
+      "underReview": "处理中",
+      "rejected": "已失效",
       "expired": "已过期",
       "terminated": "已终止"
     },
@@ -486,7 +486,7 @@
       "channel": "渠道商",
       "insurer": "保险公司",
       "stateLine": "州/业务线",
-      "approvedDate": "批准日期",
+      "approvedDate": "生效日期",
       "expiryDate": "到期日",
       "daysRemaining": "剩余天数",
       "actions": "操作"
@@ -497,10 +497,10 @@
     "summaryPrefix": "共",
     "summarySuffix": "条可终止记录",
     "status": {
-      "approved": "已批准",
-      "pending": "待审核",
-      "underReview": "审核中",
-      "rejected": "已拒绝",
+      "approved": "已生效",
+      "pending": "待生效",
+      "underReview": "处理中",
+      "rejected": "已失效",
       "expired": "已过期",
       "terminated": "已终止"
     },

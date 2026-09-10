@@ -29,6 +29,7 @@
     "i18nManagement": "多语言管理",
     "permissionManagement": "权限管理",
     "userManagement": "用户管理",
+    "departmentManagement": "部门管理",
     "systemManagement": "系统管理"
   },
   "carriers": {
@@ -43,6 +44,7 @@
     "notifications": "通知",
     "help": "帮助",
     "admin": "管理员",
+    "comingSoon": "功能建设中，敬请期待",
     "adminRole": "平台管理员",
     "brandTagline": "海外保险管理平台",
     "language": "语言 / LANGUAGE",

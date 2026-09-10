@@ -21,7 +21,7 @@
       "empty": "所有合规保险公司均已建立合作关系",
       "status": {
         "verified": "已认证",
-        "pending": "待审核"
+        "pending": "待生效"
       }
     },
     "step1": {
@@ -56,13 +56,13 @@
     },
     "step3": {
       "confirmTitle": "确认提交合作申请",
-      "description": "申请提交后将进入内部合规审核，同时向保险公司发送合作意向通知。审批通过后系统将自动创建合作记录。",
+      "description": "申请提交后将向保险公司发送合作意向通知，系统随即自动创建合作记录。",
       "confirmation": "我确认以上信息准确，同意提交合作申请"
     }
   },
   "toast": {
-    "applicationSubmitted": "合作申请已成功提交，预计 5-10 个工作日审核完成",
-    "terminationSubmitted": "合作关系终止申请已提交（{insurer}），预计 3-5 个工作日审批完成"
+    "applicationSubmitted": "合作申请已成功提交，预计 5-10 个工作日完成开通",
+    "terminationSubmitted": "合作关系终止申请已提交（{insurer}），预计 3-5 个工作日完成处理"
   },
   "view": {
     "common": {
@@ -88,9 +88,9 @@
     "coopStatus": {
       "draft": "草稿",
       "submitted": "已提交",
-      "underReview": "审核中",
+      "underReview": "处理中",
       "approved": "合作中",
-      "rejected": "已拒绝",
+      "rejected": "已失效",
       "terminated": "已终止"
     },
     "contractStatus": {
@@ -105,10 +105,10 @@
     "integrationStatus": {
       "available": "可接入",
       "requested": "已申请",
-      "inReview": "审核中",
-      "approved": "已批准",
+      "inReview": "处理中",
+      "approved": "已生效",
       "integrated": "已接入",
-      "rejected": "已拒绝",
+      "rejected": "已失效",
       "suspended": "已暂停"
     },
     "renewalPriority": {
@@ -126,7 +126,7 @@
     },
     "stats": {
       "active": "合作中",
-      "reviewing": "审核中",
+      "reviewing": "处理中",
       "terminated": "已终止",
       "lobs": "覆盖险种"
     },
@@ -243,12 +243,12 @@
       "noteLabel": "备注说明",
       "notePlaceholder": "填写终止背景、后续安排或特殊事项…",
       "confirmPrefix": "我已知悉终止影响，确认申请终止与",
-      "confirmSuffix": "的合作关系，本申请需主管审批后生效并记录至审计日志。",
+      "confirmSuffix": "的合作关系，本操作提交后立即生效并记录至审计日志。",
       "submit": "提交终止申请",
-      "toastSubmitted": "合作关系终止申请已提交（{insurer}），预计 3-5 个工作日审批完成",
+      "toastSubmitted": "合作关系终止申请已提交（{insurer}），预计 3-5 个工作日完成处理",
       "done": {
         "title": "终止申请已提交",
-        "desc": "申请进入审批流程，审批通过后按所选时间执行终止操作。",
+        "desc": "终止操作已确认，将按所选时间执行。",
         "back": "返回列表"
       }
     },
@@ -287,7 +287,7 @@
       "submit": "提交申请",
       "done": {
         "title": "合作申请已提交",
-        "desc": "申请已进入合规审核流程，预计 5–10 个工作日完成，审批结果将通过邮件通知。",
+        "desc": "申请已提交，预计 5–10 个工作日完成开通，结果将通过邮件通知。",
         "back": "返回合作列表"
       },
       "stepNames": {
@@ -302,7 +302,7 @@
         "coopTypeLabel": "合作类型",
         "status": {
           "verified": "已认证",
-          "pending": "待审核"
+          "pending": "待生效"
         }
       },
       "step1": {
@@ -344,7 +344,7 @@
       },
       "step3": {
         "confirmTitle": "确认提交合作申请",
-        "description": "申请提交后将进入内部合规审核，同时向保险公司发送合作意向通知。审批通过后系统将自动创建合作记录。",
+        "description": "申请提交后将向保险公司发送合作意向通知，系统随即自动创建合作记录。",
         "confirmation": "我确认以上信息准确，同意提交合作申请"
       }
     }
@@ -447,11 +447,11 @@
     "stats": {
       "negotiating": "谈判中",
       "pendingSignature": "待签署",
-      "approved": "已批准",
+      "approved": "已生效",
       "inProgress": "进行中",
       "expiringSoon": "即将到期",
       "terminated": "已终止",
-      "pendingApproval": "待审批",
+      "pendingApproval": "待生效",
       "expired": "已到期"
     },
     "searchPlaceholder": "按保险公司名称或合作ID搜索...",
@@ -513,7 +513,7 @@
       "item1": "所有渠道授权将被自动收回",
       "item2": "将向保险公司提交 Appointment 终止申请",
       "item3": "渠道将立即收到通知",
-      "item4": "此操作需要法务、合规和总经理审批"
+      "item4": "此操作将同步通知法务与合规团队"
     },
     "form": {
       "selectCoop": "选择合作关系*",
@@ -524,7 +524,7 @@
       "typePlaceholder": "选择终止方式",
       "effectiveDate": "终止生效日期",
       "immediate": "立即终止",
-      "immediateDesc": "批准后立即生效",
+      "immediateDesc": "提交后立即生效",
       "futureDate": "指定日期",
       "futureDateDesc": "设置具体终止日期",
       "terminationDate": "终止日期*",
@@ -574,19 +574,19 @@
       "terminateAppointments": "终止 {count} 个 Appointment",
       "nextStepsTitle": "后续步骤",
       "nextSteps": {
-        "1": "审查所有影响数据并选择上述处理策略",
+        "1": "核对所有影响数据并选择上述处理策略",
         "2": "执行批量操作（收回授权、提交 Appointment）",
-        "3": "提交审批流程",
+        "3": "确认并提交",
         "4": "完成后生成审计报告"
       },
       "close": "关闭",
-      "continueApproval": "继续审批"
+      "continueApproval": "继续确认"
     },
     "workflow": {
-      "title": "审批流程",
-      "legalReview": "法务审查",
-      "complianceReview": "合规审查",
-      "gmApproval": "总经理审批"
+      "title": "确认流程",
+      "legalReview": "法务确认",
+      "complianceReview": "合规确认",
+      "gmApproval": "总经理确认"
     },
     "alerts": {
       "selectFields": "请选择合作、原因和方式",
@@ -644,7 +644,7 @@
     },
     "status": {
       "draft": "草稿",
-      "pendingApproval": "待审批",
+      "pendingApproval": "待生效",
       "signed": "已签署",
       "inEffect": "有效",
       "expiringSoon": "即将到期",

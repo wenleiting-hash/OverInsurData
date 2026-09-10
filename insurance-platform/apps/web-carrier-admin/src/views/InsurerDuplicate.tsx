@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Search, RefreshCw, GitMerge, CheckCircle, X, AlertTriangle, Eye, ArrowRight, Shield } from 'lucide-react';
+import { useInsurerDuplicateCheck } from '@/services/insurerService';
 import type { ViewId } from '@/App';
 import { useTranslation } from 'react-i18next';
 

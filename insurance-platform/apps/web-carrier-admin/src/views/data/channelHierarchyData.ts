@@ -89,7 +89,7 @@ export interface HierarchyRelation {
   startDate: string
   endDate?: string
   terminationReason?: string
-  approvedBy?: string
+  approvedBy?: string        // 建立该层级关系的操作人（本系统无审批流程，仅作变更记录用）
   changeHistory?: RelationChange[]
 }
 
@@ -127,6 +127,11 @@ export const hierarchyRelations: HierarchyRelation[] = [
 export type ChangeType = 'add-relation' | 'move-parent' | 'add-parent' | 'remove-parent' | 'terminate' | 'adjust-share'
 
 export interface PendingChange {
+  // 本系统没有任何审批流程。这里的「待生效变更」只是已录入但 effectiveDate 尚未到达的层级调整：
+  //   pending-approval → 待生效（到达 effectiveDate 自动生效，也可手工提前生效）
+  //   approved         → 已生效
+  //   rejected         → 已作废
+  // 字段名沿用早期原型以兼容存量 mock 数据，不代表存在审批环节。
   id: string
   changeType: ChangeType
   nodeId: string
@@ -139,7 +144,7 @@ export interface PendingChange {
   requestedBy: string
   requestDate: string
   status: 'pending-approval' | 'approved' | 'rejected'
-  approver?: string
+  approver?: string          // 执行生效/作废的操作人，不是审批人
   effectiveDate: string
   reason: string
   reasonEn?: string
@@ -149,7 +154,7 @@ export const pendingChanges: PendingChange[] = [
   { id: 'pc1', changeType: 'move-parent', nodeId: 'c5', nodeName: 'Sunshine State Brokers', fromParentId: 'r-south', fromParentName: 'South & Southeast Region', toParentId: 'r-northeast', toParentName: 'Northeast Region', requestedBy: 'Carlos Martinez', requestDate: '2026-08-15', status: 'pending-approval', effectiveDate: '2026-09-01', reason: '业务重心东移，主要合作保险公司在东北区', reasonEn: 'Business focus shifting east; primary carrier partners are in the Northeast region' },
   { id: 'pc2', changeType: 'add-parent', nodeId: 'ag-001', nodeName: 'Alex Kim', toParentId: 'b-pc-sf', toParentName: 'PC San Francisco Branch', newRevenueShare: 0.3, requestedBy: 'Linda Zhao', requestDate: '2026-08-18', status: 'pending-approval', effectiveDate: '2026-09-01', reason: '跨区域协作，Alex Kim 承接 SF 分支部分业务', reasonEn: 'Cross-region collaboration; Alex Kim takes on part of the SF Branch book of business' },
   { id: 'pc3', changeType: 'terminate', nodeId: 'hr12', nodeName: 'Gulf South Insurance Partners', requestedBy: 'Zhang Wei', requestDate: '2026-08-20', status: 'pending-approval', effectiveDate: '2026-09-30', reason: '持续赔付率超标，合规委员会决议终止合作', reasonEn: 'Persistent loss-ratio exceedance; the compliance committee resolved to terminate the partnership' },
-  { id: 'pc4', changeType: 'add-relation', nodeId: 'c11', nodeName: 'Bay Area Commercial Specialists', toParentId: 'r-west', toParentName: 'West Region', requestedBy: 'Kevin Zhang', requestDate: '2026-08-01', status: 'approved', approver: 'Sarah Chen', effectiveDate: '2026-08-15', reason: '新渠道加入申请', reasonEn: 'New channel onboarding application' },
+  { id: 'pc4', changeType: 'add-relation', nodeId: 'c11', nodeName: 'Bay Area Commercial Specialists', toParentId: 'r-west', toParentName: 'West Region', requestedBy: 'Kevin Zhang', requestDate: '2026-08-01', status: 'approved', approver: 'Sarah Chen', effectiveDate: '2026-08-15', reason: '新渠道加入', reasonEn: 'New channel onboarding' },
 ]
 
 // ── White-label Configurations ────────────────────────────────────────────────

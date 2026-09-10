@@ -38,7 +38,7 @@
     "inactive": "Inactive",
     "expired": "Expired",
     "suspended": "Suspended",
-    "pending": "Pending",
+    "pending": "Pending Issuance",
     "cancelled": "Cancelled"
   },
   "verificationStatus": {

@@ -40,25 +40,27 @@ interface FilterQuery {
   type?: string;
 }
 
+import { IsString, IsOptional, IsIn } from 'class-validator';
+
 /**
  * Translation Entry DTO
  */
 export class CreateTranslationDto {
-  ovwrNamespace: string;
-  ovwrKey: string;
-  ovwrEnUS: string;
-  ovwrZhCN?: string;
-  ovwrType?: 'label' | 'button' | 'placeholder' | 'toast' | 'confirm' | 'validate' | 'error-page';
-  ovwrModule?: string;
-  ovwrSection?: string;
+  @IsString() ovwrNamespace: string;
+  @IsString() ovwrKey: string;
+  @IsString() ovwrEnUS: string;
+  @IsOptional() @IsString() ovwrZhCN?: string;
+  @IsOptional() @IsString() ovwrType?: string;
+  @IsOptional() @IsString() ovwrModule?: string;
+  @IsOptional() @IsString() ovwrSection?: string;
 }
 
 export class UpdateTranslationDto {
-  ovwrEnUS?: string;
-  ovwrZhCN?: string;
-  ovwrType?: string;
-  ovwrModule?: string;
-  ovwrSection?: string;
+  @IsOptional() @IsString() ovwrEnUS?: string;
+  @IsOptional() @IsString() ovwrZhCN?: string;
+  @IsOptional() @IsString() ovwrType?: string;
+  @IsOptional() @IsString() ovwrModule?: string;
+  @IsOptional() @IsString() ovwrSection?: string;
 }
 
 @ApiTags('Ovwr I18n Management')

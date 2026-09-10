@@ -39,6 +39,8 @@ import enUSAudit from './locales/en-US/audit.json';
 import zhCNAudit from './locales/zh-CN/audit.json';
 import enUSExport from './locales/en-US/export.json';
 import zhCNExport from './locales/zh-CN/export.json';
+import enUSDepartment from './locales/en-US/department.json';
+import zhCNDepartment from './locales/zh-CN/department.json';
 
 const resources = {
   'en-US': {
@@ -63,6 +65,7 @@ const resources = {
     mfa: enUSMfa,
     audit: enUSAudit,
     export: enUSExport,
+    department: enUSDepartment,
   },
   'zh-CN': {
     common: zhCNCommon,
@@ -86,6 +89,7 @@ const resources = {
     mfa: zhCNMfa,
     audit: zhCNAudit,
     export: zhCNExport,
+    department: zhCNDepartment,
   },
 };
 

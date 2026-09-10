@@ -29,6 +29,7 @@
     "i18nManagement": "Interface Copy Management",
     "permissionManagement": "Permission Management",
     "userManagement": "User Management",
+    "departmentManagement": "Department Management",
     "systemManagement": "System Management"
   },
   "carriers": {
@@ -43,6 +44,7 @@
     "notifications": "Notifications",
     "help": "Help",
     "admin": "Admin",
+    "comingSoon": "Coming soon",
     "adminRole": "Platform Admin",
     "brandTagline": "Overseas Insurance Platform",
     "language": "Language / LANGUAGE",

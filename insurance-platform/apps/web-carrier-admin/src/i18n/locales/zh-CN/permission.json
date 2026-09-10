@@ -39,6 +39,9 @@
     "copyRole": "复制角色",
     "createRole": "新建角色",
     "saveChanges": "保存修改",
+    "deleteRole": "删除角色",
+    "deleteRoleConfirm": "确定要删除角色 {name} 吗？此操作不可撤销。",
+    "systemRoleNoActions": "系统内置角色不可操作",
     "savedToast": "权限配置已保存",
     "roleList": "角色列表",
     "systemBadge": "系统",
@@ -56,8 +59,8 @@
       "dataDesc": "控制该角色可以访问和查看的数据范围",
       "op": "操作权限",
       "opDescPrefix": "控制敏感操作的执行权限。",
-      "approvalTerm": "「审批」",
-      "opDescSuffix": "表示需提交审批流后方可执行。",
+      "approvalTerm": "「确认」",
+      "opDescSuffix": "表示需二次确认后方可执行。",
       "highRiskWarning": "该角色含有高风险操作权限，请谨慎分配"
     },
     "funcTree": {
@@ -168,12 +171,12 @@
         "desc": "暂停渠道的所有业务"
       },
       "channel_approve": {
-        "label": "审批渠道入驻",
-        "desc": "批准或拒绝渠道入驻申请"
+        "label": "渠道入驻确认",
+        "desc": "确认或退回渠道入驻申请"
       },
       "commission_approve": {
-        "label": "审批佣金方案",
-        "desc": "批准佣金费率变更"
+        "label": "佣金方案确认",
+        "desc": "确认佣金费率变更"
       },
       "commission_pay": {
         "label": "发起结算打款",
@@ -211,7 +214,7 @@
     "opResult": {
       "allow": "允许",
       "deny": "禁止",
-      "conditional": "审批"
+      "conditional": "确认"
     },
     "risk": {
       "high": "高风险",
@@ -303,7 +306,7 @@
       "pending": "待激活"
     },
     "filters": {
-      "search": "搜索姓名、用户名、邮箱或电话...",
+      "search": "搜索姓名、用户名、邮箱...",
       "allStatus": "全部状态",
       "allRoles": "全部角色",
       "allDepts": "全部部门",
@@ -318,12 +321,13 @@
       "lastLogin": "最近登录",
       "actions": "操作",
       "never": "从未登录",
+      "noRoles": "未分配角色",
       "empty": "未找到匹配的用户"
     },
     "footer": {
       "filteredFrom": "筛选出 {n} 位用户（共 {total} 位）",
       "userCount": "共 {n} 位用户",
-      "manageRoles": "管理角色权限"
+      "manageRoles": "管理角色与权限"
     },
     "menu": {
       "editUser": "编辑用户",
@@ -383,24 +387,22 @@
       "remarks": "请输入备注（选填）"
     },
     "roles": {
-      "superAdmin": "超级管理员",
-      "opsAdmin": "运营管理员",
-      "carrierAdmin": "保险公司管理员",
-      "agent": "代理人",
-      "channelManager": "渠道专员",
-      "financeSpecialist": "财务专员",
-      "readonly": "只读用户"
+      "super_admin": "超级管理员",
+      "ops_manager": "运营管理员",
+      "channel_manager": "渠道经理",
+      "finance_staff": "财务专员",
+      "readonly_user": "只读用户"
     },
     "depts": {
-      "tech": "技术部",
-      "ops": "运营部",
-      "finance": "财务部",
-      "channel": "渠道部",
-      "compliance": "合规部",
-      "marketing": "市场部"
+      "TECH": "技术部",
+      "OPS": "运营部",
+      "FIN": "财务部",
+      "CHANNEL": "渠道部",
+      "COMPLIANCE": "合规部",
+      "MARKET": "市场部"
     },
     "status": {
-      "active": "活跃",
+      "active": "正常",
       "inactive": "停用",
       "locked": "已锁定",
       "pending": "待激活"
@@ -419,7 +421,25 @@
       "updateFailed": "更新用户失败",
       "deleteFailed": "删除用户失败",
       "passwordResetFailed": "重置密码失败",
-      "toggleStatusFailed": "更新账号状态失败"
+      "toggleStatusFailed": "更新账号状态失败",
+      "cannotDisableSelf": "不能停用自己当前登录的账号"
+    }
+  },
+  "roleMgmt": {
+    "description": "管理系统角色及权限配置",
+    "users": "用户数",
+    "empty": "未找到匹配的角色",
+    "footer": "共 {n} 个角色",
+    "roleNameEn": "角色名称 (英文)",
+    "toast": {
+      "created": "角色创建成功",
+      "updated": "角色更新成功",
+      "deleted": "角色已删除"
+    },
+    "error": {
+      "createFailed": "创建角色失败",
+      "updateFailed": "更新角色失败",
+      "deleteFailed": "删除角色失败"
     }
   }
 }

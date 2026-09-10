@@ -21,7 +21,7 @@
       "empty": "All compliant insurers already have established partnerships",
       "status": {
         "verified": "Verified",
-        "pending": "Pending Review"
+        "pending": "Pending Effective"
       }
     },
     "step1": {
@@ -56,13 +56,13 @@
     },
     "step3": {
       "confirmTitle": "Confirm Submit Application",
-      "description": "After submission, the application enters internal compliance review with notification sent to the insurer. Upon approval, partnership record will be automatically created.",
+      "description": "After submission a partnership intent notification is sent to the insurer and the partnership record is created automatically.",
       "confirmation": "I confirm the above information is accurate and agree to submit the application"
     }
   },
   "toast": {
-    "applicationSubmitted": "Partnership application successfully submitted, estimated 5-10 business days for review",
-    "terminationSubmitted": "Partnership termination application submitted ({insurer}, estimated 3-5 business days for approval"
+    "applicationSubmitted": "Partnership application successfully submitted, estimated 5-10 business days to complete onboarding",
+    "terminationSubmitted": "Partnership termination application submitted ({insurer}), estimated 3-5 business days to process"
   },
   "view": {
     "common": {
@@ -88,9 +88,9 @@
     "coopStatus": {
       "draft": "Draft",
       "submitted": "Submitted",
-      "underReview": "Under Review",
+      "underReview": "Processing",
       "approved": "Active",
-      "rejected": "Rejected",
+      "rejected": "Void",
       "terminated": "Terminated"
     },
     "contractStatus": {
@@ -105,10 +105,10 @@
     "integrationStatus": {
       "available": "Available",
       "requested": "Requested",
-      "inReview": "Under Review",
-      "approved": "Approved",
+      "inReview": "Processing",
+      "approved": "Effective",
       "integrated": "Integrated",
-      "rejected": "Rejected",
+      "rejected": "Void",
       "suspended": "Suspended"
     },
     "renewalPriority": {
@@ -126,7 +126,7 @@
     },
     "stats": {
       "active": "Active",
-      "reviewing": "Under Review",
+      "reviewing": "Processing",
       "terminated": "Terminated",
       "lobs": "Lines Covered"
     },
@@ -243,12 +243,12 @@
       "noteLabel": "Notes",
       "notePlaceholder": "Describe the termination background, follow-up arrangements, or special matters…",
       "confirmPrefix": "I acknowledge the termination impact and confirm the request to terminate the partnership with",
-      "confirmSuffix": ". This application takes effect after supervisor approval and will be recorded in the audit log.",
+      "confirmSuffix": ". This operation takes effect immediately upon submission and will be recorded in the audit log.",
       "submit": "Submit Termination Request",
-      "toastSubmitted": "Partnership termination request submitted ({insurer}), estimated 3-5 business days for approval",
+      "toastSubmitted": "Partnership termination request submitted ({insurer}), estimated 3-5 business days to process",
       "done": {
         "title": "Termination Request Submitted",
-        "desc": "The request has entered the approval workflow. Termination will be executed at the selected time once approved.",
+        "desc": "Termination has been confirmed and will be executed at the selected time.",
         "back": "Back to List"
       }
     },
@@ -287,7 +287,7 @@
       "submit": "Submit Application",
       "done": {
         "title": "Application Submitted",
-        "desc": "Your application has entered the compliance review process, estimated 5–10 business days. The result will be sent to you by email.",
+        "desc": "Your application has been submitted, estimated 5–10 business days to complete onboarding. The result will be sent to you by email.",
         "back": "Back to Partnership List"
       },
       "stepNames": {
@@ -302,7 +302,7 @@
         "coopTypeLabel": "Partnership Type",
         "status": {
           "verified": "Verified",
-          "pending": "Pending Review"
+          "pending": "Pending Effective"
         }
       },
       "step1": {
@@ -344,7 +344,7 @@
       },
       "step3": {
         "confirmTitle": "Confirm Submit Application",
-        "description": "After submission, the application enters internal compliance review and a partnership intent notification is sent to the insurer. Upon approval, the partnership record will be created automatically.",
+        "description": "After submission a partnership intent notification is sent to the insurer and the partnership record is created automatically.",
         "confirmation": "I confirm the above information is accurate and agree to submit the application"
       }
     }
@@ -447,11 +447,11 @@
     "stats": {
       "negotiating": "Negotiating",
       "pendingSignature": "Pending Signature",
-      "approved": "Approved",
+      "approved": "Effective",
       "inProgress": "In Progress",
       "expiringSoon": "Expiring Soon",
       "terminated": "Terminated",
-      "pendingApproval": "Pending Approval",
+      "pendingApproval": "Pending Effective",
       "expired": "Expired"
     },
     "searchPlaceholder": "Search by insurer name or cooperation ID...",
@@ -463,7 +463,7 @@
     },
     "expiringAlert": "{count} Cooperation(s) Expiring Within 90 Days",
     "daysLeft": "{days} days left",
-    "reviewAll": "Review All",
+    "reviewAll": "View All",
     "setReminders": "Set Reminders",
     "expiryListTitle": "Detailed Expiry List ({count} entries)",
     "col": {
@@ -513,7 +513,7 @@
       "item1": "All channel authorizations will be automatically recalled",
       "item2": "Appointment terminations will be filed with insurers",
       "item3": "Channels will be notified immediately",
-      "item4": "This action requires legal, compliance, and GM approval"
+      "item4": "This action notifies the legal and compliance teams"
     },
     "form": {
       "selectCoop": "Select Cooperation Relationship*",
@@ -524,7 +524,7 @@
       "typePlaceholder": "Select termination type",
       "effectiveDate": "Termination Effective Date",
       "immediate": "Immediate Termination",
-      "immediateDesc": "Effective as soon as approved",
+      "immediateDesc": "Effective immediately upon submission",
       "futureDate": "Future Date",
       "futureDateDesc": "Set a specific termination date",
       "terminationDate": "Termination Date*",
@@ -574,19 +574,19 @@
       "terminateAppointments": "Terminate {count} Appointments",
       "nextStepsTitle": "Next Steps",
       "nextSteps": {
-        "1": "Review all impact data and select handling strategies above",
+        "1": "Verify all impact data and select handling strategies above",
         "2": "Execute batch operations (recall authorizations, file appointments)",
-        "3": "Submit for approval workflow",
+        "3": "Confirm and submit",
         "4": "Generate audit report upon completion"
       },
       "close": "Close",
-      "continueApproval": "Continue to Approval"
+      "continueApproval": "Continue"
     },
     "workflow": {
-      "title": "Approval Workflow",
-      "legalReview": "Legal Review",
-      "complianceReview": "Compliance Review",
-      "gmApproval": "General Manager Approval"
+      "title": "Confirmation Workflow",
+      "legalReview": "Legal Confirmation",
+      "complianceReview": "Compliance Confirmation",
+      "gmApproval": "General Manager Confirmation"
     },
     "alerts": {
       "selectFields": "Please select cooperation, reason, and type",
@@ -644,7 +644,7 @@
     },
     "status": {
       "draft": "Draft",
-      "pendingApproval": "Pending Approval",
+      "pendingApproval": "Pending Effective",
       "signed": "Signed",
       "inEffect": "In Effect",
       "expiringSoon": "Expiring Soon",

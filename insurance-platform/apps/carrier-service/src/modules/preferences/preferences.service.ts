@@ -31,7 +31,12 @@ export class PreferencesService {
       }
 
       return result.rows[0];
-    } catch (error) {
+    } catch (error: any) {
+      // If table doesn't exist, return in-memory defaults instead of throwing
+      if (error?.code === '42P01' || error?.message?.includes('does not exist')) {
+        console.warn('[PreferencesService] ovwr_user_preferences table missing, returning defaults');
+        return { ovwr_language_code: 'en-US', ovwr_date_format: 'MM/DD/YYYY', ovwr_time_zone: 'America/New_York', ovwr_theme_mode: 'light' };
+      }
       console.error('[PreferencesService] Error fetching preferences:', error);
       throw new BadRequestException('获取用户偏好失败');
     }

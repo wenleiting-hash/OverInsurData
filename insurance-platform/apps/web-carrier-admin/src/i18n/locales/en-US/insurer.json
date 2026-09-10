@@ -5,7 +5,8 @@
     "duplicateCheck": "Duplicate Check",
     "batchImport": "Batch Import",
     "export": "Export",
-    "addInsurer": "Add Carrier"
+    "addInsurer": "Add Carrier",
+    "selectBeforeExport": "Please select data to export first"
   },
   "filters": {
     "searchPlaceholder": "Search company name, short name, NAIC code...",
@@ -16,7 +17,6 @@
     "status": "Cooperation Status",
     "allStatuses": "All Statuses",
     "active": "Active",
-    "pending": "Pending Review",
     "inactive": "Inactive",
     "region": "Headquarters Region",
     "allRegions": "All Regions",
@@ -38,6 +38,7 @@
     "selectedCount": "{count} selected",
     "batchEnable": "Batch Enable",
     "batchDisable": "Batch Disable",
+    "batchDelete": "Batch Delete",
     "cancelSelection": "Deselect All",
     "exportSelected": "Export Selected"
   },
@@ -62,14 +63,14 @@
     "monthly": "Monthly",
     "quarterly": "Quarterly",
     "active": "Active",
-    "pending": "Pending",
     "inactive": "Inactive"
   },
   "pagination": {
     "totalCount": "{count} results · Page {page} of {pages}",
-    "pageSize": "8 per page",
+    "pageSize": "10 per page",
     "pageSize20": "20 per page",
-    "pageSize50": "50 per page"
+    "pageSize50": "50 per page",
+    "pageSize100": "100 per page"
   },
   "emptyState": "No data available",
   "form": {
@@ -154,14 +155,13 @@
     "exportPdf": "Export PDF",
     "edit": "Edit",
     "saveDraft": "Save Draft",
-    "submitReview": "Submit for Review",
+    "submitReview": "Save",
     "comingSoon": "This module is under development...",
     "basicInfo": "Basic Information",
     "contactInfoTitle": "Contact",
     "amBestPrefix": "AM Best",
     "status": {
       "active": "Active",
-      "pending": "Pending Review",
       "inactive": "Inactive"
     },
     "kpi": {
@@ -189,7 +189,6 @@
     "coop": {
       "active": "Normal",
       "expiring": "Expiring Soon",
-      "negotiating": "In Negotiation",
       "terminated": "Terminated"
     },
     "contractExpiry": "Contract Expiry",
@@ -278,7 +277,8 @@
       "independent": "Independent Agency",
       "tierPlatinum": "Platinum",
       "tierGold": "Gold",
-      "tierSilver": "Silver"
+      "tierSilver": "Silver",
+      "emptyData": "No partner channels available"
     },
     "channelTypes": {
       "direct": "Direct",
@@ -288,7 +288,7 @@
     },
     "channelStatus": {
       "active": "Active",
-      "pending": "Under Review",
+      "pending": "Pending",
       "inactive": "Inactive"
     },
     "documents": {
@@ -334,13 +334,14 @@
       "changedAt": "Change Date"
     },
     "history": {
-      "count": "{{count}} change record(s)",
+      "count": "{count} change record(s)",
       "allFields": "All Fields",
       "allOperators": "All Operators",
       "exportLog": "Export Log",
       "changeBefore": "Before",
       "changeAfter": "After",
-      "approvedByPrefix": "· Approved by: ",
+      "approvedByPrefix": "· Handled by: ",
+      "emptyData": "No change records available",
       "sections": {
         "basic": "Basic Info",
         "rating": "Financial Ratings",
@@ -357,7 +358,8 @@
       "premium": "Premium",
       "status": "Status",
       "effectiveDate": "Effective Date",
-      "actions": "Actions"
+      "actions": "Actions",
+      "lossRatio": "Loss Ratio"
     },
     "products": {
       "countPre": "This insurer offers a total of ",
@@ -365,7 +367,8 @@
       "addProduct": "Add Product",
       "typeIndividual": "Personal",
       "typeGroup": "Group",
-      "typeVoluntary": "Voluntary"
+      "typeVoluntary": "Voluntary",
+      "emptyData": "No linked products available"
     },
     "productStatus": {
       "active": "Active",
@@ -390,7 +393,8 @@
         "avgPolicyValue": "Avg. Policy Value",
         "retentionRate": "Retention Rate",
         "cac": "Customer Acquisition Cost"
-      }
+      },
+      "emptyData": "No performance data available"
     },
     "lossTable": {
       "name": "Product Name",
@@ -435,6 +439,7 @@
     "actions": {
       "disable": "Disable",
       "enable": "Enable",
+      "delete": "Delete",
       "featurePending": "Feature pending"
     }
   },
@@ -531,8 +536,8 @@
       "skippedValue": "{n} rows (validation failed)",
       "mode": "Import Mode",
       "modeValue": "Insert (do not overwrite existing data)",
-      "review": "Review Requirement",
-      "reviewValue": "Records enter Pending Review status after import and require admin approval",
+      "review": "Import Note",
+      "reviewValue": "Records are imported directly and take effect immediately",
       "reupload": "Re-upload",
       "submit": "Confirm import of {n} records"
     },
@@ -541,7 +546,7 @@
       "desc": "Successfully imported {ok} insurers; {fail} rows were skipped due to validation failure",
       "success": "Successfully Imported",
       "skipped": "Skipped",
-      "pendingReview": "Pending Review",
+      "pendingReview": "Pending",
       "count": "{n}",
       "viewRecords": "View Import Records",
       "backToList": "Back to Insurer List"
@@ -577,7 +582,7 @@
     },
     "recordStatus": {
       "active": "Active",
-      "pending": "Pending Review"
+      "pending": "Pending"
     },
     "field": {
       "naicCode": "NAIC Code",
@@ -653,22 +658,32 @@
       "scheduledNote": "Scheduled deactivation: channels may continue processing in-flight business until this date (transition period); deactivation occurs automatically on that date",
       "confirmDisablePre": "I understand the impact of this action and confirm deactivating",
       "confirmEnablePre": "I understand the impact of this action and confirm reactivating",
-      "confirmPost": ", and the relevant team members have been informed. This action will be recorded in the audit log and requires supervisor approval to take effect.",
-      "btnDisable": "Submit Deactivation",
+      "confirmPost": ". This action will be recorded in the audit log.",
+      "btnDisable": "Confirm Deactivation",
       "btnEnable": "Confirm Reactivation"
+    },
+    "deleteConfirm": {
+      "title": "Confirm Deletion",
+      "subtitle": "This action is irreversible",
+      "warningPre": "Insurance company ",
+      "warningPost": " will be deleted. Related configurations and partnership records will also be removed and cannot be recovered.",
+      "confirmBtn": "Confirm Delete",
+      "deleting": "Deleting…"
     },
     "batchExport": {
       "title": "Bulk Export",
       "scopeTitle": "Export Scope",
       "scopeFiltered": "Current filtered results",
+      "scopeFilteredDesc": "{count} record(s) matching current filters",
       "scopeSelected": "Selected records",
+      "scopeSelectedDesc": "{count} record(s) selected in the list",
       "scopeAll": "All data",
-      "count": "{{count}}",
+      "scopeAllDesc": "All {count} record(s) in the database",
       "formatTitle": "Export Format",
       "fmtXlsxDesc": "Recommended · preserves formatting",
       "fmtCsvDesc": "Universal · plain text",
       "fieldsTitle": "Export Fields",
-      "fieldsSelected": "({{count}} of {{total}} selected)",
+      "fieldsSelected": "({count} of {total} selected)",
       "selectAll": "Select All",
       "clearAll": "Clear",
       "relatedTitle": "Related Data",
@@ -697,11 +712,11 @@
       "relPerformance": "Performance summary",
       "relContacts": "Contacts",
       "footerPrefix": "Exporting ",
-      "footerRecords": "{{count}} record(s)",
-      "footerFields": "{{count}} field(s)",
+      "footerRecords": "{count} record(s)",
+      "footerFields": "{count} field(s)",
       "footerRelated": " + related data",
       "exporting": "Exporting…",
-      "exportBtn": "Export {{format}}"
+      "exportBtn": "Export {format}"
     }
   }
 }

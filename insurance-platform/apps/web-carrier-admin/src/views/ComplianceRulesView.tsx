@@ -1,8 +1,24 @@
 import { useState } from 'react';
-import { ArrowLeft, Shield, AlertTriangle, CheckCircle, Plus, Edit2, Trash2, Flag, Settings } from 'lucide-react';
+import { ArrowLeft, Shield, AlertTriangle, CheckCircle, Plus, Edit2, Trash2, Flag, Settings, X } from 'lucide-react';
 import type { ViewId } from '@/App';
-import { COMPLIANCE_RULES, type RuleCategory, type ComplianceRule } from './data/mockComplianceData';
 import { useTranslation } from 'react-i18next';
+import { useComplianceRules, useCreateRule, useUpdateRule, useDeleteRule, useToggleRule } from '@/services/complianceService';
+
+type RuleCategory = 'appointment' | 'license' | 'ofac' | 'channel' | 'product';
+
+interface ComplianceRule {
+  rule_id: string;
+  rule_name: string;
+  rule_name_en?: string;
+  category: string;
+  condition_expr?: string;
+  condition_expr_en?: string;
+  action: string;
+  enabled: boolean;
+  priority: number;
+  triggered_count: number;
+  last_triggered_at?: string;
+}
 
 interface Props {
   navigateTo: (view: ViewId) => void;
@@ -11,42 +27,40 @@ interface Props {
 export default function ComplianceRulesView({ navigateTo }: Props) {
   const { t, i18n } = useTranslation('compliance');
   const isEn = i18n.language?.startsWith?.('en') ?? false;
-  
-  // Get rules data
-  const [allRules, setAllRules] = useState<ComplianceRule[]>(COMPLIANCE_RULES);
-  
   const [activeTab, setActiveTab] = useState<RuleCategory | 'all'>('appointment');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingRule, setEditingRule] = useState<ComplianceRule | null>(null);
+  const [editingRule, setEditingRule] = useState<any>(null);
+
+  const { data: rulesRes, isLoading } = useComplianceRules(activeTab !== 'all' ? { category: activeTab } : undefined);
+  const createRule = useCreateRule();
+  const updateRule = useUpdateRule();
+  const deleteRuleMut = useDeleteRule();
+  const toggleRuleMut = useToggleRule();
+
+  const allRules: ComplianceRule[] = rulesRes?.data ?? [];
 
   const toggleRuleEnabled = (ruleId: string) => {
-    setAllRules(rules => 
-      rules.map(rule => 
-        rule.id === ruleId 
-          ? { ...rule, enabled: !rule.enabled }
-          : rule
-      )
-    );
+    toggleRuleMut.mutate(ruleId);
   };
 
   const deleteRule = (ruleId: string) => {
     if (confirm(t('rules.deleteConfirm'))) {
-      setAllRules(rules => rules.filter(r => r.id !== ruleId));
+      deleteRuleMut.mutate(ruleId);
     }
   };
 
   const handleOpenAddModal = () => {
     setEditingRule({
-      id: '',
-      name: '',
-      nameEn: '',
+      rule_id: '',
+      rule_name: '',
+      rule_name_en: '',
       category: 'appointment',
-      condition: '',
-      conditionEn: '',
+      condition_expr: '',
+      condition_expr_en: '',
       action: 'block',
       enabled: true,
       priority: allRules.length + 1,
-      triggeredCount: 0,
+      triggered_count: 0,
     });
     setShowAddModal(true);
   };
@@ -54,8 +68,8 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
   const handleOpenEditModal = (rule: ComplianceRule) => {
     setEditingRule({
       ...rule,
-      name: isEn ? rule.nameEn : rule.name,
-      condition: isEn ? rule.conditionEn : rule.condition,
+      rule_name: isEn ? (rule.rule_name_en || rule.rule_name) : rule.rule_name,
+      condition_expr: isEn ? (rule.condition_expr_en || rule.condition_expr) : rule.condition_expr,
     });
     setShowAddModal(true);
   };
@@ -66,33 +80,18 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
   };
 
   const handleSaveRule = () => {
-    if (!editingRule || !editingRule.name.trim()) return;
-    const isEdit = !!editingRule.id;
+    if (!editingRule || !editingRule.rule_name?.trim()) return;
+    const isEdit = !!editingRule.rule_id;
 
     if (isEdit) {
-      // Update existing
-      setAllRules(rules =>
-        rules.map(r => r.id === editingRule.id ? editingRule : r)
-      );
+      updateRule.mutate({ id: editingRule.rule_id, dto: editingRule });
     } else {
-      const newRule: ComplianceRule = {
-        ...editingRule,
-        id: `cr${allRules.length + 1}`,
-        nameEn: editingRule.name,
-        conditionEn: editingRule.condition,
-        triggeredCount: 0,
-        lastTriggered: undefined,
-      };
-      setAllRules(rules => [...rules, newRule]);
+      createRule.mutate(editingRule);
     }
-
     handleCloseModal();
-    alert(isEdit ? t('rules.updated') : t('rules.created'));
   };
 
-  const filteredRules = activeTab === 'all'
-    ? allRules
-    : allRules.filter(rule => rule.category === activeTab);
+  const filteredRules = allRules;
 
   type TabType = RuleCategory | 'all';
 
@@ -127,7 +126,7 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -170,7 +169,7 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
             <span className="text-sm text-gray-600">{t('rules.stats.todayBlocked')}</span>
           </div>
           <div className="text-3xl font-bold text-red-600">
-            {allRules.reduce((acc, r) => acc + r.triggeredCount, 0)}
+            {allRules.reduce((acc, r) => acc + (r.triggered_count || 0), 0)}
           </div>
         </div>
         <div className="glass p-6 rounded-xl">
@@ -179,7 +178,7 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
             <span className="text-sm text-gray-600">{t('rules.stats.priorityRange')}</span>
           </div>
           <div className="text-3xl font-bold text-purple-600">
-            1-{Math.max(...allRules.map(r => r.priority))}
+            1-{allRules.length > 0 ? Math.max(...allRules.map(r => r.priority)) : 0}
           </div>
         </div>
       </div>
@@ -218,9 +217,11 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
       {/* Rules List */}
       <div className="glass p-6 rounded-xl">
         <div className="space-y-4">
-          {filteredRules.map(rule => (
+          {isLoading ? (
+            <div className="py-12 text-center text-gray-400">Loading...</div>
+          ) : filteredRules.map(rule => (
             <div
-              key={rule.id}
+              key={rule.rule_id}
               className={`p-6 rounded-lg border transition-all ${
                 rule.enabled
                   ? 'border-gray-200 hover:border-blue-300 hover:shadow-md'
@@ -230,24 +231,24 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{isEn ? rule.nameEn : rule.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{isEn ? (rule.rule_name_en || rule.rule_name) : rule.rule_name}</h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${actionLabels[rule.action].bg} ${actionLabels[rule.action].text}`}>
                       {actionLabels[rule.action].label}
                     </span>
-                    {getCategoryBadge(rule.category)}
+                    {getCategoryBadge(rule.category as RuleCategory)}
                   </div>
                   
-                  <p className="text-sm text-gray-600 mb-2">{isEn ? rule.conditionEn : rule.condition}</p>
+                  <p className="text-sm text-gray-600 mb-2">{isEn ? (rule.condition_expr_en || rule.condition_expr) : rule.condition_expr}</p>
                   
                   <div className="flex items-center gap-6 text-xs text-gray-500">
                     <div className="flex items-center gap-1">
                       <Flag className="w-4 h-4" />
-                      <span>{t('rules.triggered', { n: rule.triggeredCount })}</span>
+                      <span>{t('rules.triggered', { n: rule.triggered_count })}</span>
                     </div>
-                    {rule.lastTriggered && (
+                    {rule.last_triggered_at && (
                       <div className="flex items-center gap-1">
                         <span>{t('rules.lastTriggered')}</span>
-                        <span className="font-mono text-gray-700">{rule.lastTriggered}</span>
+                        <span className="font-mono text-gray-700">{rule.last_triggered_at}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1">
@@ -260,7 +261,7 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
                 <div className="flex items-center gap-3">
                   {/* Toggle Switch */}
                   <button
-                    onClick={() => toggleRuleEnabled(rule.id)}
+                    onClick={() => toggleRuleEnabled(rule.rule_id)}
                     className={`relative w-14 h-7 rounded-full transition-colors ${
                       rule.enabled ? 'bg-green-500' : 'bg-gray-300'
                     }`}
@@ -281,7 +282,7 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
                     <Edit2 className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => deleteRule(rule.id)}
+                    onClick={() => deleteRule(rule.rule_id)}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-red-600"
                     title={t('rules.delete')}
                   >
@@ -295,7 +296,7 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
 
         {/* Empty State */}
         {filteredRules.length === 0 && (
-          <div className="py-12 text-center text-gray-500">
+          <div className="py-12 text-center text-gray-400">
             <Settings className="w-12 h-12 mx-auto text-gray-400 mb-3" />
             <p>{t('rules.empty')}</p>
             <button
@@ -316,7 +317,7 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
               {/* Modal Header */}
               <div className="flex items-start justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {editingRule.id ? t('rules.editTitle') : t('rules.createTitle')}
+                  {editingRule.rule_id ? t('rules.editTitle') : t('rules.createTitle')}
                 </h3>
                 <button
                   onClick={handleCloseModal}
@@ -333,8 +334,8 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
                 </label>
                 <input
                   type="text"
-                  value={editingRule.name}
-                  onChange={e => setEditingRule({ ...editingRule, name: e.target.value })}
+                  value={editingRule.rule_name}
+                  onChange={e => setEditingRule({ ...editingRule, rule_name: e.target.value })}
                   placeholder={t('rules.form.namePlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -382,8 +383,8 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
                 </label>
                 <textarea
                   rows={4}
-                  value={editingRule.condition}
-                  onChange={e => setEditingRule({ ...editingRule, condition: e.target.value })}
+                  value={editingRule.condition_expr || ''}
+                  onChange={e => setEditingRule({ ...editingRule, condition_expr: e.target.value })}
                   placeholder={t('rules.form.conditionPlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
@@ -442,6 +443,3 @@ export default function ComplianceRulesView({ navigateTo }: Props) {
     </div>
   );
 }
-
-// Import X icon at top
-import { X } from 'lucide-react';

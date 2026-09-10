@@ -2,15 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ViewId } from '@/App';
 import { ShieldAlert, CheckCircle, Clock, XCircle, AlertTriangle, Filter, Download, RefreshCw, Shield, Search } from 'lucide-react';
-import type { ComplianceInterception } from './data/mockComplianceData';
-import { generateMockComplianceInterceptions } from './data/mockComplianceData';
+import { useInterceptions, useResolveInterception } from '@/services/complianceService';
 
 interface Props {
   navigateTo: (view: ViewId) => void;
 }
-
-// Use Figma prototype data
-const interceptions: ComplianceInterception[] = generateMockComplianceInterceptions();
 
 export default function ComplianceInterceptorView({ navigateTo }: Props) {
   const { t } = useTranslation('appointment');
@@ -18,20 +14,26 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
   const [resultFilter, setResultFilter] = useState<string>('ALL');
   const [reasonFilter, setReasonFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedInterception, setSelectedInterception] = useState<ComplianceInterception | null>(null);
+  const [selectedInterception, setSelectedInterception] = useState<any>(null);
+  const resolveMut = useResolveInterception();
+
+  const params: any = {};
+  if (resultFilter !== 'ALL') params.result = resultFilter;
+  const { data: interRes, isLoading } = useInterceptions(params);
+  const interceptions: any[] = interRes?.data ?? [];
   
   // Get interception by ID for details view
   const getInterceptionById = (id: string) => {
-    return interceptions.find(i => i.id === id);
+    return interceptions.find(i => i.interception_id === id);
   };
   
-  const filteredInterceptions = interceptions.filter(inter => {
+  const filteredInterceptions = interceptions.filter((inter: any) => {
     const matchesResult = resultFilter === 'ALL' || inter.result === resultFilter;
     const matchesReason = reasonFilter === 'ALL' || inter.reason === reasonFilter;
     const matchesSearch = 
-      inter.channelName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inter.insurerShort.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inter.id.toLowerCase().includes(searchQuery.toLowerCase());
+      (inter.channel_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (inter.insurer_short || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (inter.interception_id || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesResult && matchesReason && matchesSearch;
   });
   
@@ -58,7 +60,7 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
     return { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', label: 'Unknown' };
   };
   
-  const handleRelease = (interception: ComplianceInterception) => {
+  const handleRelease = (interception: any) => {
     // Release logic - in real implementation would call API
     console.log(`Releasing interception ${interception.id}`);
     // Here we just update the local state
@@ -66,7 +68,7 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50">
       {/* Header */}
       <div className="max-w-[1600px] mx-auto mb-6">
         <div className="flex items-center gap-2 text-gray-600 mb-3">
@@ -174,7 +176,7 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
         </div>
         
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-[rgba(246,248,255,0.9)]">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID & Timestamp</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Channel & Insurer</th>
@@ -186,12 +188,12 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredInterceptions.map((inter) => {
+          <tbody className="bg-[rgba(255,255,255,0.95)] divide-y divide-[rgba(193,198,215,0.25)]">
+            {filteredInterceptions.map((inter, idx) => {
               const severityClass = getSeverityColor(inter.severity);
               const resultBadge = getResultBadge(inter.result);
               return (
-                <tr key={inter.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={inter.id} className="hover:bg-[rgba(246,248,255,0.55)] transition-colors" style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(246,248,255,0.55)' }}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">{inter.id}</div>
                     <div className="text-xs text-gray-500">{new Date(inter.timestamp).toLocaleString()}</div>
@@ -332,7 +334,7 @@ export default function ComplianceInterceptorView({ navigateTo }: Props) {
                         onClick={() => handleRelease(selectedInterception)}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                       >
-                        Approve Release
+                        Confirm Release
                       </button>
                       <button
                         onClick={() => setSelectedInterception(null)}

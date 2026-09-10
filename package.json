@@ -1,8 +1,16 @@
-{
-	"dependencies": {
-		"@nestjs/swagger": "^12.0.1",
-		"bcrypt": "^6.0.0",
-		"class-transformer": "^0.5.1",
-		"class-validator": "^0.14.4"
+﻿{
+	"name": "overinsur-data",
+	"version": "1.0.0",
+	"private": true,
+	"description": "AI 全自动开发引擎 - 用户与权限模块",
+	"scripts": {
+		"dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+		"dev:backend": "cd insurance-platform/apps/carrier-service && pnpm dev",
+		"dev:frontend": "cd insurance-platform/apps/web-carrier-admin && pnpm dev",
+		"deploy": "node scripts/auto-deploy.js",
+		"check-env": "node scripts/check-env.js",
+		"start-services": "node scripts/start-all-services.js",
+		"auto-develop-p0-backend": "npx tsx scripts/auto-develop-p0-backend.ts",
+		"develop-p0-backend": "npx tsx scripts/auto-develop-p0-backend.ts"
 	}
 }

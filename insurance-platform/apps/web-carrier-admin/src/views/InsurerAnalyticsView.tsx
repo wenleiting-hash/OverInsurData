@@ -12,14 +12,9 @@ import {
 } from 'lucide-react'
 import type { ViewId } from '@/App'
 import {
-  insurerKPIs, premiumTrendData, performanceVsTarget,
-  productPerfData, productMonthlyData,
-  statePerformance, regionSummary, regionalMonthly, REGIONS,
-  channelPerfData, channelMonthly,
-  lossRatioTrend, lossAlerts, lossRatioByLine,
-  renewalTrend, renewalCohorts, renewalByProduct,
-  MONTHS,
-} from './data/insurerAnalyticsData'
+  useAnalyticsOverview, useAnalyticsProducts, useAnalyticsRegional,
+  useAnalyticsChannels, useAnalyticsLossRatio, useAnalyticsRenewal,
+} from '@/services/analyticsService'
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -33,14 +28,15 @@ const REGION_COLORS: Record<string, string> = {
   Southeast: '#34C759', Midwest: '#60CDFF',
 }
 
-function fmt(n: number) { return '$' + (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(0) + 'K' : n.toString()) }
-function fmtFull(n: number) { return '$' + n.toLocaleString() }
-function pct(n: number) { return (n * 100).toFixed(1) + '%' }
-function delta(n: number, invert = false) {
-  const pos = invert ? n < 0 : n > 0
+function fmt(n: number | undefined | null) { const v = n ?? 0; return '$' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : v.toString()) }
+function fmtFull(n: number | undefined | null) { return '$' + (n ?? 0).toLocaleString() }
+function pct(n: number | undefined | null) { return ((n ?? 0) * 100).toFixed(1) + '%' }
+function delta(n: number | undefined | null, invert = false) {
+  const v = n ?? 0
+  const pos = invert ? v < 0 : v > 0
   const color = pos ? '#1E8033' : '#C0392B'
-  const icon = n > 0.001 ? <ArrowUpRight size={12} /> : n < -0.001 ? <ArrowDownRight size={12} /> : <Minus size={12} />
-  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color, fontSize: 12, fontWeight: 700 }}>{icon}{Math.abs(n * 100).toFixed(1)}pp</span>
+  const icon = v > 0.001 ? <ArrowUpRight size={12} /> : v < -0.001 ? <ArrowDownRight size={12} /> : <Minus size={12} />
+  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color, fontSize: 12, fontWeight: 700 }}>{icon}{Math.abs(v * 100).toFixed(1)}pp</span>
 }
 
 function Badge({ bg, color, children }: { bg: string; color: string; children: React.ReactNode }) {
@@ -48,7 +44,16 @@ function Badge({ bg, color, children }: { bg: string; color: string; children: R
 }
 
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div className="glass-card" style={{ borderRadius: 14, padding: '18px 20px', ...style }}>{children}</div>
+  return <div style={{ borderRadius: 14, padding: '18px 20px', background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(193,198,215,0.42)', ...style }}>{children}</div>
+}
+
+// KPI 色调常量（对齐原型 V2）
+const TINT: Record<string, { bg: string; bd: string }> = {
+  blue:   { bg: 'rgba(0,88,188,0.08)',   bd: '1px solid rgba(0,88,188,0.133)' },
+  green:  { bg: 'rgba(52,199,89,0.08)',  bd: '1px solid rgba(30,128,51,0.133)' },
+  red:    { bg: 'rgba(255,59,48,0.08)',  bd: '1px solid rgba(192,57,43,0.133)' },
+  orange: { bg: 'rgba(255,159,10,0.08)', bd: '1px solid rgba(176,96,0,0.133)' },
+  purple: { bg: 'rgba(123,63,202,0.08)', bd: '1px solid rgba(123,63,202,0.133)' },
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -65,10 +70,15 @@ const tooltipStyle = {
 function OverviewTab() {
   const { t } = useTranslation('analytics')
   const [selectedInsurer, setSelectedInsurer] = useState<string | null>(null)
-  const totalPremium = insurerKPIs.reduce((s, k) => s + k.totalPremium, 0)
-  const totalCommission = insurerKPIs.reduce((s, k) => s + k.totalCommission, 0)
-  const avgLossRatio = insurerKPIs.reduce((s, k) => s + k.lossRatio, 0) / insurerKPIs.length
-  const avgRenewal = insurerKPIs.reduce((s, k) => s + k.renewalRate, 0) / insurerKPIs.length
+  const { data: overviewRes } = useAnalyticsOverview()
+  const overviewData: any = overviewRes?.data ?? {}
+  const insurerKPIs: any[] = overviewData?.insurer_kpis ?? []
+  const premiumTrendData: any[] = overviewData?.premium_trend ?? []
+  const performanceVsTarget: any[] = overviewData?.performance_vs_target ?? []
+  const totalPremium = insurerKPIs.reduce((s: number, k: any) => s + (k.total_premium || k.totalPremium || 0), 0)
+  const totalCommission = insurerKPIs.reduce((s: number, k: any) => s + (k.total_commission || k.totalCommission || 0), 0)
+  const avgLossRatio = insurerKPIs.length ? insurerKPIs.reduce((s: number, k: any) => s + (k.loss_ratio || k.lossRatio || 0), 0) / insurerKPIs.length : 0
+  const avgRenewal = insurerKPIs.length ? insurerKPIs.reduce((s: number, k: any) => s + (k.renewal_rate || k.renewalRate || 0), 0) / insurerKPIs.length : 0
 
   return (
     <div>
@@ -80,7 +90,7 @@ function OverviewTab() {
           { label: t('overview.kpiLossRatio'), value: pct(avgLossRatio), sub: t('overview.kpiLossRatioSub'), color: '#B06000', trend: false },
           { label: t('overview.kpiRenewal'), value: pct(avgRenewal), sub: t('overview.kpiRenewalSub'), color: '#7B3FCA', trend: true },
         ].map(s => (
-          <Card key={s.label} style={{ background: `linear-gradient(135deg, ${s.color}08 0%, transparent 60%)` }}>
+          <Card key={s.label} style={{ background: (s.color === '#0058BC' ? TINT.blue : s.color === '#1E8033' ? TINT.green : s.color === '#B06000' ? TINT.orange : TINT.purple).bg, border: (s.color === '#0058BC' ? TINT.blue : s.color === '#1E8033' ? TINT.green : s.color === '#B06000' ? TINT.orange : TINT.purple).bd }}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: s.color, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
             <div style={{ fontSize: 11.5, color: s.trend ? '#1E8033' : '#B06000', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -92,25 +102,36 @@ function OverviewTab() {
 
       {/* Insurer ranking cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 20 }}>
-        {insurerKPIs.sort((a, b) => b.totalPremium - a.totalPremium).map(k => (
-          <div key={k.insurerId} onClick={() => setSelectedInsurer(selectedInsurer === k.insurerId ? null : k.insurerId)} style={{ borderRadius: 14, padding: '16px 18px', border: selectedInsurer === k.insurerId ? `2px solid ${k.insurerColor}` : '1px solid rgba(193,198,215,0.35)', background: selectedInsurer === k.insurerId ? `${k.insurerColor}08` : 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'all 0.15s' }}>
+        {insurerKPIs.sort((a: any, b: any) => (b.total_premium || b.totalPremium || 0) - (a.total_premium || a.totalPremium || 0)).map((k: any) => {
+          const kColor = k.insurer_color || k.insurerColor || INSURER_COLORS[k.insurer_short || k.insurerShort] || '#0058BC'
+          const kShort = k.insurer_short || k.insurerShort || ''
+          const kPremium = k.total_premium || k.totalPremium || 0
+          const kGrowth = k.premium_growth || k.premiumGrowth || 0
+          const kLoss = k.loss_ratio || k.lossRatio || 0
+          const kRenewal = k.renewal_rate || k.renewalRate || 0
+          const kPolicies = k.active_policies || k.activePolicies || 0
+          const kChannels = k.active_channels || k.activeChannels || 0
+          const kProducts = k.active_products || k.activeProducts || 0
+          const kId = k.insurer_id || k.insurerId || ''
+          return (
+          <div key={kId} onClick={() => setSelectedInsurer(selectedInsurer === kId ? null : kId)} style={{ borderRadius: 14, padding: '16px 18px', border: selectedInsurer === kId ? `2px solid ${kColor}` : '1px solid rgba(193,198,215,0.35)', background: selectedInsurer === kId ? `${kColor}08` : 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'all 0.15s' }}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: `${k.insurerColor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1.5px solid ${k.insurerColor}30` }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: k.insurerColor }}>{k.insurerShort.slice(0, 2).toUpperCase()}</span>
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: `${kColor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1.5px solid ${kColor}30` }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: kColor }}>{kShort.slice(0, 2).toUpperCase()}</span>
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#181C23' }}>{k.insurerShort}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#181C23' }}>{kShort}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                {k.premiumGrowth > 0.1 && <Badge bg={`${k.insurerColor}15`} color={k.insurerColor}>{t('overview.highGrowth')}</Badge>}
+                {kGrowth > 0.1 && <Badge bg={`${kColor}15`} color={kColor}>{t('overview.highGrowth')}</Badge>}
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {[
-                { label: t('kpi.premium'), value: fmt(k.totalPremium), mono: true },
-                { label: t('kpi.premiumGrowth'), value: `+${pct(k.premiumGrowth)}`, color: '#1E8033' },
-                { label: t('kpi.lossRatio'), value: pct(k.lossRatio), color: k.lossRatio > 0.65 ? '#C0392B' : k.lossRatio > 0.60 ? '#B06000' : '#1E8033' },
-                { label: t('kpi.renewalRate'), value: pct(k.renewalRate), color: k.renewalRate > 0.9 ? '#1E8033' : k.renewalRate > 0.87 ? '#B06000' : '#C0392B' },
+                { label: t('kpi.premium'), value: fmt(kPremium), mono: true },
+                { label: t('kpi.premiumGrowth'), value: `+${pct(kGrowth)}`, color: '#1E8033' },
+                { label: t('kpi.lossRatio'), value: pct(kLoss), color: kLoss > 0.65 ? '#C0392B' : kLoss > 0.60 ? '#B06000' : '#1E8033' },
+                { label: t('kpi.renewalRate'), value: pct(kRenewal), color: kRenewal > 0.9 ? '#1E8033' : kRenewal > 0.87 ? '#B06000' : '#C0392B' },
               ].map(m => (
                 <div key={m.label}>
                   <div style={{ fontSize: 10.5, color: '#A0A5B1', marginBottom: 1 }}>{m.label}</div>
@@ -119,12 +140,13 @@ function OverviewTab() {
               ))}
             </div>
             <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(193,198,215,0.3)', display: 'flex', gap: 12, fontSize: 11.5, color: '#717786' }}>
-              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{k.activePolicies.toLocaleString()}</span> {t('overview.unitPolicies')}</span>
-              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{k.activeChannels}</span> {t('overview.unitChannels')}</span>
-              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{k.activeProducts}</span> {t('overview.unitProducts')}</span>
+              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{(kPolicies ?? 0).toLocaleString()}</span> {t('overview.unitPolicies')}</span>
+              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{kChannels}</span> {t('overview.unitChannels')}</span>
+              <span><span style={{ fontWeight: 700, color: '#181C23' }}>{kProducts}</span> {t('overview.unitProducts')}</span>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Premium trend chart */}
@@ -172,6 +194,9 @@ function ProductAnalyticsTab() {
   const { t } = useTranslation('analytics')
   const [sortKey, setSortKey] = useState<'totalPremium' | 'lossRatio' | 'renewalRate' | 'premiumGrowth'>('totalPremium')
   const [filterInsurer, setFilterInsurer] = useState('all')
+  const { data: prodRes } = useAnalyticsProducts()
+  const productPerfData: any[] = prodRes?.data ?? []
+  const productMonthlyData: any[] = prodRes?.data?.monthly_trend ?? []
 
   const sorted = [...productPerfData]
     .filter(p => filterInsurer === 'all' || p.insurerShort === filterInsurer)
@@ -216,7 +241,7 @@ function ProductAnalyticsTab() {
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
+            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(246,248,255,0.9)' }}>
               {[t('kpi.productName'), t('kpi.insurer'), t('kpi.line'), t('kpi.premium'), t('kpi.growth'), t('kpi.policies'), t('kpi.avgPremium'), t('kpi.lossRatio'), t('kpi.renewalRate'), t('kpi.topState')].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
@@ -227,7 +252,7 @@ function ProductAnalyticsTab() {
               const lrColor = p.lossRatio > 0.65 ? '#C0392B' : p.lossRatio > 0.60 ? '#B06000' : '#1E8033'
               const rrColor = p.renewalRate > 0.9 ? '#1E8033' : p.renewalRate > 0.87 ? '#B06000' : '#C0392B'
               return (
-                <tr key={p.productId} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
+                <tr key={p.productId} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(246,248,255,0.55)' }}>
                   <td style={{ padding: '10px 14px', fontWeight: 700, color: '#181C23', maxWidth: 200 }}>{p.productName}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, background: `${INSURER_COLORS[p.insurerShort]}15`, color: INSURER_COLORS[p.insurerShort], borderRadius: 6, padding: '2px 7px' }}>{p.insurerShort}</span>
@@ -239,8 +264,8 @@ function ProductAnalyticsTab() {
                       {p.premiumGrowth > 0 ? '+' : ''}{pct(p.premiumGrowth)}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{p.policyCount.toLocaleString()}</td>
-                  <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555', fontSize: 12 }}>${p.avgPremium.toLocaleString()}</td>
+                  <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{(p.policyCount ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555', fontSize: 12 }}>${(p.avgPremium ?? 0).toLocaleString()}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <div className="flex items-center gap-2">
                       <div style={{ width: 40, height: 5, borderRadius: 3, background: 'rgba(193,198,215,0.3)', overflow: 'hidden' }}>
@@ -298,7 +323,12 @@ function ProductAnalyticsTab() {
 function RegionalAnalyticsTab() {
   const { t } = useTranslation('analytics')
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
-  const regionStates = selectedRegion ? statePerformance.filter(s => s.region === selectedRegion).sort((a, b) => b.totalPremium - a.totalPremium) : statePerformance.sort((a, b) => b.totalPremium - a.totalPremium).slice(0, 8)
+  const { data: regRes } = useAnalyticsRegional()
+  const regData: any = regRes?.data ?? {}
+  const statePerformance: any[] = regData?.state_performance ?? []
+  const regionSummary: any[] = regData?.region_summary ?? []
+  const regionalMonthly: any[] = regData?.regional_monthly ?? []
+  const regionStates = selectedRegion ? statePerformance.filter((s: any) => s.region === selectedRegion).sort((a: any, b: any) => (b.total_premium || b.totalPremium || 0) - (a.total_premium || a.totalPremium || 0)) : [...statePerformance].sort((a: any, b: any) => (b.total_premium || b.totalPremium || 0) - (a.total_premium || a.totalPremium || 0)).slice(0, 8)
 
   return (
     <div>
@@ -378,7 +408,7 @@ function RegionalAnalyticsTab() {
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
+            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(246,248,255,0.9)' }}>
               {[t('kpi.state'), t('kpi.region'), t('kpi.premium'), t('kpi.growth'), t('kpi.policies'), t('kpi.lossRatio'), t('kpi.topInsurer'), t('kpi.channels')].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
@@ -388,12 +418,12 @@ function RegionalAnalyticsTab() {
             {regionStates.map((s, i) => {
               const rColor = REGION_COLORS[s.region]
               return (
-                <tr key={s.state} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
+                <tr key={s.state} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(246,248,255,0.55)' }}>
                   <td style={{ padding: '10px 14px', fontWeight: 800, fontSize: 16, color: '#0058BC', fontFamily: "'JetBrains Mono', monospace" }}>{s.state}</td>
                   <td style={{ padding: '10px 14px' }}><span style={{ fontSize: 11, fontWeight: 700, background: `${rColor}12`, color: rColor, borderRadius: 5, padding: '2px 7px' }}>{s.region}</span></td>
                   <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: '#0058BC' }}>{fmt(s.totalPremium)}</td>
                   <td style={{ padding: '10px 14px', fontWeight: 700, color: '#1E8033', fontSize: 12.5 }}>+{pct(s.growthRate)}</td>
-                  <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{s.policyCount.toLocaleString()}</td>
+                  <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{(s.policyCount ?? 0).toLocaleString()}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: s.lossRatio > 0.65 ? '#C0392B' : s.lossRatio > 0.62 ? '#B06000' : '#1E8033', fontSize: 12.5 }}>{pct(s.lossRatio)}</span>
                   </td>
@@ -414,14 +444,17 @@ function RegionalAnalyticsTab() {
 function ChannelAnalyticsTab() {
   const { t } = useTranslation('analytics')
   const [selectedTier, setSelectedTier] = useState<string>('all')
+  const { data: chanRes } = useAnalyticsChannels()
+  const channelPerfData: any[] = chanRes?.data ?? []
+  const channelMonthly: any[] = chanRes?.data?.monthly ?? []
   const tierColors: Record<string, { bg: string; color: string }> = {
     Platinum: { bg: 'rgba(175,82,222,0.12)', color: '#7B3FCA' },
     Gold:     { bg: 'rgba(255,159,10,0.12)', color: '#B06000' },
     Silver:   { bg: 'rgba(180,180,180,0.15)', color: '#717786' },
     Bronze:   { bg: 'rgba(150,100,60,0.12)', color: '#8B5E3C' },
   }
-  const filtered = channelPerfData.filter(c => selectedTier === 'all' || c.tier === selectedTier)
-  const totalPremium = channelPerfData.reduce((s, c) => s + c.totalPremium, 0)
+  const filtered = channelPerfData.filter((c: any) => selectedTier === 'all' || c.tier === selectedTier)
+  const totalPremium = channelPerfData.reduce((s: number, c: any) => s + (c.total_premium || c.totalPremium || 0), 0)
 
   return (
     <div>
@@ -486,7 +519,7 @@ function ChannelAnalyticsTab() {
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
+            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(246,248,255,0.9)' }}>
               {[t('channel.name'), t('kpi.tier'), t('kpi.premiumContribution'), t('kpi.share'), t('kpi.growth'), t('kpi.commission'), t('kpi.lossRatio'), t('kpi.renewalRate'), t('kpi.insurer'), t('kpi.product')].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
@@ -498,7 +531,7 @@ function ChannelAnalyticsTab() {
               const lrC = c.lossRatio > 0.65 ? '#C0392B' : c.lossRatio > 0.62 ? '#B06000' : '#1E8033'
               const rrC = c.renewalRate > 0.9 ? '#1E8033' : c.renewalRate > 0.87 ? '#B06000' : '#C0392B'
               return (
-                <tr key={c.channelId} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
+                <tr key={c.channelId} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(246,248,255,0.55)' }}>
                   <td style={{ padding: '10px 14px', fontWeight: 700, color: '#181C23' }}>{c.channelName}</td>
                   <td style={{ padding: '10px 14px' }}><Badge bg={tc.bg} color={tc.color}>{c.tier}</Badge></td>
                   <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: '#0058BC' }}>{fmt(c.totalPremium)}</td>
@@ -530,6 +563,14 @@ function ChannelAnalyticsTab() {
 
 function LossRatioTab() {
   const { t } = useTranslation('analytics')
+  const { data: lossRes } = useAnalyticsLossRatio()
+  const { data: overviewRes } = useAnalyticsOverview()
+  const lossData: any = lossRes?.data ?? {}
+  const overviewData: any = overviewRes?.data ?? {}
+  const lossAlerts: any[] = lossData?.alerts ?? []
+  const lossRatioTrend: any[] = lossData?.trend ?? []
+  const lossRatioByLine: any[] = lossData?.by_line ?? []
+  const insurerKPIs: any[] = overviewData?.insurer_kpis ?? []
   const alertSev: Record<string, { bg: string; color: string; icon: React.ReactNode }> = {
     critical: { bg: 'rgba(255,59,48,0.1)',  color: '#C0392B', icon: <XOctagon size={14} /> },
     warning:  { bg: 'rgba(255,159,10,0.1)', color: '#B06000', icon: <AlertTriangle size={14} /> },
@@ -647,17 +688,27 @@ function LossRatioTab() {
 
 function RenewalAnalyticsTab() {
   const { t } = useTranslation('analytics')
+  const { data: renRes } = useAnalyticsRenewal()
+  const { data: overviewRes } = useAnalyticsOverview()
+  const renData: any = renRes?.data ?? {}
+  const overviewData: any = overviewRes?.data ?? {}
+  const renewalTrend: any[] = renData?.trend ?? []
+  const renewalCohorts: any[] = renData?.cohorts ?? []
+  const renewalByProduct: any[] = renData?.by_product ?? []
+  const insurerKPIs: any[] = overviewData?.insurer_kpis ?? []
+  const lastCohort = renewalCohorts[renewalCohorts.length - 1] ?? { dueCount: 0, renewedCount: 0, renewalRate: 0, avgPremiumChange: 0 }
+  const avgRenewal = insurerKPIs.length ? insurerKPIs.reduce((s: number, k: any) => s + (k.renewal_rate || k.renewalRate || 0), 0) / insurerKPIs.length : 0
   return (
     <div>
       {/* KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
-          { label: t('renewal.kpiOverall'), value: pct(insurerKPIs.reduce((s, k) => s + k.renewalRate, 0) / insurerKPIs.length), color: '#0058BC', sub: t('renewal.kpiOverallSub'), up: true },
-          { label: t('renewal.kpiDue'), value: renewalCohorts[renewalCohorts.length - 1].dueCount.toLocaleString(), color: '#181C23', sub: t('renewal.kpiDueSub'), up: null },
-          { label: t('renewal.kpiRenewed'), value: renewalCohorts[renewalCohorts.length - 1].renewedCount.toLocaleString(), color: '#1E8033', sub: pct(renewalCohorts[renewalCohorts.length - 1].renewalRate), up: true },
-          { label: t('renewal.kpiGrowth'), value: '+' + pct(renewalCohorts[renewalCohorts.length - 1].avgPremiumChange), color: '#7B3FCA', sub: t('renewal.kpiGrowthSub'), up: true },
+          { label: t('renewal.kpiOverall'), value: insurerKPIs.length ? pct(avgRenewal) : '-', color: '#0058BC', sub: t('renewal.kpiOverallSub'), up: true },
+          { label: t('renewal.kpiDue'), value: (lastCohort.dueCount ?? 0).toLocaleString(), color: '#181C23', sub: t('renewal.kpiDueSub'), up: null },
+          { label: t('renewal.kpiRenewed'), value: (lastCohort.renewedCount ?? 0).toLocaleString(), color: '#1E8033', sub: pct(lastCohort.renewalRate), up: true },
+          { label: t('renewal.kpiGrowth'), value: '+' + pct(lastCohort.avgPremiumChange), color: '#7B3FCA', sub: t('renewal.kpiGrowthSub'), up: true },
         ].map(s => (
-          <Card key={s.label}>
+          <Card key={s.label} style={{ background: (s.color === '#0058BC' ? TINT.blue : s.color === '#1E8033' ? TINT.green : s.color === '#181C23' ? TINT.orange : TINT.purple).bg, border: (s.color === '#0058BC' ? TINT.blue : s.color === '#1E8033' ? TINT.green : s.color === '#181C23' ? TINT.orange : TINT.purple).bd }}>
             <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: s.color, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
             <div style={{ fontSize: 11.5, marginTop: 4, color: s.up === null ? '#717786' : s.up ? '#1E8033' : '#C0392B', display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -746,7 +797,7 @@ function RenewalAnalyticsTab() {
         <div style={{ padding: '12px 16px', borderBottom: '0.5px solid rgba(193,198,215,0.4)', fontSize: 13, fontWeight: 700, color: '#181C23' }}>{t('renewal.cohortDetail')}</div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
+            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(246,248,255,0.9)' }}>
               {[t('renewal.period'), t('renewal.dueCount'), t('renewal.renewed'), t('renewal.cancelled'), t('renewal.lapsed'), t('kpi.renewalRate'), t('renewal.avgPremiumChange')].map(h => (
                 <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786' }}>{h}</th>
               ))}
@@ -754,10 +805,10 @@ function RenewalAnalyticsTab() {
           </thead>
           <tbody>
             {[...renewalCohorts].reverse().map((c, i) => (
-              <tr key={c.period} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
+              <tr key={c.period} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(246,248,255,0.55)' }}>
                 <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#0058BC' }}>{c.period}</td>
-                <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{c.dueCount.toLocaleString()}</td>
-                <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: '#1E8033' }}>{c.renewedCount.toLocaleString()}</td>
+                <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{(c.dueCount ?? 0).toLocaleString()}</td>
+                <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: '#1E8033' }}>{(c.renewedCount ?? 0).toLocaleString()}</td>
                 <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#B06000' }}>{c.cancelledCount}</td>
                 <td style={{ padding: '10px 14px', fontFamily: "'JetBrains Mono', monospace", color: '#C0392B' }}>{c.lapsedCount}</td>
                 <td style={{ padding: '10px 14px' }}>
@@ -799,8 +850,9 @@ export default function InsurerAnalyticsView({ navigateTo: _navigateTo }: Props)
   const { t } = useTranslation('analytics')
   const [tab, setTab] = useState<TabId>('overview')
   const [period, setPeriod] = useState('2026-08')
-
-  const criticalAlerts = lossAlerts.filter(a => a.severity === 'critical').length
+  const { data: lossRes } = useAnalyticsLossRatio()
+  const lossAlerts: any[] = lossRes?.data?.alerts ?? []
+  const criticalAlerts = lossAlerts.filter((a: any) => a.severity === 'critical').length
 
   return (
     <div>

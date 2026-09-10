@@ -46,6 +46,7 @@ export type ViewId =
   | 'user-list'
   | 'user-create'
   | 'user-edit'
+  | 'department-management'
   | 'menu-permission'
   | 'data-permission'
   | 'operation-log'
@@ -63,14 +64,7 @@ export type ViewId =
   | 'compliance-interceptor'
   | 'compliance-report-generator'
   | 'license-expiry-reminder'
-  | 'compliance-dashboard'
-
-  // 🔵 Phase 5: 产品深度优化模块
-  | 'rate-plan-engine'
-  | 'actuarial-model-integration'
-  | 'underwriting-rule-engine'
-  | 'product-lifecycle-dashboard'
-  | 'multi-currency-settlement';
+  | 'compliance-dashboard';
 
 export interface ViewMeta {
   crumbs: string[];
@@ -121,6 +115,7 @@ export const VIEW_LABELS: Record<string, ViewMeta> = {
   'role-create': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.roleMgmt'], title: 'nav.newRole' },
   'role-edit': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.roleMgmt'], title: 'nav.editRole' },
   'user-list': { crumbs: ['nav.systemSettings'], title: 'nav.userMgmt' },
+  'department-management': { crumbs: ['nav.systemSettings'], title: 'menu.departmentManagement' },
   'user-create': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.userMgmt'], title: 'nav.newUser' },
   'user-edit': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.userMgmt'], title: 'nav.editUser' },
   'menu-permission': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.menuPermission'], title: 'nav.menuPermissionConfig' },
