@@ -1,3 +1,0 @@
-﻿鈥塃RR_PNPM_NO_SCRIPT鈥?Missing script: dev
-
-Command "dev" not found.

@@ -1,1 +1,67 @@
-node_modules
+# ===== Dependencies =====
+node_modules/
+.pnp
+.pnp.js
+
+# ===== pnpm content-addressable store =====
+# .pnpmrc sets `store-dir=pnpm-store`, so pnpm's package cache lands INSIDE the repo.
+# It is a machine-local cache and must never be committed (~525 MB / ~59k files).
+pnpm-store/
+.pnpm-store/
+
+# ===== Build outputs =====
+dist/
+dist-ssr/
+build/
+out/
+*.tsbuildinfo
+
+# ===== Environment / secrets =====
+# Real credentials must stay local; commit the *.example templates instead.
+.env
+.env.local
+.env.*.local
+# drizzle migration credentials (holds PGPASSWORD and a DRIZZLE_URL with an embedded password)
+insurance-platform/packages/domain-models/.env.development
+# ...but always keep the templates tracked
+!.env.example
+!.env.*.example
+
+# ===== Logs & runtime artifacts =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+service-log.txt
+dev-start.log
+
+# ===== Runtime file uploads =====
+uploads/
+
+# ===== Temp / diagnostic / backup files =====
+*.backup
+*.bak
+*.tmp
+*.orig
+*.rej
+db-user-check.txt
+
+# ===== Editor / OS =====
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== Agent / tooling caches =====
+.qoder/
+.trae/
+.sixth/
