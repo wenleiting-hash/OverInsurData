@@ -4,8 +4,8 @@ import {
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ProductDetailService } from './product-detail.service';
-import { CreateProductDto, UpdateProductDto } from './dtos/product.dto';
-import { CreateUnderwritingRuleDto, CreateTrainingMaterialDto, UpdateUnderwritingRuleDto, SetRuleStatusDto, SetMaterialStatusDto, CreateRatePlanDto, UpdateRatePlanDto } from './dtos/product-detail.dto';
+import { CreateProductDto, UpdateProductDto, ToggleProductStatusDto, SetProductStateStatusDto } from './dtos/product.dto';
+import { CreateUnderwritingRuleDto, CreateTrainingMaterialDto, UpdateUnderwritingRuleDto, SetRuleStatusDto, SetMaterialStatusDto, UpdateTrainingMaterialDto, CreateRatePlanDto, UpdateRatePlanDto } from './dtos/product-detail.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -56,6 +56,16 @@ export class ProductController {
 
   @Get(':id/states')
   async getStates(@Param('id') id: string) { return this.productDetailService.getStates(id); }
+
+  /** Suspend / resume a single salable state (states tab card action). */
+  @Patch(':id/states/:stateCode/status')
+  async setStateStatus(
+    @Param('id') id: string, @Param('stateCode') stateCode: string,
+    @Body() dto: SetProductStateStatusDto, @Req() req: any,
+  ) {
+    this.assertAdmin(req, 'change product state status');
+    return this.productDetailService.setStateStatus(id, stateCode.toUpperCase(), dto.status as 'active' | 'suspended');
+  }
 
   @Get(':id/underwriting-rules')
   async getUnderwritingRules(@Param('id') id: string) { return this.productDetailService.getUnderwritingRules(id); }
@@ -133,6 +143,16 @@ export class ProductController {
     return this.productDetailService.deleteRule(id, ruleId);
   }
 
+  /** Edit material metadata / replace its file (training tab "更多 → 编辑"). */
+  @Patch(':id/training-materials/:materialId')
+  async updateTrainingMaterial(
+    @Param('id') id: string, @Param('materialId') materialId: string,
+    @Body() dto: UpdateTrainingMaterialDto, @Req() req: any,
+  ) {
+    this.assertAdmin(req, 'update training material');
+    return this.productDetailService.updateMaterial(id, materialId, dto);
+  }
+
   @Delete(':id/training-materials/:materialId')
   async deleteTrainingMaterial(@Param('id') id: string, @Param('materialId') materialId: string, @Req() req: any) {
     this.assertAdmin(req, 'delete training material');
@@ -152,9 +172,9 @@ export class ProductController {
   }
 
   @Patch(':id/toggle-status')
-  async toggleStatus(@Param('id') id: string, @Req() req: any) {
-    this.assertAdmin(req, 'toggle product status');
-    return this.productService.toggleStatus(id);
+  async toggleStatus(@Param('id') id: string, @Body() dto: ToggleProductStatusDto, @Req() req: any) {
+    const userId = this.assertAdmin(req, 'toggle product status');
+    return this.productService.toggleStatus(id, dto, { userId, username: req.user?.username ?? userId });
   }
 
   @Patch('batch-toggle')

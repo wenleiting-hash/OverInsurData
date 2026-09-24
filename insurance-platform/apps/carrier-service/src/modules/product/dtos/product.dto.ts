@@ -53,6 +53,31 @@ export class CreateProductDto {
   @IsOptional() @IsBoolean() is_active?: boolean;
 }
 
+/**
+ * Payload for PATCH /api/products/:id/toggle-status.
+ *
+ * 上下架必须携带原因（写入 status_reason 并记审计日志）；scope=selected 时必须带 states。
+ * effectiveAt 为空/过去时间 => 立即生效；为未来时间 => 写入 pending_change 定时生效。
+ */
+export class ToggleProductStatusDto {
+  /** 缺省时按当前状态推断：Active -> delist，其余 -> list。 */
+  @IsOptional() @IsIn(['list', 'delist']) action?: string;
+  /** 稳定原因码（如 rate-file-expired / risk-control），不随界面语言变化，便于审计检索。 */
+  @IsString() @IsNotEmpty() reason!: string;
+  @IsOptional() @IsString() remark?: string;
+  /** all=全部可售州下架（产品整体 Paused）；selected=仅暂停指定州（产品仍 Active）。 */
+  @IsOptional() @IsIn(['all', 'selected']) scope?: string;
+  /** scope=selected 时必填：州代码数组，如 ['CA','NY']。 */
+  @IsOptional() @IsArray() @IsString({ each: true }) states?: string[];
+  /** ISO 8601 计划生效时间；空/null 表示立即生效。 */
+  @IsOptional() @IsString() effectiveAt?: string | null;
+}
+
+export class SetProductStateStatusDto {
+  /** 单州只允许 已开通(active) ↔ 已暂停(suspended)；not-available 的州不能在此开通。 */
+  @IsIn(['active', 'suspended']) status!: string;
+}
+
 export class UpdateProductDto {
   @IsOptional() @IsString() carrier_id?: string;
   @IsOptional() @IsString() product_name?: string;

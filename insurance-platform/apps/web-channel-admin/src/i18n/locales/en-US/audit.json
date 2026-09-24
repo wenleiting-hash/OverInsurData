@@ -1,0 +1,33 @@
+{
+  "title": "Login History",
+  "filters": {
+    "title": "Filters",
+    "dateRange": "Date Range",
+    "search": "Search",
+    "status": "Status"
+  },
+  "filtersAll": "All",
+  "actions": {
+    "exportCSV": "Export CSV",
+    "clearFilters": "Clear Filters"
+  },
+  "columns": {
+    "timestamp": "Timestamp",
+    "username": "Username",
+    "ipAddr": "IP Address",
+    "userAgent": "User Agent",
+    "status": "Status",
+    "reason": "Reason"
+  },
+  "status": {
+    "success": "Success",
+    "failure": "Failure"
+  },
+  "emptyState": "No records available",
+  "pagination": {
+    "info": "Showing {{start}}-{{end}} of {{total}} entries",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {{page}} of {{total}}"
+  }
+}

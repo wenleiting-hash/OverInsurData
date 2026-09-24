@@ -18,6 +18,11 @@
     "allStatuses": "All Statuses",
     "active": "Active",
     "inactive": "Inactive",
+    "expiring": "Expiring Soon",
+    "terminated": "Terminated",
+    "archiveStatus": "Archive Status",
+    "archiveActive": "Active",
+    "archiveInactive": "Deactivated",
     "region": "Headquarters Region",
     "allRegions": "All Regions",
     "northeast": "Northeast",
@@ -70,7 +75,9 @@
     "pageSize": "10 per page",
     "pageSize20": "20 per page",
     "pageSize50": "50 per page",
-    "pageSize100": "100 per page"
+    "pageSize100": "100 per page",
+    "pageSize200": "200 per page",
+    "pageSize500": "500 per page"
   },
   "emptyState": "No data available",
   "form": {
@@ -187,13 +194,14 @@
     },
     "coopStatus": "Cooperation Status",
     "coop": {
-      "active": "Normal",
+      "active": "Active",
       "expiring": "Expiring Soon",
-      "terminated": "Terminated"
+      "terminated": "Terminated",
+      "none": "No Cooperation"
     },
     "contractExpiry": "Contract Expiry",
-    "foundedIn": "Founded in {{year}}",
-    "daysRemaining": "{{days}} days remaining",
+    "foundedIn": "Founded in {year}",
+    "daysRemaining": "{days} days remaining",
     "sections": {
       "basicInfo": "Company Information",
       "hq": "Headquarters",
@@ -228,11 +236,12 @@
       "apiPull": "Automatic API Pull",
       "dueDay25": "25th of each month",
       "paymentTerm": "15 business days after month end",
+      "paymentTermDays": "Within {n} days after reconciliation",
       "premiumCollectionValue": "Channel collects → Platform aggregates",
       "paymentTermDaysUnit": "days"
     },
     "contacts": {
-      "viewAll": "View all {{count}} contacts",
+      "viewAll": "View all {count} contacts",
       "roleAccountManager": "Account Manager",
       "roleUnderwriting": "Underwriting Contact",
       "roleFinance": "Settlement / Finance Contact",
@@ -247,7 +256,7 @@
       "moodysDesc": "Moody's Rating",
       "fitchDesc": "Fitch Rating",
       "trend": "Rating Trend",
-      "updatedAt": "Updated {{date}}",
+      "updatedAt": "Updated {date}",
       "lossTrendTitle": "Loss Ratio Trend (Last 6 Months)",
       "lossTrendSub": "Monthly loss ratio · alert threshold 65%",
       "lossCurrent": "Current Loss Ratio",
@@ -257,7 +266,7 @@
       "healthSolvency": "Risk-Based Capital Ratio",
       "healthCombined": "Combined Ratio",
       "healthRoi": "Return on Investment",
-      "regThreshold": "Regulatory threshold: {{value}}"
+      "regThreshold": "Regulatory threshold: {value}"
     },
     "channelTable": {
       "name": "Channel Name",
@@ -297,11 +306,12 @@
       "preview": "Preview",
       "download": "Download",
       "delete": "Delete",
-      "alert": "{{count}} document(s) expiring or already expired — please update promptly",
-      "uploadedInfo": "Uploaded {{date}} · {{by}}",
-      "validUntil": " · Valid until {{date}}",
+      "alert": "{count} document(s) expiring or already expired — please update promptly",
+      "uploadedInfo": "Uploaded {date} · {by}",
+      "validUntil": " · Valid until {date}",
       "noDocs": "No documents",
       "docTypes": {
+        "businessLicense": "Business License",
         "master": "Master Agreement",
         "nda": "NDA",
         "dpa": "DPA",
@@ -362,9 +372,16 @@
       "lossRatio": "Loss Ratio"
     },
     "products": {
-      "countPre": "This insurer offers a total of ",
-      "countPost": " products",
+      "countSummary": "{total} products · {onSale} on sale",
+      "autoLinkHint": "Products are linked automatically when a carrier is created or onboarded. You can also manually attach products via \"Link Existing Products\".",
+      "linkedToast": "Linked {n} product(s)",
       "addProduct": "Add Product",
+      "linkExisting": "Link Existing Product",
+      "linkModalTitle": "Link Existing Products",
+      "linkSearchPlaceholder": "Search by name or code",
+      "linked": "Linked",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
       "typeIndividual": "Personal",
       "typeGroup": "Group",
       "typeVoluntary": "Voluntary",
@@ -440,7 +457,8 @@
       "disable": "Disable",
       "enable": "Enable",
       "delete": "Delete",
-      "featurePending": "Feature pending"
+      "featurePending": "Feature pending",
+      "viewProduct": "View Product Details"
     }
   },
   "import": {
@@ -481,9 +499,19 @@
     },
     "upload": {
       "heading": "Upload Excel File",
-      "desc": "Only .xlsx / .xls formats supported, max file size 10MB",
+      "desc": "Only .xlsx / .xls / .csv formats supported, max file size 10MB",
       "dragHint": "Drag a file here, or click to select a file",
-      "formats": "Supports .xlsx · .xls"
+      "formats": "Supports .xlsx · .xls · .csv",
+      "continue": "Continue to data preview",
+      "reselect": "Re-select",
+      "remove": "Remove file",
+      "invalidType": "Unsupported file format. Please upload a .xlsx, .xls or .csv file",
+      "tooLarge": "File exceeds the 10MB size limit. Please compress or split the file and re-upload",
+      "parseFailed": "Failed to parse the file. Please make sure it is not corrupted and follows the standard template",
+      "emptyFile": "The file is empty or contains no valid data rows. Please check and re-upload",
+      "missingColumns": "Required columns (Full Company Name, NAIC Code) were not recognized. Please download and use the standard template",
+      "sizeKb": "{n} KB",
+      "sizeMb": "{n} MB"
     },
     "preview": {
       "heading": "Data Preview",
@@ -491,6 +519,7 @@
       "totalRows": "{n} rows in total",
       "mappingTitle": "Field Mapping Confirmation",
       "ignore": "— Ignore —",
+      "unmapped": "Unmapped",
       "colRow": "Row",
       "colName": "Full Company Name",
       "colShortName": "Short Name",
@@ -500,7 +529,8 @@
       "colRating": "Rating",
       "colStatus": "Status",
       "ok": "OK",
-      "toValidate": "Go to Validation"
+      "toValidate": "Go to Validation",
+      "showingFirst": "Large dataset — previewing the first {n} of {total} rows; all rows will be validated"
     },
     "fieldMap": {
       "fullName": "Full Company Name",
@@ -513,8 +543,26 @@
       "foundedYear": "Founded Year"
     },
     "errors": {
+      "nameRequired": "Full company name cannot be empty",
+      "nameTooLong": "Full company name cannot exceed {n} characters",
+      "shortNameRequired": "Short name cannot be empty",
+      "shortNameTooLong": "Short name cannot exceed {n} characters",
       "naicRequired": "NAIC code cannot be empty",
-      "ratingRequired": "AM Best rating cannot be empty"
+      "naicFormat": "NAIC code must be exactly 5 digits",
+      "typeRequired": "Company type cannot be empty",
+      "typeInvalid": "Company type must be \"Admitted\" or \"Non-Admitted\"",
+      "stateRequired": "HQ state cannot be empty",
+      "stateInvalid": "State must be a 2-letter uppercase code (e.g. NY, CA)",
+      "regionRequired": "Region cannot be empty",
+      "regionInvalid": "Region must be one of Northeast / Southeast / Midwest / West / National",
+      "ratingInvalid": "Invalid AM Best rating (e.g. A++, A+, A, A-, B++)",
+      "yearInvalid": "Founded year must be a 4-digit year between {min} and {max}",
+      "duplicateInFile": "NAIC code duplicates row {row}",
+      "duplicateInDb": "NAIC code {code} already exists in the system"
+    },
+    "errorReport": {
+      "field": "Field",
+      "reason": "Reason"
     },
     "validate": {
       "heading": "Validation Results",
@@ -525,7 +573,8 @@
       "row": "Row {n}",
       "downloadReport": "Download Error Report",
       "skipErrors": "Skip error rows, import valid rows only",
-      "continue": "Confirm and continue import"
+      "continue": "Confirm and continue import",
+      "noValidRows": "There are no valid rows to import. Please fix the errors or re-upload the file"
     },
     "confirm": {
       "heading": "Confirm Import",
@@ -539,14 +588,18 @@
       "review": "Import Note",
       "reviewValue": "Records are imported directly and take effect immediately",
       "reupload": "Re-upload",
-      "submit": "Confirm import of {n} records"
+      "submit": "Confirm import of {n} records",
+      "importing": "Importing…",
+      "submitFailed": "Import submission failed. Please try again later or re-upload the file"
     },
     "result": {
       "heading": "Import Complete",
       "desc": "Successfully imported {ok} insurers; {fail} rows were skipped due to validation failure",
+      "descOne": "Successfully imported 1 insurer; {fail} rows were skipped due to validation failure",
       "success": "Successfully Imported",
       "skipped": "Skipped",
       "pendingReview": "Pending",
+      "total": "Total Rows",
       "count": "{n}",
       "viewRecords": "View Import Records",
       "backToList": "Back to Insurer List"
@@ -623,6 +676,13 @@
       "desc": "{n} groups processed, merged or marked as not duplicates"
     }
   },
+  "toasts": {
+    "batchDeleted": "Deleted {n} carrier(s)",
+    "deleteFailed": "Delete failed, please try again",
+    "batchEnabled": "Enabled {n} carrier(s)",
+    "batchDisabled": "Disabled {n} carrier(s)",
+    "actionFailed": "Operation failed, please try again"
+  },
   "modals": {
     "disable": {
       "titleDisable": "Deactivate Insurer",
@@ -660,7 +720,12 @@
       "confirmEnablePre": "I understand the impact of this action and confirm reactivating",
       "confirmPost": ". This action will be recorded in the audit log.",
       "btnDisable": "Confirm Deactivation",
-      "btnEnable": "Confirm Reactivation"
+      "btnEnable": "Confirm Reactivation",
+      "disabledMsg": "Carrier deactivated",
+      "enabledMsg": "Carrier reactivated",
+      "errorMsg": "Operation failed, please try again",
+      "stopping": "Deactivating...",
+      "enabling": "Reactivating..."
     },
     "deleteConfirm": {
       "title": "Confirm Deletion",
@@ -669,6 +734,19 @@
       "warningPost": " will be deleted. Related configurations and partnership records will also be removed and cannot be recovered.",
       "confirmBtn": "Confirm Delete",
       "deleting": "Deleting…"
+    },
+    "batchConfirm": {
+      "titleDelete": "Bulk Delete",
+      "titleDisable": "Bulk Deactivate",
+      "titleEnable": "Bulk Reactivate",
+      "selectedCount": "{count} carrier(s) selected",
+      "bodyDelete": "The selected carriers and their related configurations will be permanently removed. This action is irreversible. Continue?",
+      "bodyDisable": "After deactivation, the selected carriers cannot take on new business. Continue?",
+      "bodyEnable": "After reactivation, the selected carriers will resume normal business operations. Continue?",
+      "processing": "Processing...",
+      "confirmDelete": "Confirm Delete",
+      "confirmDisable": "Confirm Deactivate",
+      "confirmEnable": "Confirm Reactivate"
     },
     "batchExport": {
       "title": "Bulk Export",

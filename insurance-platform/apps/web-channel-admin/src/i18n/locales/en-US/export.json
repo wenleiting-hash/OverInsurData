@@ -1,0 +1,99 @@
+{
+  "page": {
+    "title": "Data Export Gateway",
+    "subtitle": "Data Export Gateway & Template Management"
+  },
+  "actions": {
+    "configureAutoExport": "Configure Scheduled Export",
+    "exportNow": "Export Now",
+    "download": "Download",
+    "retry": "Retry",
+    "copyLink": "Copy Link",
+    "preview": "Preview",
+    "newTemplate": "+ New Template",
+    "newSchedule": "+ Add New Schedule",
+    "edit": "Edit"
+  },
+  "stats": {
+    "totalTasks": "Total Export Tasks",
+    "completed": "Completed",
+    "processing": "Processing",
+    "retryNeeded": "Retry Needed",
+    "failed": "Failed Tasks",
+    "totalRecords": "Total Records Exported"
+  },
+  "formatSection": {
+    "title": "Select Data Source & Export Format",
+    "subtitle": "Select Data Source & Export Format"
+  },
+  "formats": {
+    "excel": { "desc": "Complex spreadsheets with formulas and charts" },
+    "pdf": { "desc": "Fixed-layout formal documents" },
+    "csv": { "desc": "Lightweight comma-separated text" },
+    "json": { "desc": "Structured data exchange for developers" },
+    "xml": { "desc": "Tag-based enterprise data format" }
+  },
+  "tasks": {
+    "title": "Recent Export Tasks",
+    "subtitle": "Recent Export Tasks History"
+  },
+  "filters": {
+    "allFormats": "All Formats",
+    "allStatus": "All Status"
+  },
+  "status": {
+    "completed": "✓ Completed",
+    "processing": "● Processing",
+    "pending": "○ Pending",
+    "failed": "✗ Failed"
+  },
+  "taskColumns": {
+    "taskName": "Task Name",
+    "format": "Format",
+    "dataSource": "Data Source",
+    "recordCount": "Records",
+    "fileSize": "File Size",
+    "createdAt": "Created At",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "templates": {
+    "title": "Export Templates",
+    "subtitle": "Pre-built Export Templates Library",
+    "usageCount": "{count} uses",
+    "lastUsed": "Last used: {date}",
+    "download": "Download Template"
+  },
+  "autoExport": {
+    "title": "Scheduled Auto-Export",
+    "subtitle": "Scheduled Auto-Export Configuration",
+    "enabled": "✓ Enabled",
+    "compression": "🔒 Compressed",
+    "cycle": "Cycle: ",
+    "output": "Output: ",
+    "recipients": "Recipients: ",
+    "emailCount": "{count} emails",
+    "nextRun": "Next Run: ",
+    "schedule": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    }
+  },
+  "aiAdvice": {
+    "title": "AI Export Optimization & Performance Tips",
+    "tip1": "Detected failure on 'Bulk User Permission Audit Report' export due to database connection timeout. Recommend running large data exports during off-peak hours (2-4 AM).",
+    "tip2": "Excel accounts for 40% of exports while CSV is only 17%. If primarily for developers, consider increasing JSON/XML export share.",
+    "tip3": "'Daily Finance Reconciliation Report' has auto-compression (gzip) enabled, saving ~65% storage — best practice.",
+    "tip4": "Last 30 days exported 38,590 records, avg 3.2 min. For over 100k records, use background async task mode."
+  },
+  "toast": {
+    "generating": "Generating new export task...",
+    "downloading": "Downloading file: {filename}",
+    "retrying": "Retried export task: {taskId}",
+    "linkCopied": "Copied export task link: {taskId}",
+    "configuringAutoExport": "Opening scheduled export configuration dialog...",
+    "downloadingTemplate": "Downloading template: {templateId}",
+    "viewPreview": "View export preview"
+  }
+}

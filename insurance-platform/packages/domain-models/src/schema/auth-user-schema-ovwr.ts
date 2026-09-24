@@ -60,6 +60,8 @@ export const ovwrAuthRole = pgTable('auth_role', {
   ovwrRoleCode: varchar('role_code', { length: 64 }).notNull(),
   ovwrDescription: text('description'),
   ovwrPermissionKeys: jsonb('permission_keys').$type<string[]>().default([]),
+  // V1.0.16 T1：所属子系统，区分 carrier_mgmt / channel_mgmt
+  ovwrSubsystemKey: varchar('subsystem_key', { length: 32 }).notNull().default('carrier_mgmt'),
   ovwrIsSystem: boolean('is_system').notNull().default(false),
   ovwrSortOrder: integer('sort_order').notNull().default(0),
   ovwrCreatedAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -68,6 +70,7 @@ export const ovwrAuthRole = pgTable('auth_role', {
 }, (table) => ({
   ovwrIdxRoleKey: index('idx_auth_role_key').on(table.ovwrRoleKey),
   ovwrIdxSortOrder: index('idx_auth_role_sort').on(table.ovwrSortOrder),
+  ovwrIdxSubsystem: index('idx_auth_role_subsystem').on(table.ovwrSubsystemKey),
 }));
 
 // ─── auth_user (用户账户表 - 权威定义) ──────────────────────────────────
@@ -80,7 +83,8 @@ export const ovwrAuthUser = pgTable('auth_user', {
   // Identity
   ovwrUsername: varchar('username', { length: 64 }).unique().notNull(),
   ovwrEmail: varchar('email', { length: 255 }).unique().notNull(),
-  ovwrPasswordHash: varchar('password_hash', { length: 255 }).notNull(),
+  // SSO 账号无密码哈希，允许 NULL（V1.0.16 T1）
+  ovwrPasswordHash: varchar('password_hash', { length: 255 }),
   ovwrNameZh: varchar('name_zh', { length: 100 }),                // 中文名
   ovwrNameEn: varchar('name_en', { length: 100 }),                // English name
   ovwrPhone: varchar('phone', { length: 20 }),
@@ -95,6 +99,8 @@ export const ovwrAuthUser = pgTable('auth_user', {
   ovwrAuthMethod: varchar('auth_method', { length: 16 }).notNull().default('local'),
   ovwrSsoProvider: varchar('sso_provider', { length: 32 }),
   ovwrLdapDn: varchar('ldap_dn', { length: 255 }),
+  // V1.0.16 T1：workOS 工号，SSO 用户匹配键，仅 sso_provider=workos 账号有值
+  ovwrExternalId: varchar('external_id', { length: 64 }),
 
   // Status & MFA
   ovwrStatus: varchar('status', { length: 16 }).notNull().default('active'),
@@ -123,6 +129,7 @@ export const ovwrAuthUser = pgTable('auth_user', {
   ovwrIdxUserUuid: index('idx_auth_user_uuid').on(table.ovwrUserUuid),
   ovwrIdxDept: index('idx_auth_user_dept').on(table.ovwrDeptId),
   ovwrIdxStatus: index('idx_auth_user_status').on(table.ovwrStatus),
+  ovwrIdxExternalId: index('idx_auth_user_external_id').on(table.ovwrExternalId),
 }));
 
 // ─── auth_user_role (用户角色关联表) ───────────────────────────────

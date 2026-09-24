@@ -1,0 +1,32 @@
+﻿src/App.tsx(257,47): error TS2322: Type '(view: ViewId, params?: { carrierId?: string; productId?: string; userId?: string; channelId?: string; }) => void' is not assignable to type '(view: string, params?: any) => void'.
+  Types of parameters 'view' and 'view' are incompatible.
+    Type 'string' is not assignable to type 'ViewId'.
+src/App.tsx(260,40): error TS2322: Type '(view: ViewId, params?: { carrierId?: string; productId?: string; userId?: string; channelId?: string; }) => void' is not assignable to type '(view: string, params?: any) => void'.
+  Types of parameters 'view' and 'view' are incompatible.
+    Type 'string' is not assignable to type 'ViewId'.
+src/components/EntryRow.tsx(14,22): error TS7016: Could not find a declaration file for module 'lodash.debounce'. 'E:/WorkProject/OverInsurData/insurance-platform/node_modules/.pnpm/lodash.debounce@4.0.8/node_modules/lodash.debounce/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/lodash.debounce` if it exists or add a new declaration (.d.ts) file containing `declare module 'lodash.debounce';`
+src/views/AppointmentTerminationView.tsx(168,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/views/ChannelAnalyticsView.tsx(165,42): error TS2322: Type '(v: number) => [string, string]' is not assignable to type 'Formatter<ValueType, NameType> & ((value: ValueType, name: NameType, item: TooltipPayloadEntry, index: number, payload: TooltipPayload) => ReactNode | [...])'.
+  Type '(v: number) => [string, string]' is not assignable to type 'Formatter<ValueType, NameType>'.
+    Types of parameters 'v' and 'value' are incompatible.
+      Type 'ValueType | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/views/ChannelAnalyticsView.tsx(167,61): error TS2322: Type '(v: number) => string' is not assignable to type 'LabelFormatter'.
+  Types of parameters 'v' and 'label' are incompatible.
+    Type 'RenderableText' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/views/ChannelPerformanceView.tsx(396,42): error TS2322: Type '(v: number) => [string, string]' is not assignable to type 'Formatter<ValueType, NameType> & ((value: ValueType, name: NameType, item: TooltipPayloadEntry, index: number, payload: TooltipPayload) => ReactNode | [...])'.
+  Type '(v: number) => [string, string]' is not assignable to type 'Formatter<ValueType, NameType>'.
+    Types of parameters 'v' and 'value' are incompatible.
+      Type 'ValueType | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/views/ChannelPerformanceView.tsx(398,61): error TS2322: Type '(v: number) => string' is not assignable to type 'LabelFormatter'.
+  Types of parameters 'v' and 'label' are incompatible.
+    Type 'RenderableText' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/views/I18nManagementView.tsx(225,5): error TS2552: Cannot find name 'setEntries'. Did you mean 'entries'?
+src/views/I18nManagementView.tsx(225,16): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/views/I18nManagementView.tsx(225,33): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/views/I18nManagementView.tsx(250,11): error TS2552: Cannot find name 'setEntries'. Did you mean 'entries'?

@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useGetProduct, useCreateProduct, useUpdateProduct } from '@/services/productService'
 import { useGetInsurers } from '@/services/insurerService'
+import { dictionaryService, type DictTree } from '@/services/dictionaryService'
 import { productApi } from '@/lib/user-api-client'
 import type { ProductDocument } from '@/lib/user-api-client'
 
@@ -19,24 +20,9 @@ interface Props {
   onBackToList: () => void
 }
 
-// 主要承保范围选项（稳定英文 key，标签经 i18n 解析）
-const COVERAGE_KEYS = ['liability', 'comprehensive', 'collision', 'medical', 'um', 'roadside', 'substitute', 'newCarValue', 'deductibleWaiver'] as const
-type CoverageKey = typeof COVERAGE_KEYS[number]
-
-const COVERAGE_LABEL_KEYS: Record<CoverageKey, string> = {
-  liability: 'detail.info.liability',
-  comprehensive: 'detail.info.comprehensive',
-  collision: 'detail.info.collision',
-  medical: 'detail.info.medical',
-  um: 'detail.info.um',
-  roadside: 'detail.info.roadside',
-  substitute: 'detail.info.substitute',
-  newCarValue: 'detail.info.newCarValue',
-  deductibleWaiver: 'detail.info.deductibleWaiver',
-}
-
-// 数据文件 coverages 值 → 表单稳定 key（编辑回填用）
-const COVERAGE_BACKFILL: Record<string, CoverageKey> = {
+// 存量数据文件 coverages 值（PascalCase 展示名）→ 字典稳定 key 兼容层。
+// 仅用于编辑回填归一化；动态选项与标签自 V1.0.18 起来自险种字典树（coverage-tree）。
+const COVERAGE_BACKFILL: Record<string, string> = {
   Liability: 'liability',
   Comprehensive: 'comprehensive',
   Collision: 'collision',
@@ -48,15 +34,14 @@ const COVERAGE_BACKFILL: Record<string, CoverageKey> = {
   DeductibleWaiver: 'deductibleWaiver',
 }
 
-/** 大小写无关的 coverages 解析表：历史种子数据存 PascalCase 展示名（"Liability"），本表单提交的是
- *  camelCase 稳定 key（"liability"）。两种写法都要能回填——否则编辑一次就会把已有 coverages 静默清空。 */
-const COVERAGE_LOOKUP: Record<string, CoverageKey> = {
-  ...Object.fromEntries(COVERAGE_KEYS.map(k => [k.toLowerCase(), k] as [string, CoverageKey])),
-  ...Object.fromEntries(Object.entries(COVERAGE_BACKFILL).map(([k, v]) => [k.toLowerCase(), v] as [string, CoverageKey])),
-}
+/** 大小写无关解析表：历史种子数据存 PascalCase 展示名（"Liability"），字典稳定 key 是 camelCase（"liability"）。 */
+const COVERAGE_LOOKUP: Record<string, string> = Object.fromEntries(
+  Object.entries(COVERAGE_BACKFILL).map(([k, v]) => [k.toLowerCase(), v] as [string, string])
+)
 
-const toCoverageKey = (v: unknown): CoverageKey | undefined =>
-  typeof v === 'string' ? COVERAGE_LOOKUP[v.toLowerCase()] : undefined
+/** 历史值归一化：命中兼容层转稳定 key；未命中保留原值（未知项回显置灰，不可新增、可提交）。 */
+const toCoverageKey = (v: unknown): string =>
+  typeof v === 'string' ? (COVERAGE_LOOKUP[v.trim().toLowerCase()] ?? v.trim()) : ''
 
 // 费率影响因子（稳定 key → detail.rates.fac* 标签）
 const FACTOR_KEYS = ['drivingRecord', 'vehicleType', 'drivingExperience', 'creditScore', 'territory', 'usage', 'ageBand', 'claimsHistory', 'vehicleValue', 'safetyEquip'] as const
@@ -77,22 +62,9 @@ const FACTOR_LABEL_KEYS: Record<FactorKey, string> = {
 
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
 
-// PRD 3.2.3: 11 business lines + sub-line linkage
+// PRD 3.2.3: 11 business lines。V1.0.18 起业务线/子险种选项来自险种字典树（coverage-tree），
+// 本表仅作字典加载失败时的降级兜底（code → 提交口径大写，与存量 line_of_business 一致）。
 const BUSINESS_LINES = ['Auto', 'Home', 'Commercial', 'Cyber', 'Life', 'Travel', 'Professional', 'D&O', 'E&O', 'Marine', 'Specialty'] as const
-
-const SUB_LINE_MAP: Record<string, string[]> = {
-  Auto: ['Personal Auto', 'Commercial Auto', 'Fleet Auto'],
-  Home: ['Homeowners', 'Renters', 'Condo', 'Landlord'],
-  Commercial: ['General Liability', 'Commercial Property', 'Workers Comp', 'BOP'],
-  Cyber: ['Cyber Liability', 'Data Breach', 'Network Security'],
-  Life: ['Term Life', 'Whole Life', 'Universal Life'],
-  Travel: ['Single Trip', 'Annual Multi-Trip', 'Business Travel'],
-  Professional: ['Professional Liability', 'Medical Malpractice', 'Architects & Engineers'],
-  'D&O': ['Directors & Officers', 'Employment Practices', 'Fiduciary Liability'],
-  'E&O': ['Errors & Omissions', 'Technology E&O', 'Media Liability'],
-  Marine: ['Inland Marine', 'Ocean Marine', 'Cargo'],
-  Specialty: ['Event Insurance', 'Pet Insurance', 'Warranty', 'Surety'],
-}
 
 interface FormData {
   productName: string
@@ -171,12 +143,22 @@ function Field({ label, required, hint, error, children }: { label: string; requ
 }
 
 export default function ProductForm({ productId, onBackToList }: Props) {
-  const { t } = useTranslation('product')
+  const { t, i18n } = useTranslation('product')
+  const { t: tDict } = useTranslation('dict')
   const { data: apiProduct, isLoading: isLoadingProduct } = useGetProduct(productId ?? null)
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
   const { data: insurersResult } = useGetInsurers({ size: 100 })
   const insurers = insurersResult?.data ?? []
+
+  // V1.0.18 险种字典：拉取联动树（仅启用项）。加载失败时降级内置 BUSINESS_LINES，
+  // 子险种/承保范围则退化为空列表——不阻塞表单，仅失去联动。
+  const [dictTree, setDictTree] = useState<DictTree | null>(null)
+  useEffect(() => {
+    dictionaryService.tree().then(r => setDictTree(r.data)).catch(() => {})
+  }, [])
+
+  const isZhLang = i18n.language?.startsWith('zh') ?? true
   const existing = apiProduct ? {
     productName: apiProduct.product_name,
     productCode: apiProduct.product_code,
@@ -216,7 +198,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
     lineOfBusiness: '',
     subLine: '',
     description: '',
-    coverages: ['liability', 'comprehensive', 'collision'],
+    coverages: [],
     rateType: 'tiered',
     baseRate: '',
     minPremium: '',
@@ -251,7 +233,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
         lineOfBusiness: existing.lineOfBusiness,
         subLine: existing.subLine || '',
         description: existing.description || '',
-        coverages: Array.from(new Set((existing.coverages ?? []).map(toCoverageKey).filter((k): k is CoverageKey => !!k))),
+        coverages: Array.from(new Set((existing.coverages ?? []).map(toCoverageKey).filter(k => !!k))),
         rateType: existing.rateType === 'Flat' ? 'flat' : existing.rateType === 'UsageBased' ? 'usage' : 'tiered',
         baseRate: existing.baseRate ?? '',
         minPremium: existing.minPremium ?? '',
@@ -529,7 +511,7 @@ export default function ProductForm({ productId, onBackToList }: Props) {
         setCurrentStep(0)
         setErrorStep(0)
       }
-      const msg = detail ? `${t('form.feedback.saveFailed')}：${detail}` : t('form.feedback.saveFailed')
+      const msg = detail ? t('form.feedback.saveFailedDetail', { detail }) : t('form.feedback.saveFailed')
       setSaveError(msg)
       setSubmitError(msg)
       showToastMessage(msg, 'error')
@@ -552,9 +534,30 @@ export default function ProductForm({ productId, onBackToList }: Props) {
   // 提交中状态（对齐 InsurerForm 的 isSubmitting，用于禁用提交按钮）
   const isSubmitting = createProduct.isPending || updateProduct.isPending
 
-  const coverageLabels: Record<CoverageKey, string> = Object.fromEntries(
-    COVERAGE_KEYS.map(k => [k, t(COVERAGE_LABEL_KEYS[k])])
-  ) as Record<CoverageKey, string>
+  // ── V1.0.18 险种字典联动 ────────────────────────────────────────────
+  // formData.lineOfBusiness 存提交口径（大写），字典 code 首字母大写 → UPPER 比较
+  const toLobVal = (code: string) => code.toUpperCase().replace('&', '_')
+  const selDictLine = dictTree?.lines.find(l => toLobVal(l.code) === formData.lineOfBusiness) ?? null
+  const dictCovs = dictTree?.allCoverages ?? []
+  const fallbackCovs: { code: string; nameZh: string; nameEn: string }[] =
+    Object.values(COVERAGE_BACKFILL).map(code => ({ code, nameZh: '', nameEn: '' }))
+  // 承保范围随业务线联动：选中业务线 → 该业务线关联项（空就是空，不兜底全量）；
+  // 未选业务线 → 空（联动：先选业务线）；字典未加载 → 内置兼容层降级
+  const availableCoverages = dictTree
+    ? (selDictLine?.coverages ?? [])
+    : fallbackCovs
+  // 业务线选项：字典优先，字典未加载时降级内置表（label 走 values.lob* i18n）
+  const lineOptions: { code: string; nameZh: string; nameEn: string }[] = dictTree?.lines?.length
+    ? dictTree.lines
+    : BUSINESS_LINES.map(code => ({ code, nameZh: '', nameEn: '' }))
+  // 标签：字典 nameZh/nameEn → product.detail.info.* → 原始 key
+  const covLabel = (key: string): string => {
+    const hit = dictCovs.find(c => c.code.toLowerCase() === key.toLowerCase())
+    if (hit) return isZhLang ? hit.nameZh : hit.nameEn
+    return t(`detail.info.${key}`, { defaultValue: '' }) || key
+  }
+  // 历史值（已停用/未知项）回显置灰后缀：可提交、不可新增
+  const disabledSuffix = isZhLang ? `（${tDict('status.disabled')}）` : ` (${tDict('status.disabled')})`
 
   const factorLabels: Record<FactorKey, string> = Object.fromEntries(
     FACTOR_KEYS.map(k => [k, t(FACTOR_LABEL_KEYS[k])])
@@ -627,11 +630,11 @@ export default function ProductForm({ productId, onBackToList }: Props) {
               >
                 <ChevronLeft size={20} />
               </button>
-              <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#181C23', margin: 0 }}>
+              <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#181C23', margin: 0 }}>
                 {productId ? t('header.titleEdit', { productName: existing?.productName ?? '' }) : t('header.titleCreate')}
               </h1>
             </div>
-            <p style={{ fontSize: '15px', color: '#717786' }}>
+            <p style={{ fontSize: '13px', color: '#717786' }}>
               {productId ? t('header.subtitleEdit') : t('header.subtitleCreate')}
             </p>
           </div>
@@ -857,9 +860,11 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                           onBlur={onFieldBlur('lineOfBusiness')}
                         >
                           <option value="">{t('form.basic.selectLine')}</option>
-                          {BUSINESS_LINES.map(lob => (
-                            <option key={lob} value={lob.toUpperCase().replace('&', '_')}>{t(`values.lob${lob.toUpperCase().replace('&', '_')}`, lob)}</option>
-                          ))}
+                          {lineOptions.map(l => {
+                            const val = toLobVal(l.code)
+                            // 标签优先字典 nameZh/nameEn，字典未命中时回退 values.lob* i18n
+                            return <option key={l.code} value={val}>{(isZhLang ? l.nameZh : l.nameEn) || t(`values.lob${val}`, l.code)}</option>
+                          })}
                         </select>
                       </Field>
                       <Field label={t('fields.subLine')} required>
@@ -872,10 +877,18 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                           onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(24,28,35,0.1)'}
                         >
                           <option value="">{t('fields.subLinePlaceholder')}</option>
-                          {(SUB_LINE_MAP[formData.lineOfBusiness] || SUB_LINE_MAP[Object.keys(SUB_LINE_MAP).find(k => k.toUpperCase().replace('&', '_') === formData.lineOfBusiness) || ''] || []).map(sub => (
-                            // 选项文案走 values.* 查表（与详情页/列表页同一口径），缺键时降级为原始英文名
-                            <option key={sub} value={sub}>{t(`values.${sub}`, sub)}</option>
+                          {(selDictLine?.subLines ?? []).map(s => (
+                            // 标签优先字典 nameZh/nameEn，未命中降级 values.* 查表（与详情页/列表页同一口径）
+                            <option key={s.code} value={s.code}>{(isZhLang ? s.nameZh : s.nameEn) || t(`values.${s.code}`, s.code)}</option>
                           ))}
+                          {/* 历史值回显：已停用/未收录的子险种置灰展示，可提交、不可新增 */}
+                          {(() => {
+                            const subs = selDictLine?.subLines ?? []
+                            const legacy = formData.subLine && !subs.some(s => s.code === formData.subLine) ? formData.subLine : ''
+                            return legacy ? (
+                              <option value={legacy} style={{ color: '#9AA0AE' }}>{t(`values.${legacy}`, legacy)}{disabledSuffix}</option>
+                            ) : null
+                          })()}
                         </select>
                       </Field>
                     </div>
@@ -938,28 +951,61 @@ export default function ProductForm({ productId, onBackToList }: Props) {
                       />
                     </Field>
 
-                    {/* Row 6: 主要承保范围 */}
+                    {/* Row 6: 主要承保范围（随业务线联动，未配置关联则空） */}
                     <Field label={t('detail.info.coverageTitle')} hint={t('form.basic.coverageHint')}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {COVERAGE_KEYS.map(coverage => {
-                          const isSelected = formData.coverages.includes(coverage)
+                        {(() => {
+                          const availKeys = availableCoverages.map(c => c.code)
+                          // 已选但不在当前可选列表的历史值 → 置灰回显（可取消勾选，不可重新勾选）
+                          const legacyKeys = formData.coverages.filter(k => !availKeys.some(a => a.toLowerCase() === k.toLowerCase()))
+                          if (availableCoverages.length === 0 && legacyKeys.length === 0) {
+                            return (
+                              <span style={{ fontSize: 13, color: '#9aa3b2' }}>
+                                {t('form.basic.coverageEmpty')}
+                              </span>
+                            )
+                          }
                           return (
-                            <label
-                              key={coverage}
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
-                                background: isSelected ? 'rgba(0,88,188,0.10)' : 'rgba(241,243,254,0.7)',
-                                border: `0.5px solid ${isSelected ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
-                                color: isSelected ? '#0058BC' : '#414755',
-                              }}
-                            >
-                              <input type="checkbox" checked={isSelected} style={{ display: 'none' }}
-                                onChange={() => toggleCoverage(coverage)} />
-                              {isSelected && <CheckCircle size={11} />}
-                              {coverageLabels[coverage]}
-                            </label>
+                            <>
+                              {availableCoverages.map(c => {
+                                const isSelected = formData.coverages.includes(c.code)
+                                return (
+                                  <label
+                                    key={c.code}
+                                    style={{
+                                      display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                                      background: isSelected ? 'rgba(0,88,188,0.10)' : 'rgba(241,243,254,0.7)',
+                                      border: `0.5px solid ${isSelected ? '#0058BC' : 'rgba(193,198,215,0.4)'}`,
+                                      color: isSelected ? '#0058BC' : '#414755',
+                                    }}
+                                  >
+                                    <input type="checkbox" checked={isSelected} style={{ display: 'none' }}
+                                      onChange={() => toggleCoverage(c.code)} />
+                                    {isSelected && <CheckCircle size={11} />}
+                                    {(isZhLang ? c.nameZh : c.nameEn) || covLabel(c.code)}
+                                  </label>
+                                )
+                              })}
+                              {legacyKeys.map(k => (
+                                <label
+                                  key={k}
+                                  title={tDict('matrix.coverageDisabled')}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                                    background: 'rgba(113,119,134,0.08)',
+                                    border: '0.5px dashed rgba(113,119,134,0.45)',
+                                    color: '#717786', opacity: 0.75,
+                                  }}
+                                >
+                                  <input type="checkbox" checked style={{ display: 'none' }}
+                                    onChange={() => toggleCoverage(k)} />
+                                  <CheckCircle size={11} />
+                                  {covLabel(k)}{disabledSuffix}
+                                </label>
+                              ))}
+                            </>
                           )
-                        })}
+                        })()}
                       </div>
                     </Field>
                   </>

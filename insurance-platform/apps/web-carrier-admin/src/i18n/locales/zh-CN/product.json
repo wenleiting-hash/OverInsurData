@@ -137,6 +137,7 @@
     "statusPaused": "暂停销售",
     "statusOffSale": "停售",
     "statusIncomplete": "草稿",
+    "statusPending": "待激活",
     "underwritingAuto": "自动核保",
     "underwritingManual": "人工核保",
     "underwritingMGA": "MGA 核保",
@@ -222,6 +223,7 @@
     "status": "状态",
     "active": "在售",
     "paused": "暂停",
+    "pending": "待激活",
     "inactive": "停售",
     "resetFilters": "清除筛选",
     "sortBy": "排序",
@@ -247,12 +249,19 @@
     "offSale": "停售",
     "pause": "暂停",
     "cancel": "取消",
-    "selectBeforeExport": "请先选择要导出的数据"
+    "selectBeforeExport": "请先选择要导出的数据",
+    "exportSuccess": "产品汇总已导出"
   },
   "export": {
     "relRatePlans": "费率方案",
     "relStates": "可售州明细",
-    "relAuthorizations": "渠道授权"
+    "relAuthorizations": "渠道授权",
+    "colRatePlanNames": "费率方案清单",
+    "colStateList": "可售州清单",
+    "exportSuccess": "导出完成（{count} 条）",
+    "exportFailed": "导出失败，请重试",
+    "authorizationsSkipped": "渠道授权暂无可导出的接口，已跳过该项",
+    "skipJoiner": "；"
   },
   "bulkActions": {
     "selectedCount": "已选择 {count} 个产品",
@@ -269,7 +278,41 @@
     "totalCount": "共 {count} 条 · 第 {page} / {pages} 页",
     "pageSize": "每页 10 条",
     "pageSize20": "每页 20 条",
-    "pageSize50": "每页 50 条"
+    "pageSize50": "每页 50 条",
+    "pageSize100": "每页 100 条",
+    "pageSize200": "每页 200 条",
+    "pageSize500": "每页 500 条"
+  },
+  "toasts": {
+    "listed": "已上架产品",
+    "paused": "已暂停产品销售",
+    "delisted": "已下架产品",
+    "actionFailed": "操作失败，请重试",
+    "deletedN": "已删除 {n} 个产品",
+    "deleteFailed": "删除失败，请重试",
+    "batchListedN": "已上架 {n} 个产品",
+    "batchDelistedN": "已下架 {n} 个产品",
+    "exportSuccess": "导出完成（{count} 条）"
+  },
+  "deleteConfirm": {
+    "title": "确认删除",
+    "subtitle": "此操作不可撤销",
+    "bodyPre": "即将删除产品 ",
+    "bodyPost": "，删除后相关费率方案、授权记录将一并移除，且无法恢复。",
+    "deleting": "删除中…",
+    "confirm": "确认删除"
+  },
+  "batchConfirm": {
+    "deleteTitle": "批量删除",
+    "listTitle": "批量上架",
+    "delistTitle": "批量下架",
+    "selectedCount": "已选择 {n} 个产品",
+    "deleteBody": "删除后，选中的产品及相关费率方案、授权记录将被永久移除，此操作不可撤销。确认继续？",
+    "listBody": "上架后，选中的产品将恢复在售状态。确认继续？",
+    "delistBody": "下架后，选中的产品将停止新保报价，已有保单按原合同正常续保。确认继续？",
+    "processing": "处理中...",
+    "confirmList": "确认上架",
+    "confirmDelist": "确认下架"
   },
   "pages": {
     "productManagement": "产品管理"
@@ -451,6 +494,7 @@
     "footerCount": "共 {count} 条产品记录"
   },
   "detail": {
+    "loadingText": "加载中…",
     "tabs": {
       "info": "基本信息",
       "rates": "费率方案",
@@ -468,6 +512,9 @@
       "launch": "上架日期",
       "statesSelling": "{count} 州在售",
       "statesValid": "{count} 州有效",
+      "mom": "环比 +{pct}%",
+      "termYear": "年",
+      "termYears": "年",
       "lossWarn": "⚠ 超预警阈值",
       "normalRange": "正常范围",
       "highRetention": "↑ 高留存",
@@ -478,6 +525,8 @@
     },
     "info": {
       "basicTitle": "产品基本信息",
+      "documentsTitle": "产品文件",
+      "documentsEmpty": "暂无产品文件，可在编辑产品的「合规文件上传」步骤上传",
       "productName": "产品全称",
       "status": "当前状态",
       "spRating": "S&P 评级",
@@ -506,6 +555,7 @@
     },
     "rates": {
       "summary": "共 {total} 个费率方案 · {active} 个生效中",
+      "productTitle": "产品费率配置（建品时录入）",
       "add": "新增费率方案",
       "active": "生效中",
       "draft": "草稿",
@@ -540,10 +590,18 @@
       "notAvail": "未开通",
       "suspended": "已暂停",
       "search": "搜索州名或代码…",
-      "channels": "{count} 渠道"
+      "channels": "{count} 渠道",
+      "suspend": "暂停",
+      "resume": "恢复",
+      "suspendSuccess": "该州已暂停销售",
+      "resumeSuccess": "该州已恢复销售",
+      "suspendFailed": "暂停该州失败",
+      "resumeFailed": "恢复该州失败"
     },
     "underwriting": {
       "summary": "共 {total} 条规则 · {active} 条生效中 · {testing} 条测试中",
+      "productTitle": "产品核保配置（建品时录入）",
+      "yes": "是",
       "add": "新增规则",
       "eligibility": "资格规则",
       "rating": "费率规则",
@@ -551,6 +609,7 @@
       "referral": "转介规则",
       "testing": "测试中",
       "inactive": "已停用",
+      "then": "则",
       "lastModified": "最后修改：{date} · {by}"
     },
     "training": {
@@ -592,6 +651,7 @@
       "description": "产品描述",
       "descPlaceholder": "描述产品的核心价值、目标客群和主要特点…",
       "coverageHint": "选择本产品包含的承保类别",
+      "coverageEmpty": "该业务线暂未配置承保范围，请在险种字典管理中维护关联",
       "uwModeHint": "自动核保由系统按预设规则即时决策；人工核保需后台专员审核；MGA 委托授权渠道在限额内自行核保",
       "renewalHint": "保证续保：到期自动续保；有条件续保：满足条件后方可续保；定期不续保：保险期间届满后终止",
       "termHint": "单张保单允许的最长保险期间，单位为年",
@@ -612,7 +672,7 @@
     "underwriting": {
       "subtitle": "设定基本的资格规则和自动化决策逻辑，高级规则可在产品上架后进一步配置。",
       "noteTitle": "核保规则说明",
-      "noteBody": "此处配置的规则将在渠道提交报价时自动执行。规则生效前请与承保团队确认。",
+      "noteBody": "此处配置的规则将在渠道提交报价时生效（自动执行为未来态）。规则生效前请与承保团队确认。",
       "years": "岁",
       "autoRules": "自动核保规则",
       "tagExclusion": "（排除规则）",
@@ -654,7 +714,8 @@
       "stepsProgress": "{done} / {total} 步完成",
       "updated": "产品信息已更新",
       "redirecting": "正在跳转至产品列表…",
-      "saveFailed": "保存失败，请重试"
+      "saveFailed": "保存失败，请重试",
+      "saveFailedDetail": "保存失败：{detail}"
     },
     "errors": {
       "enterData": "请录入相关数据",
@@ -768,7 +829,12 @@
       "submit": "上传并登记",
       "submitting": "提交中…",
       "success": "培训材料已上传",
-      "failed": "上传培训材料失败"
+      "failed": "上传培训材料失败",
+      "editTitle": "编辑培训材料",
+      "editSubtitle": "可修改元数据或替换文件；未重新上传文件时保持原文件不变",
+      "editSubmit": "保存修改",
+      "editSuccess": "培训材料已更新",
+      "editFailed": "更新培训材料失败"
     },
     "statusModal": {
       "listTitle": "产品上架",
@@ -808,7 +874,16 @@
       "verbDelist": "下架",
       "confirmTail": "。本操作将记录至审计日志。",
       "confirmListBtn": "确认上架",
-      "submitDelistBtn": "确认下架"
+      "submitDelistBtn": "确认下架",
+      "selectStates": "选择需要暂停销售的州（仅展示当前在售州）",
+      "selectAll": "全选",
+      "selectNone": "清空",
+      "noActiveStates": "当前没有在售州可暂停",
+      "selectedCount": "已选择 {count} 个州",
+      "scheduledHint": "将于 {date} 00:00 自动执行，可在产品详情查看待生效变更",
+      "scheduledSuccess": "已登记定时上下架，到时间自动执行",
+      "changeSuccess": "产品状态已更新并记录审计日志",
+      "changeFailed": "产品状态变更失败"
     }
   },
   "menu": {

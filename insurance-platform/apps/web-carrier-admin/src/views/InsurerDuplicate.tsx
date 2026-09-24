@@ -133,13 +133,13 @@ export default function InsurerDuplicate({ navigateTo }: Props) {
   const resolved = DUPLICATE_GROUPS.filter(g => groupStatus[g.id] && groupStatus[g.id] !== 'unresolved');
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <button className="btn-ghost" onClick={() => navigateTo('insurer-list')}><ArrowLeft size={15} /></button>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{t('duplicate.title')}</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23' }}>{t('duplicate.title')}</h1>
             <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>{t('duplicate.subtitle')}</p>
           </div>
         </div>

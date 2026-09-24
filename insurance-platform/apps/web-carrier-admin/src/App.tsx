@@ -28,41 +28,33 @@ const PermissionView = lazy(() => import('@/views/PermissionView'));
 const RoleListView = lazy(() => import('@/views/RoleListView'));
 const UserListView = lazy(() => import('@/views/UserListView'));
 const DepartmentView = lazy(() => import('@/views/DepartmentView'));
+const IntegrationAppsView = lazy(() => import('@/views/IntegrationAppsView'));
+// V1.0.17/18 · 险种字典管理
+const DictionaryManageView = lazy(() => import('@/views/DictionaryManageView'));
+// V1.0.16 T2 · SSO 回调页（独立路由 /sso/callback，登录守卫白名单内）
+const SsoCallbackView = lazy(() => import('@/views/sso/SsoCallbackView'));
 
-// Compliance Views
+// Appointment Views
 const AppointmentApplicationView = lazy(() => import('@/views/AppointmentApplicationView'));
 const AppointmentNewView = lazy(() => import('@/views/AppointmentNewView'));
 const AppointmentStatusTrackingView = lazy(() => import('@/views/AppointmentStatusTrackingView'));
 const AppointmentRenewalView = lazy(() => import('@/views/AppointmentRenewalView'));
 const AppointmentTerminationView = lazy(() => import('@/views/AppointmentTerminationView'));
-const ComplianceInterceptorView = lazy(() => import('@/views/ComplianceInterceptorView'));
-const ComplianceReportGeneratorView = lazy(() => import('@/views/ComplianceReportGeneratorView'));
-const NIPRLicenseCheckView = lazy(() => import('@/views/NIPRLicenseCheckView'));
-const LicenseExpiryReminderView = lazy(() => import('@/views/LicenseExpiryReminderView'));
-const ComplianceRulesView = lazy(() => import('@/views/ComplianceRulesView'));
-const OFACScreeningView = lazy(() => import('@/views/OFACScreeningView'));
-const ComplianceDashboardView = lazy(() => import('@/views/ComplianceDashboardView'));
 
 // Finance Views
 const FinanceDashboardView = lazy(() => import('@/views/FinanceDashboardView'));
-const CommissionBillImportView = lazy(() => import('@/views/CommissionBillImportView'));
-const BillParsingView = lazy(() => import('@/views/BillParsingView'));
-const CommissionReconciliationView = lazy(() => import('@/views/CommissionReconciliationView'));
-const DisputeManagementView = lazy(() => import('@/views/DisputeManagementView'));
-const SettlementConfigView = lazy(() => import('@/views/SettlementConfigView'));
-const PremiumReconciliationView = lazy(() => import('@/views/PremiumReconciliationView'));
-const ChannelMasterView = lazy(() => import('@/views/ChannelMasterView'));
-const ChannelList = lazy(() => import('@/views/ChannelList'));
-const ChannelNewView = lazy(() => import('@/views/ChannelNewView'));
-const ChannelHierarchyView = lazy(() => import('@/views/ChannelHierarchyView'));
-const ChannelOnboardingView = lazy(() => import('@/views/ChannelOnboardingView'));
-const ProductAuthView = lazy(() => import('@/views/ProductAuthView'));
-const CommissionSchemeView = lazy(() => import('@/views/CommissionSchemeView'));
-const CommissionSettlementView = lazy(() => import('@/views/CommissionSettlementView'));
-const ChannelPerformanceView = lazy(() => import('@/views/ChannelPerformanceView'));
-const ChannelTrainingView = lazy(() => import('@/views/ChannelTrainingView'));
-const ChannelPortalView = lazy(() => import('@/views/ChannelPortalView'));
-const ChannelAnalyticsView = lazy(() => import('@/views/ChannelAnalyticsView'));
+const ChannelMasterView = lazy(() => import('@channel/views/ChannelMasterView'));
+const ChannelList = lazy(() => import('@channel/views/ChannelList'));
+const ChannelNewView = lazy(() => import('@channel/views/ChannelNewView'));
+const ChannelHierarchyView = lazy(() => import('@channel/views/ChannelHierarchyView'));
+const ChannelOnboardingView = lazy(() => import('@channel/views/ChannelOnboardingView'));
+const ProductAuthView = lazy(() => import('@channel/views/ProductAuthView'));
+const CommissionSchemeView = lazy(() => import('@channel/views/CommissionSchemeView'));
+const CommissionSettlementView = lazy(() => import('@channel/views/CommissionSettlementView'));
+const ChannelPerformanceView = lazy(() => import('@channel/views/ChannelPerformanceView'));
+const ChannelTrainingView = lazy(() => import('@channel/views/ChannelTrainingView'));
+const ChannelPortalView = lazy(() => import('@channel/views/ChannelPortalView'));
+const ChannelAnalyticsView = lazy(() => import('@channel/views/ChannelAnalyticsView'));
 const CooperationManagementView = lazy(() => import('@/views/CooperationManagementView'));
 
 // Analytics Views
@@ -120,6 +112,8 @@ function AppContent() {
   // URL 同步
   useEffect(() => {
     const syncUrl = () => {
+      // SSO 回调页不参与 URL 同步，避免 history.replaceState 清除回调参数
+      if (location.pathname === '/sso/callback') return;
       let path = '/';
       if (state.currentView === 'insurer-list') path = '/insurers-list';
       else if (state.currentView === 'insurer-detail' && state.selectedCarrierId) path = `/insurer-detail/${state.selectedCarrierId}`;
@@ -130,7 +124,6 @@ function AppContent() {
       else if (state.currentView === 'cooperation') path = '/cooperation';
       else if (state.currentView === 'appointment') path = '/appointment';
       else if (state.currentView === 'appointment-new') path = '/appointment/new';
-      else if (state.currentView === 'ofac-screening') path = '/ofac-screening';
       else if (state.currentView === 'finance-dashboard') path = '/finance/dashboard';
       else if (state.currentView === 'finance-bill-import') path = '/finance/bills/import';
       else if (state.currentView === 'finance-bill-parsing') path = '/finance/bills/parsing';
@@ -164,17 +157,11 @@ function AppContent() {
       else if (state.currentView === 'operation-log') path = '/permission/logs/operation';
       else if (state.currentView === 'login-log') path = '/permission/logs/login';
       
-      // 🟢 Phase 2: Appointment & 合规模块路径
+      // 🟢 Phase 2: Appointment 模块路径
       else if (state.currentView === 'appointment-application') path = '/appointment';
       else if (state.currentView === 'appointment-tracking') path = '/appointment/tracking';
       else if (state.currentView === 'appointment-renewal') path = '/appointment/renewal';
       else if (state.currentView === 'appointment-termination') path = '/appointment/termination';
-      else if (state.currentView === 'license-check') path = '/compliance/license-check';
-      else if (state.currentView === 'compliance-rules') path = '/compliance/rules';
-      else if (state.currentView === 'compliance-dashboard') path = '/compliance-dashboard';
-      else if (state.currentView === 'compliance-interceptor') path = '/compliance-interceptor';
-      else if (state.currentView === 'compliance-report-generator') path = '/compliance-report-generator';
-      else if (state.currentView === 'license-expiry-reminder') path = '/license-expiry-reminder';
 
       window.history.replaceState({}, '', path);
     };
@@ -206,6 +193,14 @@ function AppContent() {
 
   // Redirect to login if not authenticated - moved AFTER useState/useEffect
   if (!isAuthenticated) {
+    // V1.0.16 T2 · SSO 回调独立路由短路：/sso/callback 直达不要求已登录，不走 Layout
+    if (location.pathname === '/sso/callback') {
+      return (
+        <Suspense fallback={<div style={{ padding: 40, color: '#717786' }}>Loading…</div>}>
+          <SsoCallbackView />
+        </Suspense>
+      );
+    }
     return <LoginPage />;
   }
 
@@ -266,15 +261,12 @@ function AppContent() {
         return <CooperationManagementView navigateTo={navigateTo} />;
       case 'finance-dashboard': // Legacy redirect
         return <FinanceDashboardView navigateTo={navigateTo} />;
-      // 🔵 Phase 2: Appointment & Compliance Unified View
+      // 🔵 Phase 2: Appointment Unified View
       case 'appointment':
         return <AppointmentApplicationView navigateTo={navigateTo} />;
 
       case 'appointment-new':
         return <AppointmentNewView navigateTo={navigateTo} />;
-
-      case 'compliance-dashboard':
-        return <ComplianceDashboardView navigateTo={navigateTo} />;
 
       case 'appointment-tracking':
         return <AppointmentStatusTrackingView navigateTo={navigateTo} />;
@@ -285,41 +277,15 @@ function AppContent() {
       case 'appointment-termination':
         return <AppointmentTerminationView navigateTo={navigateTo} />;
 
-      case 'license-check':
-        return <NIPRLicenseCheckView navigateTo={navigateTo} />;
-
-      case 'compliance-rules':
-        return <ComplianceRulesView navigateTo={navigateTo} />;
-
-      case 'ofac-screening':
-        return <OFACScreeningView navigateTo={navigateTo} />;
-
-      case 'compliance-interceptor':
-        return <ComplianceInterceptorView navigateTo={navigateTo} />;
-
-      case 'compliance-report-generator':
-        return <ComplianceReportGeneratorView navigateTo={navigateTo} />;
-
-      case 'license-expiry-reminder':
-        return <LicenseExpiryReminderView navigateTo={navigateTo} />;
-      
       case 'finance-bill-import':
-        return <CommissionBillImportView navigateTo={navigateTo} />;
-
       case 'finance-bill-parsing':
-        return <BillParsingView navigateTo={navigateTo} />;
-
       case 'finance-reconciliation':
-        return <CommissionReconciliationView navigateTo={navigateTo} />;
-
       case 'finance-disputes':
-        return <DisputeManagementView navigateTo={navigateTo} />;
-
       case 'finance-settlement-config':
-        return <SettlementConfigView navigateTo={navigateTo} />;
-
       case 'finance-premium-recon':
-        return <PremiumReconciliationView navigateTo={navigateTo} />;
+      case 'finance-enhancement':
+        // V1.0.13：财务结算单入口 5 tab，旧视图全部并入 FinanceDashboardView
+        return <FinanceDashboardView navigateTo={navigateTo} />;
 
       case 'channel-list':
         return <ChannelList navigateTo={navigateTo} />;
@@ -348,6 +314,12 @@ function AppContent() {
 
       case 'department-management':
         return <DepartmentView navigateTo={navigateTo} />;
+
+      case 'integration-apps':
+        return <IntegrationAppsView navigateTo={navigateTo} />;
+
+      case 'dictionary-manage':
+        return <DictionaryManageView navigateTo={navigateTo} />;
 
       case 'role-edit':
         return <RoleEditView roleId={state.selectedRoleId || ''} navigateTo={navigateTo} />;

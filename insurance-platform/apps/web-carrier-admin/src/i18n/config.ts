@@ -19,18 +19,12 @@ import enUSPermissionExtra from './locales/en-US/permission-extra.json';
 import zhCNPermissionExtra from './locales/zh-CN/permission-extra.json';
 import enUSAppointment from './locales/en-US/appointment.json';
 import zhCNAppointment from './locales/zh-CN/appointment.json';
-import enUSCompliance from './locales/en-US/compliance.json';
-import zhCNCompliance from './locales/zh-CN/compliance.json';
 import enUSFinance from './locales/en-US/finance.json';
 import zhCNFinance from './locales/zh-CN/finance.json';
 import enUSCooperation from './locales/en-US/cooperation.json';
 import zhCNCooperation from './locales/zh-CN/cooperation.json';
 import enUSAnalytics from './locales/en-US/analytics.json';
 import zhCNAnalytics from './locales/zh-CN/analytics.json';
-import enUSOfac from './locales/en-US/ofac.json';
-import zhCNOfac from './locales/zh-CN/ofac.json';
-import enUSLicense from './locales/en-US/license.json';
-import zhCNLicense from './locales/zh-CN/license.json';
 import enUSLogin from './locales/en-US/login.json';
 import zhCNLogin from './locales/zh-CN/login.json';
 import enUSMfa from './locales/en-US/mfa.json';
@@ -41,6 +35,8 @@ import enUSExport from './locales/en-US/export.json';
 import zhCNExport from './locales/zh-CN/export.json';
 import enUSDepartment from './locales/en-US/department.json';
 import zhCNDepartment from './locales/zh-CN/department.json';
+import enUSDict from './locales/en-US/dict.json';
+import zhCNDict from './locales/zh-CN/dict.json';
 
 const resources = {
   'en-US': {
@@ -55,17 +51,15 @@ const resources = {
       ...enUSPermissionExtra
     },
     appointment: enUSAppointment,
-    compliance: enUSCompliance,
     finance: enUSFinance,
     cooperation: enUSCooperation,
     analytics: enUSAnalytics,
-    ofac: enUSOfac,
-    license: enUSLicense,
     login: enUSLogin,
     mfa: enUSMfa,
     audit: enUSAudit,
     export: enUSExport,
     department: enUSDepartment,
+    dict: enUSDict,
   },
   'zh-CN': {
     common: zhCNCommon,
@@ -79,17 +73,15 @@ const resources = {
       ...zhCNPermissionExtra
     },
     appointment: zhCNAppointment,
-    compliance: zhCNCompliance,
     finance: zhCNFinance,
     cooperation: zhCNCooperation,
     analytics: zhCNAnalytics,
-    ofac: zhCNOfac,
-    license: zhCNLicense,
     login: zhCNLogin,
     mfa: zhCNMfa,
     audit: zhCNAudit,
     export: zhCNExport,
     department: zhCNDepartment,
+    dict: zhCNDict,
   },
 };
 

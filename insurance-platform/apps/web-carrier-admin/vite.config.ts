@@ -12,6 +12,7 @@ export default defineConfig({
       '@services': path.resolve(import.meta.dirname, './src/services'),
       '@stores': path.resolve(import.meta.dirname, './src/stores'),
       '@i18n': path.resolve(import.meta.dirname, './src/i18n'),
+      '@channel': path.resolve(import.meta.dirname, '../web-channel-admin/src'),
     },
   },
   server: {
@@ -42,16 +43,12 @@ export default defineConfig({
     minify: 'esbuild', // Use esbuild for faster builds
     rollupOptions: {
       output: {
-        // Code splitting for better caching
-        manualChunks: {
-          // Separate i18n resources
-          'i18n-core': ['i18next', 'react-i18next'],
-          // Separate React and routing
-          'react-core': ['react', 'react-dom', 'react-router-dom'],
-          // Separate state management
-          'state-management': ['zustand'],
-          // Separate charting libraries
-          'charts': ['recharts'],
+        // Code splitting for better caching (Vite 8 requires function form)
+        manualChunks(id) {
+          if (id.includes('i18next') || id.includes('react-i18next')) return 'i18n-core';
+          if (id.includes('react-router') || id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) return 'react-core';
+          if (id.includes('zustand')) return 'state-management';
+          if (id.includes('recharts')) return 'charts';
         },
       },
     },

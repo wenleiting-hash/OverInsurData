@@ -1,0 +1,80 @@
+{
+  "title": "Department Management",
+  "description": "Manage organizational structure, departments and personnel",
+  "newDepartment": "New Department",
+  "search": "Search departments...",
+  "stats": {
+    "totalDepartments": "Total Departments",
+    "totalMembers": "Total Members",
+    "maxLevel": "Max Level"
+  },
+  "detail": {
+    "empty": "Select a department to view details",
+    "addSub": "Add Sub-department",
+    "edit": "Edit",
+    "info": {
+      "members": "Members",
+      "subDepartments": "Sub-departments",
+      "createdAt": "Created",
+      "manager": "Manager"
+    },
+    "unit": {
+      "people": "people",
+      "count": "units"
+    },
+    "subDeptList": "Sub-departments",
+    "manageUsers": "Manage Users",
+    "memberTable": {
+      "title": "Department Members",
+      "name": "Name",
+      "role": "Role",
+      "email": "Email",
+      "status": "Status"
+    }
+  },
+  "form": {
+    "editTitle": "Edit Department",
+    "addSubTitle": "Add Sub-department",
+    "createTitle": "Create Department",
+    "editDesc": "Edit {name} info",
+    "addSubDesc": "Add sub-department under {parent}",
+    "createDesc": "Create a new organizational department",
+    "color": "Department Color",
+    "name": "Department Name",
+    "nameEn": "English Name",
+    "parent": "Parent Department",
+    "parentNone": "No parent (top level)",
+    "managerName": "Manager Name",
+    "managerTitle": "Title",
+    "managerEmail": "Email",
+    "managerPhone": "Phone",
+    "officeLocation": "Office Location",
+    "deptDescription": "Description",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "empty": "No department data",
+    "createSuccess": "Department created successfully",
+    "updateSuccess": "Department updated successfully",
+    "deleteSuccess": "Department deleted successfully",
+    "createError": "Failed to create department",
+    "updateError": "Failed to update department",
+    "deleteError": "Failed to delete department"
+  },
+  "delete": {
+    "title": "Delete Department - {name}",
+    "warning": "Are you sure you want to delete this department? This action cannot be undone.",
+    "subWarning": "This department has {count} sub-departments that will also be deleted.",
+    "memberWarning": "Members will not be deleted but need to be reassigned.",
+    "cancel": "Cancel",
+    "confirm": "Confirm Delete"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "locked": "Locked"
+  }
+}

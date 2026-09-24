@@ -6,6 +6,7 @@
  * - commissionBillLine    (commission_bill_line)
  * - reconciliationDiff    (reconciliation_diff)
  * - settlementCycleConfig (settlement_cycle_config)
+ * - carrierCommissionRate (carrier_commission_rate)
  */
 
 import { pgTable, varchar, integer, boolean, text, jsonb, numeric, timestamp, date } from 'drizzle-orm/pg-core';
@@ -14,6 +15,8 @@ import { pgTable, varchar, integer, boolean, text, jsonb, numeric, timestamp, da
 
 export const commissionBill = pgTable('commission_bill', {
   billId:           varchar('bill_id', { length: 32 }).primaryKey(),
+  /** V1.0.15 展示批次号 IMP-YYYYMMDD-NNN。 */
+  batchNo:          varchar('batch_no', { length: 40 }),
   fileName:         varchar('file_name', { length: 256 }).notNull(),
   insurerId:        varchar('insurer_id', { length: 32 }),
   insurerName:      varchar('insurer_name', { length: 128 }),
@@ -23,7 +26,20 @@ export const commissionBill = pgTable('commission_bill', {
   importedBy:       varchar('imported_by', { length: 64 }),
   fileSize:         varchar('file_size', { length: 32 }),
   fileFormat:       varchar('file_format', { length: 8 }),
-  status:           varchar('status', { length: 16 }).default('pending-parse'),
+  /** 旧状态轴（uploaded/exception/reconciled/settled），V1.0.15 保留兼容。 */
+  status:           varchar('status', { length: 16 }).default('uploaded'),
+  /** V1.0.15 导入状态轴：imported / voided。 */
+  importStatus:     varchar('import_status', { length: 16 }).default('imported'),
+  /** V1.0.15 对账状态轴：pending / running / completed（completed=已封帐锁定）。 */
+  reconStatus:      varchar('recon_status', { length: 16 }).default('pending'),
+  successCount:     integer('success_count').default(0),
+  failedCount:      integer('failed_count').default(0),
+  duplicateCount:   integer('duplicate_count').default(0),
+  lockedBy:         varchar('locked_by', { length: 64 }),
+  lockedAt:         timestamp('locked_at', { withTimezone: true }),
+  completedAt:      timestamp('completed_at', { withTimezone: true }),
+  voidedBy:         varchar('voided_by', { length: 64 }),
+  voidedAt:         timestamp('voided_at', { withTimezone: true }),
   totalPolicies:    integer('total_policies').default(0),
   totalPremium:     numeric('total_premium', { precision: 14, scale: 2 }).default('0'),
   totalCommission:  numeric('total_commission', { precision: 14, scale: 2 }).default('0'),
@@ -59,6 +75,12 @@ export const commissionBillLine = pgTable('commission_bill_line', {
   ourCommissionAmount: numeric('our_commission_amount', { precision: 14, scale: 2 }),
   diffAmount:          numeric('diff_amount', { precision: 14, scale: 2 }),
   matchStatus:         varchar('match_status', { length: 16 }).default('unmatched'),
+  /** V1.0.15 行状态：imported / duplicate / failed（去重键 保司+月份+保单号）。 */
+  lineStatus:          varchar('line_status', { length: 16 }).default('imported'),
+  /** V1.0.15 试算命中档位：product_state/product_all/lob_state/lob_all/bill_original。 */
+  trialLevel:          varchar('trial_level', { length: 24 }),
+  errorReason:         varchar('error_reason', { length: 512 }),
+  skipReason:          varchar('skip_reason', { length: 512 }),
   diffNote:            text('diff_note'),
   diffNoteEn:          text('diff_note_en'),
   deleted:             boolean('deleted').default(false),
@@ -119,6 +141,27 @@ export const settlementCycleConfig = pgTable('settlement_cycle_config', {
   updatedAt:       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// ─── carrier_commission_rate ───────────────────────────────────────
+
+export const carrierCommissionRate = pgTable('carrier_commission_rate', {
+  rateId:          varchar('rate_id', { length: 32 }).primaryKey(),
+  carrierId:       varchar('carrier_id', { length: 32 }).notNull(),
+  dimension:       varchar('dimension', { length: 16 }).notNull(),
+  lineOfBusiness:  varchar('line_of_business', { length: 64 }),
+  productId:       varchar('product_id', { length: 32 }),
+  state:           varchar('state', { length: 8 }),
+  rate:            numeric('rate', { precision: 5, scale: 4 }).notNull(),
+  effectiveFrom:   date('effective_from').notNull(),
+  effectiveTo:     date('effective_to'),
+  status:          varchar('status', { length: 16 }).default('pending').notNull(),
+  version:         integer('version').default(1).notNull(),
+  createdBy:       varchar('created_by', { length: 64 }),
+  remark:          varchar('remark', { length: 512 }),
+  deleted:         boolean('deleted').default(false).notNull(),
+  createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── Type inference exports ──────────────────────────────────────
 
 export type CommissionBill = typeof commissionBill.$inferSelect;
@@ -129,3 +172,5 @@ export type ReconciliationDiff = typeof reconciliationDiff.$inferSelect;
 export type NewReconciliationDiff = typeof reconciliationDiff.$inferInsert;
 export type SettlementCycleConfig = typeof settlementCycleConfig.$inferSelect;
 export type NewSettlementCycleConfig = typeof settlementCycleConfig.$inferInsert;
+export type CarrierCommissionRate = typeof carrierCommissionRate.$inferSelect;
+export type NewCarrierCommissionRate = typeof carrierCommissionRate.$inferInsert;

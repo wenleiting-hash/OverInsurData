@@ -8,13 +8,17 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { pool } from '../../database/drizzle.client';
 import { PasswordHashingService } from '../../common/services/password-hashing.service';
+import { AuditService } from '../../common/services/audit.service';
 import { CreateUserDto, UpdateUserDto, GetUserListParams } from './dtos/user.dto';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
 
-  constructor(private readonly passwordHashingService: PasswordHashingService) {}
+  constructor(
+    private readonly passwordHashingService: PasswordHashingService,
+    private readonly auditService: AuditService,
+  ) {}
 
   /**
    * Get paginated user list with optional filters
@@ -203,8 +207,8 @@ export class UserService {
       `, [userId, operatorUuid || 'system', roleKeys]);
     }
 
-    await this.logAudit({
-      userId: operatorUuid,
+    await this.auditService.log({
+      operator: { userId: operatorUuid },
       action: 'CREATE',
       module: 'user',
       targetType: 'user',
@@ -267,8 +271,8 @@ export class UserService {
       throw new NotFoundException(`User not found: ${userUuid}`);
     }
 
-    await this.logAudit({
-      userId: operatorUuid,
+    await this.auditService.log({
+      operator: { userId: operatorUuid },
       action: 'UPDATE',
       module: 'user',
       targetType: 'user',
@@ -294,8 +298,8 @@ export class UserService {
       throw new NotFoundException(`User not found: ${userUuid}`);
     }
 
-    await this.logAudit({
-      userId: operatorUuid,
+    await this.auditService.log({
+      operator: { userId: operatorUuid },
       action: 'DELETE',
       module: 'user',
       targetType: 'user',
@@ -324,8 +328,8 @@ export class UserService {
       throw new NotFoundException(`User not found: ${userUuid}`);
     }
 
-    await this.logAudit({
-      userId: operatorUuid,
+    await this.auditService.log({
+      operator: { userId: operatorUuid },
       action: 'TOGGLE_STATUS',
       module: 'user',
       targetType: 'user',
@@ -362,8 +366,8 @@ export class UserService {
       'DELETE FROM auth_refresh_token WHERE user_uuid = $1', [userUuid],
     );
 
-    await this.logAudit({
-      userId: operatorUuid,
+    await this.auditService.log({
+      operator: { userId: operatorUuid },
       action: 'PASSWORD_RESET',
       module: 'user',
       targetType: 'user',
@@ -388,37 +392,4 @@ export class UserService {
     return result.rows;
   }
 
-  /**
-   * Log audit operations
-   */
-  private async logAudit(config: {
-    userId?: string;
-    action: string;
-    module: string;
-    targetType?: string;
-    targetId?: string;
-    success?: boolean;
-    params?: Record<string, unknown>;
-  }) {
-    try {
-      await pool.query(`
-        INSERT INTO auth_operation_log (
-          log_id, user_id, action, module, target_type, target_id,
-          success, request_params, created_at
-        ) VALUES (
-          gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, NOW()
-        )
-      `, [
-        config.userId || null,
-        config.action,
-        config.module,
-        config.targetType || null,
-        config.targetId || null,
-        config.success?.toString() || null,
-        config.params ? JSON.stringify(config.params) : null,
-      ]);
-    } catch (err: unknown) {
-      this.logger.warn(`Failed to log audit: ${(err as Error).message}`);
-    }
-  }
 }

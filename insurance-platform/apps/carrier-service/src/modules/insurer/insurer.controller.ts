@@ -3,7 +3,7 @@ import {
   Body, Param, Query, Req, UseGuards, ForbiddenException, Logger,
 } from '@nestjs/common';
 import { InsurerService } from './insurer.service';
-import { CreateInsurerDto, UpdateInsurerDto } from './dtos/insurer.dto';
+import { CreateInsurerDto, UpdateInsurerDto, BatchImportInsurersDto } from './dtos/insurer.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
@@ -24,6 +24,7 @@ export class InsurerController {
   async getList(@Query() q: any) {
     return this.insurerService.getList({
       search: q.search, type: q.type, status: q.status, region: q.region, rating: q.rating,
+      cooperation_status: q.cooperation_status,
       sortKey: q.sortKey, sortDir: q.sortDir,
       page: q.page ? parseInt(q.page, 10) : 1,
       size: q.size ? parseInt(q.size, 10) : 20,
@@ -52,6 +53,12 @@ export class InsurerController {
 
   @Get(':id')
   async getById(@Param('id') id: string) { return this.insurerService.getById(id); }
+
+  @Post('batch-import')
+  async batchImport(@Body() body: BatchImportInsurersDto, @Req() req: any) {
+    const userId = this.assertAdmin(req, 'batch import insurers');
+    return this.insurerService.batchImport(body.rows, userId);
+  }
 
   @Post()
   async create(@Body() dto: CreateInsurerDto, @Req() req: any) {

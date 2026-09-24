@@ -1,0 +1,64 @@
+{
+  "title": "Two-Factor Authentication",
+  "desc": "Add an extra layer of security to your account with an authenticator app",
+  "back": "Back",
+  "scanQR": "Scan the QR code with your authenticator app",
+  "showQRCode": "Show QR Code",
+  "recommendedApps": "Recommended apps: Google Authenticator, Authy, Microsoft Authenticator",
+  "nextStep": "Next: Verify Code",
+  "enterCode": "Enter the 6-digit code from your authenticator app",
+  "verify": "Verify Code",
+  "invalidCode": "Invalid code. Please try again.",
+  "backupCodesDesc": "Your backup codes can be used to access your account if you lose your authenticator device",
+  "generateBackup": "Generate Backup Codes",
+  "status": {
+    "enabled": "Two-Factor Authentication Enabled",
+    "activeDesc": "Your account is currently protected"
+  },
+  "benefits": {
+    "improvedSecurity": "Significantly enhanced account security",
+    "backupCodes": "Offline recovery option provided",
+    "recoveryAccess": "Login access even when device is lost"
+  },
+  "supportedApps": {
+    "title": "Supported authenticator apps:"
+  },
+  "warnings": {
+    "importance": "Please keep backup codes safe. They are the only way to login if you lose access to your authenticator app.",
+    "disableConfirm": "Disabling two-factor authentication will reduce account security. Are you sure you want to continue?"
+  },
+  "texts": {
+    "saveNote": "Recommended to print or screenshot and store these codes in a secure location"
+  },
+  "sections": {
+    "backupCodes": "Backup Codes Management"
+  },
+  "actions": {
+    "enable": "Enable Now",
+    "generating": "Generating...",
+    "viewCodes": "View Codes",
+    "generate": "Generate Backup Codes",
+    "disable": "Disable 2FA"
+  },
+  "success": {
+    "mfaEnabled": "Two-factor authentication successfully enabled!",
+    "disabled": "Two-factor authentication successfully disabled"
+  },
+  "error": {
+    "setupFailed": "Failed to setup MFA",
+    "generateBackupFailed": "Failed to generate backup codes",
+    "generateFailed": "Failed to generate QR code, please try again",
+    "verificationFailed": "Verification code incorrect, please check and try again",
+    "invalidCodeLength": "Verification code must be exactly 6 digits",
+    "disableFailed": "Failed to disable, please check network connection and retry"
+  },
+  "errors": {
+    "generateFailed": "Failed to generate QR code, please try again",
+    "verificationFailed": "Verification code incorrect, please check and try again",
+    "invalidCodeLength": "Verification code must be exactly 6 digits",
+    "disableFailed": "Failed to disable, please check network connection and retry"
+  },
+  "a11y": {
+    "close": "Close dialog"
+  }
+}

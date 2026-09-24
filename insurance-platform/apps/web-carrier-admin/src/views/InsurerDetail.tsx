@@ -1,19 +1,64 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeft, Edit2, StopCircle, PlayCircle, Download,
   Building2, MapPin, Globe, Calendar, Package, Users,
-  DollarSign, Upload, Eye, Trash2, Clock, CheckCircle, AlertTriangle, FileText,
-  TrendingUp, TrendingDown,
+  DollarSign, Upload, Eye, Clock, CheckCircle, AlertTriangle, FileText,
+  TrendingUp, TrendingDown, X, Search,
 } from 'lucide-react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
 import { useGetInsurer, useToggleInsurerStatus } from '@/services/insurerService';
+import { productApi } from '@/lib/user-api-client';
+import type { ProductRecord } from '@/lib/user-api-client';
+import { products as mockProducts } from '@/views/data/mockProductData';
+import type { InsuranceProduct } from '@/views/data/mockProductData';
 import type { ViewId } from '@/App';
 import { useTranslation } from 'react-i18next';
 import DisableModal from '@/components/DisableModal';
+
+// 「关联已有产品」弹窗使用的统一产品行结构（同时兼容详情页产品表格的渲染字段）
+interface LinkedProduct {
+  productId: string;
+  name: string;
+  code: string;
+  lob: string;
+  subline?: string;
+  sublineEn?: string;
+  type: string;
+  premium: number;
+  policyCount: number;
+  status: string;
+}
+
+function normalizeApiProduct(p: ProductRecord): LinkedProduct {
+  const pt = (p.product_type || '').toLowerCase();
+  return {
+    productId: p.id,
+    name: p.product_name,
+    code: p.product_code,
+    lob: p.line_of_business,
+    subline: p.sub_line,
+    sublineEn: p.sub_line,
+    type: pt === 'individual' || pt === 'group' ? pt : 'voluntary',
+    premium: p.premium_ytd ?? 0,
+    policyCount: p.policy_count ?? 0,
+    status: p.is_active ? 'active' : 'inactive',
+  };
+}
+
+function normalizeMockProduct(p: InsuranceProduct): LinkedProduct {
+  return {
+    productId: p.productId,
+    name: p.productName,
+    code: p.productCode,
+    lob: p.lineOfBusiness,
+    subline: p.subLine,
+    sublineEn: p.subLine,
+    type: p.type === 'Individual' ? 'individual' : p.type === 'Group' ? 'group' : 'voluntary',
+    premium: p.premiumYTD ?? 0,
+    policyCount: p.policyCount ?? 0,
+    status: p.isActive ? 'active' : 'inactive',
+  };
+}
 
 interface Props {
   carrierId: string;
@@ -40,11 +85,6 @@ const RATING_COLOR: Record<string, string> = {
   'B++': '#7a5c00', 'B+': '#7a5c00',
 };
 
-const lossData = [
-  { month: 'Mar', ratio: 61.2 }, { month: 'Apr', ratio: 60.8 }, { month: 'May', ratio: 63.1 },
-  { month: 'Jun', ratio: 61.5 }, { month: 'Jul', ratio: 59.8 }, { month: 'Aug', ratio: 62.2 },
-];
-
 const DOC_TYPE_COLOR: Record<string, string> = {
   masterAgreement: 'badge-blue',
   nda: 'badge-gray',
@@ -52,22 +92,97 @@ const DOC_TYPE_COLOR: Record<string, string> = {
   ratingReport: 'badge-yellow',
   stateLicense: 'badge-green',
   commissionSupplement: 'badge-orange',
+  businessLicense: 'badge-green',
+};
+
+/** 建品/建司表单上传文件的槽位 key → 详情表格使用的文档类型 key（复用已有颜色/文案） */
+const DOC_KEY_TO_TYPE: Record<string, string> = {
+  businessLicense: 'businessLicense',
+  mainAgreement: 'masterAgreement',
+  nda: 'nda',
+  dpa: 'dpa',
+  amBestReport: 'ratingReport',
 };
 
 export default function CarrierDetail({ carrierId, navigateTo }: Props) {
   const { t, i18n } = useTranslation('insurer');
+  const { t: tf } = useTranslation('insurer-form');
   const [activeTab, setActiveTab] = useState('info');
   const [showDisable, setShowDisable] = useState(false);
   const lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+
+  // ── 关联已有产品弹窗 ──
+  const [carrierProducts, setCarrierProducts] = useState<LinkedProduct[]>([]);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkSearch, setLinkSearch] = useState('');
+  const [linkedIds, setLinkedIds] = useState<Set<string>>(new Set());
+  const [linkCandidates, setLinkCandidates] = useState<LinkedProduct[]>([]);
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkToast, setLinkToast] = useState('');
+
+  // 弹窗打开时拉取该保司下的产品；接口失败或为空时回退本地 mock（按 carrier 过滤）
+  useEffect(() => {
+    if (!linkModalOpen) return;
+    let cancelled = false;
+    setLinkLoading(true);
+    productApi
+      .getList({ insurer: carrierId, page: 1, size: 200 })
+      .then((res) => {
+        if (cancelled) return;
+        const rows = res?.data ?? [];
+        if (rows.length) {
+          setLinkCandidates(rows.map(normalizeApiProduct));
+        } else {
+          setLinkCandidates(mockProducts.filter((p) => p.insurerId === carrierId).map(normalizeMockProduct));
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLinkCandidates(mockProducts.filter((p) => p.insurerId === carrierId).map(normalizeMockProduct));
+      })
+      .finally(() => {
+        if (!cancelled) setLinkLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [linkModalOpen, carrierId]);
+
+  function openLinkModal() {
+    setLinkSearch('');
+    setLinkedIds(new Set(carrierProducts.map((p) => p.productId)));
+    setLinkModalOpen(true);
+  }
+
+  function toggleLinked(id: string) {
+    setLinkedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function confirmLink() {
+    const existing = new Set(carrierProducts.map((p) => p.productId));
+    const picked = linkCandidates.filter((p) => linkedIds.has(p.productId) && !existing.has(p.productId));
+    setCarrierProducts((prev) => [...prev, ...picked]);
+    setLinkModalOpen(false);
+    console.log('[InsurerDetail] link products:', picked.map((p) => p.productId));
+    setLinkToast(t('detail.products.linkedToast', { n: picked.length }));
+    window.setTimeout(() => setLinkToast(''), 2000);
+  }
+
+  const filteredCandidates = linkCandidates.filter((p) => {
+    const q = linkSearch.trim().toLowerCase();
+    if (!q) return true;
+    return p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q);
+  });
 
   // ── PDF Export (Print-optimized HTML) ──
   const handleExportPdf = () => {
     if (!apiCarrier) return;
     const c = carrier;
     const now = new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US');
-    const statusLabel = c.status === 'active'
-      ? (lang === 'zh' ? '合作中' : 'Active')
-      : (lang === 'zh' ? '已停用' : 'Inactive');
+    const statusLabel = c.status === 'active' ? t('filters.active') : t('filters.inactive');
 
     const html = `<!DOCTYPE html>
 <html lang="${lang === 'zh' ? 'zh-CN' : 'en-US'}">
@@ -125,14 +240,6 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
     <div class="kpi-card">
       <div class="kpi-value">${c.policyCount?.toLocaleString() ?? '-'}</div>
       <div class="kpi-label">${lang === 'zh' ? '保单数' : 'Policies'}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-value">${c.lossRatio ? formatPercent(c.lossRatio) : '-'}</div>
-      <div class="kpi-label">${lang === 'zh' ? '赔付率' : 'Loss Ratio'}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-value">${c.renewalRate ? formatPercent(c.renewalRate) : '-'}</div>
-      <div class="kpi-label">${lang === 'zh' ? '续保率' : 'Renewal Rate'}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-value">${c.channelCount ?? '-'}</div>
@@ -215,6 +322,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
     moodysRating: apiCarrier.moodys_rating,
     fitchRating: apiCarrier.fitch_rating,
     settlementCycle: apiCarrier.settlement_cycle,
+    settlementConfig: apiCarrier.settlement_config,
     lines: apiCarrier.lines,
     founded: apiCarrier.founded,
     website: apiCarrier.website,
@@ -222,19 +330,37 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
     contractExpiry: apiCarrier.contract_expiry,
     channelCount: apiCarrier.channel_count,
     productCount: apiCarrier.product_count,
+    // 资质文件由建司/编辑表单上传（documents JSONB），documents tab 必须回显
+    documents: apiCarrier.documents ?? [],
   } : {
     carrierId: carrierId, naicCode: '', carrierName: 'Loading...', shortName: '...',
     type: '', status: 'active', region: '', lossRatio: 0, renewalRate: 0, revenue: 0,
     policyCount: 0, commissionIncome: 0, amBestRating: '', founded: undefined,
-    website: '', coopStatus: '', settlementCycle: 'Monthly', lines: [],
+    website: '', coopStatus: '', settlementCycle: 'Monthly', settlementConfig: {}, lines: [],
     spRating: '', moodysRating: '', fitchRating: '', contractExpiry: '',
-    channelCount: 0, productCount: 0, coopType: '', state: '',
+    channelCount: 0, productCount: 0, coopType: '', state: '', documents: [],
   };
 
   const carrierContacts: any[] = [];
-  const carrierProducts: any[] = [];
   const carrierChannels: any[] = [];
-  const carrierDocs: any[] = [];
+  // 资质文件：直接来自表单上传的 documents 主数据（key/name/size/url/mimetype）。
+  // 此前硬编码为空数组，导致 files 已上传但 documents tab 永远显示「暂无文件」。
+  const carrierDocs: any[] = (carrier.documents ?? [])
+    .filter((d: any) => d && d.url)
+    .map((d: any) => ({
+      documentId: d.key,
+      name: d.name,
+      nameEn: d.name,
+      type: DOC_KEY_TO_TYPE[d.key] ?? d.key,
+      status: 'valid',
+      issueDate: '-',
+      expiryDate: null,
+      // 存储单位是字节，表格 formatFileSize 按 KB 渲染
+      fileSize: d.size != null ? Math.round(d.size / 1024) : 0,
+      url: d.url,
+    }))
+    // DOC_SLOTS 顺序：营业执照、主协议、NDA、DPA、评级报告
+    .sort((a: any, b: any) => Object.keys(DOC_KEY_TO_TYPE).indexOf(a.documentId) - Object.keys(DOC_KEY_TO_TYPE).indexOf(b.documentId));
   // 变更历史当前未接入真实数据（空数组），页面渲染 detail.history.emptyData。
   // 数据契约见 ./data/insurerDetails 的 ChangeHistory —— 本系统没有任何审批流程，
   // 其中 approvedBy / status='approved' 表示「使变更生效的处理人 / 变更已生效」。
@@ -264,6 +390,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
     compliance: t('detail.contacts.roleCompliance'),
   };
   const docTypeLabel: Record<string, string> = {
+    businessLicense: t('detail.documents.docTypes.businessLicense'),
     masterAgreement: t('detail.documents.docTypes.master'),
     nda: t('detail.documents.docTypes.nda'),
     dpa: t('detail.documents.docTypes.dpa'),
@@ -295,28 +422,20 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
     contact: t('detail.history.sections.contact'),
   };
 
-  const lossItems = [
-    t('detail.lossTable.items.auto'),
-    t('detail.lossTable.items.home'),
-    t('detail.lossTable.items.health'),
-    t('detail.lossTable.items.liability'),
-    t('detail.lossTable.items.accident'),
-  ];
-
   const formatFileSize = (kb: number): string => {
     if (kb < 1024) return `${kb} KB`;
     return `${(kb / 1024).toFixed(2)} MB`;
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Back + Actions Bar */}
       <div className="flex items-center justify-between mb-5">
         <button className="btn-ghost" style={{ fontSize: 13.5 }} onClick={() => navigateTo('insurer-list')}>
           <ArrowLeft size={15} /> {t('detail.backToList')}
         </button>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary" style={{ fontSize: 13 }} onClick={handleExportPdf}>
+          <button className="btn-ghost" style={{ fontSize: 13 }} onClick={handleExportPdf}>
             <Download size={14} /> {t('detail.exportPdf')}
           </button>
           {carrier.status !== 'inactive' ? (
@@ -364,7 +483,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
         {/* Identity */}
         <div style={{ flex: 1 }}>
           <div className="flex items-center gap-3 mb-2">
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#181C23' }}>{carrier.carrierName}</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23' }}>{carrier.carrierName}</h1>
             <span style={{
               fontSize: 13,
               fontWeight: 700,
@@ -395,21 +514,19 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
           </div>
 
           {/* KPI Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
             {[
               { label: t('detail.kpi.totalPremium'), value: formatCurrency(carrier.revenue ?? 0, true), sub: t('detail.kpi.thisYear') },
               { label: t('detail.kpi.policyCount'), value: (carrier.policyCount ?? 0).toLocaleString(), sub: t('detail.kpi.activePolicies') },
-              { label: t('detail.kpi.lossRatio'), value: formatPercent(carrier.lossRatio ?? 0), sub: (carrier.lossRatio ?? 0) > 0.65 ? t('detail.kpi.overThreshold') : t('detail.kpi.normal'), warn: (carrier.lossRatio ?? 0) > 0.65 },
-              { label: t('detail.kpi.renewalRate'), value: formatPercent(carrier.renewalRate ?? 0), sub: t('detail.kpi.thisYear') },
               { label: t('detail.kpi.channelCount'), value: String(carrier.channelCount ?? 0), sub: t('detail.kpi.channelUnit') },
               { label: t('detail.kpi.productCount'), value: String(carrier.productCount ?? 0), sub: t('detail.kpi.productUnit') },
             ].map(k => (
               <div key={k.label} style={{ background: 'rgba(236,237,249,0.6)', borderRadius: 12, padding: '10px 14px' }}>
                 <div style={{ fontSize: 11.5, color: '#717786', marginBottom: 4 }}>{k.label}</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: k.warn ? '#BA1A1A' : '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>
                   {k.value}
                 </div>
-                <div style={{ fontSize: 11, color: k.warn ? '#BA1A1A' : '#717786', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: '#717786', marginTop: 2 }}>
                   {k.sub}
                 </div>
               </div>
@@ -426,12 +543,16 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
               {coopLabels[coopKey] ? t(coopLabels[coopKey]) : '-'}
             </span>
           </div>
-          <div style={{ fontSize: 12, color: '#717786', marginBottom: 4 }}>{t('detail.contractExpiry')}</div>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{carrier.contractExpiry || '-'}</div>
-          {coopKey === 'expiring' && carrier.contractExpiry && (
-            <div style={{ fontSize: 11, color: '#a05800', marginTop: 4 }}>
-              {t('detail.daysRemaining', { days: Math.round((new Date(carrier.contractExpiry).getTime() - Date.now()) / 86400000) })}
-            </div>
+          {carrier.contractExpiry && (
+            <>
+              <div style={{ fontSize: 12, color: '#717786', marginBottom: 4 }}>{t('detail.contractExpiry')}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{carrier.contractExpiry}</div>
+              {coopKey === 'expiring' && (
+                <div style={{ fontSize: 11, color: '#a05800', marginTop: 4 }}>
+                  {t('detail.daysRemaining', { days: Math.round((new Date(carrier.contractExpiry).getTime() - Date.now()) / 86400000) })}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -513,12 +634,12 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     {[
-                      { label: t('detail.fields.settlementCycle'), value: carrier.settlementCycle === 'Monthly' ? t('detail.settlement.monthly') : t('detail.settlement.quarterly') },
-                      { label: t('detail.fields.billingFormat'), value: t('detail.settlement.apiPull') },
-                      { label: t('detail.fields.billingDueDate'), value: t('detail.settlement.dueDay25') },
-                      { label: t('detail.fields.paymentCycle'), value: t('detail.settlement.paymentTerm') },
-                      { label: t('detail.fields.currency'), value: 'USD' },
-                      { label: t('detail.fields.premiumCollection'), value: t('detail.settlement.premiumCollectionValue') },
+                      { label: t('detail.fields.settlementCycle'), value: tf(`settlementFields.${carrier.settlementCycle ? carrier.settlementCycle.charAt(0).toLowerCase() + carrier.settlementCycle.slice(1) : 'monthly'}`, { defaultValue: carrier.settlementCycle || '-' }) },
+                      { label: t('detail.fields.billingFormat'), value: carrier.settlementConfig?.billingFormat ? tf(`settlementFields.${carrier.settlementConfig.billingFormat === 'CSV' ? 'csvFile' : carrier.settlementConfig.billingFormat === 'Excel' ? 'excelFile' : 'manualEntry'}`, { defaultValue: carrier.settlementConfig.billingFormat }) : '-' },
+                      { label: t('detail.fields.billingDueDate'), value: carrier.settlementConfig?.billCutoffDay ? `${t('detail.settlement.dueDay25').replace('25', String(carrier.settlementConfig.billCutoffDay))}` : '-' },
+                      { label: t('detail.fields.paymentCycle'), value: carrier.settlementConfig?.paymentTermDays ? t('detail.settlement.paymentTermDays', { n: carrier.settlementConfig.paymentTermDays }) : '-' },
+                      { label: t('detail.fields.currency'), value: carrier.settlementConfig?.currency ? tf(`settlementFields.${carrier.settlementConfig.currency === 'USD' ? 'usd' : 'cad'}`, { defaultValue: carrier.settlementConfig.currency }) : '-' },
+                      { label: t('detail.fields.premiumCollection'), value: carrier.settlementConfig?.premiumCollection ? tf(`settlementFields.${carrier.settlementConfig.premiumCollection}`, { defaultValue: carrier.settlementConfig.premiumCollection }) : '-' },
                     ].map(f => (
                       <div key={f.label}>
                         <div style={fieldLabel}>{f.label}</div>
@@ -537,7 +658,7 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                     {carrierContacts.slice(0, 4).map(c => (
                       <div key={c.contactId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '0.5px solid rgba(193,198,215,0.3)' }}>
                         <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,88,188,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#0058BC', flexShrink: 0 }}>
-                          {c.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          {c.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>{c.name}</div>
@@ -592,32 +713,6 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
               </section>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <section style={{ background: sectionBg, border: sectionBorder, borderRadius: 14, padding: 18 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23', marginBottom: 4 }}>{t('detail.ratings.lossTrendTitle')}</div>
-                  <div style={{ fontSize: 11.5, color: '#717786', marginBottom: 14 }}>{t('detail.ratings.lossTrendSub')}</div>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <LineChart data={lossData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.4)" vertical={false} />
-                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} domain={[55, 70]} tickFormatter={(v: number) => `${v}%`} width={36} />
-                      <Tooltip formatter={(v: any) => [`${v}%`, t('detail.kpi.lossRatio')]} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
-                      <Line type="monotone" dataKey="ratio" stroke="#0058BC" strokeWidth={2} dot={{ r: 4, fill: '#0058BC' }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                    {[
-                      { label: t('detail.ratings.lossCurrent'), value: formatPercent(carrier.lossRatio ?? 0), color: (carrier.lossRatio ?? 0) > 0.65 ? '#BA1A1A' : '#1a7a2e' },
-                      { label: t('detail.ratings.lossIndustry'), value: '63.5%', color: '#717786' },
-                      { label: t('detail.ratings.lossTarget'), value: '60.0%', color: '#0058BC' },
-                    ].map(m => (
-                      <div key={m.label} style={{ flex: 1, background: 'rgba(236,237,249,0.7)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 11, color: '#717786', marginBottom: 4 }}>{m.label}</div>
-                        <div style={{ fontSize: 17, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono', monospace" }}>{m.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
                 <section style={{ background: sectionBg, border: sectionBorder, borderRadius: 14, padding: 18 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23', marginBottom: 14 }}>{t('detail.ratings.healthTitle')}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -712,7 +807,8 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 style={{ fontSize: 14, fontWeight: 600 }}>{t('detail.documents.count', { n: carrierDocs.length })}</h3>
-                <button className="btn-secondary">
+                {/* 文件上传/删除入口在保司编辑表单；此处跳转到编辑页，避免死按钮 */}
+                <button className="btn-secondary" onClick={() => navigateTo('insurer-edit', { carrierId })}>
                   <Upload size={14} /> {t('detail.documents.upload')}
                 </button>
               </div>
@@ -737,6 +833,13 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                   </tr>
                 </thead>
                 <tbody>
+                  {carrierDocs.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: '#717786', fontSize: 13 }}>
+                        {t('detail.documents.noDocs')}
+                      </td>
+                    </tr>
+                  )}
                   {carrierDocs.map(doc => (
                     <tr key={doc.documentId}>
                       <td>
@@ -763,9 +866,10 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                       <td><span className="font-data">{formatFileSize(doc.fileSize)}</span></td>
                       <td>
                         <div className="flex items-center gap-1">
-                          <button className="btn-ghost" style={{ padding: 5 }} title={t('detail.documents.preview')}><Eye size={14} /></button>
-                          <button className="btn-ghost" style={{ padding: 5 }} title={t('detail.documents.download')}><Download size={14} /></button>
-                          <button className="btn-ghost" style={{ padding: 5, color: '#BA1A1A' }} title={t('detail.documents.delete')}><Trash2 size={14} /></button>
+                          <a className="btn-ghost" style={{ padding: 5, display: 'inline-flex', color: '#414755' }} href={doc.url} target="_blank" rel="noreferrer" title={t('detail.documents.preview')}><Eye size={14} /></a>
+                          <a className="btn-ghost" style={{ padding: 5, display: 'inline-flex', color: '#414755' }} href={doc.url} download={doc.name} title={t('detail.documents.download')}><Download size={14} /></a>
+                          {/* 单文件删除无独立接口，统一在编辑表单的文件步骤管理 */}
+                          <button className="btn-ghost" style={{ padding: 5 }} title={t('detail.edit')} onClick={() => navigateTo('insurer-edit', { carrierId })}><Edit2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -863,13 +967,20 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
           {/* ─── Products Tab ─── */}
           {activeTab === 'products' && (
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <div style={{ fontSize: 14, color: '#717786' }}>
-                  {t('detail.products.countPre')}<strong style={{ color: '#181C23' }}>{carrierProducts.length > 0 ? carrierProducts.length : (carrier.productCount ?? 0)}</strong>{t('detail.products.countPost')}
+                  {t('detail.products.countSummary', {
+                    total: carrierProducts.length > 0 ? carrierProducts.length : (carrier.productCount ?? 0),
+                    onSale: carrierProducts.filter(p => p.status === 'active').length,
+                  })}
                 </div>
-                <button className="btn-primary" style={{ fontSize: 13 }}>
-                  <Package size={14} />{t('detail.products.addProduct')}
+                <button className="btn-primary" style={{ fontSize: 13 }} onClick={openLinkModal}>
+                  <Package size={14} />{t('detail.products.linkExisting')}
                 </button>
+              </div>
+              <div className="flex items-center gap-1.5 mb-4" style={{ fontSize: 12, color: '#717786' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0058BC', display: 'inline-block' }} />
+                {t('detail.products.autoLinkHint')}
               </div>
               <table className="data-table">
                 <thead>
@@ -880,14 +991,17 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                     <th>{t('detail.productTable.type')}</th>
                     <th style={{ textAlign: 'right' }}>{t('detail.productTable.premium')}</th>
                     <th style={{ textAlign: 'right' }}>{t('detail.kpi.policyCount')}</th>
-                    <th style={{ textAlign: 'right' }}>{t('detail.productTable.lossRatio')}</th>
                     <th>{t('detail.productTable.status')}</th>
                     <th>{t('detail.productTable.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {carrierProducts.map(product => (
-                    <tr key={product.productId}>
+                    <tr
+                      key={product.productId}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => navigateTo('product-detail', { productId: product.productId })}
+                    >
                       <td>
                         <div style={{ fontWeight: 600, fontSize: 13.5 }}>{product.name}</div>
                         <div style={{ fontSize: 11.5, color: '#717786' }}>{lang === 'en' ? product.sublineEn : product.subline}</div>
@@ -901,18 +1015,18 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                       <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}>
                         {product.policyCount.toLocaleString()}
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <span className="font-data" style={{ color: product.lossRatio > 0.65 ? '#BA1A1A' : '#1a7a2e' }}>
-                          {formatPercent(product.lossRatio)}
-                        </span>
-                      </td>
                       <td>
                         <span className={`badge ${product.status === 'active' ? 'badge-green' : 'badge-gray'}`}>
                           {product.status === 'active' ? t('detail.productStatus.active') : t('detail.productStatus.inactive')}
                         </span>
                       </td>
-                      <td>
-                        <button className="btn-ghost" style={{ padding: 5 }}>
+                      <td onClick={e => e.stopPropagation()}>
+                        <button
+                          className="btn-ghost"
+                          style={{ padding: 5 }}
+                          title={t('detail.actions.viewProduct')}
+                          onClick={() => navigateTo('product-detail', { productId: product.productId })}
+                        >
                           <Eye size={14} />
                         </button>
                       </td>
@@ -945,13 +1059,11 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
               {/* Core Business KPI grid (V1.3) */}
               <section style={{ background: sectionBg, border: sectionBorder, borderRadius: 14, padding: 18 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23', marginBottom: 16 }}>{t('detail.kpi.title')}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                   {[
                     { label: t('detail.kpi.premium'), value: formatCurrency(carrier.revenue ?? 0, true), change: '+12.4%', up: true },
                     { label: t('detail.kpi.avgPremium'), value: formatCurrency((carrier.revenue ?? 0) / (carrier.policyCount || 1), true), change: '+3.8%', up: true },
                     { label: t('detail.kpi.newBizShare'), value: '28.4%', change: '+2.1pp', up: true },
-                    { label: t('detail.kpi.lossRatio'), value: formatPercent(carrier.lossRatio ?? 0), change: '-1.2pp', up: true },
-                    { label: t('detail.kpi.renewal'), value: formatPercent(carrier.renewalRate ?? 0), change: '+0.6pp', up: true },
                     { label: t('detail.kpi.commission'), value: formatCurrency(carrier.commissionIncome ?? 0, true), change: '+14.2%', up: true },
                   ].map(m => (
                     <div key={m.label} style={{ background: 'rgba(241,243,254,0.7)', borderRadius: 10, padding: '10px 12px' }}>
@@ -984,7 +1096,6 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                       { label: t('detail.performance.metrics.ytdPremium'), value: '$219.2M', trend: '+12.8%', positive: true },
                       { label: t('detail.performance.metrics.newPolicyGrowth'), value: '+18.5%', trend: '+8.2%', positive: true },
                       { label: t('detail.performance.metrics.avgPolicyValue'), value: '$1,458', trend: '-3.1%', positive: false },
-                      { label: t('detail.performance.metrics.retentionRate'), value: '91.8%', trend: '+4.5%', positive: true },
                       { label: t('detail.performance.metrics.cac'), value: '$182', trend: '-12.5%', positive: true },
                     ].map(k => (
                       <div key={k.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(255,255,255,0.5)', borderRadius: 10 }}>
@@ -1000,44 +1111,6 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
                   </div>
                 </section>
               </div>
-
-              {/* Loss Ratio Ranking */}
-              <section style={{ background: sectionBg, border: sectionBorder, borderRadius: 14, padding: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23', marginBottom: 16 }}>{t('detail.performance.lossRanking')}</div>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>{t('detail.lossTable.name')}</th>
-                      <th style={{ textAlign: 'right' }}>{t('detail.lossTable.totalPremium')}</th>
-                      <th style={{ textAlign: 'right' }}>{t('detail.lossTable.lossAmount')}</th>
-                      <th style={{ textAlign: 'right' }}>{t('detail.lossTable.lossRatio')}</th>
-                      <th>{t('detail.lossTable.riskLevel')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lossItems.map((productName, i) => (
-                      <tr key={i}>
-                        <td><span style={{ fontWeight: 500 }}>{productName}</span></td>
-                        <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}>${(Math.random() * 50).toFixed(1)}M</td>
-                        <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}>${(Math.random() * 30).toFixed(1)}M</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <span style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            fontFamily: "'JetBrains Mono', monospace",
-                            color: i === 0 ? '#BA1A1A' : i <= 2 ? '#FF9500' : '#34C759'
-                          }}>{(55 + Math.random() * 15).toFixed(1)}%</span>
-                        </td>
-                        <td>
-                          <span className={`badge ${i === 0 ? 'badge-red' : i <= 2 ? 'badge-yellow' : 'badge-green'}`} style={{ fontSize: 11 }}>
-                            {i === 0 ? t('detail.risk.high') : i <= 2 ? t('detail.risk.medium') : t('detail.risk.low')}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </section>
             </div>
           )}
 
@@ -1049,6 +1122,133 @@ export default function CarrierDetail({ carrierId, navigateTo }: Props) {
           insurer={apiCarrier}
           onClose={() => setShowDisable(false)}
         />
+      )}
+
+      {/* 关联已有产品弹窗（仅勾选产品） */}
+      {linkModalOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(24,28,35,0.35)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+          }}
+          onClick={e => { if (e.target === e.currentTarget) setLinkModalOpen(false); }}
+        >
+          <div
+            className="glass-strong"
+            style={{ width: 720, maxWidth: 'calc(100vw - 32px)', maxHeight: '85vh', display: 'flex', flexDirection: 'column', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+          >
+            {/* Header */}
+            <div style={{
+              padding: '18px 24px 16px',
+              borderBottom: '0.5px solid rgba(193,198,215,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <div className="flex items-center gap-3">
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: 'rgba(0,88,188,0.10)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Package size={18} style={{ color: '#0058BC' }} />
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>
+                  {t('detail.products.linkModalTitle')}
+                </div>
+              </div>
+              <button className="btn-ghost" style={{ padding: 6 }} onClick={() => setLinkModalOpen(false)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div style={{ padding: '16px 24px 8px' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
+                <input
+                  className="input-glass"
+                  style={{ width: '100%', fontSize: 13.5, paddingLeft: 34 }}
+                  placeholder={t('detail.products.linkSearchPlaceholder')}
+                  value={linkSearch}
+                  onChange={e => setLinkSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Product checkbox list */}
+            <div style={{ padding: '8px 24px 16px', overflowY: 'auto', flex: 1 }}>
+              {linkLoading && (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#717786', fontSize: 13 }}>
+                  {t('common:common.loading')}
+                </div>
+              )}
+              {!linkLoading && filteredCandidates.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#717786', fontSize: 13 }}>
+                  {t('detail.products.emptyData')}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {filteredCandidates.map(p => {
+                  const already = carrierProducts.some(cp => cp.productId === p.productId);
+                  const checked = linkedIds.has(p.productId);
+                  return (
+                    <label
+                      key={p.productId}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10,
+                        cursor: already ? 'default' : 'pointer',
+                        background: checked ? 'rgba(0,88,188,0.07)' : 'rgba(255,255,255,0.6)',
+                        border: `0.5px solid ${checked ? '#0058BC' : 'rgba(193,198,215,0.5)'}`,
+                        opacity: already ? 0.75 : 1,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={already}
+                        onChange={() => toggleLinked(p.productId)}
+                        style={{ accentColor: '#0058BC', width: 15, height: 15, flexShrink: 0 }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: '#181C23' }}>{p.name}</div>
+                        <div style={{ fontSize: 11.5, color: '#717786', fontFamily: "'JetBrains Mono', monospace" }}>{p.code}</div>
+                      </div>
+                      <span className="badge badge-blue" style={{ fontSize: 11 }}>{p.lob}</span>
+                      {already && (
+                        <span className="badge badge-gray" style={{ fontSize: 11 }}>{t('detail.products.linked')}</span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: '14px 24px', borderTop: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', justifyContent: 'flex-end', gap: 10, background: 'rgba(241,243,254,0.5)' }}>
+              <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={() => setLinkModalOpen(false)}>
+                {t('detail.products.cancel')}
+              </button>
+              <button className="btn-primary" style={{ fontSize: 13.5 }} onClick={confirmLink}>
+                {t('detail.products.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 轻提示 */}
+      {linkToast && (
+        <div style={{
+          position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 200,
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: 'rgba(26,122,46,0.95)', color: '#fff',
+          fontSize: 13, fontWeight: 600, padding: '10px 18px', borderRadius: 10,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+        }}>
+          <CheckCircle size={14} /> {linkToast}
+        </div>
       )}
     </div>
   );

@@ -1,0 +1,147 @@
+{
+  "title": "Platform Overview",
+  "dataAsOf": "Data as of {date} · US Market",
+  "kpiCards": {
+    "totalPremium": "Total Premium (YTD)",
+    "policiesCount": "Active Policies",
+    "channelCount": "Partner Channels",
+    "commission": "Commission Income (YTD)"
+  },
+  "trendVsLastYear": {
+    "up": "↑ {percent} vs last year",
+    "down": "↓ {percent} vs last year"
+  },
+  "chapters": {
+    "businessDistribution": "Business Distribution Analysis",
+    "performanceTrend": "Performance Trend Analysis",
+    "lossRatioAnalysis": "Loss Ratio Analysis",
+    "recentActivities": "Recent Activity"
+  },
+  "charts": {
+    "revenueByCarrier": {
+      "title": "Revenue Ranking by Carrier",
+      "xLabel": "Insurance Carrier",
+      "yLabel": "Premium (10K USD)"
+    },
+    "marketShare": {
+      "title": "Premium Market Share",
+      "subtitle": "By Insurer",
+      "share": "Share",
+      "premium": "Premium",
+      "legend": {
+        "top3": "Top 3 Carriers",
+        "others": "Others"
+      }
+    },
+    "alertStats": {
+      "title": "Compliance Alerts Statistics",
+      "legends": {
+        "overdue": "Due Soon",
+        "expired": "Expired",
+        "warning": "Warning"
+      }
+    },
+    "premiumTrend": {
+      "title": "Premium Trend",
+      "xLabel": "Month",
+      "yLabel": "Total Premium",
+      "description": "Last 12 months · in USD millions"
+    },
+    "filters": {
+      "newPolicy": "New Biz",
+      "renewal": "Renewal",
+      "total": "Total"
+    }
+  },
+  "dataLabels": {
+    "year": {
+      "current": "Current Year (2026)",
+      "previous": "Previous Year (2025)"
+    },
+    "last12Months": "Last 12 Months",
+    "unit": {
+      "currency": "10K USD",
+      "policy": "Policies",
+      "rate": "%",
+      "channel": "Channels"
+    }
+  },
+  "alerts": {
+    "title": "Pending Items",
+    "countUnit": "items",
+    "viewAll": "View All",
+    "expiring": "AIG partnership contract expires in {days} days ({date})",
+    "appointments": "{count} channel appointments expiring within {days} days",
+    "lossRatio": "Markel loss ratio {ratio} exceeds the {threshold} alert threshold",
+    "profileReview": "BHSI insurer profile incomplete",
+    "licenseExpired": "Northeast Professional Services NPN license expired",
+    "reconciled": "{monthLabel} commission reconciliation completed — {amount} pending confirmation",
+    "recentActivityItem": {
+      "status": {
+        "info": "Info",
+        "warning": "Warning",
+        "success": "Completed"
+      }
+    }
+  },
+  "buttons": {
+    "viewDetails": "View Details",
+    "exportReport": "Export Report",
+    "refreshData": "Refresh Data"
+  },
+  "tables": {
+    "carrier": "Insurer",
+    "type": "Type",
+    "totalPremium": "Premium",
+    "lossRatio": "Loss Ratio",
+    "renewalRate": "Renewal",
+    "status": "Status"
+  },
+  "statuses": {
+    "expiring": "Expiring",
+    "pending": "Pending Effective",
+    "active": "Active"
+  },
+  "common": {
+    "added": "Added",
+    "thisMonth": "This Month",
+    "channelsAdded": "{count} new | this month"
+  },
+  "ranking": {
+    "title": "Insurer Performance Ranking"
+  },
+  "activity": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{n} days ago",
+    "minAgo": "{n} min ago",
+    "hourAgo": "{n} hr ago",
+    "monthLabel": "{m}",
+    "months": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
+    "actions": {
+      "newInsurer": "Insurer Added",
+      "newInsurerDetail": "{name} profile created successfully",
+      "productLaunch": "Product Launched",
+      "productLaunchDetail": "{product} launched in {states}",
+      "appointment": "Appointment Application",
+      "appointmentDetail": "{channel} submitted {state} application to {carrier}",
+      "reconciliation": "Commission Reconciliation",
+      "reconciliationDetail": "{carrier} {monthLabel} statement reconciled, variance {variance}",
+      "channelSuspended": "Channel Suspended",
+      "channelSuspendedDetail": "{name} suspended due to compliance issues"
+    }
+  }
+}

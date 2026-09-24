@@ -62,6 +62,24 @@ export class LoginRequestDto {
   password!: string;
 }
 
+/**
+ * V1.0.16 T2 · SSO code 换发请求
+ * - code/state 由 workOS 跳转 URL 携带
+ * - mock_user 仅 WORKOS_MOCK=1 时使用，绕过真实 W1 调用
+ */
+export class SsoExchangeDto {
+  @IsString()
+  @IsNotEmpty()
+  code!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  state!: string;
+
+  @IsOptional()
+  mock_user?: any;
+}
+
 export class TokensResponse {
   accessToken: string;
   refreshToken: string;
@@ -300,8 +318,9 @@ export class AuthService {
 
   /**
    * Generate signed JWT access and refresh tokens
+   * V1.0.16 T2：改为 public，SSO exchange 复用同一签发链路
    */
-  private async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
+  async generateTokens(user: any): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = {
       userId: user.user_uuid,
       username: user.username,
@@ -418,5 +437,118 @@ export class AuthService {
 
     const user = { ...userResult.rows[0], roles: rolesResult.rows.map((r: any) => r.role_key) };
     return this.generateTokens(user);
+  }
+
+  /**
+   * V1.0.16 T2 · SSO code 换发
+   * 流程：code+state → 调 workOS W1 → 按 external_id 匹配 → 签发本系统 JWT
+   * 联调期 WORKOS_MOCK=1 时跳过 W1，直接用 mock_user（模拟器跳转 URL 携带）
+   */
+  async exchangeSsoCode(dto: SsoExchangeDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: any;
+  }> {
+    const workosMock = process.env.WORKOS_MOCK === '1' || process.env.WORKOS_MOCK === 'true';
+    let w1Data: any = null;
+
+    if (workosMock && dto.mock_user) {
+      // 联调 mock 模式：模拟器在跳转 URL 携带 base64 编码的 W1 响应
+      w1Data = dto.mock_user?.data ?? dto.mock_user;
+      this.logger.log('SSO exchange: WORKOS_MOCK mode, using mock_user payload');
+    } else {
+      // 真实 W1 调用
+      const url = process.env.WORKOS_USERINFO_URL;
+      const clientId = process.env.WORKOS_CLIENT_ID;
+      const clientSecret = process.env.WORKOS_CLIENT_SECRET;
+      if (!url || !clientId || !clientSecret) {
+        this.logger.error('SSO exchange: WORKOS_USERINFO_URL/CLIENT_ID/CLIENT_SECRET not configured');
+        throw new UnauthorizedException({
+          success: false, code: 'SSO_SECURITY_ERROR',
+          message: 'SSO 服务端未配置 W1 凭证',
+        });
+      }
+      const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basic}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: dto.code, state: dto.state }),
+      });
+      if (!resp.ok) {
+        this.logger.warn(`SSO exchange: W1 returned ${resp.status}`);
+        throw new UnauthorizedException({
+          success: false, code: 'SSO_CODE_INVALID',
+          message: 'code 失效或已过期',
+        });
+      }
+      const json: any = await resp.json();
+      w1Data = json?.data ?? json;
+    }
+
+    const externalId = w1Data?.external_id;
+    if (!externalId) {
+      throw new UnauthorizedException({
+        success: false, code: 'SSO_CODE_INVALID',
+        message: 'W1 响应缺少 external_id',
+      });
+    }
+
+    // 按 external_id 匹配已同步账号
+    const userResult = await pool.query(`
+      SELECT id, user_uuid, username, email, name_zh, name_en, status, auth_method,
+             dept_code, login_count
+        FROM auth_user
+        WHERE external_id = $1 AND sso_provider = 'workos' AND deleted = FALSE
+    `, [externalId]);
+
+    if (userResult.rows.length === 0) {
+      this.logger.warn(`SSO exchange: user not synced, external_id=${externalId}`);
+      throw new UnauthorizedException({
+        success: false, code: 'SSO_USER_NOT_SYNCED',
+        message: '工号未同步至子系统，请联系管理员',
+      });
+    }
+
+    const user = userResult.rows[0];
+    if (user.status === 'inactive' || user.status === 'locked') {
+      throw new ForbiddenException({
+        success: false, code: 'SSO_USER_DISABLED',
+        message: '账号已停用，禁止登录',
+      });
+    }
+
+    // 更新登录追踪
+    await pool.query(`
+      UPDATE auth_user
+        SET last_login_at = NOW(), login_count = login_count + 1,
+            failed_login_attempts = 0, locked_until = NULL, updated_at = NOW()
+        WHERE user_uuid = $1
+    `, [user.user_uuid]);
+
+    // 查角色（复用 login 内 SQL）
+    const rolesResult = await pool.query(`
+      SELECT r.role_key FROM auth_user_role ur
+        JOIN auth_role r ON ur.role_id = r.role_id
+        WHERE ur.user_id = $1 AND r.deleted = FALSE
+    `, [user.id]);
+    const roles = rolesResult.rows.map((r: any) => r.role_key);
+
+    this.logger.log(`SSO login successful: external_id=${externalId} user=${user.username} roles=[${roles.join(', ')}]`);
+
+    const tokens = await this.generateTokens({ ...user, roles });
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        userId: user.user_uuid,
+        username: user.username,
+        email: user.email,
+        roles,
+        authMethod: user.auth_method || 'sso',
+      },
+    };
   }
 }

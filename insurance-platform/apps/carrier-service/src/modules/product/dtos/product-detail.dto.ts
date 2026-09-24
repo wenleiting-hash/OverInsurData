@@ -75,6 +75,23 @@ export class SetMaterialStatusDto {
   @IsIn(['active', 'inactive']) status!: string;
 }
 
+/**
+ * Payload for PATCH .../training-materials/:materialId — 编辑材料元数据/替换文件。
+ * 所有字段可选；下载次数、上传日期、上传人由服务端维护，不在此接受。
+ */
+export class UpdateTrainingMaterialDto {
+  @IsOptional() @IsString() @IsNotEmpty() title?: string;
+  @IsOptional() @IsString() titleEn?: string;
+  @IsOptional() @IsIn(['product-guide', 'rate-manual', 'underwriting-guide', 'compliance', 'training-deck', 'faq', 'video']) type?: string;
+  @IsOptional() @IsString() fileName?: string;
+  @IsOptional() @IsString() fileSize?: string;
+  @IsOptional() @IsString() version?: string;
+  @IsOptional() @IsArray() requiredFor?: string[];
+  @IsOptional() @IsString() expiryDate?: string;
+  /** 替换文件后的新下载地址；不传则保留原文件。 */
+  @IsOptional() @IsString() url?: string;
+}
+
 /** One rating factor of a rate plan; declared as a class so ValidateNested can check each element. */
 export class RatingFactorDto {
   @IsString() @IsNotEmpty() factor!: string;

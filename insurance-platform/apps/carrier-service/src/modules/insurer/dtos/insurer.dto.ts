@@ -1,12 +1,31 @@
 import {
-  IsString, IsNotEmpty, IsOptional, IsNumber, IsArray,
+  IsString, IsNotEmpty, IsOptional, IsNumber, IsArray, IsObject,
   Matches, MaxLength, IsIn, Min, Max,
+  ArrayMinSize, ArrayMaxSize, ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 const NAIC_MSG = 'NAIC Code must be exactly 5 digits (e.g. 25658)';
 const NAME_MAX = 128;
 const SHORT_NAME_MAX = 64;
+
+/** 资质文件槽位元数据（文件本体通过 POST /api/uploads 上传，此处仅存元数据）。 */
+export class CarrierDocumentDto {
+  @IsString() @IsNotEmpty()
+  key!: string;          // businessLicense / mainAgreement / nda / dpa / amBestReport
+
+  @IsString() @IsNotEmpty() @MaxLength(255)
+  name!: string;         // 原始文件名（utf8，可能含非 ASCII）
+
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  size?: number;         // 字节
+
+  @IsString() @IsNotEmpty() @MaxLength(255)
+  url!: string;          // /uploads/<storedName>
+
+  @IsOptional() @IsString() @MaxLength(128)
+  mimetype?: string;
+}
 
 export class CreateInsurerDto {
   @IsString({ message: 'NAIC Code must be a string' })
@@ -84,7 +103,13 @@ export class CreateInsurerDto {
   @IsOptional()
   @IsString()
   @MaxLength(16)
+@IsOptional()
+  @IsString()
   settlement_cycle?: string;
+
+  @IsOptional()
+  @IsObject()
+  settlement_config?: Record<string, any>;
 
   @IsOptional()
   @IsString()
@@ -94,6 +119,13 @@ export class CreateInsurerDto {
   @IsArray({ message: 'Business Lines must be an array' })
   @IsString({ each: true, message: 'Each Business Line must be a string' })
   lines?: string[];
+
+  @IsOptional()
+  @IsArray({ message: 'Documents must be an array' })
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CarrierDocumentDto)
+  documents?: CarrierDocumentDto[];
 }
 
 export class UpdateInsurerDto {
@@ -170,7 +202,13 @@ export class UpdateInsurerDto {
   @IsOptional()
   @IsString()
   @MaxLength(16)
+@IsOptional()
+  @IsString()
   settlement_cycle?: string;
+
+  @IsOptional()
+  @IsObject()
+  settlement_config?: Record<string, any>;
 
   @IsOptional()
   @IsString()
@@ -181,6 +219,13 @@ export class UpdateInsurerDto {
   @IsString({ each: true })
   lines?: string[];
 
+  @IsOptional()
+  @IsArray({ message: 'Documents must be an array' })
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CarrierDocumentDto)
+  documents?: CarrierDocumentDto[];
+
   @IsOptional() @Type(() => Number) @IsNumber() loss_ratio?: number;
   @IsOptional() @Type(() => Number) @IsNumber() renewal_rate?: number;
   @IsOptional() @Type(() => Number) @IsNumber() revenue?: number;
@@ -188,4 +233,16 @@ export class UpdateInsurerDto {
   @IsOptional() @Type(() => Number) @IsNumber() commission_income?: number;
   @IsOptional() @Type(() => Number) @IsNumber() channel_count?: number;
   @IsOptional() @Type(() => Number) @IsNumber() product_count?: number;
+}
+
+/** One row of POST /insurers/batch-import — same constraints as single create */
+export class BatchImportInsurerItemDto extends CreateInsurerDto {}
+
+export class BatchImportInsurersDto {
+  @IsArray({ message: 'rows must be an array' })
+  @ArrayMinSize(1, { message: 'At least one row is required' })
+  @ArrayMaxSize(500, { message: 'A single batch import cannot exceed 500 rows' })
+  @ValidateNested({ each: true })
+  @Type(() => BatchImportInsurerItemDto)
+  rows!: BatchImportInsurerItemDto[];
 }

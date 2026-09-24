@@ -1,0 +1,90 @@
+{
+  "title": "险种字典管理",
+  "subtitle": "维护业务线 / 子险种 / 承保范围三级字典与业务线适用范围；建品表单与集成匹配实时使用",
+  "tabs": {
+    "lines": "业务线与子险种",
+    "coverages": "承保范围",
+    "matrix": "适用范围矩阵"
+  },
+  "actions": {
+    "createLine": "新增业务线",
+    "createSubLine": "新增子险种",
+    "createCoverage": "新增承保范围",
+    "edit": "编辑",
+    "delete": "删除",
+    "enable": "启用",
+    "disable": "停用",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "save": "保存",
+    "cancel": "取消",
+    "saveAll": "全部保存",
+    "refresh": "刷新"
+  },
+  "columns": {
+    "code": "编码",
+    "nameZh": "中文名称",
+    "nameEn": "英文名称",
+    "sortOrder": "排序",
+    "status": "状态",
+    "productCount": "关联产品数",
+    "subLineCount": "子险种数",
+    "actions": "操作"
+  },
+  "status": {
+    "active": "已启用",
+    "disabled": "已停用"
+  },
+  "fields": {
+    "code": "编码",
+    "codeTipLine": "大写字母开头，仅字母与 &，长度 2-32，创建后不可修改",
+    "codeTipSubLine": "与产品表单口径一致（如 Personal Auto、D&O），创建后不可修改",
+    "codeTipCoverage": "小写驼峰（camelCase），长度 3-64，创建后不可修改",
+    "nameZh": "中文名称",
+    "nameEn": "英文名称",
+    "sortOrder": "排序值",
+    "required": "必填"
+  },
+  "empty": {
+    "subLines": "为该业务线添加第一个子险种",
+    "noLineSelected": "在左侧选择一个业务线",
+    "list": "暂无数据"
+  },
+  "confirm": {
+    "deleteTitle": "删除确认",
+    "deleteLine": "确认删除业务线「{code}」？删除为软删，不可在界面恢复。",
+    "deleteSubLine": "确认删除子险种「{code}」？删除为软删，不可在界面恢复。",
+    "deleteCoverage": "确认删除承保范围「{code}」？删除为软删，不可在界面恢复。",
+    "disableTitle": "停用确认",
+    "disableWithRefs": "该项仍有 {count} 个关联产品。停用后新建产品不可再选择，存量产品不受影响。",
+    "disableNoRefs": "确认停用「{code}」？停用后新建产品不可再选择，存量产品不受影响。",
+    "acknowledge": "我已知悉上述影响"
+  },
+  "matrix": {
+    "selected": "已选 {n}/{total}",
+    "selectedCol": "已选",
+    "selectAll": "全选",
+    "clearAll": "清空",
+    "usageWarning": "{count} 个产品正在使用，取消后新建产品不可再选，存量产品不受影响",
+    "coverageDisabled": "该项已停用，仅保留关联"
+  },
+  "toast": {
+    "created": "创建成功",
+    "updated": "保存成功",
+    "deleted": "删除成功",
+    "statusChanged": "状态已更新",
+    "relSaved": "适用范围已保存"
+  },
+  "errors": {
+    "DICT_CODE_EXISTS": "编码已存在",
+    "DICT_CODE_IMMUTABLE": "编码不可修改",
+    "DICT_IN_USE": "该项仍被引用，无法删除",
+    "DICT_INVALID_CODE_FORMAT": "编码格式不符合规范",
+    "DICT_LINE_NOT_FOUND": "业务线不存在",
+    "DICT_SUB_LINE_NOT_FOUND": "子险种不存在",
+    "DICT_COVERAGE_NOT_FOUND": "承保范围不存在",
+    "DICT_FORBIDDEN": "无权限执行该操作（需 dict:manage）",
+    "DICT_INVALID_PARAMS": "参数不完整",
+    "network": "请求失败，请稍后重试"
+  }
+}

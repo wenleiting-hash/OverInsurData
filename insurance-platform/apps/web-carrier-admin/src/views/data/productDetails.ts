@@ -6,6 +6,7 @@
 
 export type RatingFactorKey =
   | 'drivingRecord' | 'vehicleType' | 'drivingExperience' | 'creditScore' | 'territory' | 'usage'
+  | 'ageBand' | 'claimsHistory' | 'vehicleValue' | 'safetyEquip'
   | 'homeRebuildCost' | 'securityFeatures' | 'naturalRisk' | 'lossHistory'
   | 'annualRevenue' | 'industryRisk' | 'securityPosture' | 'incidentHistory'
   | 'employeeCount' | 'supplyChain'

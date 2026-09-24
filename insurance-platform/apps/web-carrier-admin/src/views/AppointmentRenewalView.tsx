@@ -3,9 +3,10 @@ import { ArrowLeft, Calendar, Plus, CheckCircle, AlertTriangle, Search, Filter, 
 import type { AppointmentRecord } from './data/mockComplianceData';
 import { generateMockAppointmentRecords } from './data/mockComplianceData';
 import { useTranslation } from 'react-i18next';
+import type { ViewId } from '@/App';
 
 interface Props {
-  navigateTo: (view: string, params?: any) => void;
+  navigateTo: (view: ViewId, params?: any) => void;
 }
 
 // Use Figma prototype data

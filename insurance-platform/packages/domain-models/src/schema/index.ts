@@ -6,6 +6,7 @@
  * AUTHORITY:
  * - User/Role/Department/RefreshToken: auth-user-schema-ovwr.ts (V5)
  * - Permission/OperationLog: permission-schema-ovwr.ts (ovwr_auth_db)
+ * - Carrier cooperation domain (overinsur_db): carrier-*-schema.ts (V1.0.10)
  */
 
 // ─── i18n schemas ──────────────────────────────────────────────────
@@ -42,6 +43,32 @@ export {
 export {
   ovwrUserPreferences,
 } from './user-preferences-ovwr';
+
+// ─── Carrier Cooperation Domain (overinsur_db, V1.0.10) ───────────
+
+export {
+  carrierPartnership,
+} from './carrier-partnership-schema';
+
+export {
+  carrierContract,
+} from './carrier-contract-schema';
+
+export {
+  carrierContact,
+} from './carrier-contact-schema';
+
+export {
+  carrierSettlementConfig,
+} from './carrier-settlement-schema';
+
+export {
+  carrierRenewalTask,
+} from './carrier-renewal-schema';
+
+export {
+  carrierProductAccessRequest,
+} from './carrier-access-request-schema';
 
 // ─── Backward-compatible aliases (i18n tables) ─────────────────────
 

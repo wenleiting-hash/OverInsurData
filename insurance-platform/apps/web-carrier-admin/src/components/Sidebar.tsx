@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Building2, Package, ShieldCheck, Wallet,
   BarChart3, Users, Network, UserPlus, Key, DollarSign, CreditCard,
   Trophy, GraduationCap, ChevronDown, ChevronRight,
-  Globe, TrendingUp, Languages, Handshake, UserCog
+  Globe, TrendingUp, Languages, Handshake, UserCog, BookMarked,
 } from 'lucide-react'
 
 interface NavGroup {
@@ -20,11 +20,6 @@ const navGroups: NavGroup[] = [
       { id: 'insurer-list', label: 'menu.insurerList', icon: <Building2 size={15} /> },
       { id: 'product-list', label: 'menu.productManagement', icon: <Package size={15} /> },
       { id: 'cooperation', label: 'menu.cooperationManagement', icon: <Handshake size={15} /> },
-      { 
-        id: 'appointment', 
-        label: 'menu.appointmentCompliance', 
-        icon: <ShieldCheck size={15} /> 
-      },
       { id: 'finance-dashboard', label: 'menu.financeSettlement', icon: <Wallet size={15} /> },
       { id: 'insurer-analytics', label: 'menu.dataAnalysis', icon: <BarChart3 size={15} /> },
     ],
@@ -36,6 +31,11 @@ const navGroups: NavGroup[] = [
       { id: 'channel-master', label: 'menu.channelMasterData', icon: <Network size={15} /> },
       { id: 'channel-hierarchy', label: 'menu.channelHierarchy', icon: <Network size={15} /> },
       { id: 'channel-onboarding', label: 'menu.onboardingManagement', icon: <UserPlus size={15} /> },
+      {
+        id: 'appointment',
+        label: 'menu.appointmentCompliance',
+        icon: <ShieldCheck size={15} />
+      },
       { id: 'product-auth', label: 'menu.productAuthorization', icon: <Key size={15} /> },
       { id: 'commission-scheme', label: 'menu.commissionScheme', icon: <DollarSign size={15} /> },
       { id: 'commission-settlement', label: 'menu.commissionSettlement', icon: <CreditCard size={15} /> },
@@ -52,6 +52,8 @@ const navGroups: NavGroup[] = [
       { id: 'department-management', label: 'menu.departmentManagement', icon: <Building2 size={15} /> },
       { id: 'permission-management', label: 'menu.permissionManagement', icon: <ShieldCheck size={15} /> },
       { id: 'i18n-management', label: 'menu.i18nManagement', icon: <Languages size={15} /> },
+      { id: 'integration-apps', label: 'menu.integrationApps', icon: <Key size={15} /> },
+      { id: 'dictionary-manage', label: 'menu.dictionaryManage', icon: <BookMarked size={15} /> },
     ],
   },
 ]

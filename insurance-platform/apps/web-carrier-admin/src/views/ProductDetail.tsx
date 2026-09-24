@@ -9,6 +9,7 @@ import {
   CheckCircle, Upload, FileText, BookOpen, Video,
   TrendingUp, TrendingDown, Star, Globe, MapPin,
   ChevronRight, BarChart2, AlertCircle, XCircle, MoreHorizontal, Trash2,
+  Pause, Play, Edit3,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ViewId } from '@/App'
@@ -16,19 +17,21 @@ import ProductStatusModal from '@/components/ProductStatusModal'
 import AddUnderwritingRuleModal from '@/components/AddUnderwritingRuleModal'
 import UploadTrainingMaterialModal from '@/components/UploadTrainingMaterialModal'
 import AddRatePlanModal from '@/components/AddRatePlanModal'
-import { formatCurrency, formatPercent } from './data/mockProductData'
+import { formatCurrency } from './data/mockProductData'
 import {
   useGetProduct, useToggleProductStatus,
   useGetRatePlans, useGetProductStates, useGetUnderwritingRules,
   useGetTrainingMaterials, useGetProductPerformance,
   useCreateUnderwritingRule, useCreateTrainingMaterial,
   useUpdateUnderwritingRule, useSetRuleStatus, useDeleteUnderwritingRule,
-  useSetMaterialStatus, useDeleteTrainingMaterial,
+  useSetMaterialStatus, useUpdateTrainingMaterial, useDeleteTrainingMaterial,
+  useSetProductStateStatus,
   useCreateRatePlan, useUpdateRatePlan, useDeleteRatePlan,
 } from '@/services/productService'
 import type {
   RatingFactorKey, CreateUnderwritingRulePayload, CreateTrainingMaterialPayload,
-  CreateRatePlanPayload, ProductUnderwritingRule, ProductRatePlan,
+  UpdateTrainingMaterialPayload, ToggleProductStatusPayload,
+  CreateRatePlanPayload, ProductUnderwritingRule, ProductRatePlan, ProductTrainingMaterial,
 } from '@/lib/user-api-client'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -155,7 +158,9 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
   const deleteRuleMut = useDeleteUnderwritingRule()
   const createMaterial = useCreateTrainingMaterial()
   const setMaterialStatusMut = useSetMaterialStatus()
+  const updateMaterialMut = useUpdateTrainingMaterial()
   const deleteMaterialMut = useDeleteTrainingMaterial()
+  const setStateStatusMut = useSetProductStateStatus()
   const createRatePlanMut = useCreateRatePlan()
   const updateRatePlanMut = useUpdateRatePlan()
   const deleteRatePlanMut = useDeleteRatePlan()
@@ -164,6 +169,8 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
   // 非 null 即进入「编辑核保规则」模式（问题8：编辑 icon 原本是死按钮）
   const [editingRule, setEditingRule] = useState<ProductUnderwritingRule | null>(null)
   const [showUploadMaterial, setShowUploadMaterial] = useState(false)
+  // 非 null 即进入「编辑培训材料」模式（缺陷#5：原本只有状态切换和删除，不能改内容）
+  const [editingMaterial, setEditingMaterial] = useState<ProductTrainingMaterial | null>(null)
   const [showAddRatePlan, setShowAddRatePlan] = useState(false)
   // 非 null 即进入「编辑费率方案」模式（卡片上的「编辑」按钮原本没有 onClick，是个死按钮）
   const [editingRatePlan, setEditingRatePlan] = useState<ProductRatePlan | null>(null)
@@ -200,7 +207,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
       <div className="flex-1 overflow-auto">
         <div style={{ maxWidth: 1200, margin: '80px auto', textAlign: 'center' }}>
           <div className="card" style={{ padding: '60px 40px' }}>
-            <div style={{ fontSize: 16, color: '#717786' }}>{t('detail.tabs.info')} Loading...</div>
+            <div style={{ fontSize: 16, color: '#717786' }}>{t('detail.loadingText')}</div>
           </div>
         </div>
       </div>
@@ -248,11 +255,11 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
     premiumYTD: apiProduct.premium_ytd,
     policyCount: apiProduct.policy_count,
     avgPremium: apiProduct.avg_premium,
-    lossRatio: apiProduct.loss_ratio,
-    renewalRate: apiProduct.renewal_rate,
     createdAt: apiProduct.created_at,
     updatedAt: apiProduct.updated_at,
-  } : { productId, productName: 'Loading...', productCode: '', lineOfBusiness: 'AUTO', status: 'Active', insurerName: '', availableStates: [], effectiveDate: '', coverages: [] }
+    // 产品文件（表单「合规文件上传」步骤）随主数据返回；此前漏接，信息 tab 无法展示
+    documents: apiProduct.documents ?? [],
+  } : { productId, productName: 'Loading...', productCode: '', lineOfBusiness: 'AUTO', status: 'Active', insurerName: '', availableStates: [], coverages: [], documents: [] }
 
   const activeStates = allStates.filter(s => s.status === 'active')
   // 本系统无审批流程，可售州不存在「审核中(pending)」态，只剩 已开通 / 已暂停 / 未开通
@@ -282,6 +289,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
     'Inactive': { label: t('values.statusOffSale'), orb: 'orb-gray' },
     'Paused': { label: t('values.statusPaused'), orb: 'orb-yellow' },
     'Incomplete': { label: t('values.statusIncomplete'), orb: 'orb-gray' },
+    'Pending': { label: t('values.statusPending'), orb: 'orb-yellow' },
   }
   const sc = statusMap[prod.status] ?? { label: prod.status, orb: 'orb-gray' }
   const lineColor = LINE_COLORS[prod.lineOfBusiness] ?? '#0058BC'
@@ -322,6 +330,10 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
     creditScore: t('detail.rates.facCredit'),
     territory: t('detail.rates.facTerritory'),
     usage: t('detail.rates.facUsage'),
+    ageBand: t('detail.rates.facAgeBand'),
+    claimsHistory: t('detail.rates.facClaimsHistory'),
+    vehicleValue: t('detail.rates.facVehicleValue'),
+    safetyEquip: t('detail.rates.facSafetyEquip'),
     homeRebuildCost: t('detail.rates.facHomeRebuildCost'),
     securityFeatures: t('detail.rates.facSecurityFeatures'),
     naturalRisk: t('detail.rates.facNatRisk'),
@@ -334,14 +346,119 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
     supplyChain: t('detail.rates.facSupplyChain'),
   }
 
+  // ── 产品级配置（建品表单录入，存主数据列；与 tab 内手工维护的子实体不同，需要在对应 tab 顶部回显）──
+  // 文件槽位 key 与 ProductForm 的 docList 保持一致
+  const docLabels: Record<string, string> = {
+    filing: t('form.documents.filing'),
+    rates: t('form.documents.rates'),
+    guide: t('detail.training.guide'),
+    uwManual: t('form.documents.uwManual'),
+    training: t('detail.training.deck'),
+  }
+  const rateTypeLabels: Record<string, string> = {
+    flat: t('form.rates.flat'),
+    tiered: t('form.rates.tiered'),
+    usage: t('form.rates.usage'),
+  }
+  // 历史数据存在大小写不一致（rate_type='Flat'、rate_factors=['ageband']），统一按小写查表，找不到再回退原值
+  const factorLabelLower: Record<string, string> = Object.fromEntries(
+    Object.entries(factorLabels).map(([k, v]) => [k.toLowerCase(), v])
+  )
+  const resolveFactorLabel = (f: string) => factorLabelLower[String(f).toLowerCase()] ?? f
+  const resolveRateTypeLabel = (v: string) => rateTypeLabels[String(v).toLowerCase()] ?? v
+  const blacklistLabels: Record<string, string> = {
+    poorCredit: t('underwriting.poorCredit'),
+    fraudHistory: t('underwriting.fraudHistory'),
+    mispresentation: t('underwriting.mispresentation'),
+  }
+  const blacklistLabelLower: Record<string, string> = Object.fromEntries(
+    Object.entries(blacklistLabels).map(([k, v]) => [k.toLowerCase(), v])
+  )
+  const resolveBlacklistLabel = (v: string) => blacklistLabelLower[String(v).toLowerCase()] ?? v
+  const productDocs: Array<{ key: string; name: string; url: string; size?: number; mimetype?: string }> =
+    (prod.documents ?? []).filter((d: any) => d && d.url)
+  const formatDocSize = (bytes?: number) => {
+    if (bytes == null) return ''
+    if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`
+  }
+  const productRateFactors: string[] = Array.isArray(prod.rateFactors) ? prod.rateFactors : []
+  const hasProductRateConfig = !!(prod.rateType || prod.baseRate != null || prod.minPremium != null || prod.maxPremium != null || productRateFactors.length)
+  const productBlacklist: string[] = Array.isArray(prod.blacklistConditions) ? prod.blacklistConditions : []
+  const hasProductUwConfig = prod.ageMin != null || prod.ageMax != null || prod.excludeDUI || prod.referHighValue || productBlacklist.length
+
   const latestPerf = perfData[perfData.length - 1]
   const prevPerf = perfData[perfData.length - 2]
   const premiumGrowth = prevPerf ? ((latestPerf.premium - prevPerf.premium) / prevPerf.premium) : 0
 
-  const confirmStatusChange = () => {
+  const confirmStatusChange = (payload: ToggleProductStatusPayload) => {
     if (!statusModalId) return
-    toggleStatus.mutate(statusModalId, {
-      onSuccess: () => setStatusModalId(null),
+    toggleStatus.mutate({ id: statusModalId, payload }, {
+      onSuccess: (res: any) => {
+        setStatusModalId(null)
+        // 定时生效：状态不变，仅登记 pending_change
+        showToast(
+          res?.scheduled ? t('modals.statusModal.scheduledSuccess') : t('modals.statusModal.changeSuccess'),
+          'success',
+        )
+      },
+      onError: (err: any) => showToast(describeError(err, t('modals.statusModal.changeFailed')), 'error'),
+    })
+  }
+
+  // 缺陷#4：单州暂停/恢复（仅 active ↔ suspended；未开通州不在卡片操作内）
+  const handleSetStateStatus = (stateCode: string, status: 'active' | 'suspended') => {
+    setStateStatusMut.mutate({ id: productId, stateCode, status }, {
+      onSuccess: () => showToast(
+        status === 'suspended' ? t('detail.states.suspendSuccess') : t('detail.states.resumeSuccess'), 'success'),
+      onError: (err: any) => showToast(describeError(
+        err, status === 'suspended' ? t('detail.states.suspendFailed') : t('detail.states.resumeFailed')), 'error'),
+    })
+  }
+
+  // 缺陷#3：头部「导出」—— 单产品汇总 CSV（BOM 防中文乱码），与列表导出同口径列头
+  const handleExportSummary = () => {
+    const headerKeys = [
+      'productName', 'productCode', 'insurerName', 'lineOfBusiness', 'subLine', 'type',
+      'availableStates', 'premiumYTD', 'policyCount', 'avgPremium',
+      'status', 'effectiveDate',
+    ]
+    const headers = headerKeys.map(k => t(`tables.${k}`))
+    const activeCount = activeStates.length
+    const suspendedCount = suspendedStates.length
+    const rowVals = [
+      prod.productName, prod.productCode, prod.insurerName,
+      prod.lineOfBusiness, prod.subLine ?? '', prod.type,
+      t('detail.kpi.statesSelling', { count: activeCount }) + (suspendedCount ? ` / ${t('detail.kpi.suspended', { count: suspendedCount })}` : ''),
+      prod.premiumYTD ?? '', prod.policyCount ?? '', prod.avgPremium ?? '',
+      prod.status, prod.effectiveDate ?? '',
+    ]
+    const esc = (v: any) => {
+      const s = String(v ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const csv = '﻿' + [headers, rowVals].map(r => r.map(esc).join(',')).join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `product_${prod.productCode || prod.productId}_${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    showToast(t('actions.exportSuccess'), 'success')
+  }
+
+  // 缺陷#5：培训材料内容编辑
+  const handleUpdateMaterial = (dto: UpdateTrainingMaterialPayload) => {
+    if (!editingMaterial) return
+    updateMaterialMut.mutate({ id: productId, materialId: editingMaterial.id, dto }, {
+      onSuccess: () => {
+        setEditingMaterial(null)
+        showToast(t('modals.uploadMaterial.editSuccess'), 'success')
+      },
+      onError: (err: any) => showToast(describeError(err, t('modals.uploadMaterial.editFailed')), 'error'),
     })
   }
 
@@ -368,8 +485,8 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
     })
   }
 
-  const handleCreateMaterial = (dto: CreateTrainingMaterialPayload) => {
-    createMaterial.mutate({ id: productId, dto }, {
+  const handleCreateMaterial = (dto: CreateTrainingMaterialPayload | UpdateTrainingMaterialPayload) => {
+    createMaterial.mutate({ id: productId, dto: dto as CreateTrainingMaterialPayload }, {
       onSuccess: () => {
         setShowUploadMaterial(false)
         showToast(t('modals.uploadMaterial.success'), 'success')
@@ -468,7 +585,9 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
     }
   }
 
-  const statusModalProduct = statusModalId && apiProduct ? { ...apiProduct, productId: apiProduct.id, status: apiProduct.status as string } as any : undefined
+  // 弹窗读的是 camelCase 视图模型（availableStates/productName/policyCount…），
+  // 必须传已映射的 prod；此前误传原始 apiProduct（available_states），导致打开即崩
+  const statusModalProduct = statusModalId && apiProduct ? prod as any : undefined
 
   return (
     <div className="flex-1 overflow-auto">
@@ -498,7 +617,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{prod.productName}</h1>
+                    <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23' }}>{prod.productName}</h1>
                     <span className={`badge ${sc.orb === 'orb-green' ? 'badge-green' : sc.orb === 'orb-yellow' ? 'badge-yellow' : sc.orb === 'orb-purple' ? 'badge-purple' : 'badge-gray'}`}>{sc.label}</span>
                     <span className="badge badge-gray" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{prod.productCode}</span>
                   </div>
@@ -517,7 +636,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="btn-ghost" style={{ fontSize: 13 }}><Download size={14} />{t('actions.export')}</button>
+                <button className="btn-ghost" style={{ fontSize: 13 }} onClick={handleExportSummary}><Download size={14} />{t('actions.export')}</button>
                 {prod.status === 'Active'
                   ? <button className="btn-ghost" style={{ fontSize: 13, color: '#BA1A1A' }} onClick={() => setStatusModalId(prod.productId)}>
                       <ToggleRight size={14} />{t('actions.delist')}
@@ -533,12 +652,10 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
             </div>
 
             {/* KPI strip */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginTop: 22, paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.3)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 22, paddingTop: 20, borderTop: '0.5px solid rgba(193,198,215,0.3)' }}>
               {[
-                { label: t('detail.kpi.premium'), value: formatCurrency(prod.premiumYTD ?? 0, true), sub: `+${(premiumGrowth * 100).toFixed(1)}% MoM`, color: '#0058BC' },
+                { label: t('detail.kpi.premium'), value: formatCurrency(prod.premiumYTD ?? 0, true), sub: t('detail.kpi.mom', { pct: (premiumGrowth * 100).toFixed(1) }), color: '#0058BC' },
                 { label: t('detail.kpi.policies'), value: (prod.policyCount ?? 0).toLocaleString(), sub: t('detail.kpi.statesValid', { count: activeStates.length }) },
-                { label: t('detail.kpi.lossRatio'), value: formatPercent(prod.lossRatio ?? 0), sub: (prod.lossRatio ?? 0) > 0.65 ? t('detail.kpi.lossWarn') : t('detail.kpi.normalRange'), color: (prod.lossRatio ?? 0) > 0.65 ? '#BA1A1A' : undefined },
-                { label: t('detail.kpi.renewal'), value: formatPercent(prod.renewalRate ?? 0), sub: (prod.renewalRate ?? 0) > 0.85 ? t('detail.kpi.highRetention') : t('detail.kpi.normal') },
                 { label: t('detail.kpi.states'), value: `${activeStates.length} / 50`, sub: suspendedStates.length > 0 ? t('detail.kpi.suspended', { count: suspendedStates.length }) : t('detail.kpi.allActive') },
                 { label: t('detail.kpi.launch'), value: launchDate, sub: t('detail.kpi.onlineMonths', { count: Math.max(0, Math.floor((Date.now() - new Date(prod.effectiveDate).getTime()) / 86400000 / 30)) }) },
               ].map(k => (
@@ -598,7 +715,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                 // 此前直接渲染裸值 "Guaranteed"，中英文环境都显示英文枚举
                 [t('fields.renewalType'), prod.renewalType ? t(`values.renewal${prod.renewalType}`, prod.renewalType) : '-'],
                 [t('fields.policyTermYears'), prod.policyTermYears
-                  ? `${prod.policyTermYears} ${lang.startsWith('en') ? (prod.policyTermYears === 1 ? 'year' : 'years') : '年'}`
+                  ? `${prod.policyTermYears} ${lang.startsWith('en') ? (prod.policyTermYears === 1 ? t('detail.kpi.termYear') : t('detail.kpi.termYears')) : t('detail.kpi.termYears')}`
                   : '-'],
                 [t('fields.naicFormNumber'), prod.naicFormNumber ?? '-'],
                 [t('fields.productCode'), prod.productCode],
@@ -640,12 +757,68 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                 <div style={{ fontSize: 13, color: '#717786' }}>{t('emptyState')}</div>
               )}
             </div>
+            {/* 产品文件：建品表单上传的备案/费率/指南等文件（documents 主数据），此前详情页无任何展示入口 */}
+            <div className="card" style={{ padding: '22px 24px', gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{t('detail.info.documentsTitle')}</div>
+              {productDocs.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+                  {productDocs.map(doc => (
+                    <div key={doc.key} style={{ padding: '12px 14px', background: 'rgba(241,243,254,0.7)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <FileText size={18} style={{ color: '#0058BC', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="badge badge-blue" style={{ fontSize: 10.5, marginBottom: 4 }}>{docLabels[doc.key] ?? doc.key}</div>
+                        <div style={{ fontSize: 12.5, color: '#181C23', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={doc.name}>
+                          {doc.name}
+                        </div>
+                        {doc.size != null && <div style={{ fontSize: 11, color: '#717786', marginTop: 2 }}>{formatDocSize(doc.size)}</div>}
+                      </div>
+                      <a
+                        href={doc.url} target="_blank" rel="noreferrer"
+                        title={t('form.documents.download')}
+                        style={{ color: '#0058BC', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                      >
+                        <Download size={15} />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: '#717786' }}>{t('detail.info.documentsEmpty')}</div>
+              )}
+            </div>
           </div>
         )}
-
-        {/* ── Tab: Rate plans ── */}
         {activeTab === 'rates' && (
           <div>
+            {/* 产品级费率配置（建品表单第二步录入，存主数据）——此前 tab 只列手工新增的费率方案，表单数据无处回显 */}
+            {hasProductRateConfig && (
+              <div className="card" style={{ padding: '18px 22px', marginBottom: 14 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{t('detail.rates.productTitle')}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, marginBottom: productRateFactors.length ? 14 : 0 }}>
+                  {[
+                    [t('form.rates.rateType'), prod.rateType ? resolveRateTypeLabel(prod.rateType) : ''],
+                    [t('form.rates.baseRateAnnual'), prod.baseRate != null && prod.baseRate !== '' ? `$${Number(prod.baseRate).toLocaleString()}` : ''],
+                    [t('detail.rates.minPremium'), prod.minPremium != null && prod.minPremium !== '' ? `$${Number(prod.minPremium).toLocaleString()}` : ''],
+                    [t('detail.rates.maxPremium'), prod.maxPremium != null && prod.maxPremium !== '' ? `$${Number(prod.maxPremium).toLocaleString()}` : ''],
+                  ].filter(([, v]) => v !== '').map(([l, v]) => (
+                    <div key={l} style={{ padding: '9px 12px', background: 'rgba(241,243,254,0.7)', borderRadius: 9 }}>
+                      <div style={{ fontSize: 11, color: '#717786', marginBottom: 2 }}>{l}</div>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                {productRateFactors.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span style={{ fontSize: 12.5, color: '#717786' }}>{t('detail.rates.ratingFactors')}：</span>
+                    {productRateFactors.map(f => (
+                      <span key={f} className="badge badge-blue" style={{ fontSize: 11 }}>
+                        {resolveFactorLabel(f)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex items-center justify-between mb-4">
               <div style={{ fontSize: 14, color: '#717786' }}>
                 {t('detail.rates.summary', { total: myRatePlans.length, active: myRatePlans.filter(r => r.status === 'active').length })}
@@ -757,7 +930,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                   onChange={e => setStateSearch(e.target.value)}
                 />
               </div>
-              {/* 原「申请新州」按钮已删除：本系统没有审批流程，不存在「申请-审批」开通州的通道。 */}
+              {/* 可售州仅作登记展示，无「申请-审批」流程入口。 */}
             </div>
             {lpStates ? (
               <div className="card" style={{ padding: 60, textAlign: 'center' }}>
@@ -789,6 +962,25 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                     {s.status === 'active' && s.channelCount !== undefined && (
                       <div style={{ fontSize: 10.5, color: '#34C759', marginTop: 2 }}>{t('detail.states.channels', { count: s.channelCount })}</div>
                     )}
+                    {/* 缺陷#4：单州暂停/恢复操作（未开通州无操作入口） */}
+                    {(s.status === 'active' || s.status === 'suspended') && (
+                      <button
+                        onClick={() => handleSetStateStatus(s.code, s.status === 'active' ? 'suspended' : 'active')}
+                        disabled={setStateStatusMut.isPending}
+                        title={s.status === 'active' ? t('detail.states.suspend') : t('detail.states.resume')}
+                        style={{
+                          marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 4,
+                          fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 6,
+                          border: '0.5px solid', cursor: setStateStatusMut.isPending ? 'wait' : 'pointer',
+                          color: s.status === 'active' ? '#a05800' : '#1a7a2e',
+                          borderColor: s.status === 'active' ? 'rgba(255,149,0,0.4)' : 'rgba(52,199,89,0.4)',
+                          background: s.status === 'active' ? 'rgba(255,149,0,0.07)' : 'rgba(52,199,89,0.07)',
+                        }}
+                      >
+                        {s.status === 'active' ? <Pause size={11} /> : <Play size={11} />}
+                        {s.status === 'active' ? t('detail.states.suspend') : t('detail.states.resume')}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -800,6 +992,46 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
         {/* ── Tab: Underwriting rules ── */}
         {activeTab === 'underwriting' && (
           <div>
+            {/* 产品级核保配置（建品表单第三步录入，存主数据）——此前 tab 只列手工新增的规则，表单数据无处回显 */}
+            {hasProductUwConfig && (
+              <div className="card" style={{ padding: '18px 22px', marginBottom: 14 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{t('detail.underwriting.productTitle')}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10, marginBottom: productBlacklist.length ? 14 : 0 }}>
+                  {(prod.ageMin != null || prod.ageMax != null) && (
+                    <div style={{ padding: '9px 12px', background: 'rgba(241,243,254,0.7)', borderRadius: 9 }}>
+                      <div style={{ fontSize: 11, color: '#717786', marginBottom: 2 }}>{t('underwriting.ageRange')}</div>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>
+                        {prod.ageMin ?? '?'} - {prod.ageMax ?? '?'} {t('form.underwriting.years')}
+                      </div>
+                    </div>
+                  )}
+                  {prod.excludeDUI && (
+                    <div style={{ padding: '9px 12px', background: 'rgba(186,26,26,0.05)', borderRadius: 9 }}>
+                      <div style={{ fontSize: 11, color: '#717786', marginBottom: 2 }}>{t('underwriting.excludeDUI')}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#BA1A1A' }}>{t('detail.underwriting.yes')}</div>
+                    </div>
+                  )}
+                  {prod.referHighValue && (
+                    <div style={{ padding: '9px 12px', background: 'rgba(255,149,0,0.06)', borderRadius: 9 }}>
+                      <div style={{ fontSize: 11, color: '#717786', marginBottom: 2 }}>{t('underwriting.referHighValue')}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#a05800' }}>
+                        {t('detail.underwriting.yes')}{prod.referThreshold != null && prod.referThreshold !== '' ? ` · $${Number(prod.referThreshold).toLocaleString()}` : ''}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {productBlacklist.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span style={{ fontSize: 12.5, color: '#717786' }}>{t('underwriting.blacklistConditions')}：</span>
+                    {productBlacklist.map(b => (
+                      <span key={b} className="badge badge-red" style={{ fontSize: 11 }}>
+                        {resolveBlacklistLabel(b)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex items-center justify-between mb-4">
               <div style={{ fontSize: 14, color: '#717786' }}>
                 {t('detail.underwriting.summary', {
@@ -850,7 +1082,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                           background: `${RULE_ACTION_COLOR[rule.action] ?? '#717786'}15`,
                           color: RULE_ACTION_COLOR[rule.action] ?? '#717786',
                         }}>
-                          THEN → {lang.startsWith('en') ? (rule.actionValueEn ?? rule.action) : (rule.actionValue ?? rule.action)}
+                          {t('detail.underwriting.then')} → {lang.startsWith('en') ? (rule.actionValueEn ?? rule.action) : (rule.actionValue ?? rule.action)}
                         </div>
                         <span style={{ fontSize: 11.5, color: '#717786' }}>{t('detail.underwriting.lastModified', { date: rule.lastModified, by: rule.modifiedBy })}</span>
                       </div>
@@ -982,7 +1214,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
               </div>
             ) : (
             <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 18 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 18 }}>
               {[
                 {
                   label: t('detail.performance.premium'),
@@ -997,13 +1229,6 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                   up: latestPerf.newBiz >= (prevPerf?.newBiz ?? 0),
                 },
                 {
-                  label: t('detail.kpi.lossRatio'),
-                  value: formatPercent(latestPerf.lossRatio),
-                  delta: latestPerf.lossRatio < 0.65 ? t('detail.kpi.normalRange') : t('detail.performance.overThreshold'),
-                  up: latestPerf.lossRatio < 0.65,
-                  warn: latestPerf.lossRatio >= 0.65,
-                },
-                {
                   label: t('detail.performance.policies'),
                   value: latestPerf.policies.toLocaleString(),
                   delta: t('detail.performance.claims', { count: latestPerf.claimsCount }),
@@ -1012,7 +1237,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
               ].map(k => (
                 <div key={k.label} className="card" style={{ padding: '18px 20px' }}>
                   <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 8 }}>{k.label}</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: k.warn ? '#BA1A1A' : '#181C23', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>{k.value}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace", marginBottom: 6 }}>{k.value}</div>
                   <div className="flex items-center gap-1" style={{ fontSize: 12.5, color: k.up ? '#1a7a2e' : '#BA1A1A' }}>
                     {k.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                     {k.delta}
@@ -1050,19 +1275,6 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-
-              <div className="card" style={{ padding: '20px 22px', gridColumn: '1 / -1' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#181C23', marginBottom: 16 }}>{t('detail.performance.chartLossTrend')}</div>
-                <ResponsiveContainer width="100%" height={160}>
-                  <LineChart data={perfData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(193,198,215,0.3)" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: '#717786' }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `${(v * 100).toFixed(0)}%`} width={42} domain={[0.4, 0.8]} />
-                    <Tooltip formatter={(v: any) => [`${(v * 100).toFixed(1)}%`, t('detail.kpi.lossRatio')]} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
-                    <Line type="monotone" dataKey="lossRatio" stroke="#FF9500" strokeWidth={2.5} dot={{ r: 3, fill: '#FF9500' }} name={t('detail.kpi.lossRatio')} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
             </div>
             </>
             )}
@@ -1074,6 +1286,7 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
       {statusModalProduct && (
         <ProductStatusModal
           product={statusModalProduct}
+          activeStates={activeStates.map(s => ({ code: s.code, name: s.name }))}
           onClose={() => setStatusModalId(null)}
           onConfirm={confirmStatusChange}
         />
@@ -1131,6 +1344,9 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
             const st = m?.status ?? 'active'
             return (
               <>
+                <MenuItem icon={<Edit3 size={13} />} label={t('actions.edit')}
+                  onClick={() => { setMenu(null); if (m) setEditingMaterial(m) }} />
+                <MenuDivider />
                 <MenuItem icon={<CheckCircle size={13} />} label={t('menu.markActive')} disabled={st === 'active'}
                   onClick={() => handleSetMaterialStatus(menu.id, 'active')} />
                 <MenuItem icon={<XCircle size={13} />} label={t('menu.markInactive')} disabled={st === 'inactive'}
@@ -1197,12 +1413,13 @@ export default function ProductDetail({ productId, navigateTo }: Props) {
         )
       })()}
 
-      {/* Upload training material (training tab) */}
-      {showUploadMaterial && (
+      {/* Upload / edit training material (training tab) —— 缺陷#5：editing 非空即编辑态 */}
+      {(showUploadMaterial || editingMaterial) && (
         <UploadTrainingMaterialModal
-          isSubmitting={createMaterial.isPending}
-          onClose={() => setShowUploadMaterial(false)}
-          onSubmit={handleCreateMaterial}
+          editing={editingMaterial}
+          isSubmitting={editingMaterial ? updateMaterialMut.isPending : createMaterial.isPending}
+          onClose={() => { setShowUploadMaterial(false); setEditingMaterial(null) }}
+          onSubmit={editingMaterial ? handleUpdateMaterial : handleCreateMaterial}
           onError={msg => showToast(msg, 'error')}
         />
       )}

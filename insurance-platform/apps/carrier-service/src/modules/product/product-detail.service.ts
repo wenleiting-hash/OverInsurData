@@ -3,6 +3,7 @@ import { unlink } from 'fs/promises';
 import { basename, resolve, sep } from 'path';
 import { pool } from '../../database/drizzle.client';
 import { UPLOAD_DIR } from '../upload/upload.config';
+import { US_STATE_ENTRIES, US_STATE_NAMES } from './product.constants';
 import {
   CreateUnderwritingRuleDto, CreateTrainingMaterialDto, UpdateUnderwritingRuleDto,
   CreateRatePlanDto, UpdateRatePlanDto,
@@ -213,23 +214,50 @@ export class ProductDetailService {
     return { deleted: true };
   }
 
-  /** Salable-state detail rows for a product (all 50 states; enabled/status drive display). Maps to ProductState[].
-   *  filing_number（监管备案号）不再返回 —— 无审批流程；列保留在库里。
-   *  status 里的历史 'pending'（审核中）统一归一为 'not-available'，避免前端渲染出审批语义。 */
+  /** Salable-state detail rows for the product — always returns all 50 states.
+   *  可售性以 insurance_product.available_states（产品表单主数据）为准；product_state 仅承载
+   *  运营层单州暂停（suspended）与种子演示列（channel_count/effective_date 等）。
+   *  历史 'pending'（审核中）归一为 not-available，避免前端渲染出审批语义。 */
   async getStates(productId: string) {
     const res = await pool.query(
-      `SELECT state_code, state_name, enabled, status, effective_date, channel_count
-       FROM product_state WHERE product_id = $1 ORDER BY state_code ASC`,
+      `SELECT p.available_states AS master_states,
+              ps.state_code, ps.state_name, ps.status, ps.enabled, ps.effective_date, ps.channel_count
+       FROM insurance_product p
+       LEFT JOIN product_state ps ON ps.product_id = p.product_id
+       WHERE p.product_id = $1 AND p.deleted = FALSE`,
       [productId],
     );
-    return res.rows.map((r: any) => ({
-      code: r.state_code,
-      name: r.state_name,
-      enabled: r.enabled,
-      effectiveDate: this.fmtDate(r.effective_date),
-      status: r.status === 'pending' ? 'not-available' : r.status,
-      channelCount: r.channel_count,
-    }));
+    if (!res.rows.length) throw new NotFoundException(`Product ${productId} not found`);
+
+    const master = new Set<string>(
+      Array.isArray(res.rows[0].master_states)
+        ? res.rows[0].master_states.map((s: unknown) => String(s).toUpperCase())
+        : [],
+    );
+    const rowMap = new Map<string, any>();
+    for (const r of res.rows) {
+      if (r.state_code) rowMap.set(String(r.state_code).toUpperCase(), r);
+    }
+
+    return US_STATE_ENTRIES.map(([code, fallbackName]) => {
+      const r = rowMap.get(code);
+      const inMaster = master.has(code);
+      // 清单外 → not-available；清单内但被运营暂停 → suspended；其余 active
+      const rawStatus = r?.status === 'pending' ? 'not-available' : r?.status;
+      const status = !inMaster
+        ? 'not-available'
+        : rawStatus === 'suspended'
+          ? 'suspended'
+          : 'active';
+      return {
+        code,
+        name: r?.state_name || fallbackName,
+        enabled: inMaster,
+        effectiveDate: this.fmtDate(r?.effective_date ?? null),
+        status,
+        channelCount: r ? Number(r.channel_count ?? 0) : 0,
+      };
+    });
   }
 
   /** Underwriting rules for a product (ordered by priority). Maps to UnderwritingRule[]. */
@@ -310,6 +338,53 @@ export class ProductDetailService {
     return this.mapRule(res.rows[0]);
   }
 
+  /**
+   * Suspend / resume a single salable state. Only active ↔ suspended transitions are accepted:
+   * a state outside the product form's available_states master list is not sellable and must be
+   * enabled through the form, not from the states tab. Legacy products without a product_state row
+   * for a master-listed state are reconciled on demand (row auto-created as active first).
+   */
+  async setStateStatus(productId: string, stateCode: string, status: 'active' | 'suspended') {
+    const code = stateCode.trim().toUpperCase();
+    const prod = await pool.query(
+      `SELECT available_states FROM insurance_product WHERE product_id = $1 AND deleted = FALSE`,
+      [productId],
+    );
+    if (!prod.rows.length) throw new NotFoundException(`Product ${productId} not found`);
+    const master: string[] = Array.isArray(prod.rows[0].available_states)
+      ? prod.rows[0].available_states.map((s: unknown) => String(s).toUpperCase())
+      : [];
+    if (!master.includes(code)) {
+      throw new NotFoundException(`State ${code} is not available for this product; enable it in the product form first.`);
+    }
+
+    // 主数据清单内但缺行 / 历史 not-available(pending) 行：先对齐为 active，再执行本次转换
+    await pool.query(
+      `INSERT INTO product_state (product_id, state_code, state_name, enabled, status)
+       VALUES ($1, $2, $3, TRUE, 'active')
+       ON CONFLICT (product_id, state_code) DO UPDATE
+         SET status = 'active', enabled = TRUE, updated_at = NOW()
+       WHERE product_state.status IN ('not-available', 'pending')`,
+      [productId, code, US_STATE_NAMES[code] ?? code],
+    );
+
+    const res = await pool.query(
+      `UPDATE product_state SET status = $3, updated_at = NOW()
+       WHERE product_id = $1 AND state_code = $2
+       RETURNING state_code, state_name, enabled, status, effective_date, channel_count`,
+      [productId, code, status],
+    );
+    const r = res.rows[0];
+    return {
+      code: r.state_code,
+      name: r.state_name,
+      enabled: r.enabled,
+      effectiveDate: this.fmtDate(r.effective_date),
+      status: r.status,
+      channelCount: r.channel_count,
+    };
+  }
+
   /** Hard-delete a rule (product_underwriting_rule has no soft-delete column). */
   async deleteRule(productId: string, ruleId: string) {
     const res = await pool.query(
@@ -364,6 +439,73 @@ export class ProductDetailService {
       [productId, materialId, status],
     );
     if (!res.rows.length) throw new NotFoundException(`Training material ${materialId} not found`);
+    return this.mapMaterial(res.rows[0]);
+  }
+
+  /** DTO key → DB column for the material edit dialog. required_for is jsonb (needs ::jsonb cast),
+   *  and `url` maps to the file_url column. */
+  private static readonly MATERIAL_FIELD_MAP: Record<string, { col: string; cast?: string }> = {
+    title: { col: 'title' }, titleEn: { col: 'title_en' }, type: { col: 'type' },
+    fileName: { col: 'file_name' }, fileSize: { col: 'file_size' }, version: { col: 'version' },
+    requiredFor: { col: 'required_for', cast: '::jsonb' },
+    expiryDate: { col: 'expiry_date' }, url: { col: 'file_url' },
+  };
+
+  /**
+   * Update material metadata (and optionally replace the stored file). Only keys present in the DTO
+   * are written; an empty expiryDate clears the column to NULL. When the file is replaced the old
+   * upload is best-effort deleted, same as the hard-delete path.
+   */
+  async updateMaterial(productId: string, materialId: string, dto: {
+    title?: string; titleEn?: string; type?: string; fileName?: string; fileSize?: string;
+    version?: string; requiredFor?: string[]; expiryDate?: string; url?: string;
+  }) {
+    // Replacing the file? remember the old url BEFORE the UPDATE so it can be unlinked afterwards.
+    let previousFileUrl: string | null = null;
+    if (dto.url) {
+      const pre = await pool.query(
+        'SELECT file_url FROM product_training_material WHERE product_id = $1 AND material_id = $2',
+        [productId, materialId],
+      );
+      if (!pre.rows.length) throw new NotFoundException(`Training material ${materialId} not found`);
+      previousFileUrl = pre.rows[0].file_url ?? null;
+    }
+
+    const sets: string[] = [];
+    const vals: any[] = [];
+    let idx = 1;
+    for (const [key, { col, cast }] of Object.entries(ProductDetailService.MATERIAL_FIELD_MAP)) {
+      if (!(key in dto)) continue;
+      let v: any = (dto as any)[key];
+      if (key === 'expiryDate' && v === '') v = null;
+      sets.push(`${col} = $${idx++}${cast ?? ''}`);
+      vals.push(key === 'requiredFor' ? JSON.stringify(v ?? []) : v);
+    }
+    if (!sets.length) {
+      const cur = await pool.query(
+        `SELECT ${ProductDetailService.MATERIAL_COLS} FROM product_training_material WHERE product_id = $1 AND material_id = $2`,
+        [productId, materialId],
+      );
+      if (!cur.rows.length) throw new NotFoundException(`Training material ${materialId} not found`);
+      return this.mapMaterial(cur.rows[0]);
+    }
+    sets.push('updated_at = NOW()');
+    vals.push(productId, materialId);
+    const res = await pool.query(
+      `UPDATE product_training_material SET ${sets.join(', ')}
+       WHERE product_id = $${idx} AND material_id = $${idx + 1}
+       RETURNING ${ProductDetailService.MATERIAL_COLS}`,
+      vals,
+    );
+    if (!res.rows.length) throw new NotFoundException(`Training material ${materialId} not found`);
+
+    // Best-effort removal of the replaced upload (same safety rules as deleteMaterial).
+    if (previousFileUrl && previousFileUrl !== dto.url) {
+      const target = resolve(UPLOAD_DIR, basename(previousFileUrl));
+      if (target.startsWith(UPLOAD_DIR + sep)) {
+        await unlink(target).catch((e: any) => this.logger.warn(`Kept orphan upload ${target}: ${e?.message}`));
+      }
+    }
     return this.mapMaterial(res.rows[0]);
   }
 

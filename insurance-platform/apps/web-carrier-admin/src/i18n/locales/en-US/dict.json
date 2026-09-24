@@ -1,0 +1,90 @@
+{
+  "title": "Insurance Line Dictionary",
+  "subtitle": "Maintain the line / sub-line / coverage dictionary and line applicability; consumed live by the product form and integration matching",
+  "tabs": {
+    "lines": "Lines & Sub-lines",
+    "coverages": "Coverages",
+    "matrix": "Applicability Matrix"
+  },
+  "actions": {
+    "createLine": "Add Line",
+    "createSubLine": "Add Sub-line",
+    "createCoverage": "Add Coverage",
+    "edit": "Edit",
+    "delete": "Delete",
+    "enable": "Enable",
+    "disable": "Disable",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saveAll": "Save All",
+    "refresh": "Refresh"
+  },
+  "columns": {
+    "code": "Code",
+    "nameZh": "Chinese Name",
+    "nameEn": "English Name",
+    "sortOrder": "Sort",
+    "status": "Status",
+    "productCount": "Linked Products",
+    "subLineCount": "Sub-lines",
+    "actions": "Actions"
+  },
+  "status": {
+    "active": "Active",
+    "disabled": "Disabled"
+  },
+  "fields": {
+    "code": "Code",
+    "codeTipLine": "Starts with an uppercase letter; letters and & only; 2-32 chars; immutable after creation",
+    "codeTipSubLine": "Same form as the product form values (e.g. Personal Auto, D&O); immutable after creation",
+    "codeTipCoverage": "camelCase, 3-64 chars; immutable after creation",
+    "nameZh": "Chinese Name",
+    "nameEn": "English Name",
+    "sortOrder": "Sort Order",
+    "required": "Required"
+  },
+  "empty": {
+    "subLines": "Add the first sub-line for this line",
+    "noLineSelected": "Select a line on the left",
+    "list": "No data"
+  },
+  "confirm": {
+    "deleteTitle": "Delete Confirmation",
+    "deleteLine": "Delete line \"{code}\"? Deletion is soft and cannot be restored from the UI.",
+    "deleteSubLine": "Delete sub-line \"{code}\"? Deletion is soft and cannot be restored from the UI.",
+    "deleteCoverage": "Delete coverage \"{code}\"? Deletion is soft and cannot be restored from the UI.",
+    "disableTitle": "Disable Confirmation",
+    "disableWithRefs": "{count} linked products still reference this item. After disabling, it cannot be selected for new products; existing products are unaffected.",
+    "disableNoRefs": "Disable \"{code}\"? After disabling, it cannot be selected for new products; existing products are unaffected.",
+    "acknowledge": "I understand the impact"
+  },
+  "matrix": {
+    "selected": "{n}/{total} selected",
+    "selectedCol": "Selected",
+    "selectAll": "Select All",
+    "clearAll": "Clear",
+    "usageWarning": "{count} products are using it; it cannot be selected for new products after unchecking; existing products are unaffected",
+    "coverageDisabled": "This item is disabled; the link is kept"
+  },
+  "toast": {
+    "created": "Created",
+    "updated": "Saved",
+    "deleted": "Deleted",
+    "statusChanged": "Status updated",
+    "relSaved": "Applicability saved"
+  },
+  "errors": {
+    "DICT_CODE_EXISTS": "Code already exists",
+    "DICT_CODE_IMMUTABLE": "Code is immutable",
+    "DICT_IN_USE": "Item is still referenced and cannot be deleted",
+    "DICT_INVALID_CODE_FORMAT": "Code format is invalid",
+    "DICT_LINE_NOT_FOUND": "Line not found",
+    "DICT_SUB_LINE_NOT_FOUND": "Sub-line not found",
+    "DICT_COVERAGE_NOT_FOUND": "Coverage not found",
+    "DICT_FORBIDDEN": "Permission denied (dict:manage required)",
+    "DICT_INVALID_PARAMS": "Incomplete parameters",
+    "network": "Request failed, please retry"
+  }
+}

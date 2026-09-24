@@ -1,12 +1,5 @@
-packages:
-  # 主项目 (insurance-platform)
-  - 'insurance-platform'
-  # 后端服务
-  - 'services/*'
-  # 共享包
-  - 'packages/*'
-allowBuilds:
-  '@nestjs/core': true
-  bcrypt: set this to true or false
-  es5-ext: true
-  esbuild: true
+# 根项目是启动器（scripts/dev.js），真正的工作区在 insurance-platform/ 内。
+# 不声明 packages（省略时工作区仅含根包），避免与内层 workspace 嵌套冲突。
+# pnpm 11 默认 verifyDepsBeforeRun=install，运行脚本前会自动 pnpm install；
+# 根包无第三方依赖、两个内层 app 依赖已各自安装完整，关闭该检查防止网络抖动卡死启动。
+verifyDepsBeforeRun: false

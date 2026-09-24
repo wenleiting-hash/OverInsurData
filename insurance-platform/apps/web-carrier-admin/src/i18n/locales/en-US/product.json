@@ -137,6 +137,7 @@
     "statusPaused": "Paused",
     "statusOffSale": "Off Sale",
     "statusIncomplete": "Draft",
+    "statusPending": "Pending Activation",
     "underwritingAuto": "Auto Underwriting",
     "underwritingManual": "Manual Underwriting",
     "underwritingMGA": "MGA Underwriting",
@@ -222,6 +223,7 @@
     "status": "Status",
     "active": "Active",
     "paused": "Paused",
+    "pending": "Pending Activation",
     "inactive": "Inactive",
     "resetFilters": "Reset Filters",
     "sortBy": "Sort By",
@@ -247,12 +249,19 @@
     "offSale": "Off-sale",
     "pause": "Pause",
     "cancel": "Cancel",
-    "selectBeforeExport": "Please select data to export first"
+    "selectBeforeExport": "Please select data to export first",
+    "exportSuccess": "Product summary exported"
   },
   "export": {
     "relRatePlans": "Rate Plans",
     "relStates": "State Details",
-    "relAuthorizations": "Channel Authorizations"
+    "relAuthorizations": "Channel Authorizations",
+    "colRatePlanNames": "Rate Plan List",
+    "colStateList": "State List",
+    "exportSuccess": "Export complete ({count} records)",
+    "exportFailed": "Export failed, please try again",
+    "authorizationsSkipped": "Channel authorizations have no exportable API yet and were skipped",
+    "skipJoiner": "; "
   },
   "bulkActions": {
     "selectedCount": "{count} selected",
@@ -269,7 +278,41 @@
     "totalCount": "{count} total · Page {page} / {pages}",
     "pageSize": "10 per page",
     "pageSize20": "20 per page",
-    "pageSize50": "50 per page"
+    "pageSize50": "50 per page",
+    "pageSize100": "100 per page",
+    "pageSize200": "200 per page",
+    "pageSize500": "500 per page"
+  },
+  "toasts": {
+    "listed": "Product listed",
+    "paused": "Product sales paused",
+    "delisted": "Product delisted",
+    "actionFailed": "Operation failed, please try again",
+    "deletedN": "Deleted {n} product(s)",
+    "deleteFailed": "Deletion failed, please try again",
+    "batchListedN": "Listed {n} product(s)",
+    "batchDelistedN": "Delisted {n} product(s)",
+    "exportSuccess": "Export complete ({count} records)"
+  },
+  "deleteConfirm": {
+    "title": "Confirm Deletion",
+    "subtitle": "This action is irreversible",
+    "bodyPre": "You are about to delete product ",
+    "bodyPost": ". Related rate plans and authorization records will also be removed and cannot be recovered.",
+    "deleting": "Deleting...",
+    "confirm": "Confirm Delete"
+  },
+  "batchConfirm": {
+    "deleteTitle": "Batch Delete",
+    "listTitle": "Batch List",
+    "delistTitle": "Batch Delist",
+    "selectedCount": "{n} products selected",
+    "deleteBody": "The selected products and their rate plans and authorization records will be permanently removed. This action is irreversible. Continue?",
+    "listBody": "The selected products will return to on-sale status. Continue?",
+    "delistBody": "The selected products will stop accepting new quotes; existing policies renew per their contracts. Continue?",
+    "processing": "Processing...",
+    "confirmList": "Confirm List",
+    "confirmDelist": "Confirm Delist"
   },
   "pages": {
     "productManagement": "Product Management"
@@ -451,6 +494,7 @@
     "footerCount": "{count} product records"
   },
   "detail": {
+    "loadingText": "Loading...",
     "tabs": {
       "info": "Overview",
       "rates": "Rate Plans",
@@ -468,6 +512,9 @@
       "launch": "Launch Date",
       "statesSelling": "{count} states on sale",
       "statesValid": "Active in {count} states",
+      "mom": "+{pct}% MoM",
+      "termYear": "year",
+      "termYears": "years",
       "lossWarn": "⚠ Above alert threshold",
       "normalRange": "Within normal range",
       "highRetention": "↑ High retention",
@@ -478,6 +525,8 @@
     },
     "info": {
       "basicTitle": "Product Information",
+      "documentsTitle": "Product Documents",
+      "documentsEmpty": "No product documents yet. Upload them via the document step when editing the product.",
       "productName": "Product Name",
       "status": "Current Status",
       "spRating": "S&P Rating",
@@ -506,6 +555,7 @@
     },
     "rates": {
       "summary": "{total} rate plans · {active} active",
+      "productTitle": "Product Rate Configuration (set at creation)",
       "add": "Add Rate Plan",
       "active": "Active",
       "draft": "Draft",
@@ -540,10 +590,18 @@
       "notAvail": "Not Available",
       "suspended": "Suspended",
       "search": "Search state name or code…",
-      "channels": "{count} channels"
+      "channels": "{count} channels",
+      "suspend": "Suspend",
+      "resume": "Resume",
+      "suspendSuccess": "Sales suspended in this state",
+      "resumeSuccess": "Sales resumed in this state",
+      "suspendFailed": "Failed to suspend this state",
+      "resumeFailed": "Failed to resume this state"
     },
     "underwriting": {
       "summary": "{total} rules · {active} active · {testing} in testing",
+      "productTitle": "Product Underwriting Configuration (set at creation)",
+      "yes": "Yes",
       "add": "Add Rule",
       "eligibility": "Eligibility",
       "rating": "Rating",
@@ -551,6 +609,7 @@
       "referral": "Referral",
       "testing": "Testing",
       "inactive": "Inactive",
+      "then": "THEN",
       "lastModified": "Last modified: {date} · {by}"
     },
     "training": {
@@ -592,6 +651,7 @@
       "description": "Description",
       "descPlaceholder": "Describe the core value, target customers, and key features of the product…",
       "coverageHint": "Select the coverage categories included in this product",
+      "coverageEmpty": "No coverage configured for this line. Please maintain associations in Insurance Line Dictionary.",
       "uwModeHint": "Auto: the system decides instantly by preset rules. Manual: an underwriter reviews each case. MGA: the channel underwrites itself within its delegated authority.",
       "renewalHint": "Guaranteed: renews automatically at term end. Conditional: renews only when the conditions are met. Non-Renewable: terminates when the term expires.",
       "termHint": "The longest policy term allowed for a single policy, in years",
@@ -612,7 +672,7 @@
     "underwriting": {
       "subtitle": "Set up basic eligibility rules and automated decision logic. Advanced rules can be configured after the product goes live.",
       "noteTitle": "About Underwriting Rules",
-      "noteBody": "Rules configured here are applied automatically when channels submit quotes. Please confirm with the underwriting team before activation.",
+      "noteBody": "Rules configured here take effect when channels submit quotes (automatic execution is a future capability). Please confirm with the underwriting team before activation.",
       "years": "yrs",
       "autoRules": "Automated Underwriting Rules",
       "tagExclusion": "(Exclusion Rule)",
@@ -654,7 +714,8 @@
       "stepsProgress": "{done} / {total} steps completed",
       "updated": "Product Updated",
       "redirecting": "Redirecting to the product list…",
-      "saveFailed": "Save failed, please try again"
+      "saveFailed": "Save failed, please try again",
+      "saveFailedDetail": "Save failed: {detail}"
     },
     "errors": {
       "enterData": "Please fill in the required data",
@@ -768,7 +829,12 @@
       "submit": "Upload & Register",
       "submitting": "Submitting…",
       "success": "Training material uploaded",
-      "failed": "Failed to upload training material"
+      "failed": "Failed to upload training material",
+      "editTitle": "Edit Training Material",
+      "editSubtitle": "Update metadata or replace the file; the original file is kept unless a new one is uploaded",
+      "editSubmit": "Save Changes",
+      "editSuccess": "Training material updated",
+      "editFailed": "Failed to update training material"
     },
     "statusModal": {
       "listTitle": "List Product",
@@ -808,7 +874,16 @@
       "verbDelist": "delisting",
       "confirmTail": ". This action will be recorded in the audit log.",
       "confirmListBtn": "Confirm Listing",
-      "submitDelistBtn": "Confirm Delisting"
+      "submitDelistBtn": "Confirm Delisting",
+      "selectStates": "Select states to suspend (only states currently on sale are shown)",
+      "selectAll": "Select all",
+      "selectNone": "Clear",
+      "noActiveStates": "No state is currently on sale",
+      "selectedCount": "{count} states selected",
+      "scheduledHint": "Will execute automatically at {date} 00:00; pending change is visible in product detail",
+      "scheduledSuccess": "Scheduled status change registered; it will apply automatically",
+      "changeSuccess": "Product status updated and recorded in the audit log",
+      "changeFailed": "Failed to change product status"
     }
   },
   "menu": {

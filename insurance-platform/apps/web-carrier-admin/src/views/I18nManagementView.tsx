@@ -180,7 +180,15 @@ export default function I18nManagementView({ navigateTo }: Props) {
     zh: te.ovwr_zh_cn || '',
     type: (te.ovwr_type as CopyEntry['type']) || 'label',
   }))
-  const entries = apiEntries.length > 0 ? apiEntries : INITIAL_ENTRIES
+  const [entries, setEntries] = useState<CopyEntry[]>(apiEntries.length > 0 ? apiEntries : INITIAL_ENTRIES)
+
+  // Sync API data when it arrives
+  useEffect(() => {
+    if (apiEntries.length > 0) {
+      setEntries(apiEntries)
+    }
+  }, [apiData])
+
   const [activeModule, setActiveModule] = useState('all')
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('all')

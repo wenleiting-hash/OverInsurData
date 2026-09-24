@@ -1,22 +1,11 @@
 import { useState } from 'react'
 import {
-  FileCheck, Clock, RefreshCw, XCircle, ShieldCheck, Bell,
-  Ban, FileText, Search, AlertTriangle, CheckCircle2, XOctagon,
-  Download, Plus, Eye, Edit2,
-  AlertCircle, Filter, Loader2, Send, Activity,
-  ToggleLeft, ToggleRight, Info,
+  FileCheck, RefreshCw, XCircle, Bell,
+  Search, AlertTriangle, CheckCircle2,
+  Plus, Eye, Send, Activity,
 } from 'lucide-react'
 import type { ViewId } from '@/App'
-import {
-  appointmentRecords,
-  niprLicenses,
-  interceptLogs,
-  complianceRules,
-  ofacScreenings,
-  complianceReports,
-  REPORT_TYPES,
-  type OFACResult,
-} from './data/appointmentComplianceData'
+import { appointmentRecords } from './data/appointmentComplianceData'
 import { useTranslation } from 'react-i18next'
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
@@ -28,29 +17,6 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; labelKey: string
   expired:        { bg: 'rgba(180,180,180,0.15)', color: '#666',  labelKey: 'app.status.expired' },
   terminated:     { bg: 'rgba(130,80,255,0.12)', color: '#7B3FCA', labelKey: 'app.status.terminated' },
   'under-review': { bg: 'rgba(0,122,255,0.12)',  color: '#005DC7', labelKey: 'app.status.underReview' },
-}
-
-const LIC_STATUS_STYLE: Record<string, { bg: string; color: string; labelKey: string }> = {
-  active:    { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033', labelKey: 'app.licStatus.active' },
-  inactive:  { bg: 'rgba(180,180,180,0.15)', color: '#666',   labelKey: 'app.licStatus.inactive' },
-  expired:   { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', labelKey: 'app.licStatus.expired' },
-  suspended: { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', labelKey: 'app.licStatus.suspended' },
-  pending:   { bg: 'rgba(255,159,10,0.12)',  color: '#B06000', labelKey: 'app.licStatus.pending' },
-  cancelled: { bg: 'rgba(180,180,180,0.15)', color: '#666',   labelKey: 'app.licStatus.cancelled' },
-}
-
-const RESULT_STYLE: Record<string, { bg: string; color: string; labelKey: string; icon: React.ReactNode }> = {
-  blocked:         { bg: 'rgba(255,59,48,0.12)',  color: '#C0392B', labelKey: 'app.result.blocked',  icon: <XOctagon size={13} /> },
-  warned:          { bg: 'rgba(255,159,10,0.12)', color: '#B06000', labelKey: 'app.result.warned',  icon: <AlertTriangle size={13} /> },
-  passed:          { bg: 'rgba(52,199,89,0.12)',  color: '#1E8033', labelKey: 'app.result.passed',  icon: <CheckCircle2 size={13} /> },
-  'manual-review': { bg: 'rgba(0,122,255,0.12)', color: '#005DC7', labelKey: 'app.result.manualReview', icon: <Eye size={13} /> },
-}
-
-const OFAC_STYLE: Record<OFACResult, { bg: string; color: string; labelKey: string }> = {
-  clear:     { bg: 'rgba(52,199,89,0.12)',   color: '#1E8033', labelKey: 'app.ofacResult.clear' },
-  watchlist: { bg: 'rgba(255,159,10,0.12)',  color: '#B06000', labelKey: 'app.ofacResult.watchlist' },
-  blocked:   { bg: 'rgba(255,59,48,0.12)',   color: '#C0392B', labelKey: 'app.ofacResult.blocked' },
-  pending:   { bg: 'rgba(180,180,180,0.15)', color: '#666',    labelKey: 'app.ofacResult.pending' },
 }
 
 function Badge({ bg, color, children }: { bg: string; color: string; children: React.ReactNode }) {
@@ -403,486 +369,12 @@ function RenewalTerminationTab() {
   )
 }
 
-// ── Tab 4 — NIPR 牌照管理 ─────────────────────────────────────────────────────
-
-function NIRPLicenseTab() {
-  const { t } = useTranslation('appointment')
-  const [search, setSearch] = useState('')
-  const [verifying, setVerifying] = useState<string | null>(null)
-  const [verified, setVerified] = useState<string[]>([])
-
-  const filtered = niprLicenses.filter(l =>
-    !search || l.channelName.toLowerCase().includes(search.toLowerCase()) || l.npnNumber.toLowerCase().includes(search.toLowerCase()) || l.state.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const expiringSoon = niprLicenses.filter(l => l.daysToExpiry >= 0 && l.daysToExpiry <= 60)
-  const expired = niprLicenses.filter(l => l.daysToExpiry < 0 && l.status !== 'cancelled')
-  const mismatch = niprLicenses.filter(l => l.verificationStatus === 'mismatch')
-
-  const doVerify = (id: string) => {
-    setVerifying(id)
-    setTimeout(() => { setVerifying(null); setVerified(v => [...v, id]) }, 1800)
-  }
-
-  return (
-    <div>
-      {(expired.length > 0 || mismatch.length > 0) && (
-        <div className="flex flex-col gap-2 mb-4">
-          {expired.length > 0 && (
-            <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.25)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-              <AlertTriangle size={15} color="#C0392B" />
-              <span style={{ color: '#7A2020', fontWeight: 600 }}>{t('app.expiredLicensesCount', { n: expired.length })}</span>
-              <span style={{ color: '#A0A5B1' }}>—</span>
-              <span style={{ color: '#717786' }}>{t('app.expiredLicensesHint')}</span>
-            </div>
-          )}
-          {mismatch.length > 0 && (
-            <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(255,159,10,0.08)', border: '1px solid rgba(255,159,10,0.25)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-              <AlertCircle size={15} color="#B06000" />
-              <span style={{ color: '#7A5000', fontWeight: 600 }}>{t('app.mismatchLicensesCount', { n: mismatch.length })}</span>
-              <span style={{ color: '#A0A5B1' }}>—</span>
-              <span style={{ color: '#717786' }}>{t('app.mismatchHint')}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 18 }}>
-        {[
-          { label: t('app.licStats.total'), value: niprLicenses.length, color: '#0058BC' },
-          { label: t('app.licStats.active'), value: niprLicenses.filter(l => l.status === 'active').length, color: '#1E8033' },
-          { label: t('app.licStats.expiring60'), value: expiringSoon.length, color: '#B06000' },
-          { label: t('app.licStats.expiredSuspended'), value: expired.length + niprLicenses.filter(l => l.status === 'suspended').length, color: '#C0392B' },
-        ].map(s => (
-          <Card key={s.label}>
-            <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: s.color, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
-          </Card>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between mb-3">
-        <div className="relative">
-          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#717786' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('app.licSearchPlaceholder')} className="input-glass" style={{ paddingLeft: 30, width: 240, fontSize: 12.5 }} />
-        </div>
-        <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>
-          <ShieldCheck size={13} /> {t('app.batchNiprVerify')}
-        </button>
-      </div>
-
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['channelNpn', 'state', 'licenseNumber', 'typeLine', 'status', 'expiryDate', 'niprVerification', 'ceHours', 'actions'].map(h => (
-                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786', whiteSpace: 'nowrap' }}>{t(`app.licTable.${h}`)}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((l, i) => {
-              const st = LIC_STATUS_STYLE[l.status]
-              const vs = l.verificationStatus
-              const vsColor = vs === 'verified' ? '#1E8033' : vs === 'mismatch' ? '#B06000' : vs === 'not-found' ? '#C0392B' : '#A0A5B1'
-              const vsLabel = vs === 'verified' ? t('app.verification.verified') : vs === 'mismatch' ? t('app.verification.mismatch') : vs === 'not-found' ? t('app.verification.notFound') : t('app.verification.pending')
-              const isVerifying = verifying === l.id
-              const wasVerified = verified.includes(l.id)
-              const ceOk = (l.ceHoursCompleted ?? 0) >= (l.ceHoursRequired ?? 0)
-
-              return (
-                <tr key={l.id} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
-                  <td style={{ padding: '10px 14px' }}>
-                    <div style={{ fontWeight: 600, color: '#181C23' }}>{l.channelName}</div>
-                    <div style={{ fontSize: 11, color: '#717786', fontFamily: "'JetBrains Mono', monospace" }}>{l.npnNumber}</div>
-                  </td>
-                  <td style={{ padding: '10px 14px', fontWeight: 700, color: '#0058BC', fontSize: 14 }}>{l.state}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: '#555' }}>{l.licenseNumber}</td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#181C23' }}>{l.licenseType}</div>
-                    <div style={{ fontSize: 11, color: '#717786' }}>{l.lines.join(', ')}</div>
-                  </td>
-                  <td style={{ padding: '10px 14px' }}><Badge bg={st.bg} color={st.color}>{t(st.labelKey)}</Badge></td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: l.daysToExpiry < 0 ? '#C0392B' : l.daysToExpiry <= 60 ? '#B06000' : '#555' }}>{l.expiryDate}</div>
-                    {l.daysToExpiry >= 0 && l.daysToExpiry <= 60 && <div style={{ fontSize: 10.5, color: '#B06000', fontWeight: 600 }}>{t('app.daysRemaining', { d: l.daysToExpiry })}</div>}
-                    {l.daysToExpiry < 0 && <div style={{ fontSize: 10.5, color: '#C0392B', fontWeight: 600 }}>{t('app.status.expired')}</div>}
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    {isVerifying
-                      ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#0058BC' }}><Loader2 size={12} className="animate-spin" />{t('app.verifying')}</span>
-                      : <span style={{ color: wasVerified ? '#1E8033' : vsColor, fontSize: 12, fontWeight: 600 }}>{wasVerified ? t('app.verification.verified') : vsLabel}</span>
-                    }
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    {(l.ceHoursRequired ?? 0) > 0 ? (
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(193,198,215,0.4)', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${Math.min(100, ((l.ceHoursCompleted ?? 0) / (l.ceHoursRequired ?? 1)) * 100)}%`, background: ceOk ? '#34C759' : '#FF9F0A', borderRadius: 2 }} />
-                          </div>
-                          <span style={{ fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace", color: ceOk ? '#1E8033' : '#B06000', fontWeight: 600 }}>{l.ceHoursCompleted}/{l.ceHoursRequired}h</span>
-                        </div>
-                      </div>
-                    ) : <span style={{ fontSize: 12, color: '#C1C6D7' }}>N/A</span>}
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <div className="flex items-center gap-1">
-                      <button className="btn-ghost" style={{ padding: 5 }}><Eye size={13} /></button>
-                      <button className="btn-ghost" style={{ padding: 5 }} onClick={() => doVerify(l.id)}><ShieldCheck size={13} /></button>
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </Card>
-    </div>
-  )
-}
-
-// ── Tab 5 — 出单合规拦截 ──────────────────────────────────────────────────────
-
-function ComplianceInterceptionTab() {
-  const { t, i18n } = useTranslation('appointment')
-  const isEn = i18n.language.startsWith('en')
-  const [activeTab, setActiveTab] = useState<'log' | 'rules'>('log')
-
-  const blockCount = interceptLogs.filter(l => l.result === 'blocked').length
-  const warnCount = interceptLogs.filter(l => l.result === 'warned').length
-  const reviewCount = interceptLogs.filter(l => l.result === 'manual-review').length
-  const passCount = interceptLogs.filter(l => l.result === 'passed').length
-
-  return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 18 }}>
-        {[
-          { label: t('app.interceptStats.total'), value: interceptLogs.length, color: '#181C23' },
-          { label: t('app.result.blocked'), value: blockCount, color: '#C0392B' },
-          { label: t('app.result.warned'), value: warnCount, color: '#B06000' },
-          { label: t('app.result.manualReview'), value: reviewCount, color: '#0058BC' },
-          { label: t('app.result.passed'), value: passCount, color: '#1E8033' },
-        ].map(s => (
-          <Card key={s.label}>
-            <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: s.color, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
-          </Card>
-        ))}
-      </div>
-
-      <div className="tab-bar mb-4">
-        {([['log', t('app.interceptTabs.log')], ['rules', t('app.interceptTabs.rules')]] as const).map(([v, l]) => (
-          <div key={v} className={`tab-item${activeTab === v ? ' active' : ''}`} onClick={() => setActiveTab(v)}>{l}</div>
-        ))}
-      </div>
-
-      {activeTab === 'log' && (
-        <div className="flex flex-col gap-3">
-          {interceptLogs.map(log => {
-            const rs = RESULT_STYLE[log.result]
-            return (
-              <Card key={log.id} style={{ padding: '14px 16px' }}>
-                <div className="flex items-start justify-between">
-                  <div style={{ flex: 1 }}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Badge bg={rs.bg} color={rs.color}>{rs.icon} {t(rs.labelKey)}</Badge>
-                      <span style={{ fontSize: 11.5, color: '#A0A5B1', fontFamily: "'JetBrains Mono', monospace" }}>{log.timestamp}</span>
-                      <span style={{ fontSize: 12, color: '#717786' }}>{log.channelName} · {log.insurerShort} · {log.state} {log.line}</span>
-                    </div>
-                    <div className="flex items-center gap-4 mb-2" style={{ fontSize: 12.5 }}>
-                      <span style={{ color: '#717786' }}>{t('app.policyDraftLabel')}</span>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#0058BC' }}>{log.policyDraftId}</span>
-                      <span style={{ color: '#717786' }}>{t('app.customerLabel')}</span>
-                      <span style={{ fontWeight: 600, color: '#181C23' }}>{log.customerName}</span>
-                      <span style={{ color: '#717786' }}>{t('app.premiumLabel')}</span>
-                      <span style={{ fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>${log.premiumAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      {log.reasonDescriptions.map((d, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12.5, color: '#C0392B' }}>
-                          <XOctagon size={11} style={{ flexShrink: 0, marginTop: 1 }} />
-                          <span>{d}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {log.result === 'manual-review' && (
-                    <div style={{ marginLeft: 16, flexShrink: 0 }}>
-                      {log.overrideApproved
-                        ? <Badge bg="rgba(52,199,89,0.12)" color="#1E8033">{t('app.released')}</Badge>
-                        : <button style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>{t('app.result.manualReview')}</button>
-                      }
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )
-          })}
-        </div>
-      )}
-
-      {activeTab === 'rules' && (
-        <div className="flex flex-col gap-3">
-          {complianceRules.map(rule => {
-            const actionStyle = rule.action === 'block' ? { bg: 'rgba(255,59,48,0.1)', color: '#C0392B', label: t('app.ruleAction.block') } : rule.action === 'warn' ? { bg: 'rgba(255,159,10,0.1)', color: '#B06000', label: t('app.ruleAction.warn') } : { bg: 'rgba(0,88,188,0.1)', color: '#0058BC', label: t('app.result.manualReview') }
-            const catColors: Record<string, string> = { appointment: '#7B3FCA', license: '#0058BC', ofac: '#C0392B', channel: '#1E8033', product: '#B06000' }
-            const catBg: Record<string, string> = { appointment: 'rgba(123,63,202,0.1)', license: 'rgba(0,88,188,0.1)', ofac: 'rgba(192,57,43,0.1)', channel: 'rgba(30,128,51,0.1)', product: 'rgba(176,96,0,0.1)' }
-            return (
-              <Card key={rule.id} style={{ padding: '14px 16px' }}>
-                <div className="flex items-center justify-between">
-                  <div style={{ flex: 1 }}>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span style={{ fontSize: 11, fontWeight: 700, background: catBg[rule.category], color: catColors[rule.category], borderRadius: 5, padding: '2px 7px' }}>{rule.category.toUpperCase()}</span>
-                      <span style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{isEn ? rule.nameEn : rule.name}</span>
-                      <Badge bg={actionStyle.bg} color={actionStyle.color}>{actionStyle.label}</Badge>
-                      <span style={{ fontSize: 11, color: '#A0A5B1' }}>{t('app.priority', { n: rule.priority })}</span>
-                    </div>
-                    <div style={{ fontSize: 12, color: '#717786', fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>{isEn ? rule.conditionEn ?? rule.condition : rule.condition}</div>
-                    <div style={{ fontSize: 11.5, color: '#A0A5B1' }}>{t('app.triggerCountLabel')}<span style={{ fontWeight: 700, color: '#181C23', fontFamily: "'JetBrains Mono', monospace" }}>{rule.triggeredCount}</span> · {t('app.lastTriggeredLabel')}{rule.lastTriggered || '—'}</div>
-                  </div>
-                  <div className="flex items-center gap-3 ml-6">
-                    <button className="btn-ghost" style={{ padding: 5 }}><Edit2 size={13} /></button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: rule.enabled ? '#34C759' : '#C1C6D7' }}>
-                      {rule.enabled ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Tab 6 — 合规报告 ──────────────────────────────────────────────────────────
-
-function ComplianceReportTab() {
-  const { t, i18n } = useTranslation('appointment')
-  const isEn = i18n.language.startsWith('en')
-  const [generating, setGenerating] = useState(false)
-  const [genType, setGenType] = useState('appointment-status')
-  const [genFormat, setGenFormat] = useState('PDF')
-  const [showForm, setShowForm] = useState(false)
-
-  const doGenerate = () => {
-    setGenerating(true)
-    setTimeout(() => { setGenerating(false); setShowForm(false) }, 2000)
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23' }}>{t('app.reportCenter')}</div>
-        <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer' }}>
-          <Plus size={14} /> {t('app.generateNewReport')}
-        </button>
-      </div>
-
-      {showForm && (
-        <Card style={{ marginBottom: 16, background: 'rgba(0,88,188,0.04)', border: '1px solid rgba(0,88,188,0.15)' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#181C23', marginBottom: 14 }}>{t('app.configureReport')}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t('app.reportTypeLabel')}</label>
-              <select value={genType} onChange={e => setGenType(e.target.value)} className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                {REPORT_TYPES.map(v => <option key={v} value={v}>{t(`app.reportTypes.${v}`)}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t('app.reportPeriodLabel')}</label>
-              <select className="input-glass" style={{ width: '100%', fontSize: 13 }}>
-                <option>{t('app.period.aug2026')}</option><option>{t('app.period.jul2026')}</option><option>2026-Q3</option><option>2026-Q2</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t('app.outputFormatLabel')}</label>
-              <div className="flex gap-2">
-                {(['PDF', 'Excel', 'CSV'] as const).map(f => (
-                  <button key={f} onClick={() => setGenFormat(f)} style={{ flex: 1, padding: '7px 0', borderRadius: 8, fontSize: 12.5, fontWeight: 600, border: genFormat === f ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: genFormat === f ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: genFormat === f ? '#0058BC' : '#717786', cursor: 'pointer' }}>{f}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <button className="btn-ghost" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => setShowForm(false)}>{t('app.cancel')}</button>
-            <button onClick={doGenerate} disabled={generating} style={{ padding: '7px 20px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#0058BC', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              {generating ? <><Loader2 size={13} className="animate-spin" />{t('app.generating')}</> : t('app.startGeneration')}
-            </button>
-          </div>
-        </Card>
-      )}
-
-      <div className="flex flex-col gap-3">
-        {complianceReports.map(rp => {
-          const statusS = rp.status === 'ready' ? { bg: 'rgba(52,199,89,0.12)', color: '#1E8033', label: t('app.reportStatus.ready') } : rp.status === 'generating' ? { bg: 'rgba(255,159,10,0.12)', color: '#B06000', label: t('app.reportStatus.generating') } : rp.status === 'scheduled' ? { bg: 'rgba(180,180,180,0.15)', color: '#666', label: t('app.reportStatus.scheduled') } : { bg: 'rgba(255,59,48,0.12)', color: '#C0392B', label: t('app.reportStatus.failed') }
-          return (
-            <Card key={rp.id} style={{ padding: '14px 16px' }}>
-              <div className="flex items-center justify-between">
-                <div style={{ flex: 1 }}>
-                  <div className="flex items-center gap-3 mb-1">
-                    <Badge bg="rgba(0,88,188,0.08)" color="#0058BC">{t(`app.reportTypes.${rp.type}`)}</Badge>
-                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#181C23' }}>{isEn ? rp.nameEn : rp.name}</span>
-                    <Badge bg={statusS.bg} color={statusS.color}>{statusS.label}</Badge>
-                    <span style={{ fontSize: 11, color: '#A0A5B1', background: 'rgba(180,180,180,0.12)', padding: '1px 6px', borderRadius: 5 }}>{rp.format}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: '#717786' }}>
-                    {rp.generatedDate ? <>{t('app.generatedAtLabel')}<span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{rp.generatedDate}</span> · {t('app.generatedByLabel')}{rp.generatedBy}</> : <>{t('app.scheduledGeneration')} · {t('app.operatorLabel')}{rp.generatedBy}</>}
-                    {rp.fileSize && <> · {t('app.fileSizeLabel')}<span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{rp.fileSize}</span></>}
-                    {rp.recordCount && <> · {t('app.recordCountLabel')}<span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>{rp.recordCount}</span></>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  {rp.status === 'ready' && (
-                    <>
-                      <button className="btn-ghost" style={{ padding: 6 }}><Eye size={14} /></button>
-                      <button style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>
-                        <Download size={12} /> {t('app.download')}
-                      </button>
-                    </>
-                  )}
-                  {rp.status === 'generating' && <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#B06000' }}><Loader2 size={13} className="animate-spin" />{t('app.reportStatus.generating')}</span>}
-                  {rp.status === 'scheduled' && <span style={{ fontSize: 12, color: '#A0A5B1' }}>{t('app.awaitingExecution')}</span>}
-                </div>
-              </div>
-            </Card>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ── Tab 7 — OFAC 筛查 ────────────────────────────────────────────────────────
-
-function OFACScreeningTab() {
-  const { t } = useTranslation('appointment')
-  const [entityName, setEntityName] = useState('')
-  const [entityType, setEntityType] = useState<'Individual' | 'Company'>('Company')
-  const [screening, setScreening] = useState(false)
-  const [screenResult, setScreenResult] = useState<null | { result: OFACResult; score?: number; entry?: string }>(null)
-
-  const doScreen = () => {
-    setScreening(true)
-    setScreenResult(null)
-    setTimeout(() => {
-      setScreening(false)
-      const r = Math.random()
-      if (r < 0.05) setScreenResult({ result: 'blocked', score: 97, entry: entityName.toUpperCase() })
-      else if (r < 0.2) setScreenResult({ result: 'watchlist', score: Math.floor(75 + Math.random() * 20), entry: entityName + ' (variant)' })
-      else setScreenResult({ result: 'clear' })
-    }, 2200)
-  }
-
-  const clearCount = ofacScreenings.filter(s => s.result === 'clear').length
-  const watchCount = ofacScreenings.filter(s => s.result === 'watchlist').length
-  const blockCount = ofacScreenings.filter(s => s.result === 'blocked').length
-
-  return (
-    <div>
-      <Card style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#181C23', marginBottom: 4 }}>{t('app.ofac.title')}</div>
-        <div style={{ fontSize: 12.5, color: '#717786', marginBottom: 16 }}>{t('app.ofac.subtitle')}</div>
-        <div className="flex items-end gap-3">
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t('app.ofac.entityName')}</label>
-            <input value={entityName} onChange={e => setEntityName(e.target.value)} placeholder={t('app.ofac.entityPlaceholder')} className="input-glass" style={{ width: '100%', fontSize: 13 }} />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#717786', display: 'block', marginBottom: 6 }}>{t('app.ofac.typeLabel')}</label>
-            <div className="flex gap-2">
-              {(['Company', 'Individual'] as const).map(opt => (
-                <button key={opt} onClick={() => setEntityType(opt)} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, border: entityType === opt ? '1.5px solid #0058BC' : '1px solid rgba(193,198,215,0.4)', background: entityType === opt ? 'rgba(0,88,188,0.1)' : 'rgba(255,255,255,0.5)', color: entityType === opt ? '#0058BC' : '#717786', cursor: 'pointer' }}>{opt === 'Company' ? t('app.ofac.company') : t('app.ofac.individual')}</button>
-              ))}
-            </div>
-          </div>
-          <button onClick={doScreen} disabled={!entityName || screening} style={{ padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: entityName && !screening ? '#0058BC' : 'rgba(0,88,188,0.3)', color: '#fff', border: 'none', cursor: entityName && !screening ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {screening ? <><Loader2 size={13} className="animate-spin" />{t('app.ofac.screening')}</> : <><Search size={13} />{t('app.ofac.startScreening')}</>}
-          </button>
-        </div>
-
-        {screenResult && (
-          <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, background: screenResult.result === 'clear' ? 'rgba(52,199,89,0.08)' : screenResult.result === 'watchlist' ? 'rgba(255,159,10,0.08)' : 'rgba(255,59,48,0.08)', border: `1px solid ${screenResult.result === 'clear' ? 'rgba(52,199,89,0.3)' : screenResult.result === 'watchlist' ? 'rgba(255,159,10,0.3)' : 'rgba(255,59,48,0.3)'}` }}>
-            <div className="flex items-center gap-3">
-              {screenResult.result === 'clear' ? <CheckCircle2 size={20} color="#1E8033" /> : screenResult.result === 'watchlist' ? <AlertTriangle size={20} color="#B06000" /> : <XOctagon size={20} color="#C0392B" />}
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: screenResult.result === 'clear' ? '#1E8033' : screenResult.result === 'watchlist' ? '#B06000' : '#C0392B' }}>
-                  {screenResult.result === 'clear' ? t('app.ofac.passed') : screenResult.result === 'watchlist' ? t('app.ofac.watchlistScore', { score: screenResult.score }) : t('app.ofac.blocked')}
-                </div>
-                {screenResult.entry && <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t('app.ofac.matchedEntryLabel')}{screenResult.entry}</div>}
-                {screenResult.result === 'watchlist' && <div style={{ fontSize: 12, color: '#B06000', marginTop: 4 }}>{t('app.ofac.reviewHint')}</div>}
-                {screenResult.result === 'blocked' && <div style={{ fontSize: 12, color: '#C0392B', marginTop: 4 }}>{t('app.ofac.blockedHint')}</div>}
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 18 }}>
-        {[
-          { label: t('app.ofac.stats.total'), value: ofacScreenings.length, color: '#181C23' },
-          { label: t('app.ofacResult.clear'), value: clearCount, color: '#1E8033' },
-          { label: t('app.ofacResult.watchlist'), value: watchCount, color: '#B06000' },
-          { label: t('app.ofacResult.blocked'), value: blockCount, color: '#C0392B' },
-        ].map(s => (
-          <Card key={s.label}>
-            <div style={{ fontSize: 11, color: '#717786', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: s.color, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
-          </Card>
-        ))}
-      </div>
-
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ borderBottom: '0.5px solid rgba(193,198,215,0.5)', background: 'rgba(249,249,255,0.7)' }}>
-              {['timestamp', 'entityName', 'type', 'result', 'matchedEntry', 'operator', 'disposition'].map(h => (
-                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#717786' }}>{t(`app.ofac.table.${h}`)}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ofacScreenings.map((s, i) => {
-              const rs = OFAC_STYLE[s.result]
-              return (
-                <tr key={s.id} style={{ borderBottom: '0.5px solid rgba(193,198,215,0.25)', background: i % 2 === 0 ? 'transparent' : 'rgba(249,249,255,0.4)' }}>
-                  <td style={{ padding: '10px 14px', fontSize: 11.5, fontFamily: "'JetBrains Mono', monospace", color: '#717786', whiteSpace: 'nowrap' }}>{s.timestamp}</td>
-                  <td style={{ padding: '10px 14px', fontWeight: 600, color: '#181C23' }}>{s.entityName}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#717786' }}>{s.entityType}</td>
-                  <td style={{ padding: '10px 14px' }}><Badge bg={rs.bg} color={rs.color}>{t(rs.labelKey)}</Badge></td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: s.matchedEntry ? '#B06000' : '#C1C6D7' }}>{s.matchedEntry || '—'}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#555' }}>{s.screenedBy}</td>
-                  <td style={{ padding: '10px 14px' }}>
-                    {s.result === 'watchlist' && (
-                      s.overrideApproved
-                        ? <span style={{ fontSize: 11.5, color: '#1E8033', fontWeight: 600 }}>{t('app.released')}</span>
-                        : <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700, background: 'rgba(0,88,188,0.1)', color: '#0058BC', border: '1px solid rgba(0,88,188,0.2)', cursor: 'pointer' }}>{t('app.result.manualReview')}</button>
-                    )}
-                    {s.result === 'blocked' && <span style={{ fontSize: 11.5, color: '#C0392B', fontWeight: 600 }}>{t('app.result.blocked')}</span>}
-                    {s.result === 'clear' && <span style={{ fontSize: 11.5, color: '#1E8033' }}>{t('app.ofac.pass')}</span>}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </Card>
-    </div>
-  )
-}
-
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const TABS = [
   { id: 'apply',     icon: <FileCheck size={15} />,   labelKey: 'app.tabs.application' },
   { id: 'track',     icon: <Activity size={15} />,    labelKey: 'app.tabs.tracking' },
   { id: 'renewal',   icon: <RefreshCw size={15} />,   labelKey: 'app.tabs.renewal' },
-  { id: 'nipr',      icon: <ShieldCheck size={15} />, labelKey: 'app.tabs.license' },
-  { id: 'intercept', icon: <Ban size={15} />,         labelKey: 'app.tabs.interception' },
-  { id: 'report',    icon: <FileText size={15} />,    labelKey: 'app.tabs.report' },
-  { id: 'ofac',      icon: <Search size={15} />,      labelKey: 'app.tabs.ofac' },
 ] as const
 
 type TabId = typeof TABS[number]['id']
@@ -895,7 +387,6 @@ export default function AppointmentApplicationView({ navigateTo }: Props) {
   const { t } = useTranslation('appointment')
   const [tab, setTab] = useState<TabId>('apply')
 
-  const expiredLicenses = niprLicenses.filter(l => l.daysToExpiry < 0).length
   const pendingApps = appointmentRecords.filter(r => r.status === 'pending' || r.status === 'under-review').length
   const urgentRenewals = appointmentRecords.filter(r => r.daysToExpiry >= 0 && r.daysToExpiry <= 30 && r.status === 'approved').length
 
@@ -907,11 +398,6 @@ export default function AppointmentApplicationView({ navigateTo }: Props) {
           <p style={{ fontSize: 13, color: '#717786', marginTop: 3 }}>{t('app.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          {expiredLicenses > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,59,48,0.1)', border: '1px solid rgba(255,59,48,0.25)', fontSize: 12.5, fontWeight: 600, color: '#C0392B' }}>
-              <AlertTriangle size={13} /> {t('app.expiredLicensesCount', { n: expiredLicenses })}
-            </div>
-          )}
           {urgentRenewals > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.25)', fontSize: 12.5, fontWeight: 600, color: '#B06000' }}>
               <Bell size={13} /> {t('app.expiringSoonCount', { n: urgentRenewals })}
@@ -933,9 +419,6 @@ export default function AppointmentApplicationView({ navigateTo }: Props) {
             {tb.id === 'apply' && pendingApps > 0 && (
               <span style={{ background: '#FF9F0A', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{pendingApps}</span>
             )}
-            {tb.id === 'nipr' && expiredLicenses > 0 && (
-              <span style={{ background: '#FF3B30', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '1px 5px', lineHeight: 1.4 }}>{expiredLicenses}</span>
-            )}
           </div>
         ))}
       </div>
@@ -943,10 +426,6 @@ export default function AppointmentApplicationView({ navigateTo }: Props) {
       {tab === 'apply' && <AppointmentApplicationTab navigateTo={navigateTo} />}
       {tab === 'track' && <StatusTrackingTab />}
       {tab === 'renewal' && <RenewalTerminationTab />}
-      {tab === 'nipr' && <NIRPLicenseTab />}
-      {tab === 'intercept' && <ComplianceInterceptionTab />}
-      {tab === 'report' && <ComplianceReportTab />}
-      {tab === 'ofac' && <OFACScreeningTab />}
     </div>
   )
 }

@@ -14,7 +14,8 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@channel/*": ["../web-channel-admin/src/*"]
     }
   },
   "include": ["src"]

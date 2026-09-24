@@ -18,6 +18,11 @@
     "allStatuses": "全部状态",
     "active": "合作中",
     "inactive": "已停用",
+    "expiring": "即将到期",
+    "terminated": "已终止",
+    "archiveStatus": "档案状态",
+    "archiveActive": "正常",
+    "archiveInactive": "已停用",
     "region": "总部大区",
     "allRegions": "全部区域",
     "northeast": "Northeast",
@@ -71,7 +76,9 @@
     "pageSize": "每页 10 条",
     "pageSize20": "每页 20 条",
     "pageSize50": "每页 50 条",
-    "pageSize100": "每页 100 条"
+    "pageSize100": "每页 100 条",
+    "pageSize200": "每页 200 条",
+    "pageSize500": "每页 500 条"
   },
   "form": {
     "title": "职位",
@@ -187,13 +194,14 @@
     },
     "coopStatus": "合作状态",
     "coop": {
-      "active": "正常",
+      "active": "合作中",
       "expiring": "即将到期",
-      "terminated": "已终止"
+      "terminated": "已终止",
+      "none": "未合作"
     },
     "contractExpiry": "合同到期",
-    "foundedIn": "成立于 {{year}} 年",
-    "daysRemaining": "剩余 {{days}} 天",
+    "foundedIn": "成立于 {year} 年",
+    "daysRemaining": "剩余 {days} 天",
     "sections": {
       "basicInfo": "公司基本信息",
       "hq": "总部信息",
@@ -228,11 +236,12 @@
       "apiPull": "API 自动拉取",
       "dueDay25": "每月 25 日",
       "paymentTerm": "月后 15 个工作日",
+      "paymentTermDays": "对账后 {n} 天内付款",
       "premiumCollectionValue": "渠道代收 → 平台归集",
       "paymentTermDaysUnit": "天"
     },
     "contacts": {
-      "viewAll": "查看全部 {{count}} 个对接人",
+      "viewAll": "查看全部 {count} 个对接人",
       "roleAccountManager": "客户经理",
       "roleUnderwriting": "核保联系人",
       "roleFinance": "结算财务联系人",
@@ -247,7 +256,7 @@
       "moodysDesc": "穆迪评级",
       "fitchDesc": "惠誉评级",
       "trend": "评级趋势",
-      "updatedAt": "更新于 {{date}}",
+      "updatedAt": "更新于 {date}",
       "lossTrendTitle": "赔付率走势（近6月）",
       "lossTrendSub": "月度赔付率 · 预警阈值 65%",
       "lossCurrent": "当前赔付率",
@@ -257,7 +266,7 @@
       "healthSolvency": "偿付能力充足率",
       "healthCombined": "综合成本率",
       "healthRoi": "投资回报率",
-      "regThreshold": "监管阈值: {{value}}"
+      "regThreshold": "监管阈值: {value}"
     },
     "channelTable": {
       "name": "渠道名称",
@@ -297,11 +306,12 @@
       "preview": "预览",
       "download": "下载",
       "delete": "删除",
-      "alert": "{{count}} 个文件即将到期或已过期，请及时更新",
-      "uploadedInfo": "上传于 {{date}} · {{by}}",
-      "validUntil": " · 有效期至 {{date}}",
+      "alert": "{count} 个文件即将到期或已过期，请及时更新",
+      "uploadedInfo": "上传于 {date} · {by}",
+      "validUntil": " · 有效期至 {date}",
       "noDocs": "暂无附件文件",
       "docTypes": {
+        "businessLicense": "营业执照",
         "master": "主合作协议",
         "nda": "保密协议 (NDA)",
         "dpa": "数据处理协议 (DPA)",
@@ -362,9 +372,16 @@
       "lossRatio": "赔付率"
     },
     "products": {
-      "countPre": "该保险公司下共 ",
-      "countPost": " 个产品",
+      "countSummary": "共 {total} 个产品 · {onSale} 个在售",
+      "autoLinkHint": "产品由新建保险公司或接入流程自动关联；可通过「关联已有产品」手动补充挂靠。",
+      "linkedToast": "已关联 {n} 个产品",
       "addProduct": "新增产品",
+      "linkExisting": "关联已有产品",
+      "linkModalTitle": "关联已有产品",
+      "linkSearchPlaceholder": "搜索产品名称或代码",
+      "linked": "已关联",
+      "confirm": "确定",
+      "cancel": "取消",
       "typeIndividual": "个人险",
       "typeGroup": "团体险",
       "typeVoluntary": "自愿险",
@@ -440,7 +457,8 @@
       "disable": "停用",
       "enable": "启用",
       "delete": "删除",
-      "featurePending": "功能待实现"
+      "featurePending": "功能待实现",
+      "viewProduct": "查看产品详情"
     }
   },
   "import": {
@@ -481,9 +499,19 @@
     },
     "upload": {
       "heading": "上传 Excel 文件",
-      "desc": "仅支持 .xlsx / .xls 格式，文件大小不超过 10MB",
+      "desc": "仅支持 .xlsx / .xls / .csv 格式，文件大小不超过 10MB",
       "dragHint": "拖拽文件至此处，或点击选择文件",
-      "formats": "支持 .xlsx · .xls"
+      "formats": "支持 .xlsx · .xls · .csv",
+      "continue": "继续数据预览",
+      "reselect": "重新选择",
+      "remove": "移除文件",
+      "invalidType": "不支持的文件格式，请上传 .xlsx / .xls / .csv 文件",
+      "tooLarge": "文件大小超过 10MB 限制，请压缩或拆分后重新上传",
+      "parseFailed": "文件解析失败，请确认文件未损坏且符合标准模板格式",
+      "emptyFile": "文件内容为空或没有有效数据行，请检查后重新上传",
+      "missingColumns": "未识别到必填列（公司全称、NAIC 编码），请下载并使用标准模板",
+      "sizeKb": "{n} KB",
+      "sizeMb": "{n} MB"
     },
     "preview": {
       "heading": "数据预览",
@@ -491,6 +519,7 @@
       "totalRows": "共 {n} 行",
       "mappingTitle": "字段映射确认",
       "ignore": "— 忽略 —",
+      "unmapped": "未匹配",
       "colRow": "行号",
       "colName": "公司全称",
       "colShortName": "简称",
@@ -500,7 +529,8 @@
       "colRating": "评级",
       "colStatus": "状态",
       "ok": "正常",
-      "toValidate": "进入校验"
+      "toValidate": "进入校验",
+      "showingFirst": "数据量较大，仅预览前 {n} 行（共 {total} 行）；全部数据将参与校验"
     },
     "fieldMap": {
       "fullName": "公司全称",
@@ -513,8 +543,26 @@
       "foundedYear": "成立年份"
     },
     "errors": {
+      "nameRequired": "公司全称不能为空",
+      "nameTooLong": "公司全称不能超过 {n} 个字符",
+      "shortNameRequired": "公司简称不能为空",
+      "shortNameTooLong": "公司简称不能超过 {n} 个字符",
       "naicRequired": "NAIC 编码不能为空",
-      "ratingRequired": "AM Best 评级不能为空"
+      "naicFormat": "NAIC 编码必须为 5 位数字",
+      "typeRequired": "公司类型不能为空",
+      "typeInvalid": "公司类型只能为 Admitted 或 Non-Admitted",
+      "stateRequired": "总部州不能为空",
+      "stateInvalid": "州必须为 2 位大写英文字母（如 NY、CA）",
+      "regionRequired": "大区不能为空",
+      "regionInvalid": "大区只能为 Northeast / Southeast / Midwest / West / National",
+      "ratingInvalid": "AM Best 评级不合法（如 A++、A+、A、A-、B++）",
+      "yearInvalid": "成立年份需为 {min} 至 {max} 之间的 4 位整数年份",
+      "duplicateInFile": "NAIC 编码与第 {row} 行重复",
+      "duplicateInDb": "NAIC 编码 {code} 已存在于系统中"
+    },
+    "errorReport": {
+      "field": "错误字段",
+      "reason": "错误原因"
     },
     "validate": {
       "heading": "数据校验结果",
@@ -525,7 +573,8 @@
       "row": "行 {n}",
       "downloadReport": "下载错误报告",
       "skipErrors": "跳过错误行，仅导入正常行",
-      "continue": "确认，继续导入"
+      "continue": "确认，继续导入",
+      "noValidRows": "没有可导入的有效行，请修正错误数据或重新上传文件"
     },
     "confirm": {
       "heading": "确认执行导入",
@@ -539,14 +588,18 @@
       "review": "导入说明",
       "reviewValue": "导入后直接进入系统，数据立即生效",
       "reupload": "重新上传",
-      "submit": "确认导入 {n} 条记录"
+      "submit": "确认导入 {n} 条记录",
+      "importing": "导入中…",
+      "submitFailed": "导入提交失败，请稍后重试或重新上传文件"
     },
     "result": {
       "heading": "导入完成",
       "desc": "已成功导入 {ok} 家保险公司，{fail} 行因校验失败已跳过",
+      "descOne": "已成功导入 1 家保险公司，{fail} 行因校验失败已跳过",
       "success": "成功导入",
       "skipped": "已跳过",
       "pendingReview": "待处理",
+      "total": "总行数",
       "count": "{n} 条",
       "viewRecords": "查看导入记录",
       "backToList": "返回保险公司列表"
@@ -623,6 +676,13 @@
       "desc": "共处理 {n} 组，已合并或标记为非重复"
     }
   },
+  "toasts": {
+    "batchDeleted": "已删除 {n} 家保险公司",
+    "deleteFailed": "删除失败，请重试",
+    "batchEnabled": "已启用 {n} 家保险公司",
+    "batchDisabled": "已停用 {n} 家保险公司",
+    "actionFailed": "操作失败，请重试"
+  },
   "modals": {
     "disable": {
       "titleDisable": "停用保险公司",
@@ -660,7 +720,12 @@
       "confirmEnablePre": "我已了解此操作的影响范围，确认启用",
       "confirmPost": "。本操作将记录至审计日志。",
       "btnDisable": "确认停用",
-      "btnEnable": "确认启用"
+      "btnEnable": "确认启用",
+      "disabledMsg": "保险公司已停用",
+      "enabledMsg": "保险公司已启用",
+      "errorMsg": "操作失败，请重试",
+      "stopping": "正在停用...",
+      "enabling": "正在启用..."
     },
     "deleteConfirm": {
       "title": "确认删除",
@@ -669,6 +734,19 @@
       "warningPost": "，删除后相关配置、合作记录将一并移除，且无法恢复。",
       "confirmBtn": "确认删除",
       "deleting": "删除中…"
+    },
+    "batchConfirm": {
+      "titleDelete": "批量删除",
+      "titleDisable": "批量停用",
+      "titleEnable": "批量启用",
+      "selectedCount": "已选择 {count} 家保险公司",
+      "bodyDelete": "删除后，选中的保险公司及相关配置将被永久移除，此操作不可撤销。确认继续？",
+      "bodyDisable": "停用后，选中的保险公司将无法进行新业务操作。确认继续？",
+      "bodyEnable": "启用后，选中的保险公司将恢复正常业务操作。确认继续？",
+      "processing": "处理中...",
+      "confirmDelete": "确认删除",
+      "confirmDisable": "确认停用",
+      "confirmEnable": "确认启用"
     },
     "batchExport": {
       "title": "批量导出",

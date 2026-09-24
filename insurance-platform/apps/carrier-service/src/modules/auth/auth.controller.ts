@@ -18,7 +18,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthService, RegisterRequestDto, LoginRequestDto } from './auth.service';
+import { AuthService, RegisterRequestDto, LoginRequestDto, SsoExchangeDto } from './auth.service';
 import { PasswordHashingService } from '../../common/services/password-hashing.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -84,6 +84,32 @@ export class AuthController {
       await this.authService.logout(refreshToken);
     }
     return { success: true, message: '登出成功' };
+  }
+
+  /**
+   * V1.0.16 T2 · SSO code 换发
+   * workOS 跳转回调后，前端 /sso/callback 携 code+state 调此端点换取本系统 JWT。
+   * 不挂 JwtAuthGuard；联调期 WORKOS_MOCK=1 时 mock_user 字段绕过 W1。
+   */
+  @HttpCode(HttpStatus.OK)
+  @Post('sso/exchange')
+  @ApiOperation({ summary: 'SSO code 换发本系统令牌' })
+  @ApiResponse({ status: 200, description: '换发成功' })
+  @ApiResponse({ status: 401, description: 'code 失效或工号未同步' })
+  @ApiResponse({ status: 403, description: '账号已停用' })
+  async ssoExchange(@Body() dto: SsoExchangeDto) {
+    const { accessToken, refreshToken, user } = await this.authService.exchangeSsoCode(dto);
+    return {
+      success: true,
+      message: 'SSO 登录成功',
+      data: {
+        accessToken,
+        refreshToken,
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        user,
+      },
+    };
   }
 
   @HttpCode(HttpStatus.OK)

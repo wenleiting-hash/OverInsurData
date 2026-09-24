@@ -95,9 +95,11 @@
     "excelFile": "Excel File",
     "edi835": "EDI 835",
     "manualEntry": "Manual Entry",
+    "soonSuffix": " (coming soon)",
     "billCutoffDay": "Bill Cutoff Day",
     "cutoffDayHint": "Which day of month/quarter for data cutoff",
     "billCutoffPrefix": "Day",
+    "billCutoffSuffix": "of each month",
     "day": "day(s)",
     "paymentTerm": "Payment Term",
     "paymentHint": "Days to pay after reconciliation completed",
@@ -119,8 +121,10 @@
     "uploaded": "Uploaded",
     "notUploaded": "Not uploaded",
     "uploadBtn": "Upload",
+    "uploading": "Uploading…",
+    "uploadFailed": "File upload failed, please try again",
     "previewBtn": "Preview",
-    "fakeFileName": "Agreement_Draft_{{ts}}.pdf",
+    "fakeFileName": "Agreement_Draft_{ts}.pdf",
     "docs": {
       "businessLicense": "Business License",
       "mainAgreement": "Master Agreement",
@@ -148,6 +152,7 @@
     "missingSettlement": "Please fill in settlement configuration",
     "missingDocuments": "Please upload qualification documents",
     "submitFailed": "Submission Failed",
+    "unknown": "Unknown error, please try again",
     "naicDuplicate": "This NAIC Code already exists, please use a different one",
     "naicAvailable": "NAIC Code is available"
   }

@@ -11,10 +11,12 @@ import {
 import { useTranslation } from 'react-i18next'
 import type { ViewId } from '@/App'
 import type { ProductRecord, ProductListParams } from '@/lib/user-api-client'
+import { productApi } from '@/lib/user-api-client'
 import { useGetProducts, useBatchToggleProductStatus, useDeleteProduct, useBatchDeleteProduct } from '@/services/productService'
-import { formatCurrency, formatPercent } from './data/mockProductData'
+import { formatCurrency } from './data/mockProductData'
+import * as XLSX from 'xlsx'
 import BatchExportModal from '@/components/BatchExportModal'
-import type { ExportFieldOption, ExportRelatedOption } from '@/components/BatchExportModal'
+import type { ExportFieldOption, ExportRelatedOption, BatchExportOptions } from '@/components/BatchExportModal'
 
 interface Props {
   navigateTo: (view: ViewId, params?: { carrierId?: string; productId?: string; userId?: string }) => void
@@ -26,7 +28,7 @@ const LINE_COLORS: Record<string, string> = {
   Professional: 'badge-yellow', D_O: 'badge-red',
 }
 
-type SortKey = 'name' | 'premium' | 'lossRatio' | 'renewalRate' | 'policyCount'
+type SortKey = 'name' | 'premium' | 'policyCount'
 type SortDir = 'asc' | 'desc'
 
 export default function ProductList({ navigateTo }: Props) {
@@ -54,8 +56,7 @@ export default function ProductList({ navigateTo }: Props) {
   const [exportToast, setExportToast] = useState(false)
 
   const SORT_KEY_MAP: Record<SortKey, string> = {
-    name: 'product_name', premium: 'premium_ytd', lossRatio: 'loss_ratio',
-    renewalRate: 'renewal_rate', policyCount: 'policy_count',
+    name: 'product_name', premium: 'premium_ytd', policyCount: 'policy_count',
   }
   const queryParams: ProductListParams = {
     search: search || undefined,
@@ -105,6 +106,7 @@ export default function ProductList({ navigateTo }: Props) {
     'Paused': { cls: 'badge-yellow', orb: 'orb-yellow' },
     'Inactive': { cls: 'badge-gray', orb: 'orb-gray' },
     'Incomplete': { cls: 'badge-gray', orb: 'orb-gray' },
+    'Pending': { cls: 'badge-orange', orb: 'orb-yellow' },
   }
 
   const statusText: Record<string, string> = {
@@ -112,6 +114,7 @@ export default function ProductList({ navigateTo }: Props) {
     'Paused': t('values.statusPaused'),
     'Inactive': t('values.statusOffSale'),
     'Incomplete': t('values.statusIncomplete'),
+    'Pending': t('values.statusPending'),
   }
 
   // Single-product status change via "更多" menu (上架 / 暂停 / 下架)
@@ -122,10 +125,10 @@ export default function ProductList({ navigateTo }: Props) {
       { ids: [id], status },
       {
         onSuccess: () => {
-          const msg = status === 'Active' ? '已上架产品' : status === 'Paused' ? '已暂停产品销售' : '已下架产品'
+          const msg = status === 'Active' ? t('toasts.listed') : status === 'Paused' ? t('toasts.paused') : t('toasts.delisted')
           setBatchToast({ type: 'success', msg })
         },
-        onError: () => setBatchToast({ type: 'error', msg: '操作失败，请重试' }),
+        onError: () => setBatchToast({ type: 'error', msg: t('toasts.actionFailed') }),
       },
     )
   }
@@ -165,28 +168,29 @@ export default function ProductList({ navigateTo }: Props) {
       batchDelete.mutate(ids, {
         onSuccess: (data) => {
           setBatchConfirm(null)
-          setBatchToast({ type: 'success', msg: `已删除 ${data.deleted} 个产品` })
+          setBatchToast({ type: 'success', msg: t('toasts.deletedN', { n: data.deleted }) })
           setSelected(new Set())
         },
         onError: () => {
           setBatchConfirm(null)
-          setBatchToast({ type: 'error', msg: '删除失败，请重试' })
+          setBatchToast({ type: 'error', msg: t('toasts.deleteFailed') })
         },
       })
       return
     }
-    const targetStatus = action === 'list' ? 'Active' : 'Inactive'
+    // 本系统无 Inactive 终态：下架统一为 Paused（可恢复），与详情页/后端语义一致
+    const targetStatus = action === 'list' ? 'Active' : 'Paused'
     batchToggle.mutate(
       { ids, status: targetStatus },
       {
         onSuccess: (data) => {
           setBatchConfirm(null)
-          setBatchToast({ type: 'success', msg: action === 'list' ? `已上架 ${data.updated} 个产品` : `已下架 ${data.updated} 个产品` })
+          setBatchToast({ type: 'success', msg: action === 'list' ? t('toasts.batchListedN', { n: data.updated }) : t('toasts.batchDelistedN', { n: data.updated }) })
           setSelected(new Set())
         },
         onError: () => {
           setBatchConfirm(null)
-          setBatchToast({ type: 'error', msg: '操作失败，请重试' })
+          setBatchToast({ type: 'error', msg: t('toasts.actionFailed') })
         },
       },
     )
@@ -204,8 +208,6 @@ export default function ProductList({ navigateTo }: Props) {
     { key: 'premiumYTD', label: t('tables.premiumYTD'), selected: true },
     { key: 'policyCount', label: t('tables.policyCount'), selected: true },
     { key: 'avgPremium', label: t('tables.avgPremium'), selected: false },
-    { key: 'lossRatio', label: t('tables.lossRatio'), selected: true },
-    { key: 'renewalRate', label: t('tables.renewalRate'), selected: true },
     { key: 'status', label: t('tables.status'), selected: true },
     { key: 'effectiveDate', label: t('tables.effectiveDate'), selected: false },
   ]
@@ -216,34 +218,105 @@ export default function ProductList({ navigateTo }: Props) {
     { key: 'authorizations', label: t('export.relAuthorizations') },
   ]
 
-  // 导出已勾选的产品（对齐 InsurerList：必须先选择数据）
-  const handleExport = () => {
-    const rows = sorted.filter((p: ProductRecord) => selected.has(p.id))
-    const headers = [
-      t('tables.productName'), t('tables.productCode'), t('tables.insurerName'), t('tables.lineOfBusiness'),
-      t('tables.type'), t('tables.premiumYTD'), t('tables.policyCount'), t('tables.lossRatio'),
-      t('tables.renewalRate'), t('tables.status'),
-    ]
-    const csvData = rows.map((p: ProductRecord) => [
-      `"${p.product_name}"`,
-      p.product_code,
-      `"${p.carrier_name ?? ''}"`,
-      p.line_of_business,
-      p.product_type ?? '',
-      formatCurrency(p.premium_ytd ?? 0, true),
-      p.policy_count?.toLocaleString() ?? 'N/A',
-      formatPercent(p.loss_ratio ?? 0),
-      formatPercent(p.renewal_rate ?? 0),
-      statusText[p.status] ?? p.status,
-    ].join(','))
+  // 导出：严格按弹窗勾选生成 —— 范围(筛选/勾选/全部) × 格式(xlsx/csv) × 字段 × 关联数据
+  const handleExport = async (opts: BatchExportOptions) => {
+    try {
+      // ① 取数：勾选=当前页选中行；筛选/全部=按对应条件拉全量（列表接口只持有当前页）
+      let rows: ProductRecord[]
+      if (opts.scope === 'selected') {
+        rows = sorted.filter(p => selected.has(p.id))
+      } else {
+        const params: ProductListParams = opts.scope === 'filtered'
+          ? {
+              search: queryParams.search, insurer: queryParams.insurer, line: queryParams.line,
+              status: queryParams.status, sortKey: queryParams.sortKey, sortDir: queryParams.sortDir,
+              size: 10000,
+            }
+          : { size: 10000 }
+        const res = await productApi.getList(params)
+        rows = res.data
+      }
+      if (rows.length === 0) { setExportToast(true); return }
 
-    const csvContent = [headers.join(','), ...csvData].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.setAttribute('href', url)
-    link.setAttribute('download', `products_${new Date().toISOString().split('T')[0]}.csv`)
-    link.click()
+      // ② 关联数据（追加列）：费率方案名拼接；可售州给数量+州码清单；渠道授权暂无后端接口 → 跳过并提示
+      const withRelated = await Promise.all(rows.map(async p => {
+        const extra: Record<string, string> = {}
+        if (opts.related.includes('ratePlans')) {
+          try {
+            const plans = await productApi.getRatePlans(p.id)
+            extra.__ratePlans = plans.map(pl => pl.name || pl.id).join('; ')
+          } catch { extra.__ratePlans = '' }
+        }
+        if (opts.related.includes('states')) {
+          try {
+            const states = await productApi.getStates(p.id)
+            extra.__states = `${states.length}: ${states.map(s => s.code).join(', ')}`
+          } catch { extra.__states = '' }
+        }
+        return { p, extra }
+      }))
+
+      // ③ 字段值提取（与表格展示同口径）
+      const valOf = (key: string, p: ProductRecord): string => {
+        switch (key) {
+          case 'productName': return p.product_name
+          case 'productCode': return p.product_code
+          case 'insurerName': return p.carrier_name ?? ''
+          case 'lineOfBusiness': return p.line_of_business
+          case 'subLine': return p.sub_line ?? ''
+          case 'type': return p.product_type ?? ''
+          case 'availableStates': return (p.available_states ?? []).join(', ')
+          case 'premiumYTD': return formatCurrency(p.premium_ytd ?? 0, true)
+          case 'policyCount': return String(p.policy_count ?? '')
+          case 'avgPremium': return p.avg_premium != null ? formatCurrency(p.avg_premium, true) : ''
+          case 'status': return statusText[p.status] ?? p.status
+          case 'effectiveDate': return p.effective_date ?? ''
+          default: return ''
+        }
+      }
+
+      const labelOf = (key: string) => exportFields.find(f => f.key === key)?.label ?? key
+      const headers: string[] = opts.fields.map(labelOf)
+      const relatedCols: { prop: string; label: string }[] = []
+      if (opts.related.includes('ratePlans')) relatedCols.push({ prop: '__ratePlans', label: t('export.colRatePlanNames') })
+      if (opts.related.includes('states')) relatedCols.push({ prop: '__states', label: t('export.colStateList') })
+      headers.push(...relatedCols.map(c => c.label))
+
+      const matrix = withRelated.map(({ p, extra }) => {
+        const base = opts.fields.map(k => valOf(k, p))
+        base.push(...relatedCols.map(c => extra[c.prop] ?? ''))
+        return base
+      })
+
+      // ④ 生成文件：CSV 带 BOM 防中文乱码；XLSX 走 xlsx 库
+      const fileName = `products_${new Date().toISOString().slice(0, 10)}`
+      if (opts.format === 'xlsx') {
+        const aoa = [headers, ...matrix]
+        const ws = XLSX.utils.aoa_to_sheet(aoa)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Products')
+        XLSX.writeFile(wb, `${fileName}.xlsx`)
+      } else {
+        const esc = (v: string) => /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+        const csv = '﻿' + [headers, ...matrix].map(r => r.map(esc).join(',')).join('\r\n')
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${fileName}.csv`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      }
+
+      let msg = t('export.exportSuccess', { count: rows.length })
+      // 渠道授权没有后端查询接口，勾选时无法生成——明确告知而不是静默丢列
+      if (opts.related.includes('authorizations')) msg += `${t('export.skipJoiner')}${t('export.authorizationsSkipped')}`
+      setBatchToast({ type: 'success', msg })
+    } catch {
+      setBatchToast({ type: 'error', msg: t('export.exportFailed') })
+    }
   }
 
   const dateLocale = i18n.language.startsWith('en') ? 'en-US' : 'zh-CN'
@@ -254,7 +327,7 @@ export default function ProductList({ navigateTo }: Props) {
         {/* Page Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{t('pages.productManagement')}</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23' }}>{t('pages.productManagement')}</h1>
             <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>{t('list.countSummary', { total: apiResult?.total ?? 0, results: sorted.length })}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -291,6 +364,7 @@ export default function ProductList({ navigateTo }: Props) {
             <option value="Active">{t('filters.active')}</option>
             <option value="Inactive">{t('filters.inactive')}</option>
             <option value="Paused">{t('filters.paused')}</option>
+            <option value="Pending">{t('filters.pending')}</option>
           </select>
           {(search || filterInsurer !== 'all' || filterLine !== 'all' || filterStatus !== 'all') && (
             <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }}
@@ -344,12 +418,6 @@ export default function ProductList({ navigateTo }: Props) {
                 <th onClick={() => handleSort('policyCount')} style={{ cursor: 'pointer', textAlign: 'right' }}>
                   <span className="flex items-center gap-1 justify-end">{t('tables.policyCount')} <SortIcon k="policyCount" /></span>
                 </th>
-                <th onClick={() => handleSort('lossRatio')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">{t('tables.lossRatio')} <SortIcon k="lossRatio" /></span>
-                </th>
-                <th onClick={() => handleSort('renewalRate')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">{t('tables.renewalRate')} <SortIcon k="renewalRate" /></span>
-                </th>
                 <th>{t('tables.effectiveDate')}</th>
                 <th data-col="status">{t('tables.status')}</th>
                 <th style={{ width: 140, position: 'sticky', right: 0, zIndex: 2, background: 'rgba(236,237,249,0.99)', boxShadow: '-3px 0 8px -2px rgba(0,22,80,0.08)' }} data-col="actions">{t('tables.actions')}</th>
@@ -389,14 +457,6 @@ export default function ProductList({ navigateTo }: Props) {
                     </td>
                     <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}>
                       {p.policy_count?.toLocaleString()}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 500, color: (p.loss_ratio ?? 0) > 0.65 ? '#BA1A1A' : (p.loss_ratio ?? 0) > 0.60 ? '#a05800' : '#1a7a2e' }}>
-                        {formatPercent(p.loss_ratio ?? 0)}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}>
-                      {formatPercent(p.renewal_rate ?? 0)}
                     </td>
                     <td style={{ width: 110, fontSize: 12.5, color: '#717786' }}>
                       {new Date(p.effective_date).toLocaleDateString(dateLocale, {
@@ -452,9 +512,12 @@ export default function ProductList({ navigateTo }: Props) {
                   value={pageSize}
                   onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
                 >
-                  <option value={10}>10 条/页</option>
-                  <option value={20}>20 条/页</option>
-                  <option value={50}>50 条/页</option>
+                  <option value={10}>{t('pagination.pageSize')}</option>
+                  <option value={20}>{t('pagination.pageSize20')}</option>
+                  <option value={50}>{t('pagination.pageSize50')}</option>
+                  <option value={100}>{t('pagination.pageSize100')}</option>
+                  <option value={200}>{t('pagination.pageSize200')}</option>
+                  <option value={500}>{t('pagination.pageSize500')}</option>
                 </select>
               </div>
               <div className="flex items-center gap-1">
@@ -519,16 +582,6 @@ export default function ProductList({ navigateTo }: Props) {
               {t('actions.pause')}
             </button>
             <button
-              style={{ ...itemBase, color: '#414755', opacity: st === 'Inactive' ? 0.4 : 1, cursor: st === 'Inactive' ? 'not-allowed' : 'pointer' }}
-              disabled={st === 'Inactive'}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(246,248,255,0.8)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-              onClick={() => handleStatusChange(menuTargetId, 'Inactive')}
-            >
-              <XCircle size={14} style={{ color: '#BA1A1A' }} />
-              {t('actions.offSale')}
-            </button>
-            <button
               style={{ ...itemBase, color: '#BA1A1A' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,240,240,0.8)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'none')}
@@ -554,15 +607,15 @@ export default function ProductList({ navigateTo }: Props) {
                   <AlertTriangle size={18} style={{ color: '#BA1A1A' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23' }}>确认删除</div>
-                  <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>此操作不可撤销</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23' }}>{t('deleteConfirm.title')}</div>
+                  <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t('deleteConfirm.subtitle')}</div>
                 </div>
               </div>
               <button className="btn-ghost" style={{ padding: 6 }} onClick={() => setDeleteTarget(null)}><X size={16} /></button>
             </div>
             <div style={{ padding: '22px 24px' }}>
               <div style={{ background: 'rgba(255,240,240,0.9)', border: '0.5px solid rgba(186,26,26,0.25)', borderRadius: 12, padding: '16px 18px', fontSize: 13.5, lineHeight: 1.7, color: '#414755' }}>
-                即将删除产品 <strong style={{ color: '#BA1A1A' }}>{deleteTarget.name}</strong>，删除后相关费率方案、授权记录将一并移除，且无法恢复。
+                {t('deleteConfirm.bodyPre')}<strong style={{ color: '#BA1A1A' }}>{deleteTarget.name}</strong>{t('deleteConfirm.bodyPost')}
               </div>
             </div>
             <div style={{ padding: '14px 24px', borderTop: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', justifyContent: 'flex-end', gap: 10, background: 'rgba(241,243,254,0.5)' }}>
@@ -573,7 +626,7 @@ export default function ProductList({ navigateTo }: Props) {
                 onClick={() => { deleteProduct.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) }) }}
               >
                 <Trash2 size={14} />
-                {deleteProduct.isPending ? '删除中…' : '确认删除'}
+                {deleteProduct.isPending ? t('deleteConfirm.deleting') : t('deleteConfirm.confirm')}
               </button>
             </div>
           </div>
@@ -597,9 +650,9 @@ export default function ProductList({ navigateTo }: Props) {
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>
-                  {batchConfirm === 'delete' ? '批量删除' : batchConfirm === 'list' ? '批量上架' : '批量下架'}
+                  {batchConfirm === 'delete' ? t('batchConfirm.deleteTitle') : batchConfirm === 'list' ? t('batchConfirm.listTitle') : t('batchConfirm.delistTitle')}
                 </div>
-                <div style={{ fontSize: 12.5, color: '#717786' }}>已选择 {selected.size} 个产品</div>
+                <div style={{ fontSize: 12.5, color: '#717786' }}>{t('batchConfirm.selectedCount', { n: selected.size })}</div>
               </div>
             </div>
             <div style={{
@@ -608,13 +661,13 @@ export default function ProductList({ navigateTo }: Props) {
               borderRadius: 10, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: '#414755',
             }}>
               {batchConfirm === 'delete'
-                ? '删除后，选中的产品及相关费率方案、授权记录将被永久移除，此操作不可撤销。确认继续？'
+                ? t('batchConfirm.deleteBody')
                 : batchConfirm === 'list'
-                  ? '上架后，选中的产品将恢复在售状态。确认继续？'
-                  : '下架后，选中的产品将停止新保报价，已有保单按原合同正常续保。确认继续？'}
+                  ? t('batchConfirm.listBody')
+                  : t('batchConfirm.delistBody')}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={() => setBatchConfirm(null)}>取消</button>
+              <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={() => setBatchConfirm(null)}>{t('actions.cancel')}</button>
               <button
                 onClick={() => handleBatchAction(batchConfirm!)}
                 disabled={batchToggle.isPending || batchDelete.isPending}
@@ -624,7 +677,7 @@ export default function ProductList({ navigateTo }: Props) {
                   color: '#fff', opacity: (batchToggle.isPending || batchDelete.isPending) ? 0.6 : 1,
                 }}
               >
-                {(batchToggle.isPending || batchDelete.isPending) ? '处理中...' : batchConfirm === 'delete' ? '确认删除' : batchConfirm === 'list' ? '确认上架' : '确认下架'}
+                {(batchToggle.isPending || batchDelete.isPending) ? t('batchConfirm.processing') : batchConfirm === 'delete' ? t('deleteConfirm.confirm') : batchConfirm === 'list' ? t('batchConfirm.confirmList') : t('batchConfirm.confirmDelist')}
               </button>
             </div>
           </div>

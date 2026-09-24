@@ -1,4 +1,4 @@
-﻿import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CarrierModule } from './modules/carrier/carrier.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -9,10 +9,13 @@ import { DepartmentModule } from './modules/department/department.module';
 import { InsurerModule } from './modules/insurer/insurer.module';
 import { ProductModule } from './modules/product/product.module';
 import { CooperationModule } from './modules/cooperation/cooperation.module';
-import { ComplianceModule } from './modules/compliance/compliance.module';
+import { ChannelModule } from './modules/channel/channel.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { IntegrationModule } from './modules/integration/integration.module';
+import { DictionaryModule } from './modules/dictionary/dictionary.module';
+import { CommonModule } from './common/common.module';
 import { RequestTracingMiddleware } from './common/middleware/request-tracing.middleware';
 
 @Module({
@@ -22,6 +25,7 @@ import { RequestTracingMiddleware } from './common/middleware/request-tracing.mi
       envFilePath: ['.env', '.env.local'],
       ignoreEnvFile: false,
     }),
+    CommonModule,
     CarrierModule,
     AuthModule,
     OvwrModule,
@@ -31,10 +35,12 @@ import { RequestTracingMiddleware } from './common/middleware/request-tracing.mi
     InsurerModule,
     ProductModule,
     CooperationModule,
-    ComplianceModule,
+    ChannelModule,
     FinanceModule,
     AnalyticsModule,
     UploadModule,
+    IntegrationModule,
+    DictionaryModule,
   ],
 })
 export class AppModule implements NestModule {

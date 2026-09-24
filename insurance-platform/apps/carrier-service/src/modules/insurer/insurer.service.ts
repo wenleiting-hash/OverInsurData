@@ -6,8 +6,8 @@ import { CreateInsurerDto, UpdateInsurerDto } from './dtos/insurer.dto';
 export class InsurerService {
   private readonly logger = new Logger(InsurerService.name);
 
-  async getList(query: { search?: string; type?: string; status?: string; region?: string; rating?: string; sortKey?: string; sortDir?: string; page?: number; size?: number }) {
-    const { search, type, status, region, rating, sortKey = 'revenue', sortDir = 'desc', page = 1, size = 20 } = query;
+  async getList(query: { search?: string; type?: string; status?: string; region?: string; rating?: string; cooperation_status?: string; sortKey?: string; sortDir?: string; page?: number; size?: number }) {
+    const { search, type, status, region, rating, cooperation_status, sortKey = 'revenue', sortDir = 'desc', page = 1, size = 20 } = query;
     const conditions: string[] = ['deleted = FALSE'];
     const values: any[] = [];
     let paramIdx = 1;
@@ -17,14 +17,19 @@ export class InsurerService {
     if (status && status !== 'all') { conditions.push(`status = $${paramIdx}`); values.push(status); paramIdx++; }
     if (region && region !== 'all') { conditions.push(`region = $${paramIdx}`); values.push(region); paramIdx++; }
     if (rating && rating !== 'all') { conditions.push(`am_best_rating = $${paramIdx}`); values.push(rating); paramIdx++; }
+    if (cooperation_status && cooperation_status !== 'all') { conditions.push(`cp.status = $${paramIdx}`); values.push(cooperation_status); paramIdx++; }
 
     const allowedSorts = ['carrier_name', 'revenue', 'loss_ratio', 'renewal_rate', 'policy_count', 'commission_income', 'created_at'];
     const sortCol = allowedSorts.includes(sortKey) ? sortKey : 'revenue';
     const dir = sortDir === 'asc' ? 'ASC' : 'DESC';
 
     const offset = (page - 1) * size;
-    const countSql = `SELECT COUNT(*) FROM insurance_carrier WHERE ${conditions.join(' AND ')}`;
-    const dataSql = `SELECT * FROM insurance_carrier WHERE ${conditions.join(' AND ')} ORDER BY ${sortCol} ${dir} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+    const joinClause = cooperation_status && cooperation_status !== 'all'
+      ? ' LEFT JOIN carrier_partnership cp ON cp.carrier_id = insurance_carrier.carrier_id AND cp.deleted = FALSE'
+      : '';
+    const coopStatusSubquery = `(SELECT cp2.status FROM carrier_partnership cp2 WHERE cp2.carrier_id = insurance_carrier.carrier_id AND cp2.deleted = FALSE ORDER BY cp2.created_at DESC LIMIT 1) AS coop_status`;
+    const countSql = `SELECT COUNT(*) FROM insurance_carrier${joinClause} WHERE ${conditions.join(' AND ')}`;
+    const dataSql = `SELECT insurance_carrier.*, ${coopStatusSubquery} FROM insurance_carrier${joinClause} WHERE ${conditions.join(' AND ')} ORDER BY ${sortCol} ${dir} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
     values.push(size, offset);
 
     const [countRes, dataRes] = await Promise.all([pool.query(countSql, values.slice(0, paramIdx - 1)), pool.query(dataSql, values)]);
@@ -119,7 +124,9 @@ export class InsurerService {
       ['state', dto.state], ['coop_type', dto.coop_type], ['founded_year', dto.founded_year],
       ['website', dto.website], ['am_best_rating', dto.am_best_rating], ['sp_rating', dto.sp_rating],
       ['moodys_rating', dto.moodys_rating], ['fitch_rating', dto.fitch_rating], ['settlement_cycle', dto.settlement_cycle],
+      ['settlement_config', dto.settlement_config ? JSON.stringify(dto.settlement_config) : undefined],
       ['contract_expiry', dto.contract_expiry], ['lines', dto.lines ? JSON.stringify(dto.lines) : undefined],
+      ['documents', dto.documents ? JSON.stringify(dto.documents) : undefined],
     ];
     for (const [col, val] of optional) {
       if (val !== undefined) { cols.push(col); vals.push(val); placeholders.push(`$${idx++}`); }
@@ -163,7 +170,7 @@ export class InsurerService {
     const fields = Object.entries(dto).filter(([, v]) => v !== undefined);
     for (const [key, val] of fields) {
       sets.push(`${key} = $${idx++}`);
-      vals.push(key === 'lines' ? JSON.stringify(val) : val);
+      vals.push((key === 'lines' || key === 'documents' || key === 'settlement_config') ? JSON.stringify(val) : val);
     }
     if (sets.length === 0) return this.getById(id);
     sets.push(`updated_at = NOW()`);
@@ -213,6 +220,47 @@ export class InsurerService {
       ids,
     );
     return { deleted: res.rowCount ?? 0 };
+  }
+
+  /**
+   * Batch import insurers from an uploaded spreadsheet.
+   * Each row is validated/inserted independently; invalid rows are collected and
+   * returned to the caller instead of failing the whole batch.
+   * Spreadsheet row numbers start at 2 (row 1 is the template header).
+   */
+  async batchImport(rows: CreateInsurerDto[], userId: string) {
+    const errors: Array<{ row: number; field?: string; reason: string }> = [];
+    const seenNaic = new Set<string>();
+    let created = 0;
+
+    for (let i = 0; i < rows.length; i++) {
+      const spreadsheetRow = i + 2;
+      const dto = rows[i];
+      const naic = String(dto?.naic_code ?? '').trim();
+      try {
+        if (!naic) {
+          errors.push({ row: spreadsheetRow, field: 'naic_code', reason: 'NAIC Code is required' });
+          continue;
+        }
+        if (seenNaic.has(naic)) {
+          errors.push({ row: spreadsheetRow, field: 'naic_code', reason: `NAIC Code "${naic}" is duplicated within the imported file` });
+          continue;
+        }
+        await this.create({ ...dto, naic_code: naic }, userId);
+        seenNaic.add(naic);
+        created++;
+      } catch (err: any) {
+        const response = typeof err.getResponse === 'function' ? err.getResponse() : undefined;
+        errors.push({
+          row: spreadsheetRow,
+          field: response?.field,
+          reason: response?.message || err?.message || 'Failed to import row',
+        });
+      }
+    }
+
+    this.logger.log(`Batch import: ${created}/${rows.length} insurers created, ${errors.length} skipped (by ${userId})`);
+    return { total: rows.length, created, skipped: errors.length, errors };
   }
 
   async duplicateCheck() {

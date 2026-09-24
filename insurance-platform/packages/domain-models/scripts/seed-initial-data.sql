@@ -47,11 +47,16 @@ ON CONFLICT (ovwr_permission_code) DO NOTHING;
 -- Part 2: Default Permission Templates
 -- ===========================================
 
-INSERT INTO public.ovwr_auth_permission_template (ovwr_template_id, ovwr_template_name, ovwr_template_code, ovwr_description, ovwr_scope, ovwr_is_default, ovwr_usage_count, ovwr_status, ovwr_created_at, ovwr_updated_at) VALUES
-('tpl-ovwr-admin-001', 'Super Administrator', 'tpl-admin-full', 'Default admin template with all system permissions', 'system', TRUE, 0, '1', NOW(), NOW()),
-('tpl-ovwr-operator-001', 'Operator Standard', 'tpl-operator-standard', 'Standard operator permissions including i18n and basic permission management', 'department', FALSE, 0, '1', NOW(), NOW()),
-('tpl-ovwr-viewer-001', 'Viewer Basic', 'tpl-viewer-basic', 'Read-only viewer template with minimal permissions', 'project', FALSE, 0, '1', NOW(), NOW())
-ON CONFLICT (ovwr_template_code) DO NOTHING;
+-- NOTE: Column list aligned to the canonical ovwr_auth_permission_template
+-- schema defined in 02-init-ovwr-schema.sql (which supersedes create-ovwr-schemas.sql).
+-- The old columns ovwr_template_code/ovwr_scope/ovwr_is_default/ovwr_status no longer
+-- exist; the table now uses ovwr_version + ovwr_format (NOT NULL) and a JSON-role-bundle
+-- design. format='json' per table comment; version='1.0.0' as initial release.
+INSERT INTO public.ovwr_auth_permission_template (ovwr_template_id, ovwr_template_name, ovwr_version, ovwr_format, ovwr_description, ovwr_usage_count, ovwr_created_at, ovwr_updated_at) VALUES
+('tpl-ovwr-admin-001',    'Super Administrator', '1.0.0', 'json', 'Default admin template with all system permissions',                          0, NOW(), NOW()),
+('tpl-ovwr-operator-001', 'Operator Standard',   '1.0.0', 'json', 'Standard operator permissions including i18n and basic permission management', 0, NOW(), NOW()),
+('tpl-ovwr-viewer-001',    'Viewer Basic',        '1.0.0', 'json', 'Read-only viewer template with minimal permissions',                          0, NOW(), NOW())
+ON CONFLICT (ovwr_template_id) DO NOTHING;
 
 -- ===========================================
 -- Part 3: Sample Translation Terms (40 terms)

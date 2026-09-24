@@ -19,6 +19,8 @@ import {
   type CreateUnderwritingRulePayload,
   type CreateTrainingMaterialPayload,
   type UpdateUnderwritingRulePayload,
+  type UpdateTrainingMaterialPayload,
+  type ToggleProductStatusPayload,
   type CreateRatePlanPayload,
   type UpdateRatePlanPayload,
 } from '@/lib/user-api-client';
@@ -135,14 +137,29 @@ export function useUpdateProduct() {
   });
 }
 
-/** Hook: Toggle product status (Active ↔ Paused) */
+/** Hook: Toggle product status with full delist/list payload (reason, scope, states, scheduled time). */
 export function useToggleProductStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => productApi.toggleStatus(id),
-    onSuccess: (_data, id) => {
+    mutationFn: ({ id, payload }: { id: string; payload: ToggleProductStatusPayload }) =>
+      productApi.toggleStatus(id, payload),
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: productKeys.states(variables.id) });
+    },
+  });
+}
+
+/** Hook: Suspend / resume a single salable state from the states tab. */
+export function useSetProductStateStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, stateCode, status }: { id: string; stateCode: string; status: 'active' | 'suspended' }) =>
+      productApi.setProductStateStatus(id, stateCode, status),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.states(variables.id) });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.id) });
     },
   });
 }
@@ -250,6 +267,18 @@ export function useSetMaterialStatus() {
   return useMutation({
     mutationFn: ({ id, materialId, status }: { id: string; materialId: string; status: 'active' | 'inactive' }) =>
       productApi.setMaterialStatus(id, materialId, status),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.trainingMaterials(variables.id) });
+    },
+  });
+}
+
+/** Hook: Edit training material metadata / replace its file (editing mode of upload modal). */
+export function useUpdateTrainingMaterial() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, materialId, dto }: { id: string; materialId: string; dto: UpdateTrainingMaterialPayload }) =>
+      productApi.updateTrainingMaterial(id, materialId, dto),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.trainingMaterials(variables.id) });
     },

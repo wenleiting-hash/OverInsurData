@@ -1,0 +1,54 @@
+# /opt/overinsur/docker-compose.yml (完整版含 PG + API)
+services:
+  overinsur-pg:
+    image: postgres:16
+    container_name: overinsur-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: overinsur_db
+      POSTGRES_USER: overinsur
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:5460:5432"
+    volumes:
+      - overinsur-pg-data:/var/lib/postgresql/data
+      - /opt/overinsur/backup:/backup
+    mem_limit: 512m
+    networks:
+      - overinsur-net
+
+  carrier-api:
+    build:
+      context: /opt/overinsur/src
+      dockerfile: apps/carrier-service/Dockerfile
+    container_name: carrier-api
+    restart: unless-stopped
+    depends_on:
+      - overinsur-pg
+    environment:
+      NODE_ENV: production
+      DB_HOST: overinsur-pg
+      DB_PORT: 5432
+      DB_NAME: overinsur_db
+      DB_USER: overinsur
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      INTEGRATION_MASTER_KEY: ${INTEGRATION_MASTER_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      WORKOS_MOCK: ${WORKOS_MOCK}
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "127.0.0.1:8610:8080"
+    volumes:
+      - /opt/overinsur/data/uploads:/app/uploads
+    mem_limit: 512m
+    networks:
+      - overinsur-net
+
+networks:
+  overinsur-net:
+    driver: bridge
+
+volumes:
+  overinsur-pg-data:

@@ -8,6 +8,23 @@ interface MFAModalProps {
   onClose: () => void;
 }
 
+/** navigator.clipboard 仅在安全上下文（HTTPS/localhost）可用；HTTP 生产环境走 execCommand 回退 */
+async function copyToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand('copy');
+  document.body.removeChild(ta);
+  if (!ok) throw new Error('execCommand copy failed');
+}
+
 export function MFAModal({ isOpen, onClose }: MFAModalProps) {
   const { t } = useTranslation(['settings', 'common']);
   const {
@@ -272,11 +289,15 @@ export function MFAModal({ isOpen, onClose }: MFAModalProps) {
                     </div>
 
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          JSON.parse(localStorage.getItem('mfa_backup_codes') || '[]').join('\n')
-                        );
-                        alert('Backup codes copied to clipboard!');
+                      onClick={async () => {
+                        try {
+                          await copyToClipboard(
+                            JSON.parse(localStorage.getItem('mfa_backup_codes') || '[]').join('\n')
+                          );
+                          alert('Backup codes copied to clipboard!');
+                        } catch {
+                          alert('Copy failed, please select the codes and copy manually');
+                        }
                       }}
                       className="mt-3 w-full py-2 text-sm font-medium"
                       style={{

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>海外保险数字化平台 - Channel Management</title>
+    
+    <!-- RTL Stylesheet (loaded dynamically when needed) -->
+    <link id="rtl-stylesheet" rel="stylesheet" href="" />
+    
+    <style>
+      /* RTL support styles */
+      [dir="rtl"] {
+        direction: rtl;
+        text-align: right;
+      }
+      
+      [dir="rtl"] .text-left {
+        text-align: left;
+      }
+      
+      [dir="rtl"] .text-right {
+        text-align: right;
+      }
+      
+      [dir="rtl"] .flex-row-reverse {
+        flex-direction: row-reverse;
+      }
+      
+      /* RTL margin/padding flips */
+      [dir="rtl"] .ml-auto, [dir="rtl"] .mr-auto {
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+      
+      [dir="rtl"] .pl-4 {
+        padding-right: 1rem;
+        padding-left: 0;
+      }
+      
+      [dir="rtl"] .pr-4 {
+        padding-right: 0;
+        padding-left: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

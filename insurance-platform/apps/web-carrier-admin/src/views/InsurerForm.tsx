@@ -4,7 +4,7 @@ import {
   DollarSign, FileText, X, AlertCircle, Info, Eye, CheckCircle, Loader,
 } from 'lucide-react'
 import { useGetInsurer, useCreateInsurer, useUpdateInsurer } from '@/services/insurerService'
-import { insurerApi } from '@/lib/user-api-client'
+import { insurerApi, type InsurerDocument } from '@/lib/user-api-client'
 import type { ViewId } from '@/App'
 import { useTranslation } from 'react-i18next'
 
@@ -22,11 +22,23 @@ const STEPS = [
   { id: 'documents', label: (t: any) => t('steps.documents.label'), desc: (t: any) => t('steps.documents.desc'), icon: FileText },
 ]
 
+/** 资质文件固定槽位：使用稳定英文 key 作为持久化标识（绝不使用翻译文案做 key）。 */
+const DOC_SLOTS = [
+  { key: 'businessLicense', required: true },
+  { key: 'mainAgreement', required: true },
+  { key: 'nda', required: true },
+  { key: 'dpa', required: false },
+  { key: 'amBestReport', required: false },
+] as const
+const REQUIRED_DOC_KEYS = DOC_SLOTS.filter(s => s.required).map(s => s.key)
+
+type UploadedDoc = InsurerDocument & { file?: File }
+
 const REGIONS = ['Northeast', 'Southeast', 'Midwest', 'West']
 const LINES_OF_BUSINESS = ['Auto', 'Home', 'Life', 'Health', 'Commercial', 'Cyber', 'Travel', 'Professional', 'D&O', 'E&O', 'Marine', 'Specialty', 'Workers Comp']
 const COOP_TYPES = ['direct', 'mga', 'wholesale', 'independent', 'platform']
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
-const AM_BEST_RATINGS = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'B++', 'B+', 'B', 'C++', 'C', 'D', 'E', 'F', 'NR']
+const AM_BEST_RATINGS = ['A++', 'A+', 'A', 'A-', 'B++', 'B+', 'B', 'B-', 'C++', 'C+', 'C', 'C-', 'D', 'E', 'F', 'S', 'NR']
 const SP_RATINGS = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'A-', 'BBB+', 'BBB', 'BBB-', 'BB+', 'BB', 'BB-', 'B+', 'B', 'B-', 'CCC+', 'CCC', 'CCC-', 'CC', 'C', 'D']
 
 const INPUT = { className: 'input-glass w-full', style: { fontSize: 13.5 } }
@@ -89,14 +101,17 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
     moodysRating: apiInsurer.moodys_rating,
     fitchRating: apiInsurer.fitch_rating,
     settlementCycle: apiInsurer.settlement_cycle,
+    settlementConfig: apiInsurer.settlement_config,
+    documents: apiInsurer.documents ?? [],
   } : undefined
   const [step, setStep] = useState(0)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [naicError, setNaicError] = useState(false)
   const [naicStatus, setNaicStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
-  const [uploadTargetDocType, setUploadTargetDocType] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadTargetDocKeyRef = useRef<string | null>(null)
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null)
+  const [docError, setDocError] = useState<string | null>(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -119,12 +134,12 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
     fitch: existing?.fitchRating ?? '',
     fitchDate: '2025-11-15',
     settlementCycle: existing?.settlementCycle ?? '',
-    billingFormat: '',
-    billCutoffDay: '25',
-    paymentDays: '30',
-    currency: 'USD',
-    premiumCollection: 'aggregate',
-    uploadedFiles: [] as { name: string; type: string; size: string; file?: File }[],
+    billingFormat: existing?.settlementConfig?.billingFormat ?? '',
+    billCutoffDay: String(existing?.settlementConfig?.billCutoffDay ?? 25),
+    paymentDays: String(existing?.settlementConfig?.paymentTermDays ?? 30),
+    currency: existing?.settlementConfig?.currency ?? 'USD',
+    premiumCollection: existing?.settlementConfig?.premiumCollection ?? 'aggregate',
+    uploadedFiles: [] as UploadedDoc[],
   })
 
   const set = (k: string, v: any) => setForm(p => ({ ...p, [k]: v }))
@@ -165,6 +180,13 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
         moodys: existing.moodysRating ?? '',
         fitch: existing.fitchRating ?? '',
         settlementCycle: existing.settlementCycle ?? '',
+        billingFormat: existing.settlementConfig?.billingFormat ?? '',
+        billCutoffDay: String(existing.settlementConfig?.billCutoffDay ?? 25),
+        paymentDays: String(existing.settlementConfig?.paymentTermDays ?? 30),
+        currency: existing.settlementConfig?.currency ?? 'USD',
+        premiumCollection: existing.settlementConfig?.premiumCollection ?? 'aggregate',
+        // 资质文件回显：仅含服务端元数据（无本地 File，预览走 /uploads url）
+        uploadedFiles: Array.isArray(existing.documents) ? existing.documents : [],
       }))
       setDataLoaded(true)
     }
@@ -196,27 +218,45 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
     if (i === 1) return form.type && form.state && form.region
     if (i === 2) return form.amBest
     if (i === 3) return form.settlementCycle && form.billingFormat
-    return form.uploadedFiles.filter(f =>
-      [t('documents.docs.businessLicense'), t('documents.docs.mainAgreement'), t('documents.docs.nda')].includes(f.type)
-    ).length === 3
+    return REQUIRED_DOC_KEYS.every(k => form.uploadedFiles.some(f => f.key === k))
   })
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 选完文件立即上传到 /uploads，成功后用返回的元数据占住对应槽位（同槽位替换）
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
-    const sizeMB = (file.size / 1024 / 1024).toFixed(1)
-    const docType = uploadTargetDocType || t('documents.docs.mainAgreement')
-    set('uploadedFiles', [...form.uploadedFiles, { name: file.name, type: docType, size: `${sizeMB} MB`, file }])
     e.target.value = '' // reset so same file can be re-selected
+    const key = uploadTargetDocKeyRef.current
+    if (!file || !key) return
+    uploadTargetDocKeyRef.current = null
+    setDocError(null)
+    setUploadingKey(key)
+    try {
+      const meta = await insurerApi.uploadDocument(file)
+      const doc: UploadedDoc = { key, name: meta.originalName, size: meta.size, url: meta.url, mimetype: meta.mimetype }
+      set('uploadedFiles', [...form.uploadedFiles.filter(f => f.key !== key), doc])
+    } catch (err: any) {
+      const raw = err?.response?.data?.message
+      const msg = Array.isArray(raw)
+        ? raw.join('; ')
+        : (typeof raw === 'string' && raw ? raw : t('documents.uploadFailed'))
+      setDocError(msg)
+    } finally {
+      setUploadingKey(null)
+    }
+  }
+
+  const formatFileSize = (bytes?: number) => {
+    if (bytes == null) return ''
+    if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`
   }
 
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null)
 
-  const handlePreview = (f: { name: string; file?: File }) => {
-    if (f.file) {
-      const url = URL.createObjectURL(f.file)
-      setPreviewFile({ url, name: f.name })
-    }
+  const handlePreview = (f: UploadedDoc) => {
+    // 本次会话刚上传的文件可走本地 blob；编辑回显的历史文件走服务端 /uploads url
+    const url = f.file ? URL.createObjectURL(f.file) : f.url
+    setPreviewFile({ url, name: f.name })
   }
 
   const closePreview = () => {
@@ -229,8 +269,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
   const handleSubmit = () => {
     setSubmitError(null)
     // 逐步骤校验必填字段：跳到第一个缺失步骤并红色标记该步骤缺失字段
-    const requiredDocs = [t('documents.docs.businessLicense'), t('documents.docs.mainAgreement'), t('documents.docs.nda')]
-    const docsOk = requiredDocs.every(d => form.uploadedFiles.some(f => f.type === d))
+    const docsOk = REQUIRED_DOC_KEYS.every(k => form.uploadedFiles.some(f => f.key === k))
     const missingByStep: string[][] = [
       [!form.name.trim() ? 'name' : '', !form.shortName.trim() ? 'shortName' : '', !form.naicCode.trim() ? 'naicCode' : ''].filter(Boolean),
       [!form.state ? 'state' : ''].filter(Boolean),
@@ -283,6 +322,18 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
     }
     // Lines array — only include if non-empty
     if (form.lines.length > 0) dto.lines = form.lines
+    // 结算配置（billingFormat/billCutoffDay/paymentDays/currency/premiumCollection 持久化到 JSONB）
+    dto.settlement_config = {
+      billingFormat: form.billingFormat || undefined,
+      billCutoffDay: form.billCutoffDay ? parseInt(form.billCutoffDay, 10) || undefined : undefined,
+      paymentTermDays: form.paymentDays ? parseInt(form.paymentDays, 10) || undefined : undefined,
+      currency: form.currency || undefined,
+      premiumCollection: form.premiumCollection || undefined,
+    }
+    // 资质文件元数据（文件已在选文件时上传完成）；编辑模式显式发送空数组也可清空
+    dto.documents = form.uploadedFiles.map(f => ({
+      key: f.key, name: f.name, size: f.size, url: f.url, mimetype: f.mimetype,
+    }))
 
     const onSuccess = () => navigateTo('insurer-list')
     const onError = (err: any) => {
@@ -290,7 +341,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
       const data = err?.response?.data
       const error = data?.error || ''
       // Extract message: handle both string and string[] (NestJS validation)
-      const rawMsg = data?.message || err?.message || 'Unknown error'
+      const rawMsg = data?.message || err?.message || t('errors.unknown')
       const displayMsg = Array.isArray(rawMsg) ? rawMsg.join('; ') : (typeof rawMsg === 'string' ? rawMsg : JSON.stringify(rawMsg))
       console.error('[InsurerForm] Submit error:', { status, error, message: displayMsg })
       setSubmitError(displayMsg)
@@ -309,7 +360,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
       }
     } catch (e: any) {
       console.error('[InsurerForm] Unexpected error during submit:', e)
-      setSubmitError(e?.message || 'Unexpected error')
+      setSubmitError(e?.message || t('errors.unknown'))
     }
   }
 
@@ -323,7 +374,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
             <ArrowLeft size={15} />
           </button>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23' }}>
               {mode === 'create' 
                 ? t('header.titleCreate') 
                 : t('header.titleEdit', { name: existing?.shortName ?? '' })}
@@ -362,7 +413,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
         }}>
           <AlertCircle size={16} style={{ color: '#BA1A1A', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#BA1A1A' }}>{t('errors.submitFailed') || '提交失败'}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#BA1A1A' }}>{t('errors.submitFailed')}</div>
             <div style={{ fontSize: 12.5, color: '#BA1A1A', marginTop: 2, wordBreak: 'break-all' }}>{submitError}</div>
           </div>
           <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#BA1A1A', fontSize: 14, padding: 4 }} onClick={() => setSubmitError(null)}>✕</button>
@@ -467,12 +518,12 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                     )}
                     {naicStatus === 'taken' && (
                       <div style={{ fontSize: 11.5, color: '#BA1A1A', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <AlertCircle size={11} />{t('errors.naicDuplicate') || 'This NAIC Code already exists'}
+                        <AlertCircle size={11} />{t('errors.naicDuplicate')}
                       </div>
                     )}
                     {naicStatus === 'available' && (
                       <div style={{ fontSize: 11.5, color: '#34C759', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <CheckCircle size={11} />{t('errors.naicAvailable') || 'NAIC Code is available'}
+                        <CheckCircle size={11} />{t('errors.naicAvailable')}
                       </div>
                     )}
                     {renderFieldError('naicCode')}
@@ -638,10 +689,10 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                     <FieldLabel label={t('settlementFields.billingFormat')} required />
                     <select {...INPUT} style={{ ...INPUT.style, ...errBorder('billingFormat') }} value={form.billingFormat} onChange={e => set('billingFormat', e.target.value)}>
                       <option value="" disabled>{t('settlementFields.selectPlaceholder')}</option>
-                      <option value="API">{t('settlementFields.apiPull')}</option>
+                      <option value="API" disabled>{t('settlementFields.apiPull')}{t('settlementFields.soonSuffix')}</option>
                       <option value="CSV">{t('settlementFields.csvFile')}</option>
                       <option value="Excel">{t('settlementFields.excelFile')}</option>
-                      <option value="EDI">{t('settlementFields.edi835')}</option>
+                      <option value="EDI" disabled>{t('settlementFields.edi835')}{t('settlementFields.soonSuffix')}</option>
                       <option value="Manual">{t('settlementFields.manualEntry')}</option>
                     </select>
                     {renderFieldError('billingFormat')}
@@ -649,9 +700,9 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                   <div>
                     <FieldLabel label={t('settlementFields.billCutoffDay')} hint={t('settlementFields.cutoffDayHint')} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t('settlementFields.day')}</span>
+                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t('settlementFields.billCutoffPrefix')}</span>
                       <input {...INPUT} type="number" value={form.billCutoffDay} onChange={e => set('billCutoffDay', e.target.value)} style={{ ...INPUT.style, width: 70 }} min={1} max={28} />
-                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t('settlementFields.day')}</span>
+                      <span style={{ fontSize: 13.5, color: '#717786' }}>{t('settlementFields.billCutoffSuffix')}</span>
                     </div>
                   </div>
                   <div>
@@ -666,8 +717,7 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                     <FieldLabel label={t('settlementFields.currency')} />
                     <select {...INPUT} value={form.currency} onChange={e => set('currency', e.target.value)}>
                       <option value="USD">{t('settlementFields.usd')}</option>
-                      <option value="EUR">EUR — Euro</option>
-                      <option value="GBP">GBP — British Pound</option>
+                      <option value="CAD">{t('settlementFields.cad')}</option>
                     </select>
                   </div>
                   <div>
@@ -690,52 +740,56 @@ export default function InsurerForm({ mode, carrierId, navigateTo }: Props) {
                 {t('documents.uploadHint')}
               </div>
               {renderFieldError('documents')}
+              {docError && (
+                <div style={{ marginBottom: 12, padding: '9px 13px', borderRadius: 10, background: 'rgba(186,26,26,0.06)', border: '1px solid rgba(186,26,26,0.2)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#BA1A1A' }}>
+                  <AlertCircle size={13} style={{ flexShrink: 0 }} />
+                  <span style={{ wordBreak: 'break-all' }}>{docError}</span>
+                  <button style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#BA1A1A', fontSize: 12 }} onClick={() => setDocError(null)}>✕</button>
+                </div>
+              )}
 
-              {/* Hidden real file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                style={{ display: 'none' }}
-                onChange={handleFileSelected}
-              />
-
-              {/* Required doc list */}
+              {/* Doc slot list（key 为稳定英文标识，标签走 i18n） */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { type: t('documents.docs.businessLicense'), required: true },
-                  { type: t('documents.docs.mainAgreement'), required: true },
-                  { type: t('documents.docs.nda'), required: true },
-                  { type: t('documents.docs.dpa'), required: false },
-                  { type: t('documents.docs.amBestReport'), required: false },
-                ].map(doc => {
-                  const uploaded = form.uploadedFiles.find(f => f.type === doc.type)
+                {DOC_SLOTS.map(doc => {
+                  const uploaded = form.uploadedFiles.find(f => f.key === doc.key)
+                  const isUploading = uploadingKey === doc.key
+                  const label = t(`documents.docs.${doc.key}`)
                   return (
-                    <div key={doc.type} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(193,198,215,0.4)', borderRadius: 10 }}>
+                    <div key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(193,198,215,0.4)', borderRadius: 10 }}>
                       <div style={{ width: 36, height: 36, borderRadius: 9, background: uploaded ? 'rgba(52,199,89,0.10)' : 'rgba(193,198,215,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <FileText size={16} style={{ color: uploaded ? '#34C759' : '#717786' }} />
                       </div>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#181C23' }}>
-                          {doc.type}
+                          {label}
                           {doc.required && <span style={{ fontSize: 11, color: '#BA1A1A', marginLeft: 6 }}>{t('documents.requiredDocs')}</span>}
                         </div>
-                        {uploaded
-                          ? <div style={{ fontSize: 11.5, color: '#1a7a2e', marginTop: 2 }}>{uploaded.name} · {uploaded.size}</div>
-                          : <div style={{ fontSize: 11.5, color: '#717786', marginTop: 2 }}>{t('documents.notUploaded')}</div>
+                        {isUploading
+                          ? <div style={{ fontSize: 11.5, color: '#717786', marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} />{t('documents.uploading')}
+                            </div>
+                          : uploaded
+                            ? <div style={{ fontSize: 11.5, color: '#1a7a2e', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {uploaded.name}
+                                {uploaded.size != null ? ` · ${formatFileSize(uploaded.size)}` : ''}
+                              </div>
+                            : <div style={{ fontSize: 11.5, color: '#717786', marginTop: 2 }}>{t('documents.notUploaded')}</div>
                         }
                       </div>
-                      {uploaded
+                      {uploaded && !isUploading
                         ? <>
-                            {uploaded.file && (
-                              <button className="btn-ghost" style={{ padding: 5, color: '#0058BC' }} onClick={() => handlePreview(uploaded)} title={t('documents.previewBtn')}><Eye size={14} /></button>
-                            )}
-                            <button className="btn-ghost" style={{ padding: 5, color: '#BA1A1A' }} onClick={() => set('uploadedFiles', form.uploadedFiles.filter(f => f.type !== doc.type))}><X size={14} /></button>
+                            <button type="button" className="btn-ghost" style={{ padding: 5, color: '#0058BC' }} onClick={() => handlePreview(uploaded)} title={t('documents.previewBtn')}><Eye size={14} /></button>
+                            <button type="button" className="btn-ghost" style={{ padding: 5, color: '#BA1A1A' }} onClick={() => set('uploadedFiles', form.uploadedFiles.filter(f => f.key !== doc.key))}><X size={14} /></button>
                           </>
-                        : <button className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => {
-                            setUploadTargetDocType(doc.type)
-                            fileInputRef.current?.click()
-                          }}>{t('documents.uploadBtn')}</button>
+                        : !isUploading && (
+                          <label className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px', cursor: 'pointer' }} onClick={() => {
+                            setDocError(null)
+                            uploadTargetDocKeyRef.current = doc.key
+                          }}>
+                            {t('documents.uploadBtn')}
+                            <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" style={{ display: 'none' }} onChange={handleFileSelected} />
+                          </label>
+                        )
                       }
                     </div>
                   )

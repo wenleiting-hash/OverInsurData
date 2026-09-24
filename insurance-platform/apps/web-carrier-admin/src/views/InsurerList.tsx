@@ -3,7 +3,7 @@ import {
   Search, Plus, Download, Upload, Copy, Eye, Edit2, XCircle, CheckCircle,
   ChevronUp, ChevronDown, Trash2, Ban, AlertTriangle, X,
 } from 'lucide-react';
-import { formatCurrency, formatPercent } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
 import type { InsurerRecord, InsurerListParams } from '@/lib/user-api-client';
 import { useGetInsurers, useToggleInsurerStatus, useDeleteInsurer, useBatchToggleInsurerStatus, useBatchDeleteInsurer } from '@/services/insurerService';
 import type { ViewId } from '@/App';
@@ -15,7 +15,7 @@ interface Props {
   navigateTo: (view: ViewId, params?: any) => void;
 }
 
-type SortKey = 'name' | 'totalPremium' | 'lossRatio' | 'renewalRate' | 'naicCode';
+type SortKey = 'name' | 'totalPremium' | 'naicCode';
 type SortDir = 'asc' | 'desc';
 
 export default function InsurerList({ navigateTo }: Props) {
@@ -45,8 +45,7 @@ export default function InsurerList({ navigateTo }: Props) {
 
   // ── API-driven data fetching ──
   const SORT_KEY_MAP: Record<SortKey, string> = {
-    name: 'carrier_name', totalPremium: 'revenue', lossRatio: 'loss_ratio',
-    renewalRate: 'renewal_rate', naicCode: 'naic_code',
+    name: 'carrier_name', totalPremium: 'revenue', naicCode: 'naic_code',
   };
   const queryParams: InsurerListParams = {
     search: search || undefined,
@@ -91,12 +90,12 @@ export default function InsurerList({ navigateTo }: Props) {
       batchDelete.mutate(ids, {
         onSuccess: (data) => {
           setBatchConfirm(null);
-          setBatchToast({ type: 'success', msg: `已删除 ${data.deleted} 家保险公司` });
+          setBatchToast({ type: 'success', msg: t('toasts.batchDeleted', { n: data.deleted }) });
           setSelected(new Set());
         },
         onError: () => {
           setBatchConfirm(null);
-          setBatchToast({ type: 'error', msg: '删除失败，请重试' });
+          setBatchToast({ type: 'error', msg: t('toasts.deleteFailed') });
         },
       });
     } else {
@@ -106,12 +105,12 @@ export default function InsurerList({ navigateTo }: Props) {
         {
           onSuccess: (data) => {
             setBatchConfirm(null);
-            setBatchToast({ type: 'success', msg: action === 'enable' ? `已启用 ${data.updated} 家保险公司` : `已停用 ${data.updated} 家保险公司` });
+            setBatchToast({ type: 'success', msg: action === 'enable' ? t('toasts.batchEnabled', { n: data.updated }) : t('toasts.batchDisabled', { n: data.updated }) });
             setSelected(new Set());
           },
           onError: () => {
             setBatchConfirm(null);
-            setBatchToast({ type: 'error', msg: '操作失败，请重试' });
+            setBatchToast({ type: 'error', msg: t('toasts.actionFailed') });
           },
         },
       );
@@ -157,7 +156,7 @@ export default function InsurerList({ navigateTo }: Props) {
     const headers = [
       t('list.csvHeaders.naicCode'), t('list.csvHeaders.companyName'), t('list.csvHeaders.companyType'),
       t('list.csvHeaders.amBestRating'), t('list.csvHeaders.status'), t('list.csvHeaders.region'),
-      t('list.csvHeaders.totalPremium'), t('list.csvHeaders.lossRatio'), t('list.csvHeaders.renewalRate'),
+      t('list.csvHeaders.totalPremium'),
       t('list.csvHeaders.settlementCycle'),
     ];
     const csvData = sorted.map(ins => [
@@ -168,8 +167,6 @@ export default function InsurerList({ navigateTo }: Props) {
       ins.status,
       ins.region,
       formatCurrency(ins.revenue ?? 0, true),
-      formatPercent(ins.loss_ratio ?? 0),
-      formatPercent(ins.renewal_rate ?? 0),
       ins.settlement_cycle,
     ].join(','));
     
@@ -209,7 +206,7 @@ export default function InsurerList({ navigateTo }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#181C23' }}>{t('listTitle')}</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181C23' }}>{t('listTitle')}</h1>
           <p style={{ fontSize: 13, color: '#717786', marginTop: 2 }}>
             {t('listSubtitle', { count: totalFromApi, filtered: totalFromApi })}
           </p>
@@ -252,9 +249,9 @@ export default function InsurerList({ navigateTo }: Props) {
           <option value="Non-Admitted">{t('filters.nonAdmitted')}</option>
         </select>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}>
-          <option value="all">{t('filters.status')}</option>
-          <option value="active">{t('filters.active')}</option>
-          <option value="inactive">{t('filters.inactive')}</option>
+          <option value="all">{t('filters.archiveStatus')}</option>
+          <option value="active">{t('filters.archiveActive')}</option>
+          <option value="inactive">{t('filters.archiveInactive')}</option>
         </select>
         <select className="input-glass" style={{ fontSize: 13 }} value={filterRegion} onChange={e => { setFilterRegion(e.target.value); setPage(1); }}>
           <option value="all">{t('filters.region')}</option>
@@ -287,7 +284,7 @@ export default function InsurerList({ navigateTo }: Props) {
           </span>
           <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => setBatchConfirm('enable')}><CheckCircle size={13} /> {t('bulkActions.batchEnable')}</button>
           <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => setBatchConfirm('disable')}><XCircle size={13} /> {t('bulkActions.batchDisable')}</button>
-          <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => setBatchConfirm('delete')}><Trash2 size={13} /> {t('bulkActions.batchDelete') || '批量删除'}</button>
+          <button className="btn-ghost" style={{ fontSize: 12.5, color: '#BA1A1A' }} onClick={() => setBatchConfirm('delete')}><Trash2 size={13} /> {t('bulkActions.batchDelete')}</button>
           <button className="btn-ghost" style={{ fontSize: 12.5 }} onClick={() => setShowExport(true)}><Download size={13} /> {t('bulkActions.exportSelected')}</button>
           <button className="btn-ghost ml-auto" style={{ fontSize: 12.5 }} onClick={() => setSelected(new Set())}>{t('bulkActions.cancelSelection')}</button>
         </div>
@@ -318,12 +315,6 @@ export default function InsurerList({ navigateTo }: Props) {
                   <span className="flex items-center gap-1 justify-end">{t('table.totalPremium')} <SortIcon k="totalPremium" /></span>
                 </th>
                 <th style={{ textAlign: 'right' }}>{t('table.policyCount')}</th>
-                <th onClick={() => handleSort('lossRatio')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">{t('table.lossRatio')} <SortIcon k="lossRatio" /></span>
-                </th>
-                <th onClick={() => handleSort('renewalRate')} style={{ cursor: 'pointer', textAlign: 'right' }}>
-                  <span className="flex items-center gap-1 justify-end">{t('table.renewalRate')} <SortIcon k="renewalRate" /></span>
-                </th>
                 <th>{t('table.settlementMethod')}</th>
                 <th>{t('table.cooperationStatus')}</th>
                 <th style={{ width: 100, position: 'sticky', right: 0, zIndex: 2, background: 'rgba(246,248,255,0.99)', boxShadow: '-3px 0 8px -2px rgba(0,22,80,0.08)' }}>{t('table.actions')}</th>
@@ -378,21 +369,6 @@ export default function InsurerList({ navigateTo }: Props) {
                     <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#414755' }}>
                       {(ins.policy_count ?? 0).toLocaleString()}
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <span
-                        className="font-data"
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 500,
-                          color: (ins.loss_ratio ?? 0) > 0.65 ? '#BA1A1A' : (ins.loss_ratio ?? 0) > 0.60 ? '#a05800' : '#1a7a2e',
-                        }}
-                      >
-                        {formatPercent(ins.loss_ratio ?? 0)}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#414755' }}>
-                      {formatPercent(ins.renewal_rate ?? 0)}
-                    </td>
                     <td>
                       <span className="badge badge-gray" style={{ fontSize: 11 }}>{ins.settlement_cycle === 'Monthly' ? t('table.monthly') : t('table.quarterly')}</span>
                     </td>
@@ -437,7 +413,7 @@ export default function InsurerList({ navigateTo }: Props) {
                               setMenuTargetId(insId);
                             }}
                           >
-                            {t('table.more') || '更多'}
+                            {t('table.more')}
                           </button>
                         </div>
                       </div>
@@ -464,10 +440,12 @@ export default function InsurerList({ navigateTo }: Props) {
               value={pageSize}
               onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
             >
-              <option value={10}>{t('pagination.pageSize', '10 条/页')}</option>
-              <option value={20}>{t('pagination.pageSize20', '20 条/页')}</option>
-              <option value={50}>{t('pagination.pageSize50', '50 条/页')}</option>
-              <option value={100}>{t('pagination.pageSize100', '100 条/页')}</option>
+              <option value={10}>{t('pagination.pageSize')}</option>
+              <option value={20}>{t('pagination.pageSize20')}</option>
+              <option value={50}>{t('pagination.pageSize50')}</option>
+              <option value={100}>{t('pagination.pageSize100')}</option>
+              <option value={200}>{t('pagination.pageSize200')}</option>
+              <option value={500}>{t('pagination.pageSize500')}</option>
             </select>
           </div>
           <div className="flex items-center gap-1">
@@ -519,7 +497,7 @@ export default function InsurerList({ navigateTo }: Props) {
               onClick={() => { setMenuTargetId(null); setMenuPos(null); setDisableTarget(menuIns); }}
             >
               <Ban size={14} style={{ color: '#a05800' }} />
-              {menuIns.status === 'inactive' ? (t('detail.actions.enable') || '启用') : (t('detail.actions.disable') || '停用')}
+              {menuIns.status === 'inactive' ? t('detail.actions.enable') : t('detail.actions.disable')}
             </button>
             <button
               style={{
@@ -532,7 +510,7 @@ export default function InsurerList({ navigateTo }: Props) {
               onClick={() => { setMenuTargetId(null); setMenuPos(null); setDeleteTarget({ id: menuTargetId, name: menuInsName }); }}
             >
               <Trash2 size={14} />
-              {t('detail.actions.delete') || '删除'}
+              {t('detail.actions.delete')}
             </button>
           </div>
         );
@@ -581,8 +559,8 @@ export default function InsurerList({ navigateTo }: Props) {
                   <AlertTriangle size={18} style={{ color: '#BA1A1A' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23' }}>{t('modals.deleteConfirm.title') || '确认删除'}</div>
-                  <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t('modals.deleteConfirm.subtitle') || '此操作不可撤销'}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#181C23' }}>{t('modals.deleteConfirm.title')}</div>
+                  <div style={{ fontSize: 12.5, color: '#717786', marginTop: 2 }}>{t('modals.deleteConfirm.subtitle')}</div>
                 </div>
               </div>
               <button className="btn-ghost" style={{ padding: 6 }} onClick={() => setDeleteTarget(null)}><X size={16} /></button>
@@ -596,15 +574,15 @@ export default function InsurerList({ navigateTo }: Props) {
                 borderRadius: 12, padding: '16px 18px',
                 fontSize: 13.5, lineHeight: 1.7, color: '#414755',
               }}>
-                {t('modals.deleteConfirm.warningPre') || '即将删除保险公司 '}
+                {t('modals.deleteConfirm.warningPre')}
                 <strong style={{ color: '#BA1A1A' }}>{deleteTarget.name}</strong>
-                {t('modals.deleteConfirm.warningPost') || '，删除后相关配置、合作记录将一并移除，且无法恢复。'}
+                {t('modals.deleteConfirm.warningPost')}
               </div>
             </div>
 
             {/* Footer */}
             <div style={{ padding: '14px 24px', borderTop: '0.5px solid rgba(193,198,215,0.4)', display: 'flex', justifyContent: 'flex-end', gap: 10, background: 'rgba(241,243,254,0.5)' }}>
-              <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={() => setDeleteTarget(null)}>{t('common:common.cancel') || '取消'}</button>
+              <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={() => setDeleteTarget(null)}>{t('common:common.cancel')}</button>
               <button
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -621,8 +599,8 @@ export default function InsurerList({ navigateTo }: Props) {
               >
                 <Trash2 size={14} />
                 {deleteInsurer.isPending
-                  ? (t('modals.deleteConfirm.deleting') || '删除中…')
-                  : (t('modals.deleteConfirm.confirmBtn') || '确认删除')}
+                  ? t('modals.deleteConfirm.deleting')
+                  : t('modals.deleteConfirm.confirmBtn')}
               </button>
             </div>
           </div>
@@ -674,9 +652,9 @@ export default function InsurerList({ navigateTo }: Props) {
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#181C23' }}>
-                  {batchConfirm === 'delete' ? '批量删除' : batchConfirm === 'disable' ? '批量停用' : '批量启用'}
+                  {batchConfirm === 'delete' ? t('modals.batchConfirm.titleDelete') : batchConfirm === 'disable' ? t('modals.batchConfirm.titleDisable') : t('modals.batchConfirm.titleEnable')}
                 </div>
-                <div style={{ fontSize: 12.5, color: '#717786' }}>已选择 {selected.size} 家保险公司</div>
+                <div style={{ fontSize: 12.5, color: '#717786' }}>{t('modals.batchConfirm.selectedCount', { count: selected.size })}</div>
               </div>
             </div>
             <div style={{
@@ -685,13 +663,13 @@ export default function InsurerList({ navigateTo }: Props) {
               borderRadius: 10, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: '#414755',
             }}>
               {batchConfirm === 'delete'
-                ? '删除后，选中的保险公司及相关配置将被永久移除，此操作不可撤销。确认继续？'
+                ? t('modals.batchConfirm.bodyDelete')
                 : batchConfirm === 'disable'
-                  ? '停用后，选中的保险公司将无法进行新业务操作。确认继续？'
-                  : '启用后，选中的保险公司将恢复正常业务操作。确认继续？'}
+                  ? t('modals.batchConfirm.bodyDisable')
+                  : t('modals.batchConfirm.bodyEnable')}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={() => setBatchConfirm(null)}>取消</button>
+              <button className="btn-secondary" style={{ fontSize: 13.5 }} onClick={() => setBatchConfirm(null)}>{t('common:common.cancel')}</button>
               <button
                 onClick={() => handleBatchAction(batchConfirm!)}
                 disabled={batchToggle.isPending || batchDelete.isPending}
@@ -701,7 +679,13 @@ export default function InsurerList({ navigateTo }: Props) {
                   color: '#fff', opacity: (batchToggle.isPending || batchDelete.isPending) ? 0.6 : 1,
                 }}
               >
-                {(batchToggle.isPending || batchDelete.isPending) ? '处理中...' : batchConfirm === 'delete' ? '确认删除' : batchConfirm === 'disable' ? '确认停用' : '确认启用'}
+                {(batchToggle.isPending || batchDelete.isPending)
+                  ? t('modals.batchConfirm.processing')
+                  : batchConfirm === 'delete'
+                    ? t('modals.batchConfirm.confirmDelete')
+                    : batchConfirm === 'disable'
+                      ? t('modals.batchConfirm.confirmDisable')
+                      : t('modals.batchConfirm.confirmEnable')}
               </button>
             </div>
           </div>

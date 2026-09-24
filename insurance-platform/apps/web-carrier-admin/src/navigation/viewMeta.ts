@@ -51,20 +51,15 @@ export type ViewId =
   | 'data-permission'
   | 'operation-log'
   | 'login-log'
+  | 'integration-apps'
+  | 'dictionary-manage'
 
-  // 🔴 Phase 2: Appointment & 合规模块
+  // 🔴 Phase 2: Appointment 模块
   | 'appointment-application'
   | 'appointment-new'
   | 'appointment-tracking'
   | 'appointment-renewal'
-  | 'appointment-termination'
-  | 'license-check'
-  | 'compliance-rules'
-  | 'ofac-screening'
-  | 'compliance-interceptor'
-  | 'compliance-report-generator'
-  | 'license-expiry-reminder'
-  | 'compliance-dashboard';
+  | 'appointment-termination';
 
 export interface ViewMeta {
   crumbs: string[];
@@ -73,19 +68,18 @@ export interface ViewMeta {
 
 export const VIEW_LABELS: Record<string, ViewMeta> = {
   dashboard: { crumbs: [], title: 'nav.overview' },
-  'insurer-list': { crumbs: ['nav.insuranceCarrierMgmt'], title: 'nav.insuranceCarrierList' },
-  'insurer-detail': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insuranceCarrierList'], title: 'nav.insuranceCarrierDetail' },
-  'insurer-new': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insuranceCarrierList'], title: 'nav.newInsuranceCarrier' },
-  'insurer-edit': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insuranceCarrierList'], title: 'nav.editInsuranceCarrier' },
-  'insurer-import': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insuranceCarrierList'], title: 'nav.bulkImport' },
-  'insurer-duplicate': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insuranceCarrierList'], title: 'nav.duplicateDetection' },
+  'insurer-list': { crumbs: ['nav.insuranceCarrierMgmt'], title: 'nav.insurerList' },
+  'insurer-detail': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insurerList'], title: 'nav.insuranceCarrierDetail' },
+  'insurer-new': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insurerList'], title: 'nav.newInsuranceCarrier' },
+  'insurer-edit': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insurerList'], title: 'nav.editInsuranceCarrier' },
+  'insurer-import': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insurerList'], title: 'nav.bulkImport' },
+  'insurer-duplicate': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.insurerList'], title: 'nav.duplicateDetection' },
   'product-list': { crumbs: ['nav.insuranceCarrierMgmt'], title: 'nav.productMgmt' },
   'product-detail': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.productMgmt'], title: 'nav.productDetail' },
   'product-new': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.productMgmt'], title: 'nav.newProduct' },
   'product-edit': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.productMgmt'], title: 'nav.editProduct' },
   'cooperation': { crumbs: ['nav.insuranceCarrierMgmt'], title: 'nav.cooperationMgmt' },
   'appointment': { crumbs: ['nav.insuranceCarrierMgmt'], title: 'nav.appointmentCompliance' },
-  'compliance-dashboard': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.complianceDashboard' },
   'finance-dashboard': { crumbs: ['nav.insuranceCarrierMgmt'], title: 'nav.financeDashboard' },
   'finance-bill-import': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.financeSettlement'], title: 'nav.commissionBillImport' },
   'finance-bill-parsing': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.financeSettlement'], title: 'nav.billParsing' },
@@ -116,21 +110,17 @@ export const VIEW_LABELS: Record<string, ViewMeta> = {
   'role-edit': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.roleMgmt'], title: 'nav.editRole' },
   'user-list': { crumbs: ['nav.systemSettings'], title: 'nav.userMgmt' },
   'department-management': { crumbs: ['nav.systemSettings'], title: 'menu.departmentManagement' },
+  'integration-apps': { crumbs: ['nav.systemSettings'], title: 'menu.integrationApps' },
+  'dictionary-manage': { crumbs: ['nav.systemSettings'], title: 'menu.dictionaryManage' },
   'user-create': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.userMgmt'], title: 'nav.newUser' },
   'user-edit': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.userMgmt'], title: 'nav.editUser' },
   'menu-permission': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.menuPermission'], title: 'nav.menuPermissionConfig' },
   'data-permission': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.dataPermission'], title: 'nav.dataPermissionConfig' },
   'operation-log': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.operationLog'], title: 'nav.operationLogAudit' },
   'login-log': { crumbs: ['nav.systemSettings', 'nav.permissionMgmt', 'nav.loginLog'], title: 'nav.loginLogAudit' },
-  // Phase 2: Appointment & 合规模块（补齐 App.tsx 既有 case 对应的面包屑）
+  // Phase 2: Appointment 模块（补齐 App.tsx 既有 case 对应的面包屑）
   'appointment-new': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.newAppointment' },
   'appointment-tracking': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.statusTracking' },
   'appointment-renewal': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.renewalMgmt' },
   'appointment-termination': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.terminationMgmt' },
-  'license-check': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.niprLicenseCheck' },
-  'compliance-rules': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.complianceRules' },
-  'compliance-interceptor': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.complianceInterceptor' },
-  'compliance-report-generator': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.complianceReportGenerator' },
-  'license-expiry-reminder': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.licenseExpiryReminder' },
-  'ofac-screening': { crumbs: ['nav.insuranceCarrierMgmt', 'nav.appointmentCompliance'], title: 'nav.ofacScreening' },
 };

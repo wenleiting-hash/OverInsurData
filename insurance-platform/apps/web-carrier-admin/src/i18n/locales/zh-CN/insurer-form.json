@@ -95,9 +95,11 @@
     "excelFile": "Excel 文件",
     "edi835": "EDI 835",
     "manualEntry": "人工录入",
+    "soonSuffix": "（待开放）",
     "billCutoffDay": "账单截止日",
     "cutoffDayHint": "每月/季第几天为数据截止日",
     "billCutoffPrefix": "每月第",
+    "billCutoffSuffix": "天",
     "day": "天",
     "paymentTerm": "付款期限",
     "paymentHint": "对账完成后多少天内支付",
@@ -119,8 +121,10 @@
     "uploaded": "已上传",
     "notUploaded": "未上传",
     "uploadBtn": "上传",
+    "uploading": "上传中…",
+    "uploadFailed": "文件上传失败，请重试",
     "previewBtn": "预览",
-    "fakeFileName": "合作协议_Draft_{{ts}}.pdf",
+    "fakeFileName": "合作协议_Draft_{ts}.pdf",
     "docs": {
       "businessLicense": "营业执照",
       "mainAgreement": "主合作协议",
@@ -148,6 +152,7 @@
     "missingSettlement": "请填写结算配置",
     "missingDocuments": "请上传资质文件",
     "submitFailed": "提交失败",
+    "unknown": "未知错误，请重试",
     "naicDuplicate": "该 NAIC 编码已存在，请更换后重试",
     "naicAvailable": "NAIC 编码可用"
   }
